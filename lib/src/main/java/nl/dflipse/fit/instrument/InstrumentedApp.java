@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.core5.http.ContentType;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
@@ -16,6 +17,7 @@ import nl.dflipse.fit.instrument.services.InstrumentedService;
 import nl.dflipse.fit.instrument.services.OTELCollectorService;
 import nl.dflipse.fit.instrument.services.PlainService;
 import nl.dflipse.fit.instrument.services.ProxyService;
+import nl.dflipse.fit.strategy.Faultload;
 import nl.dflipse.fit.trace.data.TraceData;
 
 public class InstrumentedApp {
@@ -110,6 +112,24 @@ public class InstrumentedApp {
         } catch (IOException e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public void registerFaultload(Faultload faultload) {
+        String queryUrl = orchestratorInspectUrl + "/v1/register_faultload";
+        ObjectMapper mapper = new ObjectMapper();
+        var obj = mapper.createObjectNode();
+        obj.put("faultload", faultload.serializeJson());
+
+        try {
+            String jsonBody = obj.toString();
+
+            Response res = Request.post(queryUrl)
+                      .bodyString(jsonBody, ContentType.APPLICATION_JSON)
+                      .execute();
+            res.returnContent().asString(); // Ensure the request is executed
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

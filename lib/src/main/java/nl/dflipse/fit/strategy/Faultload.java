@@ -47,6 +47,10 @@ public class Faultload {
         traceState.set("faultload", encodedFaultload);
     }
 
+    public String serializeJson() {
+        return FaultloadSerializer.serializeJson(faultload);
+    }
+
     public String getTraceId() {
         return traceParent.traceId;
     }

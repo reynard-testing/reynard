@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
+import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -16,7 +17,8 @@ import nl.dflipse.fit.strategy.FIStrategy;
 import nl.dflipse.fit.strategy.Faultload;
 import nl.dflipse.fit.trace.data.TraceData;
 
-public class FiTestExtension implements TestTemplateInvocationContextProvider, AfterTestExecutionCallback {
+public class FiTestExtension
+        implements TestTemplateInvocationContextProvider, AfterTestExecutionCallback, BeforeTestExecutionCallback {
     private FIStrategy strategy;
     private InstrumentedApp app;
 
@@ -45,7 +47,19 @@ public class FiTestExtension implements TestTemplateInvocationContextProvider, A
         }
 
         return Stream
-                .generate(() -> createInvocationContext(strategy.next()))
+                .generate(() -> {
+                    Faultload faultload = strategy.next();
+                    TestTemplateInvocationContext invocationContext = createInvocationContext(faultload);
+                    
+                    if (faultload == null || invocationContext == null) {
+                        return invocationContext;
+                        var testNamespace = ExtensionContext.Namespace
+                                .create(context.getUniqueId(), faultload.getTraceId());
+                        context.getStore(testNamespace).put("faultload", faultload);
+                    }
+                    
+                    return invocationContext;
+                })
                 .takeWhile(ctx -> ctx != null);
     }
 
@@ -83,13 +97,17 @@ public class FiTestExtension implements TestTemplateInvocationContextProvider, A
 
         @Override
         public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-            ExtensionContext.Namespace testNamespace = ExtensionContext.Namespace
-                    .create(extensionContext.getUniqueId());
-
-            extensionContext.getStore(testNamespace).put("faultload", faultload);
-
             return faultload;
         }
+    }
+
+    @Override
+    public void beforeTestExecution(ExtensionContext context) {
+        ExtensionContext.Namespace testNamespace = ExtensionContext.Namespace.create(context.getUniqueId());
+        Faultload faultload = context.getStore(testNamespace).get("faultload", Faultload.class);
+
+        // ensure the faultload is registered to the proxies
+        app.registerFaultload(faultload);
     }
 
     @Override

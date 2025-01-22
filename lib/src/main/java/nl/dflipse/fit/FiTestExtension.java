@@ -53,10 +53,11 @@ public class FiTestExtension
                     
                     if (faultload == null || invocationContext == null) {
                         return invocationContext;
-                        var testNamespace = ExtensionContext.Namespace
-                                .create(context.getUniqueId(), faultload.getTraceId());
-                        context.getStore(testNamespace).put("faultload", faultload);
                     }
+
+                    // invocationContext.get
+                    var testNamespace = ExtensionContext.Namespace.create(context.getUniqueId(), );
+                    context.getStore(testNamespace).put("faultload", faultload);
                     
                     return invocationContext;
                 })
@@ -103,6 +104,8 @@ public class FiTestExtension
 
     @Override
     public void beforeTestExecution(ExtensionContext context) {
+        TestTemplateInvocationContext invocationContext = context.getStore(ExtensionContext.Namespace.GLOBAL)
+            .get("invocationContext", TestTemplateInvocationContext.class);
         ExtensionContext.Namespace testNamespace = ExtensionContext.Namespace.create(context.getUniqueId());
         Faultload faultload = context.getStore(testNamespace).get("faultload", Faultload.class);
 

@@ -16,8 +16,8 @@ exporters:
     tls:
       insecure: true
 
-  otlphttp/collector:
-    endpoint: "http://collector:5000"
+  otlphttp/orchestrator:
+    endpoint: "http://orchestrator:5000"
     compression: none
     tls:
       insecure: true
@@ -27,4 +27,4 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp/jaeger, otlphttp/collector]
+      exporters: [otlp/jaeger, otlphttp/orchestrator]

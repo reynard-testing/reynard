@@ -3,8 +3,8 @@ package nl.dflipse.fit.strategy.strategies.util;
 import java.util.LinkedList;
 import java.util.List;
 
-import nl.dflipse.fit.collector.TraceData;
-import nl.dflipse.fit.collector.TraceTreeSpan;
+import nl.dflipse.fit.trace.data.TraceData;
+import nl.dflipse.fit.trace.data.TraceTreeSpan;
 
 public class TraceTraversal {
 

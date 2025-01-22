@@ -1,6 +1,8 @@
-package nl.dflipse.fit.instrument;
+package nl.dflipse.fit.instrument.services;
 
 import org.testcontainers.containers.GenericContainer;
+
+import nl.dflipse.fit.instrument.InstrumentedApp;
 
 public class ProxyService implements InstrumentedService {
     public GenericContainer<?> service;

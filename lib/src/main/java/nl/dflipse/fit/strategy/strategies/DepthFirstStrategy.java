@@ -3,11 +3,11 @@ package nl.dflipse.fit.strategy.strategies;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import nl.dflipse.fit.collector.TraceData;
 import nl.dflipse.fit.strategy.FIStrategy;
 import nl.dflipse.fit.strategy.Faultload;
 import nl.dflipse.fit.strategy.strategies.util.Combinatorics;
 import nl.dflipse.fit.strategy.strategies.util.TraceTraversal;
+import nl.dflipse.fit.trace.data.TraceData;
 
 public class DepthFirstStrategy implements FIStrategy {
     private boolean failed = false;

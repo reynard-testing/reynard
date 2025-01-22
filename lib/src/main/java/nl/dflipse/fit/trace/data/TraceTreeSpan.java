@@ -1,4 +1,4 @@
-package nl.dflipse.fit.collector;
+package nl.dflipse.fit.trace.data;
 
 import java.util.List;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

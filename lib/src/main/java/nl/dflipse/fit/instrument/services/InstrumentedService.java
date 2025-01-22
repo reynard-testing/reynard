@@ -1,4 +1,4 @@
-package nl.dflipse.fit.instrument;
+package nl.dflipse.fit.instrument.services;
 
 import org.testcontainers.containers.GenericContainer;
 

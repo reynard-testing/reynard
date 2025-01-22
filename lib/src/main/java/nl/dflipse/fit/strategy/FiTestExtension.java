@@ -11,8 +11,8 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 
-import nl.dflipse.fit.collector.TraceData;
 import nl.dflipse.fit.instrument.InstrumentedApp;
+import nl.dflipse.fit.trace.data.TraceData;
 
 public class FiTestExtension implements TestTemplateInvocationContextProvider, AfterTestExecutionCallback {
     private FIStrategy strategy;

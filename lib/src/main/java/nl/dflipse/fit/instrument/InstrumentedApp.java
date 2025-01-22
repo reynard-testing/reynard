@@ -11,7 +11,11 @@ import org.testcontainers.containers.Network;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nl.dflipse.fit.collector.TraceData;
+import nl.dflipse.fit.instrument.services.CollectorService;
+import nl.dflipse.fit.instrument.services.InstrumentedService;
+import nl.dflipse.fit.instrument.services.PlainService;
+import nl.dflipse.fit.instrument.services.ProxyService;
+import nl.dflipse.fit.trace.data.TraceData;
 
 public class InstrumentedApp {
     public Network network;

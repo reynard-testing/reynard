@@ -1,6 +1,6 @@
 package nl.dflipse.fit.strategy;
 
-import nl.dflipse.fit.collector.TraceData;
+import nl.dflipse.fit.trace.data.TraceData;
 
 public interface FIStrategy {
     public Faultload next();

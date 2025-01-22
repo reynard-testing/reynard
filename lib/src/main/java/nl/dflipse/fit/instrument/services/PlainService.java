@@ -1,22 +1,18 @@
-package nl.dflipse.fit.instrument;
+package nl.dflipse.fit.instrument.services;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-public class CollectorService implements InstrumentedService {
-    private GenericContainer<?> container;
-    private String name;
+public class PlainService implements InstrumentedService {
+    public GenericContainer<?> container;
+    public String name;
 
-    private static String image = "fit-otel-collector:latest";
-
-    public CollectorService(String name, Network network) {
+    public PlainService(String name, GenericContainer<?> container, Network network) {
         this.name = name;
+        this.container = container;
 
-        this.container = new GenericContainer<>(image)
-                .withCommand("flask --app collector.py run --host=0.0.0.0")
-                .withExposedPorts(5000)
-                .withNetwork(network)
-                .withNetworkAliases(name);
+        container.withNetwork(network);
+        container.withNetworkAliases(name);
     }
 
     public GenericContainer<?> getContainer() {

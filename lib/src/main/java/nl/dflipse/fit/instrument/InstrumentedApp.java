@@ -11,7 +11,7 @@ import org.testcontainers.containers.Network;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nl.dflipse.fit.instrument.services.CollectorService;
+import nl.dflipse.fit.instrument.services.OrchestratorService;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
 import nl.dflipse.fit.instrument.services.PlainService;
 import nl.dflipse.fit.instrument.services.ProxyService;
@@ -20,18 +20,19 @@ import nl.dflipse.fit.trace.data.TraceData;
 public class InstrumentedApp {
     public Network network;
     private List<InstrumentedService> services;
-    public String collectorHost = "collector";
-    public int collectorPort = 5000;
-    public CollectorService collector;
-    public String collectorInspectUrl;
+    
+    public String orchestratorHost = "collector";
+    public int orchestratorPort = 5000;
+    public OrchestratorService orchestrator;
+    public String orchestratorInspectUrl;
 
     public InstrumentedApp() {
         this.network = Network.newNetwork();
         this.services = new ArrayList<InstrumentedService>();
 
-        this.collector = new CollectorService(collectorHost, network);
+        this.orchestrator = new OrchestratorService(orchestratorHost, network);
 
-        this.services.add(collector);
+        this.services.add(orchestrator);
     }
 
     public void addService(String serviceName, GenericContainer<?> service) {
@@ -80,7 +81,7 @@ public class InstrumentedApp {
     }
 
     public TraceData getTrace(String traceId) {
-        String queryUrl = collectorInspectUrl + "/v1/get/" + traceId;
+        String queryUrl = orchestratorInspectUrl + "/v1/get/" + traceId;
         try {
             Response res = Request.get(queryUrl).execute();
             String body = res.returnContent().asString();
@@ -102,8 +103,8 @@ public class InstrumentedApp {
             }
         }
 
-        int collectorPort = collector.getContainer().getMappedPort(5000);
-        collectorInspectUrl = "http://localhost:" + collectorPort;
+        int collectorPort = orchestrator.getContainer().getMappedPort(5000);
+        orchestratorInspectUrl = "http://localhost:" + collectorPort;
     }
 
     public void stop() {

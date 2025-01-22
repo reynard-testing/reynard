@@ -3,13 +3,13 @@ package nl.dflipse.fit.instrument.services;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-public class CollectorService implements InstrumentedService {
+public class OrchestratorService implements InstrumentedService {
     private GenericContainer<?> container;
     private String name;
 
     private static String image = "fit-otel-collector:latest";
 
-    public CollectorService(String name, Network network) {
+    public OrchestratorService(String name, Network network) {
         this.name = name;
 
         this.container = new GenericContainer<>(image)

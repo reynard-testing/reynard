@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy;
+package nl.dflipse.fit;
 
 import nl.dflipse.fit.instrument.InstrumentedApp;
 

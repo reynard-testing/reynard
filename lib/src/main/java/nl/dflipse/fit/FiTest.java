@@ -1,8 +1,9 @@
-package nl.dflipse.fit.strategy;
+package nl.dflipse.fit;
 
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import nl.dflipse.fit.strategy.FIStrategy;
 import nl.dflipse.fit.strategy.strategies.DepthFirstStrategy;
 
 import java.lang.annotation.ElementType;

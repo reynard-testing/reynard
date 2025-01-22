@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy;
+package nl.dflipse.fit;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 
 import nl.dflipse.fit.instrument.InstrumentedApp;
+import nl.dflipse.fit.strategy.FIStrategy;
+import nl.dflipse.fit.strategy.Faultload;
 import nl.dflipse.fit.trace.data.TraceData;
 
 public class FiTestExtension implements TestTemplateInvocationContextProvider, AfterTestExecutionCallback {
@@ -95,12 +97,12 @@ public class FiTestExtension implements TestTemplateInvocationContextProvider, A
         // Access the queue and test result
         // var testMethod = context.getTestMethod().orElseThrow();
         // var annotation = testMethod.getAnnotation(FiTest.class);
-        var displayName = context.getDisplayName();
+        String displayName = context.getDisplayName();
 
-        var testFailed = context.getExecutionException().isPresent();
+        boolean testFailed = context.getExecutionException().isPresent();
 
         ExtensionContext.Namespace testNamespace = ExtensionContext.Namespace.create(context.getUniqueId());
-        var faultload = context.getStore(testNamespace).get("faultload", Faultload.class);
+        Faultload faultload = context.getStore(testNamespace).get("faultload", Faultload.class);
 
         System.out.println(
                 "Test " + displayName + " with result: "

@@ -21,7 +21,7 @@ public class ProxyService implements InstrumentedService {
                 .dependsOn(service)
                 .withEnv("PROXY_HOST", "0.0.0.0:" + port)
                 .withEnv("PROXY_TARGET", "http://" + this.serviceHost + ":" + port)
-                .withEnv("COLLECTOR_HOST", app.collectorHost + ":" + app.collectorPort)
+                .withEnv("COLLECTOR_HOST", app.orchestratorHost + ":" + app.orchestratorPort)
                 .withEnv("SERVICE_NAME", name)
                 .withNetwork(app.network)
                 .withNetworkAliases(name);

@@ -1,7 +1,6 @@
 package nl.dflipse.fit;
 
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.utility.MountableFile;
 
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.strategy.Faultload;
@@ -31,6 +30,7 @@ public class AppTest implements InstrumentedTest {
         // Add services
         String baseImage = "go-micro-service:latest";
 
+        // Instrumented services
         GenericContainer<?> geo = new GenericContainer<>(baseImage)
                 .withCommand("go-micro-services geo");
         app.addInstrumentedService("geo", geo, 8080)
@@ -54,6 +54,7 @@ public class AppTest implements InstrumentedTest {
         app.addInstrumentedService("profile", profile, 8080)
                 .withHttp2();
 
+        // Main client, the frontend service
         GenericContainer<?> frontend = new GenericContainer<>(baseImage)
                 .withCommand("go-micro-services frontend")
                 .withExposedPorts(8080)
@@ -61,17 +62,12 @@ public class AppTest implements InstrumentedTest {
 
         app.addService("frontend", frontend);
 
+        // Collect traces in Jaeger for inspection
         GenericContainer<?> jaeger = new GenericContainer<>("jaegertracing/all-in-one:latest")
                 .withExposedPorts(16686);
-        app.addService("jaeger", jaeger);
 
-        MountableFile otelCollectorConfig = MountableFile.forHostPath("../../otel-collector-config.yaml");
-        GenericContainer<?> otelCollector = new GenericContainer<>(
-                "otel/opentelemetry-collector-contrib:latest")
-                .withCopyFileToContainer(otelCollectorConfig, "/otel-collector-config.yaml")
-                .withCommand("--config=/otel-collector-config.yaml")
-                .dependsOn(app.orchestrator.getContainer(), jaeger);
-        app.addService("otel-collector", otelCollector);
+        app.collector.getContainer().dependsOn(jaeger);
+        app.addService("jaeger", jaeger);
 
         // Start services
         app.start();

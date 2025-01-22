@@ -11,12 +11,13 @@ import (
 	"os"
 	"strings"
 
+	"dflipse.nl/fit-proxy/faultload"
 	"dflipse.nl/fit-proxy/tracing"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
-var queryHost string = os.Getenv("COLLECTOR_HOST")
+var queryHost string = os.Getenv("ORCHESTRATOR_HOST")
 
 func reportSpanUID(traceparent tracing.TraceParentData, spanUID string) {
 	queryUrl := fmt.Sprintf("http://%s/v1/link", queryHost)
@@ -30,25 +31,6 @@ func reportSpanUID(traceparent tracing.TraceParentData, spanUID string) {
 	}
 
 	defer resp.Body.Close()
-}
-
-func parseFaultload(tracestate tracing.TraceStateData) []string {
-	faultload := tracestate.GetWithDefault("faultload", "")
-	if faultload == "" {
-		return nil
-	}
-
-	var decodedFaults []string
-	for _, fault := range strings.Split(faultload, ":") {
-		decodedFault, err := url.QueryUnescape(fault)
-		if err != nil {
-			log.Printf("Failed to decode fault: %v\n", err)
-			continue
-		}
-		decodedFaults = append(decodedFaults, decodedFault)
-	}
-
-	return decodedFaults
 }
 
 // Proxy handler that inspects and forwards HTTP requests and responses
@@ -75,48 +57,51 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Inspect request before forwarding
 
-		// Get "traceparent" and "tracestate" headers
+		// Get and parse the "traceparent" headers
 		traceparent := r.Header.Get("traceparent")
 		parent := tracing.ParseTraceParent(traceparent)
 
+		// If no traceparent is found, forward the request without inspection
 		if parent == nil {
 			proxy.ServeHTTP(w, r)
 			return
 		}
 
-		fmt.Printf("Received traced request: %s %s\n", r.Method, r.URL)
-
+		// Get and parse the "tracestate" header
 		tracestate := r.Header.Get("tracestate")
 		state := tracing.ParseTraceState(tracestate)
 
-		fmt.Printf("Traceparent: %+v\n", parent)
-		fmt.Printf("Tracestate: %+v\n", state)
-
-		// only forward the request if the "fit" flag is set
+		// only forward the request if the "fit" flag is set in the tracestate
 		shouldInspect := state.GetWithDefault("fit", "0") == "1"
 		if !shouldInspect {
 			proxy.ServeHTTP(w, r)
 			return
 		}
 
+		fmt.Printf("Received injectable request: %s %s\n", r.Method, r.URL)
+		fmt.Printf("Traceparent: %+v\n", parent)
+		fmt.Printf("Tracestate: %+v\n", state)
+
 		// determine the span ID for the current request
 		// and report the link to the parent span
 		localSpanId := tracing.SpanIdFromRequest(r)
-		log.Printf("local UID: %s\n", localSpanId)
+		log.Printf("Local UID: %s\n", localSpanId)
 		spanUID := localSpanId.String()
 
 		reportSpanUID(*parent, spanUID)
 
-		faultloadUids := parseFaultload(*state)
-		log.Printf("Fault injection: %s\n", faultloadUids)
+		faults := faultload.Parse(*state)
+		log.Printf("Fault injection: %s\n", faults)
 
-		for _, faultUid := range faultloadUids {
-			log.Printf("Checking fault UID: %s=%s?\n", faultUid, spanUID)
+		for _, fault := range faults {
+			if fault.SpanUID == spanUID {
+				log.Printf("Performing fault: %s\n", fault)
+				performed := fault.Perform(w, r)
 
-			if faultUid == spanUID {
-				log.Printf("Injecting fault: HTTP error\n")
-				http.Error(w, "Injected fault: HTTP error", http.StatusInternalServerError)
-				return
+				if performed {
+					// TODO: report to orchestrator
+					return
+				}
 			}
 		}
 
@@ -132,10 +117,14 @@ func main() {
 
 	useHttp2 := os.Getenv("USE_HTTP2") == "true"
 
+	log.Printf("Reverse proxy for: %s\n", proxyTarget)
+	log.Printf("Reachable at: %s\n", proxyHost)
+
 	// Start an HTTP/2 server with a custom reverse proxy handler
 	var httpServer *http.Server
 
 	if useHttp2 {
+		log.Printf("Using HTTP/2\n")
 		httpServer = &http.Server{
 			Addr:    proxyHost,
 			Handler: h2c.NewHandler(proxyHandler(proxyTarget, useHttp2), &http2.Server{}),
@@ -148,7 +137,6 @@ func main() {
 	}
 
 	// Start the reverse proxy server
-	log.Printf("Starting reverse proxy on %s\n", proxyHost)
 	err := httpServer.ListenAndServe()
 	// err := httpServer.ListenAndServeTLS("cert.pem", "key.pem") // Requires SSL certificates for HTTP/2
 

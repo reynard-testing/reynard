@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.dflipse.fit.instrument.services.OrchestratorService;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
+import nl.dflipse.fit.instrument.services.OTELCollectorService;
 import nl.dflipse.fit.instrument.services.PlainService;
 import nl.dflipse.fit.instrument.services.ProxyService;
 import nl.dflipse.fit.trace.data.TraceData;
@@ -20,8 +21,11 @@ import nl.dflipse.fit.trace.data.TraceData;
 public class InstrumentedApp {
     public Network network;
     private List<InstrumentedService> services;
-    
-    public String orchestratorHost = "collector";
+
+    public String collectorHost = "otel-collector";
+    public OTELCollectorService collector;
+
+    public String orchestratorHost = "orchestrator";
     public int orchestratorPort = 5000;
     public OrchestratorService orchestrator;
     public String orchestratorInspectUrl;
@@ -31,8 +35,11 @@ public class InstrumentedApp {
         this.services = new ArrayList<InstrumentedService>();
 
         this.orchestrator = new OrchestratorService(orchestratorHost, network);
-
         this.services.add(orchestrator);
+
+        this.collector = new OTELCollectorService(collectorHost, network);
+        this.collector.getContainer().dependsOn(this.orchestrator.getContainer());
+        this.services.add(collector);
     }
 
     public void addService(String serviceName, GenericContainer<?> service) {
@@ -85,8 +92,8 @@ public class InstrumentedApp {
         try {
             Response res = Request.get(queryUrl).execute();
             String body = res.returnContent().asString();
-            TraceData collectorResponse = new ObjectMapper().readValue(body, TraceData.class);
-            return collectorResponse;
+            TraceData orchestratorResponse = new ObjectMapper().readValue(body, TraceData.class);
+            return orchestratorResponse;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -103,8 +110,8 @@ public class InstrumentedApp {
             }
         }
 
-        int collectorPort = orchestrator.getContainer().getMappedPort(5000);
-        orchestratorInspectUrl = "http://localhost:" + collectorPort;
+        int orchestratorPort = orchestrator.getContainer().getMappedPort(5000);
+        orchestratorInspectUrl = "http://localhost:" + orchestratorPort;
     }
 
     public void stop() {

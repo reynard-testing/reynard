@@ -5,8 +5,6 @@ import org.testcontainers.utility.MountableFile;
 
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.strategy.Faultload;
-import nl.dflipse.fit.strategy.FiTest;
-import nl.dflipse.fit.strategy.InstrumentedTest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -72,7 +70,7 @@ public class AppTest implements InstrumentedTest {
                 "otel/opentelemetry-collector-contrib:latest")
                 .withCopyFileToContainer(otelCollectorConfig, "/otel-collector-config.yaml")
                 .withCommand("--config=/otel-collector-config.yaml")
-                .dependsOn(app.collector.getContainer(), jaeger);
+                .dependsOn(app.orchestrator.getContainer(), jaeger);
         app.addService("otel-collector", otelCollector);
 
         // Start services
@@ -99,7 +97,7 @@ public class AppTest implements InstrumentedTest {
                 .addHeader("tracestate", faultload.getTraceState().toString())
                 .execute();
 
-        String inspectUrl = app.collectorInspectUrl + "/v1/get/" + faultload.getTraceId();
+        String inspectUrl = app.orchestratorInspectUrl + "/v1/get/" + faultload.getTraceId();
         int expectedResponse = faultload.size() > 0 ? 500 : 200;
         int actualResponse = res.returnResponse().getCode();
         assertEquals(expectedResponse, actualResponse);

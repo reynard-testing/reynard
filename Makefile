@@ -9,4 +9,4 @@ build-proxy:
 build-all: build-orchestrator build-proxy
 
 run-test:
-	cd ./test/example-fit; mvn test
+	cd ./lib; mvn test

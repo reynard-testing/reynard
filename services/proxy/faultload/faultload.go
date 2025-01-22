@@ -54,7 +54,7 @@ func parseFaultload(data string) []Fault {
 	return faults
 }
 
-func (f Fault) httpError(w http.ResponseWriter, r *http.Request) bool {
+func (f Fault) performHttpError(w http.ResponseWriter, r *http.Request) bool {
 	statusCode := f.Args[0]
 	intStatusCode, err := strconv.Atoi(statusCode)
 
@@ -70,7 +70,7 @@ func (f Fault) httpError(w http.ResponseWriter, r *http.Request) bool {
 
 func (f Fault) Perform(w http.ResponseWriter, r *http.Request) bool {
 	if f.FaultType == "HTTP_ERROR" {
-		return f.httpError(w, r)
+		return f.performHttpError(w, r)
 	} else {
 		log.Printf("Unknown fault type: %s\n", f.FaultType)
 	}

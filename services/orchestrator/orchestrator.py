@@ -1,17 +1,19 @@
 import asyncio
 import base64
+import os
 from dataclasses import dataclass, field
 
+import requests
 import urllib
 
 # import trace
 from flask import Flask, request
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
 from google.protobuf.json_format import MessageToDict
-import time
 
 app = Flask(__name__)
 
+proxy_list: list[str] = os.getenv('PROXY_LIST', '').split(',')
 
 @dataclass
 class Span:
@@ -220,6 +222,26 @@ async def report_span_id():
 
     return "OK", 200
 
+async def register_faultload_at_proxy(proxy: str, faultload):
+    url = f"http://{proxy}/v1/register_faultload"
+    requests.post(url, json={"faultload": faultload})
+
+
+@app.route("/v1/register_faultload", methods=['POST'])
+async def register_faultload():
+    data = request.get_json()
+    faultload = data.get('faultload')
+
+    tasks = []
+    for proxy in proxy_list:
+        if proxy:
+            tasks.append(register_faultload_at_proxy(proxy, faultload))
+
+    await asyncio.gather(*tasks)
+    return "OK", 200
+
 if __name__ == '__main__':
+    print("Starting orchestrator")
+    print("Registered proxies: ", proxy_list)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(app.run(host='0.0.0.0', port=5000))

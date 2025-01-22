@@ -9,6 +9,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"dflipse.nl/fit-proxy/faultload"
@@ -110,9 +111,31 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 	})
 }
 
+func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
+	// Handle the /v1/register_faultload endpoint
+	fmt.Fprintf(w, "Faultload registered")
+}
+
+func asHostPort(hostAndPort string) (string, int, error) {
+	host, port, err := net.SplitHostPort(hostAndPort)
+	if err == nil {
+		return "", 0, err
+	}
+
+	intPort, err := strconv.Atoi(port)
+
+	if err != nil {
+		return host, 0, err
+	}
+
+	return host, intPort, nil
+}
+
 func main() {
 	// Set up the proxy host and target
-	proxyHost := os.Getenv("PROXY_HOST")     // Proxy server address
+	proxyHost := os.Getenv("PROXY_HOST") // Proxy server address
+	_, hostPort, err := asHostPort(proxyHost)
+	controlPort := hostPort + 1
 	proxyTarget := os.Getenv("PROXY_TARGET") // Target server address
 
 	useHttp2 := os.Getenv("USE_HTTP2") == "true"
@@ -137,10 +160,22 @@ func main() {
 	}
 
 	// Start the reverse proxy server
-	err := httpServer.ListenAndServe()
-	// err := httpServer.ListenAndServeTLS("cert.pem", "key.pem") // Requires SSL certificates for HTTP/2
+	go func() {
+		err := httpServer.ListenAndServe()
+		// err := httpServer.ListenAndServeTLS("cert.pem", "key.pem") // Requires SSL certificates for HTTP/2
+
+		if err != nil {
+			log.Fatalf("Error starting proxy server: %v\n", err)
+		}
+	}()
+
+	// Start the control server
+	registerFaultloadPort := ":" + strconv.Itoa(controlPort)
+	http.HandleFunc("/v1/register_faultload", registerFaultloadHandler)
+	log.Printf("Listening for control commands on port %s\n", registerFaultloadPort)
+	err = http.ListenAndServe(registerFaultloadPort, nil)
 
 	if err != nil {
-		log.Fatalf("Error starting proxy server: %v\n", err)
+		log.Fatalf("Error starting register faultload server: %v\n", err)
 	}
 }

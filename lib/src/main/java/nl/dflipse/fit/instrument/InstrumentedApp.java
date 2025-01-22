@@ -87,6 +87,19 @@ public class InstrumentedApp {
         return true;
     }
 
+    private List<String> getProxyList() {
+        List<String> proxyList = new ArrayList<>();
+
+        for (InstrumentedService service : this.services) {
+            if (service instanceof ProxyService) {
+                ProxyService proxy = (ProxyService) service;
+                proxyList.add(proxy.getControlHost());
+            }
+        }
+
+        return proxyList;
+    }
+
     public TraceData getTrace(String traceId) {
         String queryUrl = orchestratorInspectUrl + "/v1/get/" + traceId;
         try {
@@ -101,6 +114,9 @@ public class InstrumentedApp {
     }
 
     public void start() {
+        orchestrator.getContainer()
+            .withEnv("PROXY_LIST", String.join(",", getProxyList()));
+
         for (InstrumentedService service : this.services) {
             try {
                 service.start();

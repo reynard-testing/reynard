@@ -88,7 +88,10 @@ public class AppTest {
                 .execute();
 
         String inspectUrl = app.orchestratorInspectUrl + "/v1/get/" + faultload.getTraceId();
-        int expectedResponse = faultload.size() > 0 ? 500 : 200;
+
+        boolean containsError = faultload.getFaultload().stream()
+                .anyMatch(f -> f.faultMode.getType().equals("HTTP_ERROR"));
+        int expectedResponse = containsError ? 500 : 200;
         int actualResponse = res.returnResponse().getCode();
         assertEquals(expectedResponse, actualResponse);
 

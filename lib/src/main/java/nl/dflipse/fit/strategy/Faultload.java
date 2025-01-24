@@ -38,13 +38,10 @@ public class Faultload {
 
     private void initializeTraceState() {
         traceState.set("fit", "1");
+    }
 
-        if (faultload.isEmpty()) {
-            return;
-        }
-
-        String encodedFaultload = FaultloadSerializer.serialize(faultload);
-        traceState.set("faultload", encodedFaultload);
+    public String serializeJson() {
+        return FaultloadSerializer.serializeJson(faultload);
     }
 
     public String getTraceId() {

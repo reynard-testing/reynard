@@ -18,19 +18,20 @@ type Fault struct {
 
 func Parse(tracestate tracing.TraceStateData) []Fault {
 	faultload := tracestate.GetWithDefault("faultload", "")
-	return parseFaultload(faultload)
-}
-
-func parseFaultload(data string) []Fault {
-	decoded, err := url.QueryUnescape(data)
+	decoded, err := url.QueryUnescape(faultload)
 
 	if err != nil {
 		log.Printf("Failed to decode fault: %v\n", err)
 		return nil
 	}
+
+	return parseFaultload(decoded)
+}
+
+func parseFaultload(data string) []Fault {
 	var faultData [][]string
 
-	err = json.Unmarshal([]byte(decoded), &faultData)
+	err := json.Unmarshal([]byte(data), &faultData)
 	if err != nil {
 		log.Printf("Failed to unmarshal fault: %v\n", err)
 		return nil
@@ -52,6 +53,23 @@ func parseFaultload(data string) []Fault {
 	}
 
 	return faults
+}
+
+func ParseRequest(r *http.Request) ([]Fault, string, error) {
+	var requestBody struct {
+		Faultload string `json:"faultload"`
+		TraceId   string `json:"traceId"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+
+	if err != nil {
+		log.Printf("Failed to decode request body: %v\n", err)
+		return nil, "", err
+	}
+
+	faults := parseFaultload(requestBody.Faultload)
+	return faults, requestBody.TraceId, nil
 }
 
 func (f Fault) performHttpError(w http.ResponseWriter, r *http.Request) bool {

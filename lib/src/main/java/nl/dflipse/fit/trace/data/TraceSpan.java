@@ -45,6 +45,9 @@ public class TraceSpan {
     @JsonProperty("error_message")
     public String errorMessage;
 
+    @JsonProperty("fault_injected")
+    public boolean faultInjected;
+
     @JsonSetter("trace_state")
     private void setTraceState(String data) {
         if (data == null) {

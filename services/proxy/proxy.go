@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -9,7 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"strings"
+	"strconv"
 
 	"dflipse.nl/fit-proxy/faultload"
 	"dflipse.nl/fit-proxy/tracing"
@@ -18,12 +20,25 @@ import (
 )
 
 var queryHost string = os.Getenv("ORCHESTRATOR_HOST")
+var registeredFaults map[string][]faultload.Fault = make(map[string][]faultload.Fault)
 
-func reportSpanUID(traceparent tracing.TraceParentData, spanUID string) {
+func reportSpanUID(traceparent tracing.TraceParentData, spanUID string, faultInjected bool) {
 	queryUrl := fmt.Sprintf("http://%s/v1/link", queryHost)
 	encodedSpanUID := url.QueryEscape(spanUID)
-	jsonBody := fmt.Sprintf(`{"span_id": "%s", "span_uid": "%s"}`, traceparent.ParentID, encodedSpanUID)
-	resp, err := http.Post(queryUrl, "application/json", strings.NewReader(jsonBody))
+
+	data := map[string]interface{}{
+		"span_id":        traceparent.ParentID,
+		"span_uid":       encodedSpanUID,
+		"fault_injected": faultInjected,
+	}
+
+	jsonBodyBytes, err := json.Marshal(data)
+	if err != nil {
+		log.Printf("Failed to marshal JSON: %v\n", err)
+		return
+	}
+
+	resp, err := http.Post(queryUrl, "application/json", bytes.NewBuffer(jsonBodyBytes))
 
 	if err != nil {
 		log.Printf("Failed to report span ID: %v\n", err)
@@ -67,6 +82,14 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			return
 		}
 
+		faults, ok := registeredFaults[parent.TraceID]
+		if !ok {
+			// Forward the request to the target server
+			log.Printf("No faults registered for trace ID: %s\n", parent.TraceID)
+			proxy.ServeHTTP(w, r)
+			return
+		}
+
 		// Get and parse the "tracestate" header
 		tracestate := r.Header.Get("tracestate")
 		state := tracing.ParseTraceState(tracestate)
@@ -88,10 +111,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		log.Printf("Local UID: %s\n", localSpanId)
 		spanUID := localSpanId.String()
 
-		reportSpanUID(*parent, spanUID)
-
-		faults := faultload.Parse(*state)
-		log.Printf("Fault injection: %s\n", faults)
+		log.Printf("Fault registered: %s\n", faults)
 
 		for _, fault := range faults {
 			if fault.SpanUID == spanUID {
@@ -100,19 +120,56 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 				if performed {
 					// TODO: report to orchestrator
+					reportSpanUID(*parent, spanUID, true)
 					return
 				}
 			}
 		}
 
+		reportSpanUID(*parent, spanUID, false)
 		// Forward the request to the target server
 		proxy.ServeHTTP(w, r)
 	})
 }
 
+// Handle the /v1/register_faultload endpoint
+func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse the faultload from the request body
+	faults, traceId, err := faultload.ParseRequest(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Failed to parse request body: %v", err)
+		return
+	}
+
+	// Store the faultload for the given trace ID
+	registeredFaults[traceId] = faults
+
+	// Respond with a 200 OK
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "OK")
+}
+
+func asHostPort(hostAndPort string) (string, int) {
+	host, port, err := net.SplitHostPort(hostAndPort)
+	if err != nil {
+		return "", 0
+	}
+
+	intPort, err := strconv.Atoi(port)
+
+	if err != nil {
+		return host, 0
+	}
+
+	return host, intPort
+}
+
 func main() {
 	// Set up the proxy host and target
-	proxyHost := os.Getenv("PROXY_HOST")     // Proxy server address
+	proxyHost := os.Getenv("PROXY_HOST") // Proxy server address
+	_, hostPort := asHostPort(proxyHost)
+	controlPort := hostPort + 1
 	proxyTarget := os.Getenv("PROXY_TARGET") // Target server address
 
 	useHttp2 := os.Getenv("USE_HTTP2") == "true"
@@ -137,10 +194,22 @@ func main() {
 	}
 
 	// Start the reverse proxy server
-	err := httpServer.ListenAndServe()
-	// err := httpServer.ListenAndServeTLS("cert.pem", "key.pem") // Requires SSL certificates for HTTP/2
+	go func() {
+		err := httpServer.ListenAndServe()
+		// err := httpServer.ListenAndServeTLS("cert.pem", "key.pem") // Requires SSL certificates for HTTP/2
+
+		if err != nil {
+			log.Fatalf("Error starting proxy server: %v\n", err)
+		}
+	}()
+
+	// Start the control server
+	registerFaultloadPort := ":" + strconv.Itoa(controlPort)
+	http.HandleFunc("/v1/register_faultload", registerFaultloadHandler)
+	log.Printf("Listening for control commands on port %s\n", registerFaultloadPort)
+	err := http.ListenAndServe(registerFaultloadPort, nil)
 
 	if err != nil {
-		log.Fatalf("Error starting proxy server: %v\n", err)
+		log.Fatalf("Error starting register faultload server: %v\n", err)
 	}
 }

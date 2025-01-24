@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strconv"
+	"time"
 
 	"dflipse.nl/fit-proxy/tracing"
 )
@@ -72,7 +74,7 @@ func ParseRequest(r *http.Request) ([]Fault, string, error) {
 	return faults, requestBody.TraceId, nil
 }
 
-func (f Fault) performHttpError(w http.ResponseWriter, r *http.Request) bool {
+func (f Fault) performHttpError(w http.ResponseWriter) bool {
 	statusCode := f.Args[0]
 	intStatusCode, err := strconv.Atoi(statusCode)
 
@@ -86,9 +88,26 @@ func (f Fault) performHttpError(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-func (f Fault) Perform(w http.ResponseWriter, r *http.Request) bool {
+func (f Fault) performDelay(p *httputil.ReverseProxy, w http.ResponseWriter, r *http.Request) bool {
+	delay := f.Args[0]
+	intDelay, err := strconv.Atoi(delay)
+	if err != nil {
+		log.Printf("Invalid delay: %v\n", delay)
+		return false
+	}
+
+	duration := time.Duration(intDelay) * time.Millisecond
+	time.Sleep(duration)
+
+	p.ServeHTTP(w, r)
+	return true
+}
+
+func (f Fault) Perform(p *httputil.ReverseProxy, w http.ResponseWriter, r *http.Request) bool {
 	if f.FaultType == "HTTP_ERROR" {
-		return f.performHttpError(w, r)
+		return f.performHttpError(w)
+	} else if f.FaultType == "DELAY" {
+		return f.performDelay(p, w, r)
 	} else {
 		log.Printf("Unknown fault type: %s\n", f.FaultType)
 	}

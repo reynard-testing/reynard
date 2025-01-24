@@ -18,9 +18,8 @@ import org.junit.jupiter.api.BeforeAll;
 /**
  * FI test the app
  */
-public class AppTest implements InstrumentedTest {
-
-    static private InstrumentedApp app;
+public class AppTest {
+    public static InstrumentedApp app;
 
     @SuppressWarnings("resource")
     @BeforeAll
@@ -76,11 +75,6 @@ public class AppTest implements InstrumentedTest {
     @AfterAll
     static public void teardownServices() {
         app.stop();
-    }
-
-    @Override
-    public InstrumentedApp getApp() {
-        return app;
     }
 
     @FiTest

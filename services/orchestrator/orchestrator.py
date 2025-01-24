@@ -15,6 +15,7 @@ app = Flask(__name__)
 
 proxy_list: list[str] = os.getenv('PROXY_LIST', '').split(',')
 
+
 @dataclass
 class Span:
     span_id: str
@@ -27,7 +28,9 @@ class Span:
     trace_state: str
     is_error: bool
     error_message: str
+    # Proxy reported data
     span_uid: str = None
+    fault_injected: bool = False
 
 
 @dataclass
@@ -213,31 +216,41 @@ async def report_span_id():
     data = request.get_json()
     span_id = data.get('span_id')
     span_uid = data.get('span_uid')
+    fault_injected = data.get('fault_injected')
 
     decoded_span_uid = urllib.parse.unquote(span_uid)
     span_uid_lookup[span_id] = decoded_span_uid
 
     if span_id in span_lookup:
         span_lookup[span_id].span_uid = decoded_span_uid
+        span_lookup[span_id].fault_injected = fault_injected
 
     return "OK", 200
 
-async def register_faultload_at_proxy(proxy: str, faultload):
+
+async def register_faultload_at_proxy(proxy: str, traceId: str, faultload):
     url = f"http://{proxy}/v1/register_faultload"
-    requests.post(url, json={"faultload": faultload})
+    payload = {
+        "faultload": faultload,
+        "traceId": traceId
+    }
+    response = requests.post(url, json=payload)
+
+    if response.status_code != 200:
+        raise Exception(
+            f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}")
 
 
 @app.route("/v1/register_faultload", methods=['POST'])
 async def register_faultload():
     data = request.get_json()
     faultload = data.get('faultload')
+    traceId = data.get('traceId')
 
-    tasks = []
-    for proxy in proxy_list:
-        if proxy:
-            tasks.append(register_faultload_at_proxy(proxy, faultload))
-
+    tasks = [register_faultload_at_proxy(
+        proxy, traceId, faultload) for proxy in proxy_list]
     await asyncio.gather(*tasks)
+
     return "OK", 200
 
 if __name__ == '__main__':

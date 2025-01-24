@@ -1,5 +1,6 @@
 package nl.dflipse.fit;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -18,9 +19,8 @@ import nl.dflipse.fit.strategy.Faultload;
 import nl.dflipse.fit.trace.data.TraceData;
 
 public class FiTestExtension
-        implements TestTemplateInvocationContextProvider, AfterTestExecutionCallback, BeforeTestExecutionCallback {
+        implements TestTemplateInvocationContextProvider {
     private FIStrategy strategy;
-    private InstrumentedApp app;
 
     @Override
     public boolean supportsTestTemplate(ExtensionContext context) {
@@ -46,25 +46,29 @@ public class FiTestExtension
             throw new RuntimeException("Failed to instantiate strategy", e);
         }
 
-        return Stream
-                .generate(() -> {
-                    Faultload faultload = strategy.next();
-                    TestTemplateInvocationContext invocationContext = createInvocationContext(faultload);
-                    
-                    if (faultload == null || invocationContext == null) {
-                        return invocationContext;
-                    }
+        Class<?> testClass = context.getRequiredTestClass();
+        InstrumentedApp app;
 
-                    // invocationContext.get
-                    var testNamespace = ExtensionContext.Namespace.create(context.getUniqueId(), );
-                    context.getStore(testNamespace).put("faultload", faultload);
-                    
-                    return invocationContext;
-                })
+        try {
+            var appField = testClass.getDeclaredField("app");
+            appField.setAccessible(true); // Make the field accessible
+
+            app = (InstrumentedApp) appField.get(null); // Access the static field
+            if (app == null) {
+                throw new IllegalStateException(
+                        "InstrumentedApp is not initialized. Ensure setupServices() is called.");
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Failed to access InstrumentedApp from test class", e);
+        }
+
+        return Stream
+                .generate(() -> createInvocationContext(strategy, app))
                 .takeWhile(ctx -> ctx != null);
     }
 
-    private TestTemplateInvocationContext createInvocationContext(Faultload faultload) {
+    private TestTemplateInvocationContext createInvocationContext(FIStrategy strategy, InstrumentedApp app) {
+        Faultload faultload = strategy.next();
         if (faultload == null) {
             return null;
         }
@@ -78,7 +82,10 @@ public class FiTestExtension
 
             @Override
             public List<Extension> getAdditionalExtensions() {
-                return List.of(new QueueParameterResolver(faultload));
+                return List.of(
+                        new QueueParameterResolver(faultload),
+                        new BeforeTestExtension(faultload, app),
+                        new AfterTestExtension(faultload, strategy, app));
             }
         };
     }
@@ -102,42 +109,58 @@ public class FiTestExtension
         }
     }
 
-    @Override
-    public void beforeTestExecution(ExtensionContext context) {
-        TestTemplateInvocationContext invocationContext = context.getStore(ExtensionContext.Namespace.GLOBAL)
-            .get("invocationContext", TestTemplateInvocationContext.class);
-        ExtensionContext.Namespace testNamespace = ExtensionContext.Namespace.create(context.getUniqueId());
-        Faultload faultload = context.getStore(testNamespace).get("faultload", Faultload.class);
+    // Before each test, register the faultload with the proxies
+    private static class BeforeTestExtension implements BeforeTestExecutionCallback {
+        private final Faultload faultload;
+        private final InstrumentedApp app;
 
-        // ensure the faultload is registered to the proxies
-        app.registerFaultload(faultload);
-    }
-
-    @Override
-    public void afterTestExecution(ExtensionContext context) {
-        // Access the queue and test result
-        // var testMethod = context.getTestMethod().orElseThrow();
-        // var annotation = testMethod.getAnnotation(FiTest.class);
-        String displayName = context.getDisplayName();
-
-        boolean testFailed = context.getExecutionException().isPresent();
-
-        ExtensionContext.Namespace testNamespace = ExtensionContext.Namespace.create(context.getUniqueId());
-        Faultload faultload = context.getStore(testNamespace).get("faultload", Faultload.class);
-
-        System.out.println(
-                "Test " + displayName + " with result: "
-                        + (testFailed ? "FAIL" : "PASS"));
-
-        // Get the test instance and check if it implements InstrumentedTest
-        Object testInstance = context.getRequiredTestInstance();
-        if (testInstance instanceof InstrumentedTest) {
-            app = ((InstrumentedTest) testInstance).getApp();
-        } else {
-            throw new RuntimeException("Test does not implement InstrumentedTest");
+        BeforeTestExtension(Faultload faultload, InstrumentedApp app) {
+            this.faultload = faultload;
+            this.app = app;
         }
 
-        TraceData trace = app.getTrace(faultload.getTraceId());
-        strategy.handleResult(faultload, trace, !testFailed);
+        @Override
+        public void beforeTestExecution(ExtensionContext context) {
+            if (faultload == null) {
+                return;
+            }
+
+            app.registerFaultload(faultload);
+        }
+    }
+
+    // After each test, handle the result and update the strategy
+    private static class AfterTestExtension implements AfterTestExecutionCallback {
+        private final Faultload faultload;
+        private final FIStrategy strategy;
+        private final InstrumentedApp app;
+
+        AfterTestExtension(Faultload faultload, FIStrategy strategy, InstrumentedApp app) {
+            this.faultload = faultload;
+            this.strategy = strategy;
+            this.app = app;
+        }
+
+        @Override
+        public void afterTestExecution(ExtensionContext context) {
+
+            // Access the queue and test result
+            // var testMethod = context.getTestMethod().orElseThrow();
+            // var annotation = testMethod.getAnnotation(FiTest.class);
+
+            String displayName = context.getDisplayName();
+            boolean testFailed = context.getExecutionException().isPresent();
+
+            System.out.println(
+                    "Test " + displayName + " with result: "
+                            + (testFailed ? "FAIL" : "PASS"));
+
+            try {
+                TraceData trace = app.getTrace(faultload.getTraceId());
+                strategy.handleResult(faultload, trace, !testFailed);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

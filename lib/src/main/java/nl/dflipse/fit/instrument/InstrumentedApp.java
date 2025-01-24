@@ -102,17 +102,12 @@ public class InstrumentedApp {
         return proxyList;
     }
 
-    public TraceData getTrace(String traceId) {
+    public TraceData getTrace(String traceId) throws IOException {
         String queryUrl = orchestratorInspectUrl + "/v1/get/" + traceId;
-        try {
-            Response res = Request.get(queryUrl).execute();
-            String body = res.returnContent().asString();
-            TraceData orchestratorResponse = new ObjectMapper().readValue(body, TraceData.class);
-            return orchestratorResponse;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+        Response res = Request.get(queryUrl).execute();
+        String body = res.returnContent().asString();
+        TraceData orchestratorResponse = new ObjectMapper().readValue(body, TraceData.class);
+        return orchestratorResponse;
     }
 
     public void registerFaultload(Faultload faultload) {
@@ -120,13 +115,14 @@ public class InstrumentedApp {
         ObjectMapper mapper = new ObjectMapper();
         var obj = mapper.createObjectNode();
         obj.put("faultload", faultload.serializeJson());
+        obj.put("traceId", faultload.getTraceId());
 
         try {
             String jsonBody = obj.toString();
 
             Response res = Request.post(queryUrl)
-                      .bodyString(jsonBody, ContentType.APPLICATION_JSON)
-                      .execute();
+                    .bodyString(jsonBody, ContentType.APPLICATION_JSON)
+                    .execute();
             res.returnContent().asString(); // Ensure the request is executed
         } catch (IOException e) {
             e.printStackTrace();
@@ -135,15 +131,10 @@ public class InstrumentedApp {
 
     public void start() {
         orchestrator.getContainer()
-            .withEnv("PROXY_LIST", String.join(",", getProxyList()));
+                .withEnv("PROXY_LIST", String.join(",", getProxyList()));
 
         for (InstrumentedService service : this.services) {
-            try {
-                service.start();
-            } catch (Exception e) {
-                System.err.println("Failed to start container: " + service.getName());
-                e.printStackTrace();
-            }
+            service.start();
         }
 
         int orchestratorPort = orchestrator.getContainer().getMappedPort(5000);

@@ -28,20 +28,27 @@ class Span:
     trace_state: str
     is_error: bool
     error_message: str
+
+
+@dataclass
+class ReportedSpan:
     # Proxy reported data
-    span_uid: str = None
-    fault_injected: bool = False
+    span_id: str
+    span_uid: str
+    fault_injected: bool
 
 
 @dataclass
 class TraceNode:
     span: Span
+    report: ReportedSpan
     children: list['TraceNode'] = field(default_factory=list)
 
 
 # Local in-memory storage
 span_lookup: dict[str, Span] = {}
-span_uid_lookup: dict[str, str] = {}
+span_report_lookup: dict[str, ReportedSpan] = {}
+
 collected_spans: list[Span] = []
 collected_raw: list = []
 
@@ -118,7 +125,6 @@ def handleScopeSpan(span: dict, service_name: str):
         existing_span.is_error = is_error
         existing_span.error_message = error_message
         existing_span.end_time = end_time
-        existing_span.span_uid = span_uid_lookup.get(span_id, None)
         return
 
     # create NEW span
@@ -133,7 +139,6 @@ def handleScopeSpan(span: dict, service_name: str):
         trace_state=trace_state,
         is_error=is_error,
         error_message=error_message,
-        span_uid=span_uid_lookup.get(span_id, None)
     )
 
     add_span(span)
@@ -168,7 +173,8 @@ def collect():
 
 
 def get_trace_tree(spans: list[Span]):
-    tree_nodes = [TraceNode(span) for span in spans]
+    tree_nodes = [TraceNode(span, span_report_lookup.get(
+        span.span_id, None)) for span in spans]
     span_lookup = {node.span.span_id: node for node in tree_nodes}
 
     # build tree
@@ -218,13 +224,15 @@ async def report_span_id():
     span_uid = data.get('span_uid')
     fault_injected = data.get('fault_injected')
 
-    decoded_span_uid = urllib.parse.unquote(span_uid)
-    span_uid_lookup[span_id] = decoded_span_uid
+    span_report = ReportedSpan(
+        span_id=span_id,
+        span_uid=span_uid,
+        fault_injected=fault_injected
+    )
 
-    if span_id in span_lookup:
-        span_lookup[span_id].span_uid = decoded_span_uid
-        span_lookup[span_id].fault_injected = fault_injected
+    print("Found reported span", span_report, flush=True)
 
+    span_report_lookup[span_id] = span_report
     return "OK", 200
 
 

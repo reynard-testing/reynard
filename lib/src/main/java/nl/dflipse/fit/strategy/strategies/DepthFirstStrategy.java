@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import nl.dflipse.fit.strategy.FIStrategy;
 import nl.dflipse.fit.strategy.Fault;
@@ -54,6 +56,8 @@ public class DepthFirstStrategy implements FIStrategy {
         boolean wasFirst = first;
         first = false;
 
+        // based on the analysis of the faultless trace
+        // we can determine the potential faultpoints
         if (wasFirst) {
             var potentialFaults = TraceTraversal.depthFirstFaultpoints(trace);
             var powerSet = Combinatorics.generatePowerSet(potentialFaults);
@@ -73,6 +77,36 @@ public class DepthFirstStrategy implements FIStrategy {
             }
 
             return;
+        }
+
+        // assert that the faults were injected
+        Set<String> injectedFaults = faultload.getFaultload().stream()
+                .map(f -> f.spanId)
+                .collect(Collectors.toSet());
+        int originalSize = faultload.size();
+
+        if (originalSize == 0) {
+            return;
+        }
+
+        TraceTraversal.traverseTrace(trace, span -> {
+            if (span.report == null) {
+                return;
+            }
+
+            if (injectedFaults.contains(span.report.spanUid) && span.report.faultInjected) {
+                injectedFaults.remove(span.report.spanUid);
+            }
+        });
+
+        if (injectedFaults.size() == originalSize) {
+            System.out.println("No faults were injected!");
+            System.out.println("There is a high likelyhood of the fault injection not working correctly!");
+        }
+
+        if (!injectedFaults.isEmpty()) {
+            System.out.println("Not all faults were injected, missing:" + injectedFaults);
+            System.out.println("This can be due to redundant faults or a bug in the fault injection!");
         }
     }
 }

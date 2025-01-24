@@ -21,9 +21,6 @@ public class TraceSpan {
     @JsonProperty("parent_span_id")
     public String parentSpanId;
 
-    @JsonProperty("span_uid")
-    public String spanUid;
-
     @JsonProperty("span_id")
     public String spanId;
 
@@ -44,9 +41,6 @@ public class TraceSpan {
 
     @JsonProperty("error_message")
     public String errorMessage;
-
-    @JsonProperty("fault_injected")
-    public boolean faultInjected;
 
     @JsonSetter("trace_state")
     private void setTraceState(String data) {

@@ -8,6 +8,7 @@ public class ProxyService implements InstrumentedService {
     public GenericContainer<?> service;
     public GenericContainer<?> proxy;
     private String name;
+    private int port;
     private String serviceHost;
 
     private static String image = "fit-proxy:latest";
@@ -15,13 +16,14 @@ public class ProxyService implements InstrumentedService {
     public ProxyService(String name, GenericContainer<?> service, int port, InstrumentedApp app) {
         this.name = name;
         this.service = service;
+        this.port = port;
 
         this.serviceHost = name + "-instrumented";
         this.proxy = new GenericContainer<>(image)
                 .dependsOn(service)
                 .withEnv("PROXY_HOST", "0.0.0.0:" + port)
                 .withEnv("PROXY_TARGET", "http://" + this.serviceHost + ":" + port)
-                .withEnv("COLLECTOR_HOST", app.orchestratorHost + ":" + app.orchestratorPort)
+                .withEnv("ORCHESTRATOR_HOST", app.orchestratorHost + ":" + app.orchestratorPort)
                 .withEnv("SERVICE_NAME", name)
                 .withNetwork(app.network)
                 .withNetworkAliases(name);
@@ -45,6 +47,11 @@ public class ProxyService implements InstrumentedService {
 
     public String getName() {
         return name;
+    }
+
+    public String getControlHost() {
+        // The control port is the service port + 1
+        return this.name + ":" + (this.port + 1);
     }
 
     public void start() {

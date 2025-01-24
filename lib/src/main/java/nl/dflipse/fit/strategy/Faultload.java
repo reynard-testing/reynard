@@ -1,7 +1,5 @@
 package nl.dflipse.fit.strategy;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,12 +7,12 @@ import nl.dflipse.fit.trace.TraceParent;
 import nl.dflipse.fit.trace.TraceState;
 
 public class Faultload {
-    private final List<String> faultload;
+    private final List<Fault> faultload;
 
     private TraceParent traceParent = new TraceParent();
     private TraceState traceState = new TraceState();
 
-    public Faultload(List<String> faultload) {
+    public Faultload(List<Fault> faultload) {
         this.faultload = faultload;
         initializeTraceState();
     }
@@ -24,28 +22,26 @@ public class Faultload {
         initializeTraceState();
     }
 
-    private String encodedFaultload() {
-        List<String> encodedFaults = new ArrayList<>();
-        for (String fault : faultload) {
-            String encodedFault = URLEncoder.encode(fault, StandardCharsets.UTF_8);
-            encodedFaults.add(encodedFault);
-        }
-        String combined = String.join(":", encodedFaults);
-        return combined;
+    public List<Fault> getFaultload() {
+        return faultload;
     }
 
     public String readableString() {
-        return String.join(", ", faultload);
+        List<String> readableFaults = new ArrayList<>();
+
+        for (Fault fault : faultload) {
+            readableFaults.add(fault.spanId + "(" + fault.faultMode.getType() + " " + fault.faultMode.getArgs() + ")");
+        }
+
+        return String.join(", ", readableFaults);
     }
 
     private void initializeTraceState() {
         traceState.set("fit", "1");
+    }
 
-        if (faultload.isEmpty()) {
-            return;
-        }
-
-        traceState.set("faultload", encodedFaultload());
+    public String serializeJson() {
+        return FaultloadSerializer.serializeJson(faultload);
     }
 
     public String getTraceId() {
@@ -58,10 +54,6 @@ public class Faultload {
 
     public TraceState getTraceState() {
         return traceState;
-    }
-
-    public List<String> getFaultload() {
-        return faultload;
     }
 
     public int size() {

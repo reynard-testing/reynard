@@ -7,13 +7,13 @@ public class OrchestratorService implements InstrumentedService {
     private GenericContainer<?> container;
     private String name;
 
-    private static String image = "fit-otel-collector:latest";
+    private static String image = "fit-otel-orchestrator:latest";
 
     public OrchestratorService(String name, Network network) {
         this.name = name;
 
         this.container = new GenericContainer<>(image)
-                .withCommand("flask --app collector.py run --host=0.0.0.0")
+                .withCommand("flask --app orchestrator.py run --host=0.0.0.0")
                 .withExposedPorts(5000)
                 .withNetwork(network)
                 .withNetworkAliases(name);

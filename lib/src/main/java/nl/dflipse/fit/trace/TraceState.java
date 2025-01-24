@@ -45,6 +45,13 @@ public class TraceState {
             builder.append(entry.getValue());
             builder.append(",");
         }
-        return builder.toString();
+
+        String result = builder.toString();
+
+        if (result.length() > 256) {
+            System.out.println("[WARN] TraceState header too long: " + result.length());
+        }
+
+        return result;
     }
 }

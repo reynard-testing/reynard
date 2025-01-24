@@ -37,7 +37,8 @@ func (s SpanIdentifier) String() string {
 func SpanIdFromRequest(r *http.Request) SpanIdentifier {
 	traceId := getTraceId(r)
 	signature := getCallSignature(r)
-	clientName := getOriginatingService(r)
+	// clientName := getOriginatingService(r)
+	clientName := r.RemoteAddr
 	invocationIndex := getInvocationIndex(clientName, signature, traceId)
 
 	return SpanIdentifier{

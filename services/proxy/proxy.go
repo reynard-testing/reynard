@@ -116,7 +116,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		for _, fault := range faults {
 			if fault.SpanUID == spanUID {
 				log.Printf("Performing fault: %s\n", fault)
-				performed := fault.Perform(w, r)
+				performed := fault.Perform(proxy, w, r)
 
 				if performed {
 					// TODO: report to orchestrator

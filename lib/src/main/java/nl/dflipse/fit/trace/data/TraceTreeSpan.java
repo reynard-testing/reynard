@@ -13,4 +13,7 @@ public class TraceTreeSpan {
 
     @JsonProperty("span")
     public TraceSpan span;
+
+    @JsonProperty("report")
+    public TraceSpanReport report;
 }

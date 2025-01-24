@@ -24,11 +24,10 @@ var registeredFaults map[string][]faultload.Fault = make(map[string][]faultload.
 
 func reportSpanUID(traceparent tracing.TraceParentData, spanUID string, faultInjected bool) {
 	queryUrl := fmt.Sprintf("http://%s/v1/link", queryHost)
-	encodedSpanUID := url.QueryEscape(spanUID)
 
 	data := map[string]interface{}{
 		"span_id":        traceparent.ParentID,
-		"span_uid":       encodedSpanUID,
+		"span_uid":       spanUID,
 		"fault_injected": faultInjected,
 	}
 

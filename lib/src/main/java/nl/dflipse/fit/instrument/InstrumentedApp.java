@@ -12,17 +12,17 @@ import org.testcontainers.containers.Network;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nl.dflipse.fit.instrument.services.OrchestratorService;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
+import nl.dflipse.fit.instrument.services.Jaeger;
 import nl.dflipse.fit.instrument.services.OTELCollectorService;
-import nl.dflipse.fit.instrument.services.PlainService;
-import nl.dflipse.fit.instrument.services.ProxyService;
+import nl.dflipse.fit.instrument.services.OrchestratorService;
 import nl.dflipse.fit.strategy.Faultload;
 import nl.dflipse.fit.trace.data.TraceData;
 
 public class InstrumentedApp {
     public Network network;
-    private List<InstrumentedService> services;
+    private final List<InstrumentedService> proxies = new ArrayList<>();
+    private final List<GenericContainer<?>> services = new ArrayList<>();
 
     public String collectorHost = "otel-collector";
     public OTELCollectorService collector;
@@ -32,56 +32,52 @@ public class InstrumentedApp {
     public OrchestratorService orchestrator;
     public String orchestratorInspectUrl;
 
+    public Jaeger jaeger = null;
+    public String jaegerHost = "jaeger";
+    public int jaegerPort = 16686;
+
+    @SuppressWarnings("resource")
     public InstrumentedApp() {
         this.network = Network.newNetwork();
-        this.services = new ArrayList<InstrumentedService>();
 
-        this.orchestrator = new OrchestratorService(orchestratorHost, network);
+        this.orchestrator = new OrchestratorService()
+                .withNetwork(network)
+                .withNetworkAliases(orchestratorHost)
+                .withExposedPorts(orchestratorPort);
         this.services.add(orchestrator);
 
-        this.collector = new OTELCollectorService(collectorHost, network);
-        this.collector.getContainer().dependsOn(this.orchestrator.getContainer());
+        this.collector = new OTELCollectorService()
+                .withNetwork(network)
+                .withNetworkAliases(collectorHost)
+                .dependsOn(orchestrator);
         this.services.add(collector);
     }
 
-    public void addService(String serviceName, GenericContainer<?> service) {
-        PlainService plainService = new PlainService(serviceName, service, network);
-        this.services.add(plainService);
+    public InstrumentedApp withJaeger() {
+        jaeger = new Jaeger()
+                .withNetwork(network)
+                .withNetworkAliases(jaegerHost)
+                .withExposedPorts(jaegerPort);
+        this.collector.dependsOn(jaeger);
+        this.services.add(jaeger);
+        return this;
     }
 
-    public void addService(InstrumentedService service) {
+    public void addService(String serviceName, GenericContainer<?> service) {
+        service.withNetwork(network)
+                .withNetworkAliases(serviceName);
         this.services.add(service);
     }
 
-    public ProxyService addInstrumentedService(String serviceName, GenericContainer<?> service, int port) {
-        ProxyService proxyService = new ProxyService(serviceName, service, port, this);
-        this.services.add(proxyService);
-        return proxyService;
-    }
-
-    public InstrumentedService getServiceByName(String serviceName) {
-        for (InstrumentedService service : this.services) {
-            if (service.getName().equals(serviceName)) {
-                return service;
-            }
-        }
-
-        return null;
-    }
-
-    public GenericContainer<?> getContainerByName(String serviceName) {
-        for (InstrumentedService service : this.services) {
-            if (service.getName().equals(serviceName)) {
-                return service.getContainer();
-            }
-        }
-
-        return null;
+    public InstrumentedService instrument(String hostname, int port, GenericContainer<?> service) {
+        var newProxy = new InstrumentedService(service, hostname, port, this);
+        this.proxies.add(newProxy);
+        return newProxy;
     }
 
     public boolean allRunning() {
-        for (InstrumentedService service : this.services) {
-            if (!service.isRunning()) {
+        for (var proxy : proxies) {
+            if (!proxy.getService().isRunning()) {
                 return false;
             }
         }
@@ -92,11 +88,8 @@ public class InstrumentedApp {
     private List<String> getProxyList() {
         List<String> proxyList = new ArrayList<>();
 
-        for (InstrumentedService service : this.services) {
-            if (service instanceof ProxyService) {
-                ProxyService proxy = (ProxyService) service;
-                proxyList.add(proxy.getControlHost());
-            }
+        for (var proxy : proxies) {
+            proxyList.add(proxy.getControlHost());
         }
 
         return proxyList;
@@ -130,19 +123,19 @@ public class InstrumentedApp {
     }
 
     public void start() {
-        orchestrator.getContainer()
+        orchestrator
                 .withEnv("PROXY_LIST", String.join(",", getProxyList()));
 
-        for (InstrumentedService service : this.services) {
+        for (var service : services) {
             service.start();
         }
 
-        int orchestratorPort = orchestrator.getContainer().getMappedPort(5000);
+        int orchestratorPort = orchestrator.getMappedPort(5000);
         orchestratorInspectUrl = "http://localhost:" + orchestratorPort;
     }
 
     public void stop() {
-        for (InstrumentedService service : this.services) {
+        for (var service : services) {
             service.stop();
         }
     }

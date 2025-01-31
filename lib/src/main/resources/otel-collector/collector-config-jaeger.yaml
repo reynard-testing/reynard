@@ -5,6 +5,10 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
         compression_algorithms: [""]
+  jaeger:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14250
 
 processors:
   batch:

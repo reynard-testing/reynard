@@ -1,15 +1,15 @@
 package nl.dflipse.fit;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import nl.dflipse.fit.strategy.FIStrategy;
 import nl.dflipse.fit.strategy.strategies.DepthFirstStrategy;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD) // Apply to methods
 @Retention(RetentionPolicy.RUNTIME) // Retain at runtime so JUnit can read it

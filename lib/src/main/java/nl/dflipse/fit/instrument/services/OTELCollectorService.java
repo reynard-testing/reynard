@@ -1,47 +1,24 @@
 package nl.dflipse.fit.instrument.services;
 
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.utility.MountableFile;
 
-public class OTELCollectorService implements InstrumentedService {
-  public GenericContainer<?> container;
-  private String name;
-  private MountableFile configFile;
+public class OTELCollectorService extends GenericContainer<OTELCollectorService> {
+  private static final MountableFile CONFIG_FILE = MountableFile
+      .forClasspathResource("otel-collector/collector-config.yaml");
+  private static final MountableFile CONFIG_FILE_JAEGER = MountableFile
+      .forClasspathResource("otel-collector/collector-config-jaeger.yaml");
+  private static final String IMAGE = "otel/opentelemetry-collector-contrib:latest";
 
-  private static String image = "otel/opentelemetry-collector-contrib:latest";
-
-  public OTELCollectorService(String name, Network network) {
-    this.name = name;
-
-    configFile = MountableFile.forHostPath("../services/otel-collector/collector-config.yaml");
-
-    this.container = new GenericContainer<>(image)
-        .withCopyFileToContainer(configFile, "/otel-collector-config.yaml")
-        .withCommand("--config=/otel-collector-config.yaml")
-        .withNetwork(network)
-        .withNetworkAliases(name);
+  public OTELCollectorService() {
+    super(IMAGE);
+    this
+        .withCopyFileToContainer(CONFIG_FILE, "/otel-collector-config.yaml")
+        .withCommand("--config=/otel-collector-config.yaml");
   }
 
-  public GenericContainer<?> getContainer() {
-    return container;
+  public OTELCollectorService withJaeger() {
+    return this.withCopyFileToContainer(CONFIG_FILE_JAEGER, "/otel-collector-config.yaml");
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public boolean isRunning() {
-    return container.isRunning();
-  }
-
-  public void start() {
-    container.start();
-  }
-
-  public void stop() {
-    if (container != null && container.isRunning()) {
-      container.stop();
-    }
-  }
 }

@@ -58,7 +58,8 @@ public class InstrumentedApp {
                 .withNetwork(network)
                 .withNetworkAliases(jaegerHost)
                 .withExposedPorts(jaegerPort);
-        this.collector.dependsOn(jaeger);
+        this.collector.dependsOn(jaeger)
+                .withJeager();
         this.services.add(jaeger);
         return this;
     }
@@ -72,6 +73,7 @@ public class InstrumentedApp {
     public InstrumentedService instrument(String hostname, int port, GenericContainer<?> service) {
         var newProxy = new InstrumentedService(service, hostname, port, this);
         this.proxies.add(newProxy);
+        orchestrator.withEnv("PROXY_LIST", String.join(",", getProxyList()));
         return newProxy;
     }
 
@@ -123,15 +125,12 @@ public class InstrumentedApp {
     }
 
     public void start() {
-        orchestrator
-                .withEnv("PROXY_LIST", String.join(",", getProxyList()));
-
         for (var service : services) {
             service.start();
         }
 
-        int orchestratorPort = orchestrator.getMappedPort(5000);
-        orchestratorInspectUrl = "http://localhost:" + orchestratorPort;
+        int localOrchestratorPort = orchestrator.getMappedPort(5000);
+        orchestratorInspectUrl = "http://localhost:" + localOrchestratorPort;
     }
 
     public void stop() {

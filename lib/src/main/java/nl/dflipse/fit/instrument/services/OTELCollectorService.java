@@ -8,17 +8,30 @@ public class OTELCollectorService extends GenericContainer<OTELCollectorService>
       .forClasspathResource("otel-collector/collector-config.yaml");
   private static final MountableFile CONFIG_FILE_JAEGER = MountableFile
       .forClasspathResource("otel-collector/collector-config-jaeger.yaml");
+  private static final String CONFIG_PATH = "/otel-collector-config.yaml";
   private static final String IMAGE = "otel/opentelemetry-collector-contrib:latest";
+
+  private boolean useJeager = false;
+  private boolean setup = false;
 
   public OTELCollectorService() {
     super(IMAGE);
-    this
-        .withCopyFileToContainer(CONFIG_FILE, "/otel-collector-config.yaml")
-        .withCommand("--config=/otel-collector-config.yaml");
+    withCommand("--config=/otel-collector-config.yaml");
   }
 
-  public OTELCollectorService withJaeger() {
-    return this.withCopyFileToContainer(CONFIG_FILE_JAEGER, "/otel-collector-config.yaml");
+  public OTELCollectorService withJeager() {
+    useJeager = true;
+    return this;
+  }
+
+  @Override
+  public void start() {
+    if (!setup) {
+      withCopyFileToContainer(useJeager ? CONFIG_FILE_JAEGER : CONFIG_FILE, CONFIG_PATH);
+      setup = true;
+    }
+
+    super.start();
   }
 
 }

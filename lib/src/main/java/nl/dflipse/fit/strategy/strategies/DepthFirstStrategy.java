@@ -1,7 +1,6 @@
 package nl.dflipse.fit.strategy.strategies;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -67,6 +66,7 @@ public class DepthFirstStrategy implements FIStrategy {
 
             for (var faultIds : powerSet) {
                 if (faultIds.isEmpty()) {
+                    // powerset contains the empty set, ignore that one (we already covered it)
                     continue;
                 }
 
@@ -75,6 +75,8 @@ public class DepthFirstStrategy implements FIStrategy {
                     queue.add(newFaultload);
                 }
             }
+
+            System.out.println("[DFS] Planning on testing " + queue.size() + " combinations!");
 
             return;
         }

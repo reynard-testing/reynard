@@ -184,9 +184,16 @@ def get_trace_tree(spans: list[Span]):
             continue
         parent.children.append(node)
 
-    return [
+    root_spans = [
         node for node in tree_nodes if span_lookup.get(node.span.parent_span_id, None) is None
     ]
+
+    if len(root_spans) <= 1:
+        return root_spans
+
+    # > 1 roots
+    root_spans = [x for x in root_spans if len(x.children) > 0]
+    return root_spans
 
 
 @app.route('/v1/all', methods=['GET'])

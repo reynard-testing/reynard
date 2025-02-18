@@ -1,10 +1,9 @@
 package nl.dflipse.fit;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterAll;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 
 import nl.dflipse.fit.instrument.InstrumentedApp;

@@ -14,17 +14,21 @@ public class Combinatorics {
 
         List<T> list = new ArrayList<>(originalSet);
         T head = list.get(0);
+
         List<T> rest = list.subList(1, list.size());
 
+        // P(x :: S) = S ∪ { x ∪ Ps | Ps ∈ S }
         for (List<T> set : generatePowerSet(rest)) {
+            // Add the set itself
+            powerSet.add(set);
+
+            // add the head to the set, and add that set.
             List<T> newSet = new ArrayList<>();
             newSet.add(head);
             newSet.addAll(set);
             powerSet.add(newSet);
-            powerSet.add(set);
         }
 
-        powerSet.sort((a, b) -> Integer.compare(a.size(), b.size()));
         return powerSet;
     }
 }

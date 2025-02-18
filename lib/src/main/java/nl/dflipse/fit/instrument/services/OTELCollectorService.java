@@ -1,47 +1,37 @@
 package nl.dflipse.fit.instrument.services;
 
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.utility.MountableFile;
 
-public class OTELCollectorService implements InstrumentedService {
-  public GenericContainer<?> container;
-  private String name;
-  private MountableFile configFile;
+public class OTELCollectorService extends GenericContainer<OTELCollectorService> {
+  private static final MountableFile CONFIG_FILE = MountableFile
+      .forClasspathResource("otel-collector/collector-config.yaml");
+  private static final MountableFile CONFIG_FILE_JAEGER = MountableFile
+      .forClasspathResource("otel-collector/collector-config-jaeger.yaml");
+  private static final String CONFIG_PATH = "/otel-collector-config.yaml";
+  private static final String IMAGE = "otel/opentelemetry-collector-contrib:latest";
 
-  private static String image = "otel/opentelemetry-collector-contrib:latest";
+  private boolean useJeager = false;
+  private boolean setup = false;
 
-  public OTELCollectorService(String name, Network network) {
-    this.name = name;
-
-    configFile = MountableFile.forHostPath("../services/otel-collector/collector-config.yaml");
-
-    this.container = new GenericContainer<>(image)
-        .withCopyFileToContainer(configFile, "/otel-collector-config.yaml")
-        .withCommand("--config=/otel-collector-config.yaml")
-        .withNetwork(network)
-        .withNetworkAliases(name);
+  public OTELCollectorService() {
+    super(IMAGE);
+    withCommand("--config=/otel-collector-config.yaml");
   }
 
-  public GenericContainer<?> getContainer() {
-    return container;
+  public OTELCollectorService withJeager() {
+    useJeager = true;
+    return this;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public boolean isRunning() {
-    return container.isRunning();
-  }
-
+  @Override
   public void start() {
-    container.start();
+    if (!setup) {
+      withCopyFileToContainer(useJeager ? CONFIG_FILE_JAEGER : CONFIG_FILE, CONFIG_PATH);
+      setup = true;
+    }
+
+    super.start();
   }
 
-  public void stop() {
-    if (container != null && container.isRunning()) {
-      container.stop();
-    }
-  }
 }

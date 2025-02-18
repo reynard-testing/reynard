@@ -38,23 +38,10 @@ public class TraceTraversal {
         }
 
         TraceTreeSpan root = trace.trees.get(0);
-        return visitDepthFirst(root, null);
+        return visitDepthFirst(root);
     }
 
-    private static boolean isFaultPoint(TraceTreeSpan parent, TraceTreeSpan child) {
-        boolean isRoot = parent == null;
-        // injecting faults at the root is not useful
-        if (isRoot) {
-            return false;
-        }
-
-        // only inject faults at service boundaries
-        boolean sameName = parent.span.name.equals(child.span.name);
-        boolean differentService = !parent.span.serviceName.equals(child.span.serviceName);
-        return sameName && differentService;
-    }
-
-    private static List<String> visitDepthFirst(TraceTreeSpan spanNode, TraceTreeSpan parent) {
+    private static List<String> visitDepthFirst(TraceTreeSpan spanNode) {
         List<String> faults = new LinkedList<>();
 
         if (spanNode == null) {
@@ -63,14 +50,11 @@ public class TraceTraversal {
 
         if (spanNode.children != null) {
             for (TraceTreeSpan child : spanNode.children) {
-                faults.addAll(visitDepthFirst(child, spanNode));
+                faults.addAll(visitDepthFirst(child));
             }
         }
-
-        boolean isFaultPoint = isFaultPoint(parent, spanNode);
-
-        if (isFaultPoint && parent.report != null) {
-            faults.add(parent.report.spanUid);
+        if (spanNode.report != null) {
+            faults.add(spanNode.report.spanUid);
         }
 
         return faults;

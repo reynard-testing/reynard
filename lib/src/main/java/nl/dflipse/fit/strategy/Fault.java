@@ -4,10 +4,10 @@ import nl.dflipse.fit.strategy.faultmodes.FaultMode;
 
 public class Fault {
   public FaultMode faultMode;
-  public String spanId;
+  public String spanUid;
 
-  public Fault(FaultMode faultMode, String spanId) {
+  public Fault(FaultMode faultMode, String spanUid) {
     this.faultMode = faultMode;
-    this.spanId = spanId;
+    this.spanUid = spanUid;
   }
 }

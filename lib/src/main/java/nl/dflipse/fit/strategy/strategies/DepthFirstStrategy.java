@@ -83,7 +83,7 @@ public class DepthFirstStrategy implements FIStrategy {
 
         // assert that the faults were injected
         Set<String> injectedFaults = faultload.getFaultload().stream()
-                .map(f -> f.spanId)
+                .map(f -> f.spanUid)
                 .collect(Collectors.toSet());
         int originalSize = faultload.size();
 
@@ -104,9 +104,7 @@ public class DepthFirstStrategy implements FIStrategy {
         if (injectedFaults.size() == originalSize) {
             System.out.println("No faults were injected!");
             System.out.println("There is a high likelyhood of the fault injection not working correctly!");
-        }
-
-        if (!injectedFaults.isEmpty()) {
+        } else if (!injectedFaults.isEmpty()) {
             System.out.println("Not all faults were injected, missing:" + injectedFaults);
             System.out.println("This can be due to redundant faults or a bug in the fault injection!");
         }

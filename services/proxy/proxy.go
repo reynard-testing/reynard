@@ -201,8 +201,8 @@ func main() {
 	// Start the control server
 	registerFaultloadPort := ":" + strconv.Itoa(controlPort)
 	http.HandleFunc("/v1/register_faultload", registerFaultloadHandler)
-	log.Printf("Listening for control commands on port %s\n", registerFaultloadPort)
 	err := http.ListenAndServe(registerFaultloadPort, nil)
+	log.Printf("Listening for control commands on port %s\n", registerFaultloadPort)
 
 	if err != nil {
 		log.Fatalf("Error starting register faultload server: %v\n", err)

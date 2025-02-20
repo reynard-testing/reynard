@@ -30,7 +30,7 @@ public class Faultload {
         List<String> readableFaults = new ArrayList<>();
 
         for (Fault fault : faultload) {
-            readableFaults.add(fault.spanId + "(" + fault.faultMode.getType() + " " + fault.faultMode.getArgs() + ")");
+            readableFaults.add(fault.spanUid + "(" + fault.faultMode.getType() + " " + fault.faultMode.getArgs() + ")");
         }
 
         return String.join(", ", readableFaults);

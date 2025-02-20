@@ -217,6 +217,24 @@ def get_spans_by_trace_id(trace_id):
     filtered_spans = [
         span for span in collected_spans if span.trace_id == trace_id]
 
+    # If the clients sends a fictional root span, add it to build the correct tree
+    root_span_id = "0000000000000001"
+    has_client_root_span = any(span.parent_span_id == root_span_id for span in filtered_spans)
+    if has_client_root_span:
+        root_span = Span(
+            span_id=root_span_id,
+            trace_id=trace_id,
+            parent_span_id=None,
+            name="Client Root Span",
+            start_time=0,
+            end_time=0,
+            service_name="Client",
+            trace_state=None,
+            is_error=False,
+            error_message=None,
+        )
+        filtered_spans.append(root_span)
+
     trees = get_trace_tree(filtered_spans)
     return {
         "spans": filtered_spans,

@@ -12,6 +12,7 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
     private final String hostname;
     private final String serviceHostname;
     private final int port;
+    private final int controlPort;
 
     public InstrumentedService(GenericContainer<?> service, String hostname, int port, InstrumentedApp app) {
         super(IMAGE_NAME);
@@ -19,6 +20,7 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
         this.hostname = hostname;
         this.serviceHostname = hostname + "-instrumented";
         this.port = port;
+        this.controlPort = port + 1;
         this.service = service;
 
         this.dependsOn(service)
@@ -41,7 +43,7 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
 
     public String getControlHost() {
         // controller port is original port + 1
-        return hostname + ":" + (port + 1);
+        return hostname + ":" + this.controlPort;
     }
 
     public GenericContainer<?> getService() {

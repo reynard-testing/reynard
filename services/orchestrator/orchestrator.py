@@ -13,7 +13,8 @@ from google.protobuf.json_format import MessageToDict
 
 app = Flask(__name__)
 
-proxy_list: list[str] = os.getenv('PROXY_LIST', '').split(',')
+proxy_list: list[str] = [proxy for proxy in os.getenv(
+    'PROXY_LIST', '').split(',') if proxy]
 
 
 @dataclass
@@ -219,7 +220,8 @@ def get_spans_by_trace_id(trace_id):
 
     # If the clients sends a fictional root span, add it to build the correct tree
     root_span_id = "0000000000000001"
-    has_client_root_span = any(span.parent_span_id == root_span_id for span in filtered_spans)
+    has_client_root_span = any(
+        span.parent_span_id == root_span_id for span in filtered_spans)
     if has_client_root_span:
         root_span = Span(
             span_id=root_span_id,

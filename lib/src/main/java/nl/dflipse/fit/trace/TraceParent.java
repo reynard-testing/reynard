@@ -6,23 +6,32 @@ public class TraceParent {
     public String parentSpanId;
     public String traceFlags;
 
-    public TraceParent(String header) {
+    public static TraceParent fromHeader(String header) {
         String[] parts = header.split("-");
         if (parts.length == 4) {
-            this.version = parts[0];
-            this.traceId = parts[1];
-            this.parentSpanId = parts[2];
-            this.traceFlags = parts[3];
+            return new TraceParent(parts[0], parts[1], parts[2], parts[3]);
         } else {
             throw new IllegalArgumentException("Invalid traceparent header");
         }
     }
 
     public TraceParent() {
-        this.version = "00";
-        this.traceId = genTraceId();
-        this.parentSpanId = initialSpanId();
-        this.traceFlags = "01";
+        this(genTraceId());
+    }
+
+    public TraceParent(String traceId) {
+        this("00", traceId, initialSpanId(), "01");
+    }
+
+    public TraceParent(String traceId, String parentSpanId) {
+        this("00", traceId, parentSpanId, "01");
+    }
+
+    public TraceParent(String version, String traceId, String parentSpanId, String traceFlags) {
+        this.version = version;
+        this.traceId = traceId;
+        this.parentSpanId = parentSpanId;
+        this.traceFlags = traceFlags;
     }
 
     private static String genId(int numberOfBytes) {

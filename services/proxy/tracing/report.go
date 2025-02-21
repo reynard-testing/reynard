@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"dflipse.nl/fit-proxy/faultload"
 )
 
 type ResponseData struct {
@@ -15,15 +17,15 @@ type ResponseData struct {
 }
 
 type RequestReport struct {
-	SpanID        string       `json:"span_id"`
-	SpanUID       string       `json:"span_uid"`
-	FaultInjected bool         `json:"fault_injected"`
-	Response      ResponseData `json:"response"`
+	SpanId        string             `json:"span_id"`
+	FaultUid      faultload.FaultUid `json:"uid"`
+	InjectedFault *faultload.Fault   `json:"injected_fault"`
+	Response      *ResponseData      `json:"response"`
 }
 
 type RequestMetadata struct {
-	SpanID  string
-	SpanUID string
+	SpanId   string
+	FaultUid faultload.FaultUid
 }
 
 var queryHost string = os.Getenv("ORCHESTRATOR_HOST")

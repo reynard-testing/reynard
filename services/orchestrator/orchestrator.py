@@ -4,7 +4,6 @@ import os
 from dataclasses import dataclass, field
 
 import requests
-import urllib
 
 # import trace
 from flask import Flask, request
@@ -36,15 +35,43 @@ class ResponseData:
     # Proxy reported data
     status: int
     body: str
-    
+
+
+@dataclass
+class FaultUid:
+    origin: str
+    destination: str
+    signature: str
+    count: int
+
+
+@dataclass
+class FaultMode:
+    type: str
+    args: list[str]
+
+
+@dataclass
+class Fault:
+    uid: FaultUid
+    mode: FaultMode
+
+
+@dataclass
+class Faultload:
+    # Faultload data
+    faults: list[Fault]
+    trace_id: str
+
 
 @dataclass
 class ReportedSpan:
     # Proxy reported data
     span_id: str
-    span_uid: str
-    fault_injected: bool
+    uid: FaultUid
+    injected_fault: Fault
     response: ResponseData
+
 
 @dataclass
 class TraceNode:
@@ -181,6 +208,8 @@ def collect():
 
 
 def get_trace_tree(spans: list[Span]):
+
+    # convert to nodes & build lookup
     tree_nodes = [TraceNode(span, span_report_lookup.get(
         span.span_id, None)) for span in spans]
     span_lookup = {node.span.span_id: node for node in tree_nodes}
@@ -204,24 +233,7 @@ def get_trace_tree(spans: list[Span]):
     return root_spans
 
 
-@app.route('/v1/all', methods=['GET'])
-def get_spans():
-    trees = get_trace_tree(collected_spans)
-    return {
-        "spans": collected_spans,
-        "trees": trees
-    }, 200
-
-
-@app.route('/v1/raw', methods=['GET'])
-def get_raw_spans():
-    return {
-        "data": collected_raw,
-    }, 200
-
-
-@app.route('/v1/get/<trace_id>', methods=['GET'])
-def get_spans_by_trace_id(trace_id):
+def get_trace_tree_for_trace(trace_id: str):
     filtered_spans = [
         span for span in collected_spans if span.trace_id == trace_id]
 
@@ -243,44 +255,71 @@ def get_spans_by_trace_id(trace_id):
             error_message=None,
         )
         filtered_spans.append(root_span)
+    return filtered_spans, get_trace_tree(filtered_spans)
 
-    trees = get_trace_tree(filtered_spans)
+
+@app.route('/v1/all', methods=['GET'])
+def get_spans():
+    trees = get_trace_tree(collected_spans)
     return {
-        "spans": filtered_spans,
+        "spans": collected_spans,
         "trees": trees
     }, 200
+
+
+@app.route('/v1/raw', methods=['GET'])
+def get_raw_spans():
+    return {
+        "data": collected_raw,
+    }, 200
+
+
+@app.route('/v1/get/<trace_id>', methods=['GET'])
+def get_spans_by_trace_id(trace_id):
+    spans, trees = get_trace_tree_for_trace(trace_id)
+    return {
+        "spans": spans,
+        "trees": trees
+    }, 200
+
+
+@app.route('/v1/get-trees/<trace_id>', methods=['GET'])
+def get_tree_by_trace_id(trace_id):
+    _, trees = get_trace_tree_for_trace(trace_id)
+    return trees, 200
 
 
 @app.route('/v1/link', methods=['POST'])
 async def report_span_id():
     data = request.get_json()
     span_id = data.get('span_id')
-    span_uid = data.get('span_uid')
-    fault_injected = data.get('fault_injected')
+    uid = data.get('uid')
+    injected_fault = data.get('injected_fault')
     response = data.get('response')
+    responseData = ResponseData(
+        status=response.get('status'),
+        body=response.get('body')
+    ) if response else None
 
     span_report = ReportedSpan(
         span_id=span_id,
-        span_uid=span_uid,
-        fault_injected=fault_injected,
-        response=ResponseData(
-            status=response.get('status'),
-            body=response.get('body')
+        uid=FaultUid(
+            origin=uid.get('origin'),
+            signature=uid.get('signature'),
+            count=uid.get('count'),
+            destination=uid.get('destination'),
         ),
+        injected_fault=injected_fault,
+        response=responseData,
     )
-
     print("Found reported span", span_report, flush=True)
 
     span_report_lookup[span_id] = span_report
     return "OK", 200
 
 
-async def register_faultload_at_proxy(proxy: str, traceId: str, faultload):
+async def register_faultload_at_proxy(proxy: str, payload):
     url = f"http://{proxy}/v1/register_faultload"
-    payload = {
-        "faultload": faultload,
-        "traceId": traceId
-    }
     response = requests.post(url, json=payload)
 
     if response.status_code != 200:
@@ -290,12 +329,10 @@ async def register_faultload_at_proxy(proxy: str, traceId: str, faultload):
 
 @app.route("/v1/register_faultload", methods=['POST'])
 async def register_faultload():
-    data = request.get_json()
-    faultload = data.get('faultload')
-    traceId = data.get('traceId')
+    payload = request.get_json()
 
     tasks = [register_faultload_at_proxy(
-        proxy, traceId, faultload) for proxy in proxy_list]
+        proxy, payload) for proxy in proxy_list]
     await asyncio.gather(*tasks)
 
     return "OK", 200

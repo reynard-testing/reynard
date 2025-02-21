@@ -103,37 +103,38 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		// determine the span ID for the current request
 		// and report the link to the parent span
-		localSpanId := tracing.SpanIdFromRequest(r)
-		log.Printf("Local UID: %s\n", localSpanId)
-		spanUID := localSpanId.String()
-
-		log.Printf("Fault registered: %s\n", faults)
+		log.Printf("Faults registered for this trace: %s\n", faults)
+		faultUid := tracing.FaultUidFromRequest(r)
+		log.Printf("Determined Fault UID: %s\n", faultUid.String())
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
-			SpanID:  parent.ParentID,
-			SpanUID: spanUID,
+			SpanId:   parent.ParentID,
+			FaultUid: faultUid,
 		}
 
 		capture := &ResponseCapture{ResponseWriter: w, Status: http.StatusOK}
 
 		var proxyState ProxyState = ProxyState{
-			AppliedFault:       nil,
+			InjectedFault:      nil,
 			Proxy:              proxy,
 			ResponseWriter:     capture,
 			Request:            r,
-			FaultInjected:      false,
 			ReponseOverwritten: false,
+			Complete:           false,
 		}
 
+		// Start reporting the span for the request
+		tracing.ReportSpanUID(proxyState.asReport(metadata))
+
 		for _, fault := range faults {
-			if fault.SpanUID == spanUID {
+			if fault.Uid.Matches(faultUid) {
 				Perform(fault, &proxyState)
 				break
 			}
 		}
 
-		if proxyState.AppliedFault != nil {
-			log.Printf("Fault applied: %s\n", proxyState.AppliedFault)
+		if proxyState.InjectedFault != nil {
+			log.Printf("Fault injected: %s\n", proxyState.InjectedFault)
 		} else {
 			log.Printf("No faults applied.\n")
 		}
@@ -144,6 +145,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			log.Printf("Forwarding response.\n")
 		}
 
+		proxyState.Complete = true
 		tracing.ReportSpanUID(proxyState.asReport(metadata))
 	})
 }

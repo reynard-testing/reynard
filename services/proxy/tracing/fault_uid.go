@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"dflipse.nl/fit-proxy/faultload"
 )
 
 var traceInvocationCounter map[string]int = make(map[string]int)
 
-// var serviceName string = os.Getenv("SERVICE_NAME")
+var ServiceName string = os.Getenv("SERVICE_NAME")
 var stackName string = os.Getenv("STACK_NAME")
 var pathPrefix string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
 
@@ -23,33 +25,22 @@ func getEnvOrDefault(envVar, defaultValue string) string {
 	return value
 }
 
-type SpanIdentifier struct {
-	traceId         string
-	clientName      string
-	signature       string
-	invocationIndex int
-}
-
-func (s SpanIdentifier) String() string {
-	return fmt.Sprintf("%s>%s|%d", s.clientName, s.signature, s.invocationIndex)
-}
-
-func SpanIdFromRequest(r *http.Request) SpanIdentifier {
+func FaultUidFromRequest(r *http.Request) faultload.FaultUid {
 	traceId := getTraceId(r)
 	signature := getCallSignature(r)
 	clientName := getOriginatingService(r)
 	// clientName := r.RemoteAddr
-	invocationIndex := getInvocationIndex(clientName, signature, traceId)
+	invocationCount := getInvocationCount(clientName, signature, traceId)
 
-	return SpanIdentifier{
-		clientName:      clientName,
-		traceId:         traceId,
-		signature:       signature,
-		invocationIndex: invocationIndex,
+	return faultload.FaultUid{
+		Origin:      clientName,
+		Destination: ServiceName,
+		Signature:   signature,
+		Count:       invocationCount,
 	}
 }
 
-func getInvocationIndex(clientName, signature, traceId string) int {
+func getInvocationCount(clientName, signature, traceId string) int {
 	key := fmt.Sprintf("%s-%s-%s", clientName, signature, traceId)
 	currentIndex, exists := traceInvocationCounter[key]
 

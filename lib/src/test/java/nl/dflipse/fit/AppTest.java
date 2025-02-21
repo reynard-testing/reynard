@@ -12,9 +12,9 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
-import nl.dflipse.fit.strategy.Faultload;
 
 /**
  * FI test the app
@@ -77,10 +77,11 @@ public class AppTest {
                 .execute();
 
         String inspectUrl = app.orchestratorInspectUrl + "/v1/get/" + faultload.getTraceId();
-        String traceUrl =  "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/" + faultload.getTraceId();
+        String traceUrl = "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/"
+                + faultload.getTraceId();
 
-        boolean containsError = faultload.getFaultload().stream()
-                .anyMatch(f -> f.faultMode.getType().equals("HTTP_ERROR"));
+        boolean containsError = faultload.getFaults().stream()
+                .anyMatch(f -> f.getMode().getType().equals("HTTP_ERROR"));
         int expectedResponse = containsError ? 500 : 200;
         int actualResponse = res.returnResponse().getCode();
         assertEquals(expectedResponse, actualResponse);

@@ -22,6 +22,8 @@
     <java.version>17</java.version>
     <maven.compiler.release>17</maven.compiler.release>
     <testcontainers.version>1.20.4</testcontainers.version>
+    <slf4j.version>1.7.32</slf4j.version>
+    <log4j.version>2.24.3</log4j.version>
   </properties>
 
   <build>

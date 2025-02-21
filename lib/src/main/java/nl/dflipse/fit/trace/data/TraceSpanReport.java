@@ -16,4 +16,7 @@ public class TraceSpanReport {
 
     @JsonProperty("fault_injected")
     public boolean faultInjected;
+
+    @JsonProperty("response")
+    public TraceSpanResponse response;
 }

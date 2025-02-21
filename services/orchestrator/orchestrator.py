@@ -32,12 +32,19 @@ class Span:
 
 
 @dataclass
+class ResponseData:
+    # Proxy reported data
+    status: int
+    body: str
+    
+
+@dataclass
 class ReportedSpan:
     # Proxy reported data
     span_id: str
     span_uid: str
     fault_injected: bool
-
+    response: ResponseData
 
 @dataclass
 class TraceNode:
@@ -250,11 +257,16 @@ async def report_span_id():
     span_id = data.get('span_id')
     span_uid = data.get('span_uid')
     fault_injected = data.get('fault_injected')
+    response = data.get('response')
 
     span_report = ReportedSpan(
         span_id=span_id,
         span_uid=span_uid,
-        fault_injected=fault_injected
+        fault_injected=fault_injected,
+        response=ResponseData(
+            status=response.get('status'),
+            body=response.get('body')
+        ),
     )
 
     print("Found reported span", span_report, flush=True)

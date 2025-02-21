@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.strategies.util;
+package nl.dflipse.fit.strategy.util;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -12,9 +12,9 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
-import nl.dflipse.fit.strategy.Faultload;
 
 /**
  * FI test the app

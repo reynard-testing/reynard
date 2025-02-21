@@ -1,6 +1,6 @@
-package nl.dflipse.fit.strategy;
+package nl.dflipse.fit.faultload;
 
-import nl.dflipse.fit.strategy.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 
 public class Fault {
   public FaultMode faultMode;

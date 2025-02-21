@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.faultmodes;
+package nl.dflipse.fit.faultload.faultmodes;
 
 import java.util.List;
 

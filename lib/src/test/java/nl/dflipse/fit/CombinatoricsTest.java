@@ -6,7 +6,7 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
-import nl.dflipse.fit.strategy.strategies.util.Combinatorics;
+import nl.dflipse.fit.strategy.util.Combinatorics;
 
 public class CombinatoricsTest {
     @Test

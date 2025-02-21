@@ -12,11 +12,11 @@ import org.testcontainers.containers.Network;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
 import nl.dflipse.fit.instrument.services.Jaeger;
 import nl.dflipse.fit.instrument.services.OTELCollectorService;
 import nl.dflipse.fit.instrument.services.OrchestratorService;
-import nl.dflipse.fit.strategy.Faultload;
 import nl.dflipse.fit.trace.data.TraceData;
 
 public class InstrumentedApp {

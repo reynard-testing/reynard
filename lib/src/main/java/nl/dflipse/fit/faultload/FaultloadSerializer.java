@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy;
+package nl.dflipse.fit.faultload;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

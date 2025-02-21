@@ -6,8 +6,8 @@ import org.junit.jupiter.api.AfterAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 
+import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.InstrumentedApp;
-import nl.dflipse.fit.strategy.Faultload;
 
 public class DummyTest implements InstrumentedTest {
     public static InstrumentedApp app;

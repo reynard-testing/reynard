@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
 import org.junit.jupiter.api.extension.Extension;
@@ -15,12 +16,18 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.InstrumentedApp;
-import nl.dflipse.fit.strategy.FIStrategy;
-import nl.dflipse.fit.trace.data.TraceData;
+import nl.dflipse.fit.strategy.FaultloadResult;
+import nl.dflipse.fit.strategy.StrategyRunner;
+import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
+import nl.dflipse.fit.strategy.handlers.RedundancyAnalyzer;
+import nl.dflipse.fit.strategy.pruners.FailStopPruner;
+import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
+import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
+import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
-    private FIStrategy strategy;
+    private StrategyRunner strategy;
 
     @Override
     public boolean supportsTestTemplate(ExtensionContext context) {
@@ -40,11 +47,18 @@ public class FiTestExtension
             annotation = context.getRequiredTestClass().getAnnotation(FiTest.class);
         }
 
-        try {
-            strategy = annotation.strategy().getDeclaredConstructor().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to instantiate strategy", e);
-        }
+        var failStop = new FailStopPruner();
+        var parentChild = new ParentChildPruner();
+        var happensBefore = new HappensBeforePruner();
+        strategy = new StrategyRunner()
+                .withGenerator(new DepthFirstGenerator())
+                .withPruner(failStop)
+                .withAnalyzer(failStop)
+                .withPruner(parentChild)
+                .withAnalyzer(parentChild)
+                .withPruner(happensBefore)
+                .withAnalyzer(happensBefore)
+                .withAnalyzer(new RedundancyAnalyzer());
 
         Class<?> testClass = context.getRequiredTestClass();
         InstrumentedApp app;
@@ -64,11 +78,15 @@ public class FiTestExtension
 
         return Stream
                 .generate(() -> createInvocationContext(strategy, app))
-                .takeWhile(ctx -> ctx != null);
+                .takeWhile(ctx -> ctx != null)
+                .onClose(() -> {
+                    afterAll();
+                });
     }
 
-    private TestTemplateInvocationContext createInvocationContext(FIStrategy strategy, InstrumentedApp app) {
-        Faultload faultload = strategy.next();
+    private TestTemplateInvocationContext createInvocationContext(StrategyRunner strategy, InstrumentedApp app) {
+        Faultload faultload = strategy.nextFaultload();
+
         if (faultload == null) {
             return null;
         }
@@ -88,6 +106,13 @@ public class FiTestExtension
                         new AfterTestExtension(faultload, strategy, app));
             }
         };
+    }
+
+    public void afterAll() {
+        // all done?
+        System.out.println("---- STATS ----");
+        System.out.println("Queued : " + strategy.queuedCount);
+        System.out.println("Pruned : " + strategy.prunedCount);
     }
 
     // Parameter resolver to inject the current parameter into the test
@@ -132,10 +157,10 @@ public class FiTestExtension
     // After each test, handle the result and update the strategy
     private static class AfterTestExtension implements AfterTestExecutionCallback {
         private final Faultload faultload;
-        private final FIStrategy strategy;
+        private final StrategyRunner strategy;
         private final InstrumentedApp app;
 
-        AfterTestExtension(Faultload faultload, FIStrategy strategy, InstrumentedApp app) {
+        AfterTestExtension(Faultload faultload, StrategyRunner strategy, InstrumentedApp app) {
             this.faultload = faultload;
             this.strategy = strategy;
             this.app = app;
@@ -156,11 +181,13 @@ public class FiTestExtension
                             + (testFailed ? "FAIL" : "PASS"));
 
             try {
-                TraceData trace = app.getTrace(faultload.getTraceId());
-                strategy.handleResult(faultload, trace, !testFailed);
+                TraceTreeSpan trace = app.getTrace(faultload.getTraceId());
+                FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
+                strategy.handleResult(result);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
+
 }

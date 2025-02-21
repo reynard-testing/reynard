@@ -1,6 +1,7 @@
 package nl.dflipse.fit.instrument.services;
 
 import java.util.List;
+import java.util.Random;
 
 import org.testcontainers.containers.GenericContainer;
 
@@ -14,9 +15,13 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
     private final int port;
     private final int controlPort;
 
+    private static final Random random = new Random();
+    private final int randomId;
+
     public InstrumentedService(GenericContainer<?> service, String hostname, int port, InstrumentedApp app) {
         super(IMAGE_NAME);
 
+        this.randomId = random.nextInt() % 10000;
         this.hostname = hostname;
         this.serviceHostname = hostname + "-instrumented";
         this.port = port;
@@ -30,10 +35,12 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
                 .withEnv("ORCHESTRATOR_HOST", app.orchestratorHost + ":" + app.orchestratorPort)
                 .withEnv("SERVICE_NAME", hostname)
                 .withNetwork(app.network)
+                .withCreateContainerCmdModifier(cmd -> cmd.withName(hostname + "-proxy-" + randomId))
                 .withNetworkAliases(hostname);
 
         service.setNetwork(app.network);
         service.setNetworkAliases(List.of(this.serviceHostname));
+        service.withCreateContainerCmdModifier(cmd -> cmd.withName(hostname + "-original-" + randomId));
     }
 
     public InstrumentedService withHttp2() {

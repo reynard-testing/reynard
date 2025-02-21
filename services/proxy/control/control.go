@@ -8,6 +8,7 @@ import (
 
 	"dflipse.nl/fit-proxy/config"
 	"dflipse.nl/fit-proxy/faultload"
+	"dflipse.nl/fit-proxy/tracing"
 )
 
 var RegisteredFaults map[string][]faultload.Fault = make(map[string][]faultload.Fault)
@@ -26,16 +27,28 @@ func StartControlServer(config config.ControlConfig) {
 
 // Handle the /v1/register_faultload endpoint
 func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
-	// Parse the faultload from the request body
-	faults, traceId, err := faultload.ParseRequest(r)
+	// Parse the newFaultload from the request body
+	newFaultload, err := faultload.ParseRequest(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "Failed to parse request body: %v", err)
 		return
 	}
 
+	faults := newFaultload.Faults
+	myFaults := []faultload.Fault{}
+
+	log.Printf("Registering faultload (size=%d) for trace ID %s\n", len(newFaultload.Faults), newFaultload.TraceId)
+	for _, fault := range faults {
+		if fault.Uid.Destination == tracing.ServiceName {
+			log.Printf("Registering my fault: %s\n", fault.Uid.String())
+			myFaults = append(myFaults, fault)
+		}
+	}
+
+	log.Printf("Registered %d faults for trace ID %s\n", len(myFaults), newFaultload.TraceId)
 	// Store the faultload for the given trace ID
-	RegisteredFaults[traceId] = faults
+	RegisteredFaults[newFaultload.TraceId] = myFaults
 
 	// Respond with a 200 OK
 	w.WriteHeader(http.StatusOK)

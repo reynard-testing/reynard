@@ -1,42 +1,47 @@
 package nl.dflipse.fit.faultload;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Set;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+
+import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 
 public class FaultloadSerializer {
   private final static ObjectMapper mapper = new ObjectMapper();
 
-  public static String serialize(List<Fault> faultload) {
-    String jsonData = serializeJson(faultload);
-    String encodedJson = URLEncoder.encode(jsonData, StandardCharsets.UTF_8);
-    return encodedJson;
+  public static String serializeJson(Faultload faultload) {
+    var obj = mapper.createObjectNode();
+    obj.set("faults", serializeFaults(faultload.getFaults()));
+    obj.set("trace_id", stringNode(faultload.getTraceId()));
+
+    return obj.toString();
   }
 
-  public static String serializeJson(List<Fault> faultload) {
+  public static JsonNode serializeFaults(Set<Fault> faults) {
     ArrayNode array = mapper.createArrayNode();
 
-    for (Fault fault : faultload) {
+    for (Fault fault : faults) {
       array.add(serializeFault(fault));
     }
 
-    return array.toString();
+    return array;
   }
 
-  public static ArrayNode serializeFault(Fault fault) {
-    // [spanId, faultType, ...args]
-    ArrayNode array = mapper.createArrayNode();
+  public static JsonNode stringNode(String value) {
+    return mapper.createObjectNode().textNode(value);
+  }
 
-    array.add(fault.spanUid);
-    array.add(fault.faultMode.getType());
-    for (String arg : fault.faultMode.getArgs()) {
-      array.add(arg);
-    }
+  public static JsonNode serializeFaultUid(FaultUid faultUid) {
+    return mapper.valueToTree(faultUid);
+  }
 
-    return array;
+  public static JsonNode serializeFaultMode(FaultMode faultMode) {
+    return mapper.valueToTree(faultMode);
+  }
 
+  public static JsonNode serializeFault(Fault fault) {
+    return mapper.valueToTree(fault);
   }
 }

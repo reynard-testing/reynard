@@ -10,7 +10,7 @@ import (
 )
 
 func performHttpError(f faultload.Fault, s *ProxyState) {
-	statusCode := f.Args[0]
+	statusCode := f.Mode.Args[0]
 	intStatusCode, err := strconv.Atoi(statusCode)
 
 	if err != nil {
@@ -29,13 +29,12 @@ func performHttpError(f faultload.Fault, s *ProxyState) {
 		http.Error(s.ResponseWriter, "Injected fault: HTTP error", intStatusCode)
 	}
 
-	s.FaultInjected = true
-	s.AppliedFault = &f
+	s.InjectedFault = &f
 	s.ReponseOverwritten = true
 }
 
 func performDelay(f faultload.Fault, s *ProxyState) {
-	delay := f.Args[0]
+	delay := f.Mode.Args[0]
 	intDelay, err := strconv.Atoi(delay)
 	if err != nil {
 		log.Printf("Invalid delay: %v\n", delay)
@@ -44,18 +43,17 @@ func performDelay(f faultload.Fault, s *ProxyState) {
 
 	duration := time.Duration(intDelay) * time.Millisecond
 	time.Sleep(duration)
-	s.FaultInjected = true
-	s.AppliedFault = &f
+	s.InjectedFault = &f
 }
 
 func Perform(f faultload.Fault, s *ProxyState) {
-	if f.FaultType == "HTTP_ERROR" {
+	if f.Mode.Type == "HTTP_ERROR" {
 		performHttpError(f, s)
 		return
-	} else if f.FaultType == "DELAY" {
+	} else if f.Mode.Type == "DELAY" {
 		performDelay(f, s)
 		return
 	} else {
-		log.Printf("Unknown fault type: %s\n", f.FaultType)
+		log.Printf("Unknown fault type: %s\n", f.Mode)
 	}
 }

@@ -1,4 +1,4 @@
-package nl.dflipse.fit.trace.data;
+package nl.dflipse.fit.trace.tree;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;

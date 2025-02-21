@@ -1,47 +1,56 @@
 package nl.dflipse.fit.faultload;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import nl.dflipse.fit.trace.TraceParent;
 import nl.dflipse.fit.trace.TraceState;
 
 public class Faultload {
-    private final List<Fault> faultload;
+    private final Set<Fault> faults;
 
-    private TraceParent traceParent = new TraceParent();
-    private TraceState traceState = new TraceState();
-
-    public Faultload(List<Fault> faultload) {
-        this.faultload = faultload;
-        initializeTraceState();
-    }
+    private TraceParent traceParent;
+    private TraceState traceState;
 
     public Faultload() {
-        this.faultload = new ArrayList<>();
-        initializeTraceState();
+        this(new HashSet<>());
     }
 
-    public List<Fault> getFaultload() {
-        return faultload;
+    public Faultload(Set<Fault> faults) {
+        this.faults = faults;
+        traceParent = new TraceParent();
+
+        traceState = new TraceState();
+        traceState.set("fit", "1");
+    }
+
+    public Set<Fault> getFaults() {
+        return faults;
+    }
+
+    public Set<FaultUid> getFaultUids() {
+        Set<FaultUid> faultUids = new HashSet<>();
+        for (Fault fault : faults) {
+            faultUids.add(fault.getUid());
+        }
+        return faultUids;
     }
 
     public String readableString() {
         List<String> readableFaults = new ArrayList<>();
 
-        for (Fault fault : faultload) {
-            readableFaults.add(fault.spanUid + "(" + fault.faultMode.getType() + " " + fault.faultMode.getArgs() + ")");
+        for (Fault fault : faults) {
+            readableFaults.add(fault.getUid().toString() + "(" + fault.getMode().getType() + " "
+                    + fault.getMode().getArgs() + ")");
         }
 
         return String.join(", ", readableFaults);
     }
 
-    private void initializeTraceState() {
-        traceState.set("fit", "1");
-    }
-
     public String serializeJson() {
-        return FaultloadSerializer.serializeJson(faultload);
+        return FaultloadSerializer.serializeJson(this);
     }
 
     public String getTraceId() {
@@ -57,6 +66,6 @@ public class Faultload {
     }
 
     public int size() {
-        return faultload.size();
+        return faults.size();
     }
 }

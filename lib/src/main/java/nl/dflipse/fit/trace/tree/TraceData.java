@@ -1,5 +1,5 @@
 
-package nl.dflipse.fit.trace.data;
+package nl.dflipse.fit.trace.tree;
 
 import java.util.List;
 

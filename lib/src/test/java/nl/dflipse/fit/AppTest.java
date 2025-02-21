@@ -77,10 +77,11 @@ public class AppTest {
                 .execute();
 
         String inspectUrl = app.orchestratorInspectUrl + "/v1/get/" + faultload.getTraceId();
-        String traceUrl =  "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/" + faultload.getTraceId();
+        String traceUrl = "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/"
+                + faultload.getTraceId();
 
-        boolean containsError = faultload.getFaultload().stream()
-                .anyMatch(f -> f.faultMode.getType().equals("HTTP_ERROR"));
+        boolean containsError = faultload.getFaults().stream()
+                .anyMatch(f -> f.getMode().getType().equals("HTTP_ERROR"));
         int expectedResponse = containsError ? 500 : 200;
         int actualResponse = res.returnResponse().getCode();
         assertEquals(expectedResponse, actualResponse);

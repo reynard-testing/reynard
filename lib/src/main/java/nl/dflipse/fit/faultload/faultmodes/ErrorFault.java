@@ -2,15 +2,24 @@ package nl.dflipse.fit.faultload.faultmodes;
 
 import java.util.List;
 
-public class ErrorFault implements FaultMode {
+public class ErrorFault {
+  public static String FAULT_TYPE = "HTTP_ERROR";
+
+  public static FaultMode fromError(HttpError error) {
+    String errorCode = Integer.toString(error.getErrorCode());
+    return new FaultMode(FAULT_TYPE, List.of(errorCode));
+  }
+
   public enum HttpError {
+    INTERNAL_SERVER_ERROR(500),
+    NOT_IMPLEMENTED(501),
+    BAD_GATEWAY(502),
     SERVICE_UNAVAILABLE(503),
     GATEWAY_TIMEOUT(504),
-    INTERNAL_SERVER_ERROR(500),
-    BAD_GATEWAY(502),
-    NOT_IMPLEMENTED(501),
     HTTP_VERSION_NOT_SUPPORTED(505),
-    NETWORK_AUTHENTICATION_REQUIRED(511);
+    NETWORK_AUTHENTICATION_REQUIRED(511),
+
+    REQUEST_TIMEOUT(408);
 
     private final int errorCode;
 
@@ -21,24 +30,5 @@ public class ErrorFault implements FaultMode {
     public int getErrorCode() {
       return errorCode;
     }
-  }
-
-  private final HttpError error;
-
-  public ErrorFault(HttpError error) {
-    this.error = error;
-  }
-
-  @Override
-  public String getType() {
-    return "HTTP_ERROR";
-  }
-
-  @Override
-  public List<String> getArgs() {
-    int errorCode = error.getErrorCode();
-    return List.of(
-      Integer.toString(errorCode)
-    );
   }
 }

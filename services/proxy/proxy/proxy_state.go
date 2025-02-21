@@ -9,19 +9,26 @@ import (
 )
 
 type ProxyState struct {
-	AppliedFault       *faultload.Fault
+	InjectedFault      *faultload.Fault
 	Proxy              *httputil.ReverseProxy
 	ResponseWriter     *ResponseCapture
 	Request            *http.Request
-	FaultInjected      bool
 	ReponseOverwritten bool
+	Complete           bool
 }
 
 func (s ProxyState) asReport(metadata tracing.RequestMetadata) tracing.RequestReport {
+	var response *tracing.ResponseData = nil
+
+	if s.Complete {
+		responseData := s.ResponseWriter.GetResponseData()
+		response = &responseData
+	}
+
 	return tracing.RequestReport{
-		SpanID:        metadata.SpanID,
-		SpanUID:       metadata.SpanUID,
-		FaultInjected: s.FaultInjected,
-		Response:      s.ResponseWriter.GetResponseData(),
+		SpanId:        metadata.SpanId,
+		FaultUid:      metadata.FaultUid,
+		InjectedFault: s.InjectedFault,
+		Response:      response,
 	}
 }

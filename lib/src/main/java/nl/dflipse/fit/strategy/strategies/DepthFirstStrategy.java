@@ -61,8 +61,9 @@ public class DepthFirstStrategy implements FIStrategy {
             var potentialFaults = TraceTraversal.depthFirstFaultpoints(trace);
             var powerSet = Combinatorics.generatePowerSet(potentialFaults);
             List<FaultMode> modes = List.of(
-                    new ErrorFault(ErrorFault.HttpError.SERVICE_UNAVAILABLE),
-                    new DelayFault(1000));
+                    new DelayFault(1000),
+                    new ErrorFault(ErrorFault.HttpError.SERVICE_UNAVAILABLE)
+                );
 
             for (var faultIds : powerSet) {
                 if (faultIds.isEmpty()) {

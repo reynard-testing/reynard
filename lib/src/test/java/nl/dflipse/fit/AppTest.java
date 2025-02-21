@@ -77,6 +77,7 @@ public class AppTest {
                 .execute();
 
         String inspectUrl = app.orchestratorInspectUrl + "/v1/get/" + faultload.getTraceId();
+        String traceUrl =  "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/" + faultload.getTraceId();
 
         boolean containsError = faultload.getFaultload().stream()
                 .anyMatch(f -> f.faultMode.getType().equals("HTTP_ERROR"));

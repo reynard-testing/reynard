@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -102,7 +103,7 @@ func ParseTraceParent(traceparent string) *TraceParentData {
 
 	parts := strings.Split(traceparent, "-")
 	if len(parts) != 4 {
-		fmt.Println("Invalid traceparent format")
+		log.Println("Invalid traceparent format")
 		return nil
 	}
 

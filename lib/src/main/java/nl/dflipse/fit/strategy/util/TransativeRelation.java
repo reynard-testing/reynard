@@ -1,7 +1,9 @@
 package nl.dflipse.fit.strategy.util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,14 +57,42 @@ public class TransativeRelation<X> {
         return inverseRelation.get(child);
     }
 
-    public Set<X> getParents(X child) {
-        Set<X> parents = new HashSet<>();
+    public List<Pair<X, X>> getRelations() {
+        List<Pair<X, X>> relations = new ArrayList<>();
+        for (X parent : relation.keySet()) {
+            for (X child : relation.get(parent)) {
+                relations.add(new Pair<>(parent, child));
+            }
+        }
+        return relations;
+    }
+
+    public List<Pair<X, X>> getTransativeRelations() {
+        List<Pair<X, X>> relations = new ArrayList<>();
+        for (X parent : transitiveRelations.keySet()) {
+            for (X child : transitiveRelations.get(parent)) {
+                relations.add(new Pair<>(parent, child));
+            }
+        }
+        return relations;
+    }
+
+    public List<X> getParents(X child) {
+        List<X> parents = new ArrayList<>();
         X parent = getParent(child);
         while (parent != null) {
             parents.add(parent);
             parent = getParent(parent);
         }
+
         return parents;
+    }
+
+    public X getFirstCommonAncestor(X child1, X child2) {
+        List<X> parents1 = getParents(child1);
+        List<X> parents2 = getParents(child2);
+        parents1.retainAll(parents2);
+        return parents1.stream().findFirst().orElse(null);
     }
 
     public Set<X> getChildren(X parent) {

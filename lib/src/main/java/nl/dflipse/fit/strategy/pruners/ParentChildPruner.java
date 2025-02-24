@@ -17,11 +17,10 @@ public class ParentChildPruner implements Pruner, FeedbackHandler<Void> {
 
     @Override
     public Void handleFeedback(FaultloadResult result, HistoricStore history) {
-        if (!result.isInitial()) {
-            return null;
+        if (result.isInitial()) {
+            treeAnalysis = new TreeAnalysis(result.trace);
         }
 
-        treeAnalysis = new TreeAnalysis(result.trace);
         return null;
     }
 

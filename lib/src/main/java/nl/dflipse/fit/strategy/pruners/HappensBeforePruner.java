@@ -70,7 +70,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
 
         if (treeAnalysis.isDecendantOf(cause, effect)) {
             System.out.println("Parent-Child happens before: " + cause + " -> " + effect);
-            happensBefore.addRelation(cause, effect);
+            // happensBefore.addRelation(cause, effect);
             return;
         }
 

@@ -10,8 +10,8 @@ type TraceInvocationCounter struct {
 var traceInvocationCounter = TraceInvocationCounter{m: make(map[string]int)}
 
 func (t *TraceInvocationCounter) GetCount(key string) int {
-	t.RLock()
-	defer t.RUnlock()
+	t.Lock()
+	defer t.Unlock()
 
 	currentIndex, exists := t.m[key]
 

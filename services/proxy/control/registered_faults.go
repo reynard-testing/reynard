@@ -20,8 +20,8 @@ func (fr *FaultRegister) Register(traceId string, faults []faultload.Fault) {
 }
 
 func (fr *FaultRegister) Get(traceId string) ([]faultload.Fault, bool) {
-	fr.Lock()
-	defer fr.Unlock()
+	fr.RLock()
+	defer fr.RUnlock()
 	faults, exists := fr.m[traceId]
 	return faults, exists
 }

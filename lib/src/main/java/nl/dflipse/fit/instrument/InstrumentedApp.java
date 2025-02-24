@@ -106,8 +106,8 @@ public class InstrumentedApp {
                 new TypeReference<List<TraceTreeSpan>>() {
                 });
 
-        if (orchestratorResponse.size() == 0) {
-            throw new IOException("No trace found for traceId: " + traceId);
+        if (orchestratorResponse.isEmpty()) {
+            throw new IOException("Empty trace tree found for traceId: " + traceId);
         }
 
         if (orchestratorResponse.size() > 1) {

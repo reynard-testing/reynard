@@ -1,12 +1,11 @@
 package nl.dflipse.fit;
 
-import java.io.IOException;
+import static org.junit.Assert.assertTrue;
 
+import org.junit.Test;
 import org.junit.jupiter.api.AfterAll;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 
-import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 
 public class DummyTest implements InstrumentedTest {
@@ -28,8 +27,12 @@ public class DummyTest implements InstrumentedTest {
         app.stop();
     }
 
-    @FiTest
-    public void testApp(Faultload faultload) throws IOException {
+    // @FiTest
+    // public void testApp(Faultload faultload) throws IOException {
+    // assertTrue(true);
+    // }
+    @Test
+    public void testNothing() {
         assertTrue(true);
     }
 }

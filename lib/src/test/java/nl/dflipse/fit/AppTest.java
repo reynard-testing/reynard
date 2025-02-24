@@ -20,7 +20,7 @@ import nl.dflipse.fit.instrument.services.InstrumentedService;
  * FI test the app
  */
 @SuppressWarnings("resource")
-@Testcontainers
+@Testcontainers(parallel = true)
 public class AppTest {
     private static final String BASE_IMAGE = "go-micro-service:latest";
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();

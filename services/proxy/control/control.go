@@ -11,8 +11,6 @@ import (
 	"dflipse.nl/fit-proxy/tracing"
 )
 
-var RegisteredFaults map[string][]faultload.Fault = make(map[string][]faultload.Fault)
-
 func StartControlServer(config config.ControlConfig) {
 	registerFaultloadPort := ":" + strconv.Itoa(config.Port)
 	http.HandleFunc("/v1/register_faultload", registerFaultloadHandler)
@@ -38,17 +36,17 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	faults := newFaultload.Faults
 	myFaults := []faultload.Fault{}
 
+	log.Printf("\n----------------------------\n")
 	log.Printf("Registering faultload (size=%d) for trace ID %s\n", len(newFaultload.Faults), newFaultload.TraceId)
 	for _, fault := range faults {
 		if fault.Uid.Destination == tracing.ServiceName {
-			log.Printf("Registering my fault: %s\n", fault.Uid.String())
 			myFaults = append(myFaults, fault)
 		}
 	}
 
 	log.Printf("Registered %d faults for trace ID %s\n", len(myFaults), newFaultload.TraceId)
 	// Store the faultload for the given trace ID
-	RegisteredFaults[newFaultload.TraceId] = myFaults
+	RegisteredFaults.Register(newFaultload.TraceId, myFaults)
 
 	// Respond with a 200 OK
 	w.WriteHeader(http.StatusOK)

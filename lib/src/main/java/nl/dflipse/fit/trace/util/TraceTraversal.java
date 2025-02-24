@@ -111,6 +111,7 @@ public class TraceTraversal {
                 faults.addAll(visitDepthFirst(child));
             }
         }
+
         if (spanNode.report != null) {
             faults.add(spanNode.report.faultUid);
         }

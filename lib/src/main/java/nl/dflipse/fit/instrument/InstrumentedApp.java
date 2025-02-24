@@ -4,23 +4,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.hc.client5.http.fluent.Request;
-import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.core5.http.ContentType;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.instrument.controller.RemoteController;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
 import nl.dflipse.fit.instrument.services.Jaeger;
 import nl.dflipse.fit.instrument.services.OTELCollectorService;
 import nl.dflipse.fit.instrument.services.OrchestratorService;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
-public class InstrumentedApp {
+public class InstrumentedApp implements FaultController {
     public Network network;
     private final List<InstrumentedService> proxies = new ArrayList<>();
     private final List<GenericContainer<?>> services = new ArrayList<>();
@@ -36,6 +31,8 @@ public class InstrumentedApp {
     public Jaeger jaeger = null;
     public String jaegerHost = "jaeger";
     public int jaegerPort = 16686;
+
+    private RemoteController controller;
 
     @SuppressWarnings("resource")
     public InstrumentedApp() {
@@ -98,44 +95,20 @@ public class InstrumentedApp {
         return proxyList;
     }
 
-    public TraceTreeSpan getTrace(String traceId) throws IOException {
-        String queryUrl = orchestratorInspectUrl + "/v1/get-trees/" + traceId;
-        Response res = Request.get(queryUrl).execute();
-        String body = res.returnContent().asString();
-        List<TraceTreeSpan> orchestratorResponse = new ObjectMapper().readValue(body,
-                new TypeReference<List<TraceTreeSpan>>() {
-                });
-
-        if (orchestratorResponse.isEmpty()) {
-            throw new IOException("Empty trace tree found for traceId: " + traceId);
+    public TraceTreeSpan getTrace(Faultload faultload) throws IOException {
+        if (controller == null) {
+            throw new IllegalStateException("Controller not initialized. First call start().");
         }
 
-        if (orchestratorResponse.size() > 1) {
-            System.out.println("Expected 1 trace, got " + orchestratorResponse.size());
-        }
-
-        var trace = orchestratorResponse.get(0);
-
-        if (trace.isIncomplete()) {
-            throw new IOException("Trace is incomplete");
-        }
-
-        return trace;
+        return controller.getTrace(faultload);
     }
 
     public void registerFaultload(Faultload faultload) {
-        String queryUrl = orchestratorInspectUrl + "/v1/register_faultload";
-
-        try {
-            String jsonBody = faultload.serializeJson();
-
-            Response res = Request.post(queryUrl)
-                    .bodyString(jsonBody, ContentType.APPLICATION_JSON)
-                    .execute();
-            res.returnContent().asString(); // Ensure the request is executed
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (controller == null) {
+            throw new IllegalStateException("Controller not initialized. First call start().");
         }
+
+        controller.registerFaultload(faultload);
     }
 
     public void start() {
@@ -145,6 +118,7 @@ public class InstrumentedApp {
 
         int localOrchestratorPort = orchestrator.getMappedPort(5000);
         orchestratorInspectUrl = "http://localhost:" + localOrchestratorPort;
+        controller = new RemoteController(orchestratorInspectUrl);
     }
 
     public void stop() {

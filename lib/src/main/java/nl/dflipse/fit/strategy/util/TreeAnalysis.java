@@ -1,5 +1,6 @@
 package nl.dflipse.fit.strategy.util;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -9,11 +10,14 @@ import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 public class TreeAnalysis {
     public TraceTreeSpan rootNode;
 
+    private Set<FaultUid> faultUids;
+
     // --- Parent-Child relations
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
 
     public TreeAnalysis(TraceTreeSpan rootNode) {
         this.rootNode = rootNode;
+        this.faultUids = new HashSet<>();
         // Parent null indicates the root request
         findParentChilds(rootNode, null);
     }
@@ -22,6 +26,7 @@ public class TreeAnalysis {
         FaultUid nextParent = parent;
 
         if (node.report != null) {
+            faultUids.add(node.report.faultUid);
             var child = node.report.faultUid;
             parentChildRelation.addRelation(parent, child);
             nextParent = child;
@@ -30,6 +35,10 @@ public class TreeAnalysis {
         for (var child : node.children) {
             findParentChilds(child, nextParent);
         }
+    }
+
+    public Set<FaultUid> getFaultUids() {
+        return faultUids;
     }
 
     public List<Pair<FaultUid, FaultUid>> getRelations() {

@@ -78,7 +78,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		// Determine if registered as an interesting trace
-		faults, ok := control.RegisteredFaults[parent.TraceID]
+		faults, ok := control.RegisteredFaults.Get(parent.TraceID)
 		if !ok {
 			// Forward the request to the target server
 			log.Printf("No faults registered for trace ID: %s\n", parent.TraceID)

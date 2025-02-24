@@ -13,6 +13,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
 
@@ -21,9 +22,9 @@ import nl.dflipse.fit.instrument.services.InstrumentedService;
  */
 @SuppressWarnings("resource")
 @Testcontainers(parallel = true)
-public class AppTest {
-    private static final String BASE_IMAGE = "go-micro-service:latest";
+public class AppTest implements InstrumentedTest {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
+    private static final String BASE_IMAGE = "go-micro-service:latest";
 
     @Container
     private static final InstrumentedService geo = app.instrument("geo", 8080,
@@ -55,6 +56,11 @@ public class AppTest {
             .withCommand("go-micro-services frontend")
             .withExposedPorts(8080)
             .dependsOn(search.getService(), profile.getService());
+
+    @Override
+    public FaultController getController() {
+        return app;
+    }
 
     @BeforeAll
     public static void setupServices() {

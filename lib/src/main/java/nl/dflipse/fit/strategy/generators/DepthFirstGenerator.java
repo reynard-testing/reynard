@@ -45,7 +45,14 @@ public class DepthFirstGenerator implements Generator {
         first = false;
 
         var potentialFaults = TraceTraversal.depthFirstFaultpoints(result.trace);
+
+        for (var fault : potentialFaults) {
+            System.out.println("[DFS] Found fault: " + fault);
+        }
+
         var powerSet = Combinatorics.generatePowerSet(potentialFaults);
+        // sort by size, so we can start with the smallest sets first
+        powerSet.sort((set1, set2) -> Integer.compare(set1.size(), set2.size()));
 
         List<Faultload> newFaultloads = new ArrayList<>();
         for (var faultIds : powerSet) {

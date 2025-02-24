@@ -39,15 +39,24 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
                     .map(fault -> fault.getUid())
                     .collect(Collectors.toSet());
 
-            var notInjectedFaultUids = result.getNotInjectedFaults()
+            if (injectedErrorFaults.size() != 1) {
+                return null;
+            }
+
+            var cause = injectedErrorFaults.iterator().next();
+
+            var faultsInTrace = result.trace.getFaultUids();
+            var dissappearedFaults = treeAnalysis.getFaultUids()
                     .stream()
-                    .map(fault -> fault.getUid())
+                    .filter(f -> !faultsInTrace.contains(f))
+                    .filter(f -> !f.equals(cause))
+                    .filter(f -> !happensBefore.hasTransativeRelation(cause, f))
                     .collect(Collectors.toSet());
 
-            if (injectedErrorFaults.size() == 1 && notInjectedFaultUids.size() > 0) {
+            if (injectedErrorFaults.size() == 1 && dissappearedFaults.size() > 0) {
                 var injectedFault = injectedErrorFaults.iterator().next();
 
-                for (var notInjectedFault : notInjectedFaultUids) {
+                for (var notInjectedFault : dissappearedFaults) {
                     handleHappensBefore(injectedFault, notInjectedFault);
                 }
             }
@@ -82,15 +91,19 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
         // Then the parent cause happens before the effect
         var causeAncestors = treeAnalysis.getParents(cause);
         if (causeAncestors.contains(effectParent)) {
-            // get the cause's ancestor whose parent is the effect's parent
-            var ancestralCause = causeAncestors.stream()
-                    .filter(ancestor -> treeAnalysis.isEqual(treeAnalysis.getParent(ancestor), effectParent))
-                    .findFirst()
-                    .get();
-            // add the relation
-            System.out.println("Ancestor happens before: " + ancestralCause + " -> " + effect);
-            happensBefore.addRelation(ancestralCause, effect);
-            return;
+            System.out.println("Direct happens before: " + cause + " -> " + effect);
+            happensBefore.addRelation(cause, effect);
+
+            for (var ancestralCause : causeAncestors) {
+                if (ancestralCause.equals(effectParent)) {
+                    break;
+                }
+
+                // add the relation
+                System.out.println("Ancestor happens before: " + ancestralCause + " -> " + effect);
+                happensBefore.addRelation(ancestralCause, effect);
+                return;
+            }
         }
 
         // Other cases are undefined.

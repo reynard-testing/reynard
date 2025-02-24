@@ -1,6 +1,7 @@
 package nl.dflipse.fit;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
@@ -61,30 +63,28 @@ public class FiTestExtension
                 .withAnalyzer(new RedundancyAnalyzer());
 
         Class<?> testClass = context.getRequiredTestClass();
-        InstrumentedApp app;
+        FaultController controller;
 
         try {
-            var appField = testClass.getDeclaredField("app");
-            appField.setAccessible(true); // Make the field accessible
-
-            app = (InstrumentedApp) appField.get(null); // Access the static field
-            if (app == null) {
+            controller = (FaultController) testClass.getMethod("getController").invoke(null);
+            if (controller == null) {
                 throw new IllegalStateException(
                         "InstrumentedApp is not initialized. Ensure setupServices() is called.");
             }
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (NoSuchMethodException | NullPointerException | IllegalArgumentException | IllegalAccessException
+                | InvocationTargetException | SecurityException e) {
             throw new RuntimeException("Failed to access InstrumentedApp from test class", e);
         }
 
         return Stream
-                .generate(() -> createInvocationContext(strategy, app))
+                .generate(() -> createInvocationContext(strategy, controller))
                 .takeWhile(ctx -> ctx != null)
                 .onClose(() -> {
                     afterAll();
                 });
     }
 
-    private TestTemplateInvocationContext createInvocationContext(StrategyRunner strategy, InstrumentedApp app) {
+    private TestTemplateInvocationContext createInvocationContext(StrategyRunner strategy, FaultController controller) {
         Faultload faultload = strategy.nextFaultload();
 
         if (faultload == null) {
@@ -102,8 +102,8 @@ public class FiTestExtension
             public List<Extension> getAdditionalExtensions() {
                 return List.of(
                         new QueueParameterResolver(faultload),
-                        new BeforeTestExtension(faultload, app),
-                        new AfterTestExtension(faultload, strategy, app));
+                        new BeforeTestExtension(faultload, controller),
+                        new AfterTestExtension(faultload, strategy, controller));
             }
         };
     }
@@ -137,11 +137,11 @@ public class FiTestExtension
     // Before each test, register the faultload with the proxies
     private static class BeforeTestExtension implements BeforeTestExecutionCallback {
         private final Faultload faultload;
-        private final InstrumentedApp app;
+        private final FaultController controller;
 
-        BeforeTestExtension(Faultload faultload, InstrumentedApp app) {
+        BeforeTestExtension(Faultload faultload, FaultController controller) {
             this.faultload = faultload;
-            this.app = app;
+            this.controller = controller;
         }
 
         @Override
@@ -150,7 +150,7 @@ public class FiTestExtension
                 return;
             }
 
-            app.registerFaultload(faultload);
+            controller.registerFaultload(faultload);
         }
     }
 
@@ -158,12 +158,12 @@ public class FiTestExtension
     private static class AfterTestExtension implements AfterTestExecutionCallback {
         private final Faultload faultload;
         private final StrategyRunner strategy;
-        private final InstrumentedApp app;
+        private final FaultController controller;
 
-        AfterTestExtension(Faultload faultload, StrategyRunner strategy, InstrumentedApp app) {
+        AfterTestExtension(Faultload faultload, StrategyRunner strategy, FaultController controller) {
             this.faultload = faultload;
             this.strategy = strategy;
-            this.app = app;
+            this.controller = controller;
         }
 
         @Override
@@ -181,7 +181,7 @@ public class FiTestExtension
                             + (testFailed ? "FAIL" : "PASS"));
 
             try {
-                TraceTreeSpan trace = app.getTrace(faultload.getTraceId());
+                TraceTreeSpan trace = controller.getTrace(faultload);
                 FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
                 strategy.handleResult(result);
             } catch (IOException e) {

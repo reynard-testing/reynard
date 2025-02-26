@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
 import org.junit.jupiter.api.extension.Extension;
@@ -17,7 +16,6 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.FaultController;
-import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
@@ -69,11 +67,11 @@ public class FiTestExtension
             controller = (FaultController) testClass.getMethod("getController").invoke(null);
             if (controller == null) {
                 throw new IllegalStateException(
-                        "InstrumentedApp is not initialized. Ensure setupServices() is called.");
+                        "Test has no public static field getController(). Ensure getController() exists and returns a faultcontroller.");
             }
         } catch (NoSuchMethodException | NullPointerException | IllegalArgumentException | IllegalAccessException
                 | InvocationTargetException | SecurityException e) {
-            throw new RuntimeException("Failed to access InstrumentedApp from test class", e);
+            throw new RuntimeException("Failed to access getControleler from test class", e);
         }
 
         return Stream

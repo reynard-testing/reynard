@@ -22,7 +22,7 @@ import nl.dflipse.fit.instrument.services.InstrumentedService;
  */
 @SuppressWarnings("resource")
 @Testcontainers(parallel = true)
-public class AppTest implements InstrumentedTest {
+public class AppTest {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final String BASE_IMAGE = "go-micro-service:latest";
 
@@ -57,8 +57,7 @@ public class AppTest implements InstrumentedTest {
             .withExposedPorts(8080)
             .dependsOn(search.getService(), profile.getService());
 
-    @Override
-    public FaultController getController() {
+    public static FaultController getController() {
         return app;
     }
 

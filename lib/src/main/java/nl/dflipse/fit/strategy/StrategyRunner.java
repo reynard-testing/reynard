@@ -8,6 +8,7 @@ import java.util.Set;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.pruners.Pruner;
+import nl.dflipse.fit.strategy.util.Pair;
 
 public class StrategyRunner {
     public List<Faultload> queue;
@@ -57,38 +58,76 @@ public class StrategyRunner {
         return queue.remove(0);
     }
 
-    public void handleResult(FaultloadResult result) {
-        history.add(result);
-        analyze(result);
-
+    public Pair<Integer, Integer> generateAndPrune() {
         // Generate new faultloads
-        List<Faultload> newFaultloads = generate(result);
+        List<Faultload> newFaultloads = generate();
         queuedCount += newFaultloads.size();
         // TODO: ignore previously pruned faultloads
 
         queue.addAll(newFaultloads);
 
         // Prune the queue
-        prune();
+        int pruned = prune();
+        return new Pair<>(newFaultloads.size(), pruned);
     }
 
-    public List<Faultload> generate(FaultloadResult result) {
+    public void handleResult(FaultloadResult result) {
+        history.add(result);
+        analyze(result);
+
+        int generated = 0;
+        int pruned = 0;
+
+        while (true) {
+            var res = generateAndPrune();
+            int newFaultloads = res.getFirst();
+
+            if (newFaultloads == 0) {
+                break;
+            }
+
+            generated += newFaultloads;
+            pruned += res.getSecond();
+
+            // Keep generating and pruning until we have new faultloads in the queue
+            if (queue.size() > 0) {
+                break;
+            }
+        }
+
+        System.out.println("[Strategy] Generated " + generated + " new faultloads, pruned " + pruned + " faultloads");
+    }
+
+    public List<Faultload> generate() {
         List<Faultload> newFaultloads = new ArrayList<>();
 
         for (Generator generator : generators) {
-            newFaultloads.addAll(generator.generate(result));
+            newFaultloads.addAll(generator.generate());
         }
 
         return newFaultloads;
     }
 
+    @SuppressWarnings("rawtypes")
     public void analyze(FaultloadResult result) {
         for (var analyzer : analyzers) {
             analyzer.handleFeedback(result, history);
         }
+
+        for (Pruner pruner : pruners) {
+            if (pruner instanceof FeedbackHandler) {
+                ((FeedbackHandler) pruner).handleFeedback(result, history);
+            }
+        }
+
+        for (Generator gen : generators) {
+            if (gen instanceof FeedbackHandler) {
+                ((FeedbackHandler) gen).handleFeedback(result, history);
+            }
+        }
     }
 
-    public void prune() {
+    public int prune() {
         List<Faultload> toRemove = new ArrayList<>();
 
         for (var faultload : this.queue) {
@@ -104,9 +143,6 @@ public class StrategyRunner {
         this.prunedCount += toRemove.size();
         this.queue.removeAll(toRemove);
         this.prunedFaultloads.addAll(toRemove);
-
-        if (toRemove.size() > 0) {
-            System.out.println("[Strategy] Pruned " + toRemove.size() + " faultloads");
-        }
+        return toRemove.size();
     }
 }

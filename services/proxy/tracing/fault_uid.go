@@ -11,8 +11,6 @@ import (
 	"dflipse.nl/fit-proxy/faultload"
 )
 
-var traceInvocationCounter map[string]int = make(map[string]int)
-
 var ServiceName string = os.Getenv("SERVICE_NAME")
 var stackName string = os.Getenv("STACK_NAME")
 var pathPrefix string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
@@ -42,15 +40,7 @@ func FaultUidFromRequest(r *http.Request) faultload.FaultUid {
 
 func getInvocationCount(clientName, signature, traceId string) int {
 	key := fmt.Sprintf("%s-%s-%s", clientName, signature, traceId)
-	currentIndex, exists := traceInvocationCounter[key]
-
-	if !exists {
-		currentIndex = 0
-	} else {
-		currentIndex++
-	}
-
-	traceInvocationCounter[key] = currentIndex
+	currentIndex := traceInvocationCounter.GetCount(key)
 	return currentIndex
 }
 

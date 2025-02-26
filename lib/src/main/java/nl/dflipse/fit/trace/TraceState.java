@@ -1,6 +1,8 @@
 package nl.dflipse.fit.trace;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TraceState {
@@ -38,15 +40,13 @@ public class TraceState {
     }
 
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, String> entry : this.state.entrySet()) {
-            builder.append(entry.getKey());
-            builder.append("=");
-            builder.append(entry.getValue());
-            builder.append(",");
+        List<String> values = new ArrayList<String>();
+        for (var entry : this.state.entrySet()) {
+            String value = entry.getKey() + "=" + entry.getValue();
+            values.add(value);
         }
 
-        String result = builder.toString();
+        String result = String.join(",", values);
 
         if (result.length() > 256) {
             System.out.println("[WARN] TraceState header too long: " + result.length());

@@ -1,7 +1,7 @@
 package nl.dflipse.fit;
 
-import nl.dflipse.fit.instrument.InstrumentedApp;
+import nl.dflipse.fit.instrument.FaultController;
 
 public interface InstrumentedTest {
-    InstrumentedApp getApp();
+    FaultController getController();
 }

@@ -6,13 +6,14 @@ import org.junit.Test;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
+import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 
 public class DummyTest implements InstrumentedTest {
     public static InstrumentedApp app;
 
     @Override
-    public InstrumentedApp getApp() {
+    public FaultController getController() {
         return app;
     }
 

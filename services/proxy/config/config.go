@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 
 	"dflipse.nl/fit-proxy/util"
 )
@@ -31,6 +32,14 @@ func GetProxyConfig() ProxyConfig {
 }
 
 func GetControlConfig(proxyConfig ProxyConfig) ControlConfig {
+	if controllerPort := os.Getenv("CONTROLLER_PORT"); controllerPort != "" {
+		if controllerPortInt, err := strconv.Atoi(controllerPort); err == nil {
+			return ControlConfig{
+				Port: controllerPortInt,
+			}
+		}
+	}
+
 	_, proxyPort := util.AsHostPort(proxyConfig.Host)
 	controlPort := proxyPort + 1
 

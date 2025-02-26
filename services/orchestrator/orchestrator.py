@@ -12,6 +12,8 @@ from google.protobuf.json_format import MessageToDict
 
 app = Flask(__name__)
 
+trace_ids: set[str] = set()
+
 proxy_list: list[str] = [proxy for proxy in os.getenv(
     'PROXY_LIST', '').split(',') if proxy]
 
@@ -140,8 +142,12 @@ def getErrorStatus(span: dict) -> tuple[bool, str]:
 
 def handleScopeSpan(span: dict, service_name: str):
     # Get fields
-    span_id = to_id(span.get('spanId', None), 8)
     trace_id = to_id(span.get('traceId', None), 16)
+
+    if trace_id not in trace_ids:
+        return
+
+    span_id = to_id(span.get('spanId', None), 8)
     parent_span_id = to_id(span.get('parentSpanId', None), 8)
 
     trace_state = span.get('traceState', None)
@@ -330,6 +336,8 @@ async def register_faultload_at_proxy(proxy: str, payload):
 @app.route("/v1/register_faultload", methods=['POST'])
 async def register_faultload():
     payload = request.get_json()
+    trace_id = payload.get('trace_id')
+    trace_ids.add(trace_id)
 
     tasks = [register_faultload_at_proxy(
         proxy, payload) for proxy in proxy_list]

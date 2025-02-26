@@ -57,7 +57,7 @@ public class TraceTreeSpan {
         Set<FaultUid> faults = new HashSet<>();
 
         TraceTraversal.any(this, (TraceTreeSpan node) -> {
-            if (node.report != null && node.report.injectedFault != null) {
+            if (node.report != null) {
                 faults.add(node.report.faultUid);
             }
 

@@ -9,7 +9,6 @@ import (
 
 	"dflipse.nl/fit-proxy/config"
 	"dflipse.nl/fit-proxy/faultload"
-	"dflipse.nl/fit-proxy/tracing"
 )
 
 func StartControlServer(config config.ControlConfig) {
@@ -37,14 +36,16 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	faults := newFaultload.Faults
 	myFaults := []faultload.Fault{}
-	myDestination := tracing.GetHostIdentifier(r.Host)
+	// myDestination := tracing.GetHostIdentifier(r.Host)
 
 	log.Printf("\n----------------------------\n")
 	log.Printf("Registering faultload (size=%d) for trace ID %s\n", len(newFaultload.Faults), newFaultload.TraceId)
 	for _, fault := range faults {
-		if fault.Uid.Destination == myDestination {
-			myFaults = append(myFaults, fault)
-		}
+		// TODO: Filter faults based on destination
+		// We don't know our destination yet, so we can't filter
+		// if fault.Uid.Destination == myDestination {
+		myFaults = append(myFaults, fault)
+		// }
 	}
 
 	log.Printf("Registered %d faults for trace ID %s\n", len(myFaults), newFaultload.TraceId)

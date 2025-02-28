@@ -1,7 +1,9 @@
 package tracing
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -25,25 +27,49 @@ func getEnvOrDefault(envVar, defaultValue string) string {
 	return value
 }
 
-func FaultUidFromRequest(r *http.Request) faultload.FaultUid {
+func FaultUidFromRequest(r *http.Request, destination string) faultload.FaultUid {
 	traceId := getTraceId(r)
 	signature := getCallSignature(r)
 	origin := getOrigin(r)
-	destination := getDestination(r)
-	invocationCount := getInvocationCount(origin, signature, traceId)
+	// destination := getDestination(r)
+	payload := getPayloadHash(r)
+	invocationCount := getInvocationCount(origin, signature, payload, traceId)
 
 	return faultload.FaultUid{
 		Origin:      origin,
 		Destination: destination,
 		Signature:   signature,
+		Payload:     payload,
 		Count:       invocationCount,
 	}
 }
 
-func getInvocationCount(clientName, signature, traceId string) int {
-	key := fmt.Sprintf("%s-%s-%s", clientName, signature, traceId)
+func getInvocationCount(origin, signature, payload, traceId string) int {
+	key := fmt.Sprintf("%s-%s-%s-%s", origin, signature, payload, traceId)
 	currentIndex := traceInvocationCounter.GetCount(key)
 	return currentIndex
+}
+
+func getPayloadHash(r *http.Request) string {
+	body := r.Body
+
+	if body == nil {
+		return ""
+	}
+
+	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		log.Printf("Failed to read request body: %v\n", err)
+		return ""
+	}
+	// Reset the body so it can be read again
+	// This is necessary because the proxy will read the body to forward the request
+	r.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
+
+	hash := sha256.Sum256(bodyBytes)
+	// shortHash := hash[:8] // Use only the first 8 bytes of the hash
+	// return fmt.Sprintf("%x", shortHash)
+	return fmt.Sprintf("%x", hash)
 }
 
 func getTraceId(r *http.Request) string {
@@ -60,6 +86,7 @@ func getCallSignature(r *http.Request) string {
 	url := r.URL
 	pathOnly := url.Path
 
+	// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "application/grpc" {
 		withoutPrefix := strings.TrimPrefix(pathOnly, pathPrefix)
@@ -100,12 +127,13 @@ func getOrigin(r *http.Request) string {
 	return GetHostIdentifier(host)
 }
 
-func getDestination(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.Host)
-	if err != nil {
-		log.Printf("Failed to get destination: %v\n", err)
-		return "<none>"
-	}
+// Deprecated, use the config's destination instead
+// func getDestination(r *http.Request) string {
+// 	host, _, err := net.SplitHostPort(r.Host)
+// 	if err != nil {
+// 		log.Printf("Failed to get destination: %v\n", err)
+// 		return "<none>"
+// 	}
 
-	return GetHostIdentifier(host)
-}
+// 	return GetHostIdentifier(host)
+// }

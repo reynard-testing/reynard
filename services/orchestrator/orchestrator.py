@@ -44,6 +44,7 @@ class FaultUid:
     origin: str
     destination: str
     signature: str
+    payload: str
     count: int
 
 
@@ -307,14 +308,17 @@ async def report_span_id():
         body=response.get('body')
     ) if response else None
 
+    faultUid = FaultUid(
+        origin=uid.get('origin'),
+        signature=uid.get('signature'),
+        count=uid.get('count'),
+        destination=uid.get('destination'),
+        payload=uid.get('payload'),
+    )
+
     span_report = ReportedSpan(
         span_id=span_id,
-        uid=FaultUid(
-            origin=uid.get('origin'),
-            signature=uid.get('signature'),
-            count=uid.get('count'),
-            destination=uid.get('destination'),
-        ),
+        uid=faultUid,
         injected_fault=injected_fault,
         response=responseData,
     )

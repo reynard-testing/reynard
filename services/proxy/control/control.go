@@ -11,8 +11,11 @@ import (
 	"dflipse.nl/fit-proxy/faultload"
 )
 
+var destination string
+
 func StartControlServer(config config.ControlConfig) {
 	controlPort := ":" + strconv.Itoa(config.Port)
+	destination = config.Destination
 	http.HandleFunc("/v1/faultload/register", registerFaultloadHandler)
 	http.HandleFunc("/v1/faultload/unregister", unregisterFaultloadHandler)
 
@@ -36,16 +39,13 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	faults := newFaultload.Faults
 	myFaults := []faultload.Fault{}
-	// myDestination := tracing.GetHostIdentifier(r.Host)
 
 	log.Printf("\n----------------------------\n")
 	log.Printf("Registering faultload (size=%d) for trace ID %s\n", len(newFaultload.Faults), newFaultload.TraceId)
 	for _, fault := range faults {
-		// TODO: Filter faults based on destination
-		// We don't know our destination yet, so we can't filter
-		// if fault.Uid.Destination == myDestination {
-		myFaults = append(myFaults, fault)
-		// }
+		if fault.Uid.Destination == destination {
+			myFaults = append(myFaults, fault)
+		}
 	}
 
 	log.Printf("Registered %d faults for trace ID %s\n", len(myFaults), newFaultload.TraceId)

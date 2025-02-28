@@ -13,6 +13,7 @@ import nl.dflipse.fit.instrument.services.InstrumentedService;
 import nl.dflipse.fit.instrument.services.Jaeger;
 import nl.dflipse.fit.instrument.services.OTELCollectorService;
 import nl.dflipse.fit.instrument.services.OrchestratorService;
+import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class InstrumentedApp implements FaultController {
@@ -95,7 +96,7 @@ public class InstrumentedApp implements FaultController {
         return proxyList;
     }
 
-    public TraceTreeSpan getTrace(Faultload faultload) throws IOException {
+    public TraceAnalysis getTrace(Faultload faultload) throws IOException {
         if (controller == null) {
             throw new IllegalStateException("Controller not initialized. First call start().");
         }

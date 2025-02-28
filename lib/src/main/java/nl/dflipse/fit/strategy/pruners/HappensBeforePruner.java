@@ -11,19 +11,18 @@ import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.HistoricStore;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TransativeRelation;
-import nl.dflipse.fit.strategy.util.TreeAnalysis;
 
 public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
-    private TreeAnalysis treeAnalysis;
+    private FaultloadResult initialResult;
     private TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
 
     @Override
     public Void handleFeedback(FaultloadResult result, HistoricStore history) {
         if (result.isInitial()) {
-            treeAnalysis = new TreeAnalysis(result.trace);
+            initialResult = result;
 
             // add the parent-child relations
-            for (var pair : treeAnalysis.getRelations()) {
+            for (var pair : result.trace.getRelations()) {
                 var parent = pair.getFirst();
                 var child = pair.getSecond();
                 happensBefore.addRelation(parent, child);
@@ -46,7 +45,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
             var cause = injectedErrorFaults.iterator().next();
 
             var faultsInTrace = result.trace.getFaultUids();
-            var dissappearedFaults = treeAnalysis.getFaultUids()
+            var dissappearedFaults = initialResult.trace.getFaultUids()
                     .stream()
                     .filter(f -> !faultsInTrace.contains(f))
                     .filter(f -> !f.equals(cause))
@@ -68,16 +67,16 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
         // Case 0: if the cause is a decendant of the effect
         // Then it is trivial, and covered by the Parent-Child pruner
 
-        if (treeAnalysis.isDecendantOf(cause, effect)) {
+        if (initialResult.trace.isDecendantOf(cause, effect)) {
             System.out.println("Parent-Child happens before: " + cause + " -> " + effect);
             // happensBefore.addRelation(cause, effect);
             return;
         }
 
-        var effectParent = treeAnalysis.getParent(effect);
-        var causeParent = treeAnalysis.getParent(cause);
+        var effectParent = initialResult.trace.getParent(effect);
+        var causeParent = initialResult.trace.getParent(cause);
 
-        boolean directHappensBefore = treeAnalysis.isEqual(causeParent, effectParent);
+        boolean directHappensBefore = initialResult.trace.isEqual(causeParent, effectParent);
 
         // Case 1: if they share the same parent
         // Then the cause happens before the effect
@@ -89,7 +88,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
 
         // Case 2: if a ancestor of the cause is the parent of the effect
         // Then the parent cause happens before the effect
-        var causeAncestors = treeAnalysis.getParents(cause);
+        var causeAncestors = initialResult.trace.getParents(cause);
         if (causeAncestors.contains(effectParent)) {
             System.out.println("Direct happens before: " + cause + " -> " + effect);
             happensBefore.addRelation(cause, effect);

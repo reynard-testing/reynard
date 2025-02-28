@@ -25,6 +25,7 @@ import nl.dflipse.fit.strategy.handlers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
+import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class FiTestExtension
@@ -180,7 +181,7 @@ public class FiTestExtension
                             + (testFailed ? "FAIL" : "PASS"));
 
             try {
-                TraceTreeSpan trace = controller.getTrace(faultload);
+                TraceAnalysis trace = controller.getTrace(faultload);
                 FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
                 strategy.handleResult(result);
             } catch (IOException e) {

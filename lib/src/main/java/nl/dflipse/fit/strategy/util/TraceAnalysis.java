@@ -6,41 +6,105 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
-public class TreeAnalysis {
-    public TraceTreeSpan rootNode;
+public class TraceAnalysis {
+    private Set<FaultUid> faultUids = new HashSet<>();
+    private Set<Fault> faults = new HashSet<>();
+    private Set<TraceTreeSpan> faultInjectionPoints = new HashSet<>();
 
-    private Set<FaultUid> faultUids;
+    private boolean isIncomplete = false;
 
     // --- Parent-Child relations
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
+    UndirectedRelation<FaultUid> concurrentRelation = new UndirectedRelation<>();
 
-    public TreeAnalysis(TraceTreeSpan rootNode) {
-        this.rootNode = rootNode;
-        this.faultUids = new HashSet<>();
+    public TraceAnalysis(TraceTreeSpan rootNode) {
         // Parent null indicates the root request
-        findParentChilds(rootNode, null);
+        analyseNode(rootNode, null);
+        findConcurrent();
     }
 
-    private void findParentChilds(TraceTreeSpan node, FaultUid parent) {
+    /** Analyse the node, given the most direct FaultUid ancestor */
+    private void analyseNode(TraceTreeSpan node, FaultUid parent) {
         FaultUid nextParent = parent;
 
-        if (node.report != null) {
+        // Check if the node has a report from a fault injection proxy
+        if (node.hasReport()) {
+            // Save the faultUid
+            faultInjectionPoints.add(node);
             faultUids.add(node.report.faultUid);
+
+            // Save the parent-child relation
+            // Update the most direct parent
             var child = node.report.faultUid;
             parentChildRelation.addRelation(parent, child);
             nextParent = child;
+
+            // Check if the node is incomplete
+            // If the response is null, the fault point was reached, but the response was
+            // not yet received
+            if (node.report.response == null) {
+                isIncomplete = true;
+            }
+
+            // Save the fault
+            if (node.report.injectedFault != null) {
+                faults.add(node.report.injectedFault);
+            }
         }
 
         for (var child : node.children) {
-            findParentChilds(child, nextParent);
+            analyseNode(child, nextParent);
+        }
+    }
+
+    private boolean timeOverlap(long start1, long end1, long start2, long end2) {
+        return start1 < end2 && end1 > start2;
+    }
+
+    private boolean timeOverlap(TraceTreeSpan n1, TraceTreeSpan n2) {
+        return timeOverlap(n1.span.startTime, n1.span.endTime, n2.span.startTime, n2.span.endTime);
+    }
+
+    private void areConcurrent(TraceTreeSpan n1, TraceTreeSpan n2) {
+        // Must have the same parent
+
+        if (!n1.span.parentSpanId.equals(n2.span.parentSpanId)) {
+            return;
+        }
+
+        if (timeOverlap(n1, n2)) {
+            concurrentRelation.addRelation(n1.report.faultUid, n2.report.faultUid);
+            System.out.println("Concurrent: " + n1.report.faultUid + " + " + n2.report.faultUid);
+        }
+    }
+
+    private void findConcurrent() {
+        var fiArray = faultInjectionPoints.toArray(new TraceTreeSpan[0]);
+
+        for (int i = 0; i < fiArray.length; i++) {
+            for (int j = i + 1; j < fiArray.length; j++) {
+                var s1 = fiArray[i];
+                var s2 = fiArray[j];
+
+                areConcurrent(s1, s2);
+            }
         }
     }
 
     public Set<FaultUid> getFaultUids() {
         return faultUids;
+    }
+
+    public Set<Fault> getFaults() {
+        return faults;
+    }
+
+    public boolean isIncomplete() {
+        return isIncomplete;
     }
 
     public List<Pair<FaultUid, FaultUid>> getRelations() {

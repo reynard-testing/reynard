@@ -5,14 +5,14 @@ import java.util.Set;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.trace.tree.TraceTreeSpan;
+import nl.dflipse.fit.strategy.util.TraceAnalysis;
 
 public class FaultloadResult {
     public Faultload faultload;
-    public TraceTreeSpan trace;
+    public TraceAnalysis trace;
     public boolean passed;
 
-    public FaultloadResult(Faultload faultload, TraceTreeSpan trace, boolean passed) {
+    public FaultloadResult(Faultload faultload, TraceAnalysis trace, boolean passed) {
         this.faultload = faultload;
         this.trace = trace;
         this.passed = passed;

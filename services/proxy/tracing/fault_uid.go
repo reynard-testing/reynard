@@ -69,7 +69,7 @@ func getCallSignature(r *http.Request) string {
 	return pathOnly
 }
 
-func getHostIdentifier(addr string) string {
+func GetHostIdentifier(addr string) string {
 	names, err := net.LookupAddr(addr)
 	if err != nil || len(names) == 0 {
 		// Handle the case where no hostname is found
@@ -97,7 +97,7 @@ func getOrigin(r *http.Request) string {
 	}
 
 	log.Printf("Remote address: %s\n", r.RemoteAddr)
-	return getHostIdentifier(host)
+	return GetHostIdentifier(host)
 }
 
 func getDestination(r *http.Request) string {
@@ -107,5 +107,5 @@ func getDestination(r *http.Request) string {
 		return "<none>"
 	}
 
-	return getHostIdentifier(host)
+	return GetHostIdentifier(host)
 }

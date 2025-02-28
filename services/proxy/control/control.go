@@ -37,11 +37,12 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	faults := newFaultload.Faults
 	myFaults := []faultload.Fault{}
+	myDestination := tracing.GetHostIdentifier(r.Host)
 
 	log.Printf("\n----------------------------\n")
 	log.Printf("Registering faultload (size=%d) for trace ID %s\n", len(newFaultload.Faults), newFaultload.TraceId)
 	for _, fault := range faults {
-		if fault.Uid.Destination == tracing.ServiceName {
+		if fault.Uid.Destination == myDestination {
 			myFaults = append(myFaults, fault)
 		}
 	}

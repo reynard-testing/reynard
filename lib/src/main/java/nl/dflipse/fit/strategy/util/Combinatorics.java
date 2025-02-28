@@ -1,10 +1,7 @@
 package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Combinatorics {
     public static <T> List<List<T>> generatePowerSet(List<T> originalSet) {
@@ -35,20 +32,13 @@ public class Combinatorics {
         return powerSet;
     }
 
-    // public static <T> Stream<List<T>> streamPowerSet(List<T> originalSet) {
-    // if (originalSet.isEmpty()) {
-    // return Stream.of(Collections.emptyList());
-    // }
+    public static <T> List<List<T>> combinations(List<T> originalSet, int k) {
+        List<List<T>> res = new ArrayList<>();
+        var it = new SimpleCombinationIterator<>(originalSet, k);
+        while (it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
 
-    // T head = originalSet.get(0);
-    // List<T> rest = originalSet.subList(1, originalSet.size());
-
-    // // Recursively generate power set using streams
-    // return generatePowerSet(rest)
-    // .flatMap(subset -> Stream.of(
-    // subset, // Without head
-    // Stream.concat(Stream.of(head), subset.stream()) // With head
-    // .collect(Collectors.toList()) // Convert back to list
-    // ));
-    // }
+    }
 }

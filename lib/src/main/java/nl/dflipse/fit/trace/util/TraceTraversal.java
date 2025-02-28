@@ -17,7 +17,21 @@ public class TraceTraversal {
         traverseDepthFirst(traceTreeRoot, action);
     }
 
-    private static void traverseDepthFirst(TraceTreeSpan spanNode, java.util.function.Consumer<TraceTreeSpan> action) {
+    public static void traverseDepthFirst(TraceTreeSpan spanNode, java.util.function.Consumer<TraceTreeSpan> action) {
+        if (spanNode == null) {
+            return;
+        }
+
+        if (spanNode.children != null) {
+            for (TraceTreeSpan child : spanNode.children) {
+                traverseDepthFirst(child, action);
+            }
+        }
+
+        action.accept(spanNode);
+    }
+
+    public static void traverseBreadthFirst(TraceTreeSpan spanNode, java.util.function.Consumer<TraceTreeSpan> action) {
         if (spanNode == null) {
             return;
         }
@@ -26,7 +40,7 @@ public class TraceTraversal {
 
         if (spanNode.children != null) {
             for (TraceTreeSpan child : spanNode.children) {
-                traverseDepthFirst(child, action);
+                traverseBreadthFirst(child, action);
             }
         }
     }
@@ -96,25 +110,29 @@ public class TraceTraversal {
             return new LinkedList<>();
         }
 
-        return visitDepthFirst(traceTreeRoot);
-    }
-
-    private static List<FaultUid> visitDepthFirst(TraceTreeSpan spanNode) {
         List<FaultUid> faults = new LinkedList<>();
 
-        if (spanNode == null) {
-            return faults;
-        }
-
-        if (spanNode.children != null) {
-            for (TraceTreeSpan child : spanNode.children) {
-                faults.addAll(visitDepthFirst(child));
+        traverseDepthFirst(traceTreeRoot, (node) -> {
+            if (node.hasReport()) {
+                faults.add(node.report.faultUid);
             }
+        });
+
+        return faults;
+    }
+
+    public static List<FaultUid> breadthFirstFaultpoints(TraceTreeSpan traceTreeRoot) {
+        if (traceTreeRoot == null) {
+            return new LinkedList<>();
         }
 
-        if (spanNode.report != null) {
-            faults.add(spanNode.report.faultUid);
-        }
+        List<FaultUid> faults = new LinkedList<>();
+
+        traverseBreadthFirst(traceTreeRoot, (node) -> {
+            if (node.hasReport()) {
+                faults.add(node.report.faultUid);
+            }
+        });
 
         return faults;
     }

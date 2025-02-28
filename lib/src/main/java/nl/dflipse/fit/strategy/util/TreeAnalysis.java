@@ -1,8 +1,10 @@
 package nl.dflipse.fit.strategy.util;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
@@ -57,6 +59,10 @@ public class TreeAnalysis {
         return parentChildRelation.getDecendants(parent);
     }
 
+    public Set<FaultUid> getChildren(FaultUid parent) {
+        return parentChildRelation.getChildren(parent);
+    }
+
     public List<FaultUid> getParents(FaultUid parent) {
         List<FaultUid> parents = parentChildRelation.getParents(parent);
         parents.add(null);
@@ -85,6 +91,49 @@ public class TreeAnalysis {
 
     public boolean sameParent(FaultUid fault1, FaultUid fault2) {
         return isEqual(getParent(fault1), getParent(fault2));
+    }
+
+    public enum TraversalStrategy {
+        DEPTH_FIRST, BREADTH_FIRST
+    }
+
+    public List<FaultUid> getFaultUids(TraversalStrategy strategy) {
+        List<FaultUid> faults = new ArrayList<>();
+        traverseFaults(faults::add, strategy);
+        return faults;
+    }
+
+    public void traverseFaults(Consumer<FaultUid> consumer, TraversalStrategy strategy) {
+        switch (strategy) {
+            case DEPTH_FIRST:
+                traverseDepthFirst(null, consumer);
+                break;
+            case BREADTH_FIRST:
+                traverseBreadthFirst(null, consumer);
+                break;
+        }
+    }
+
+    public void traverseDepthFirst(FaultUid node, Consumer<FaultUid> consumer) {
+        for (var child : getChildren(node)) {
+            traverseDepthFirst(child, consumer);
+        }
+
+        if (node != null) {
+            consumer.accept(node);
+        }
+
+    }
+
+    public void traverseBreadthFirst(FaultUid node, Consumer<FaultUid> consumer) {
+        if (node != null) {
+            consumer.accept(node);
+        }
+
+        for (var child : getChildren(node)) {
+            traverseBreadthFirst(child, consumer);
+        }
+
     }
 
 }

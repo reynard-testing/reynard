@@ -18,7 +18,9 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
+import nl.dflipse.fit.strategy.generators.BreadthFirstGenerator;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
+import nl.dflipse.fit.strategy.generators.RandomPowersetGenerator;
 import nl.dflipse.fit.strategy.handlers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
@@ -51,13 +53,12 @@ public class FiTestExtension
         var parentChild = new ParentChildPruner();
         var happensBefore = new HappensBeforePruner();
         strategy = new StrategyRunner()
+                // .withGenerator(new RandomPowersetGenerator())
+                // .withGenerator(new BreadthFirstGenerator())
                 .withGenerator(new DepthFirstGenerator())
                 .withPruner(failStop)
-                .withAnalyzer(failStop)
                 .withPruner(parentChild)
-                .withAnalyzer(parentChild)
                 .withPruner(happensBefore)
-                .withAnalyzer(happensBefore)
                 .withAnalyzer(new RedundancyAnalyzer());
 
         Class<?> testClass = context.getRequiredTestClass();

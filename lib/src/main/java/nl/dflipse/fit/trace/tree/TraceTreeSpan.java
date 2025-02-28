@@ -25,6 +25,10 @@ public class TraceTreeSpan {
     @JsonProperty("report")
     public TraceSpanReport report;
 
+    public boolean hasReport() {
+        return report != null;
+    }
+
     public boolean isIncomplete() {
         boolean incomplete = false;
 

@@ -2,6 +2,7 @@ package nl.dflipse.fit.strategy.generators;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
@@ -13,16 +14,20 @@ import nl.dflipse.fit.strategy.util.AllCombinationIterator;
 import nl.dflipse.fit.strategy.util.TreeAnalysis;
 import nl.dflipse.fit.strategy.util.TreeAnalysis.TraversalStrategy;
 
-public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
+/*
+ * Generate all possible combinations of faults in a breadth-first manner.
+ * 
+ */
+public class BreadthFirstGenerator implements Generator, FeedbackHandler<Void> {
     private List<FaultMode> modes;
     private List<FaultUid> potentialFaults;
     private AllCombinationIterator<FaultUid> iterator;
 
-    public DepthFirstGenerator(List<FaultMode> modes) {
+    public BreadthFirstGenerator(List<FaultMode> modes) {
         this.modes = modes;
     }
 
-    public DepthFirstGenerator() {
+    public BreadthFirstGenerator() {
         // DelayFault.fromDelayMs(1000),
         // ErrorFault.fromError(ErrorFault.HttpError.REQUEST_TIMEOUT)
 
@@ -34,16 +39,17 @@ public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
     public Void handleFeedback(FaultloadResult result, HistoricStore history) {
         if (result.isInitial()) {
             TreeAnalysis treeAnalysis = new TreeAnalysis(result.trace);
-            potentialFaults = treeAnalysis.getFaultUids(TraversalStrategy.DEPTH_FIRST);
+            potentialFaults = treeAnalysis.getFaultUids(TraversalStrategy.BREADTH_FIRST);
 
             for (var fault : potentialFaults) {
-                System.out.println("[DFS] Found fault: " + fault);
+                System.out.println("[BFS] Found fault: " + fault);
             }
 
             iterator = new AllCombinationIterator<FaultUid>(potentialFaults);
             System.out
-                    .println("[DFS] Found " + potentialFaults.size() + " fault points. Will generate " + iterator.size()
+                    .println("[BFS] Found " + potentialFaults.size() + " fault points. Will generate " + iterator.size()
                             + " new combinations");
+
         }
 
         return null;

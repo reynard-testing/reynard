@@ -11,9 +11,11 @@ import (
 	"dflipse.nl/fit-proxy/faultload"
 )
 
-var ServiceName string = os.Getenv("SERVICE_NAME")
-var stackName string = os.Getenv("STACK_NAME")
-var pathPrefix string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
+var (
+	ServiceName string = os.Getenv("SERVICE_NAME")
+	stackPrefix string = os.Getenv("STACK_PREFIX")
+	pathPrefix  string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
+)
 
 func getEnvOrDefault(envVar, defaultValue string) string {
 	value := os.Getenv(envVar)
@@ -75,28 +77,21 @@ func getOriginatingService(r *http.Request) string {
 		return "<none>"
 	}
 
+	log.Printf("Remote address: %s\n", r.RemoteAddr)
 	names, err := net.LookupAddr(host)
 	if err != nil || len(names) == 0 {
 		// Handle the case where no hostname is found
 		return host // Return the IP as fallback
 	}
 	// Extract service name from the FQDN
-	log.Print(names)
+	log.Printf("Hostnames: %s\n", names)
 	fqdn := names[0]
 	parts := strings.Split(fqdn, ".")
 	if len(parts) == 0 {
 		return fqdn
 	}
 
-	fullStackName := parts[0] // The first part of the FQDN is usually the service name
-	serviceId := strings.TrimPrefix(fullStackName, stackName+"-")
-
-	// Split the service name on "-"
-	serviceParts := strings.Split(serviceId, "-")
-	if len(serviceParts) == 0 {
-		return serviceId
-	}
-
-	serviceName := serviceParts[0]
-	return serviceName
+	serviceName := parts[0]
+	serviceWithoutPrefix := strings.TrimPrefix(serviceName, stackPrefix)
+	return serviceWithoutPrefix
 }

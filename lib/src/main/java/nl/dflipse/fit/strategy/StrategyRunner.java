@@ -101,6 +101,10 @@ public class StrategyRunner {
     public List<Faultload> generate() {
         List<Faultload> newFaultloads = new ArrayList<>();
 
+        if (generators.isEmpty()) {
+            throw new RuntimeException("[Strategy] No generators are available, make sure to register at least one!");
+        }
+
         for (Generator generator : generators) {
             newFaultloads.addAll(generator.generate());
         }

@@ -53,9 +53,9 @@ public class FiTestExtension
         var parentChild = new ParentChildPruner();
         var happensBefore = new HappensBeforePruner();
         strategy = new StrategyRunner()
-                .withGenerator(new RandomPowersetGenerator())
+                // .withGenerator(new RandomPowersetGenerator())
                 // .withGenerator(new BreadthFirstGenerator())
-                // .withGenerator(new DepthFirstGenerator())
+                .withGenerator(new DepthFirstGenerator())
                 .withPruner(failStop)
                 .withPruner(parentChild)
                 .withPruner(happensBefore)

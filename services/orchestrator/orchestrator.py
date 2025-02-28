@@ -356,7 +356,7 @@ async def unregister_faultload_at_proxy(proxy: str, payload):
 
 
 @app.route("/v1/faultload/unregister", methods=['POST'])
-async def register_faultload():
+async def unregister_faultload():
     payload = request.get_json()
     trace_id = payload.get('trace_id')
     trace_ids.remove(trace_id)

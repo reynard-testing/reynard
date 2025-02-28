@@ -28,13 +28,13 @@ func getEnvOrDefault(envVar, defaultValue string) string {
 func FaultUidFromRequest(r *http.Request) faultload.FaultUid {
 	traceId := getTraceId(r)
 	signature := getCallSignature(r)
-	clientName := getOriginatingService(r)
-	// clientName := r.RemoteAddr
-	invocationCount := getInvocationCount(clientName, signature, traceId)
+	origin := getOrigin(r)
+	destination := getDestination(r)
+	invocationCount := getInvocationCount(origin, signature, traceId)
 
 	return faultload.FaultUid{
-		Origin:      clientName,
-		Destination: ServiceName,
+		Origin:      origin,
+		Destination: destination,
 		Signature:   signature,
 		Count:       invocationCount,
 	}
@@ -69,19 +69,11 @@ func getCallSignature(r *http.Request) string {
 	return pathOnly
 }
 
-// Returns the hostname of the service that made the request
-func getOriginatingService(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		log.Printf("Failed to get originating service: %v\n", err)
-		return "<none>"
-	}
-
-	log.Printf("Remote address: %s\n", r.RemoteAddr)
-	names, err := net.LookupAddr(host)
+func getHostIdentifier(addr string) string {
+	names, err := net.LookupAddr(addr)
 	if err != nil || len(names) == 0 {
 		// Handle the case where no hostname is found
-		return host // Return the IP as fallback
+		return addr // Return the IP as fallback
 	}
 	// Extract service name from the FQDN
 	log.Printf("Hostnames: %s\n", names)
@@ -94,4 +86,26 @@ func getOriginatingService(r *http.Request) string {
 	serviceName := parts[0]
 	serviceWithoutPrefix := strings.TrimPrefix(serviceName, stackPrefix)
 	return serviceWithoutPrefix
+}
+
+// Returns the hostname of the service that made the request
+func getOrigin(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		log.Printf("Failed to get originating service: %v\n", err)
+		return "<none>"
+	}
+
+	log.Printf("Remote address: %s\n", r.RemoteAddr)
+	return getHostIdentifier(host)
+}
+
+func getDestination(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.Host)
+	if err != nil {
+		log.Printf("Failed to get destination: %v\n", err)
+		return "<none>"
+	}
+
+	return getHostIdentifier(host)
 }

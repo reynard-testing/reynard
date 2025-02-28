@@ -77,7 +77,7 @@ public class RemoteController implements FaultController {
     }
 
     public void registerFaultload(Faultload faultload) {
-        String queryUrl = collectorUrl + "/v1/register_faultload";
+        String queryUrl = collectorUrl + "/v1/faultload/register";
 
         try {
             String jsonBody = faultload.serializeJson();
@@ -88,6 +88,27 @@ public class RemoteController implements FaultController {
             var resBody = res.returnContent().asString(); // Ensure the request is executed
             if (!resBody.equals("OK")) {
                 throw new IOException("Failed to register faultload: " + resBody);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void unregisterFaultload(Faultload faultload) {
+        String queryUrl = collectorUrl + "/v1/faultload/unregister";
+        ObjectMapper mapper = new ObjectMapper();
+        var node = mapper.createObjectNode();
+        node.put("trace_id", faultload.getTraceId());
+
+        try {
+            String jsonBody = node.toString();
+
+            Response res = Request.post(queryUrl)
+                    .bodyString(jsonBody, ContentType.APPLICATION_JSON)
+                    .execute();
+            var resBody = res.returnContent().asString(); // Ensure the request is executed
+            if (!resBody.equals("OK")) {
+                throw new IOException("Failed to unregister faultload: " + resBody);
             }
         } catch (IOException e) {
             e.printStackTrace();

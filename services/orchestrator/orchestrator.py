@@ -325,7 +325,7 @@ async def report_span_id():
 
 
 async def register_faultload_at_proxy(proxy: str, payload):
-    url = f"http://{proxy}/v1/register_faultload"
+    url = f"http://{proxy}/v1/faultload/register"
     response = requests.post(url, json=payload)
 
     if response.status_code != 200:
@@ -333,13 +333,35 @@ async def register_faultload_at_proxy(proxy: str, payload):
             f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}")
 
 
-@app.route("/v1/register_faultload", methods=['POST'])
+@app.route("/v1/faultload/register", methods=['POST'])
 async def register_faultload():
     payload = request.get_json()
     trace_id = payload.get('trace_id')
     trace_ids.add(trace_id)
 
     tasks = [register_faultload_at_proxy(
+        proxy, payload) for proxy in proxy_list]
+    await asyncio.gather(*tasks)
+
+    return "OK", 200
+
+
+async def unregister_faultload_at_proxy(proxy: str, payload):
+    url = f"http://{proxy}/v1/faultload/unregister"
+    response = requests.post(url, json=payload)
+
+    if response.status_code != 200:
+        raise Exception(
+            f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}")
+
+
+@app.route("/v1/faultload/unregister", methods=['POST'])
+async def register_faultload():
+    payload = request.get_json()
+    trace_id = payload.get('trace_id')
+    trace_ids.remove(trace_id)
+
+    tasks = [unregister_faultload_at_proxy(
         proxy, payload) for proxy in proxy_list]
     await asyncio.gather(*tasks)
 

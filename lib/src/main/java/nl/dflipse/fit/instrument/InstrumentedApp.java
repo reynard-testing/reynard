@@ -111,6 +111,14 @@ public class InstrumentedApp implements FaultController {
         controller.registerFaultload(faultload);
     }
 
+    public void unregisterFaultload(Faultload faultload) {
+        if (controller == null) {
+            throw new IllegalStateException("Controller not initialized. First call start().");
+        }
+
+        controller.unregisterFaultload(faultload);
+    }
+
     public void start() {
         for (var service : services) {
             service.start();

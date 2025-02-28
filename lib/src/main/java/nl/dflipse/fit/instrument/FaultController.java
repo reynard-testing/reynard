@@ -9,4 +9,6 @@ public interface FaultController {
     public TraceTreeSpan getTrace(Faultload faultload) throws IOException;
 
     public void registerFaultload(Faultload faultload);
+
+    public void unregisterFaultload(Faultload faultload);
 }

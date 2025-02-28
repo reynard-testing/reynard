@@ -183,6 +183,7 @@ public class FiTestExtension
                 TraceTreeSpan trace = controller.getTrace(faultload);
                 FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
                 strategy.handleResult(result);
+                controller.unregisterFaultload(faultload);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -1,6 +1,7 @@
 package control
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,18 +13,19 @@ import (
 )
 
 func StartControlServer(config config.ControlConfig) {
-	registerFaultloadPort := ":" + strconv.Itoa(config.Port)
-	http.HandleFunc("/v1/register_faultload", registerFaultloadHandler)
+	controlPort := ":" + strconv.Itoa(config.Port)
+	http.HandleFunc("/v1/faultload/register", registerFaultloadHandler)
+	http.HandleFunc("/v1/faultload/unregister", unregisterFaultloadHandler)
 
-	err := http.ListenAndServe(registerFaultloadPort, nil)
-	log.Printf("Listening for control commands on port %s\n", registerFaultloadPort)
+	err := http.ListenAndServe(controlPort, nil)
+	log.Printf("Listening for control commands on port %s\n", controlPort)
 
 	if err != nil {
 		log.Fatalf("Error starting register faultload server: %v\n", err)
 	}
 }
 
-// Handle the /v1/register_faultload endpoint
+// Handle the /v1/faultload/register endpoint
 func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the newFaultload from the request body
 	newFaultload, err := faultload.ParseRequest(r)
@@ -47,6 +49,31 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Registered %d faults for trace ID %s\n", len(myFaults), newFaultload.TraceId)
 	// Store the faultload for the given trace ID
 	RegisteredFaults.Register(newFaultload.TraceId, myFaults)
+
+	// Respond with a 200 OK
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "OK")
+}
+
+type UnregisterFaultloadRequest struct {
+	TraceId string `json:"trace_id"`
+}
+
+// Handle the /v1/faultload/unregister endpoint
+func unregisterFaultloadHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse the newFaultload from the request body
+	var requestData UnregisterFaultloadRequest
+	err := json.NewDecoder(r.Body).Decode(&requestData)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Failed to parse request body: %v", err)
+		return
+	}
+
+	log.Printf("Removed faults for trace ID %s\n", requestData.TraceId)
+	// Store the faultload for the given trace ID
+	RegisteredFaults.Remove(requestData.TraceId)
 
 	// Respond with a 200 OK
 	w.WriteHeader(http.StatusOK)

@@ -20,6 +20,7 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.generators.BreadthFirstGenerator;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
+import nl.dflipse.fit.strategy.generators.RandomPowersetGenerator;
 import nl.dflipse.fit.strategy.handlers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
@@ -52,7 +53,8 @@ public class FiTestExtension
         var parentChild = new ParentChildPruner();
         var happensBefore = new HappensBeforePruner();
         strategy = new StrategyRunner()
-                .withGenerator(new BreadthFirstGenerator())
+                .withGenerator(new RandomPowersetGenerator())
+                // .withGenerator(new BreadthFirstGenerator())
                 // .withGenerator(new DepthFirstGenerator())
                 .withPruner(failStop)
                 .withPruner(parentChild)

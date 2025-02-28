@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy.generators;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
@@ -9,20 +10,20 @@ import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.HistoricStore;
-import nl.dflipse.fit.strategy.util.AllCombinationIterator;
+import nl.dflipse.fit.strategy.util.PowersetIterator;
 import nl.dflipse.fit.strategy.util.TreeAnalysis;
 import nl.dflipse.fit.strategy.util.TreeAnalysis.TraversalStrategy;
 
-public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
+public class RandomPowersetGenerator implements Generator, FeedbackHandler<Void> {
     private List<FaultMode> modes;
     private List<FaultUid> potentialFaults;
-    private AllCombinationIterator<FaultUid> iterator;
+    private PowersetIterator<FaultUid> iterator;
 
-    public DepthFirstGenerator(List<FaultMode> modes) {
+    public RandomPowersetGenerator(List<FaultMode> modes) {
         this.modes = modes;
     }
 
-    public DepthFirstGenerator() {
+    public RandomPowersetGenerator() {
         // DelayFault.fromDelayMs(1000),
         // ErrorFault.fromError(ErrorFault.HttpError.REQUEST_TIMEOUT)
 
@@ -37,12 +38,14 @@ public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
             potentialFaults = treeAnalysis.getFaultUids(TraversalStrategy.DEPTH_FIRST);
 
             for (var fault : potentialFaults) {
-                System.out.println("[DFS] Found fault: " + fault);
+                System.out.println("[RG] Found fault: " + fault);
             }
 
-            iterator = new AllCombinationIterator<FaultUid>(potentialFaults);
+            var shuffledFaults = new ArrayList<>(potentialFaults);
+            Collections.shuffle(shuffledFaults);
+            iterator = new PowersetIterator<FaultUid>(shuffledFaults, false);
             System.out
-                    .println("[DFS] Found " + potentialFaults.size() + " fault points. Will generate " + iterator.size()
+                    .println("[RG] Found " + potentialFaults.size() + " fault points. Will generate " + iterator.size()
                             + " new combinations");
         }
 
@@ -72,7 +75,7 @@ public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
     @Override
     public void mockFaultUids(List<FaultUid> faultUids) {
         this.potentialFaults = faultUids;
-        this.iterator = new AllCombinationIterator<FaultUid>(potentialFaults);
+        this.iterator = new PowersetIterator<FaultUid>(potentialFaults, false);
     }
 
 }

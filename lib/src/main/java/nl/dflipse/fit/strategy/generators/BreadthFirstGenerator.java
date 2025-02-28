@@ -75,4 +75,10 @@ public class BreadthFirstGenerator implements Generator, FeedbackHandler<Void> {
         return faultLoads;
     }
 
+    @Override
+    public void mockFaultUids(List<FaultUid> faultUids) {
+        this.potentialFaults = faultUids;
+        this.iterator = new AllCombinationIterator<FaultUid>(potentialFaults);
+    }
+
 }

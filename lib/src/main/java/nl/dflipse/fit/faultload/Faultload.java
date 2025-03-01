@@ -49,6 +49,17 @@ public class Faultload {
         return String.join(", ", readableFaults);
     }
 
+    public boolean hasFaultMode(String... faultType) {
+        for (Fault fault : faults) {
+            for (String type : faultType) {
+                if (fault.getMode().getType().equals(type)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public String serializeJson() {
         return FaultloadSerializer.serializeJson(this);
     }

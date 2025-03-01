@@ -78,7 +78,6 @@ public class TraceAnalysis {
 
         if (timeOverlap(n1, n2)) {
             concurrentRelation.addRelation(n1.report.faultUid, n2.report.faultUid);
-            System.out.println("Concurrent: " + n1.report.faultUid + " + " + n2.report.faultUid);
         }
     }
 

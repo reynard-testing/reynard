@@ -50,6 +50,14 @@ public class TraceAnalysis {
                 isIncomplete = true;
             }
 
+            // If a remote call is detected (so our own proxy)
+            // But no children exist.
+            // TODO: is this solvable? Often is a misconfiguration, but we can still
+            // exercise the FI point.
+            // if (node.children.isEmpty()) {
+            // isIncomplete = true;
+            // }
+
             // Save the fault
             if (node.report.injectedFault != null) {
                 faults.add(node.report.injectedFault);
@@ -72,7 +80,7 @@ public class TraceAnalysis {
     private void areConcurrent(TraceTreeSpan n1, TraceTreeSpan n2) {
         // Must have the same parent
 
-        if (!n1.span.parentSpanId.equals(n2.span.parentSpanId)) {
+        if (n1.span.parentSpanId == null || !n1.span.parentSpanId.equals(n2.span.parentSpanId)) {
             return;
         }
 

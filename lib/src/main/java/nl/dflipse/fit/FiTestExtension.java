@@ -17,13 +17,10 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.HttpError;
-import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
-import nl.dflipse.fit.strategy.generators.BreadthFirstGenerator;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
-import nl.dflipse.fit.strategy.generators.RandomPowersetGenerator;
 import nl.dflipse.fit.strategy.handlers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
@@ -53,8 +50,9 @@ public class FiTestExtension
         }
 
         var modes = List.of(
-                // ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE),
-                OmissionFault.fromError(HttpError.SERVICE_UNAVAILABLE));
+                ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE)
+        // OmissionFault.fromError(HttpError.SERVICE_UNAVAILABLE)
+        );
 
         var failStop = new FailStopPruner();
         var parentChild = new ParentChildPruner();

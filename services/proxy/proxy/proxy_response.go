@@ -24,6 +24,18 @@ func (rc *ResponseCapture) Write(b []byte) (int, error) {
 	return rc.ResponseWriter.Write(b) // Write to the actual response
 }
 
+type NoOpResponseWriter struct{}
+
+func (n *NoOpResponseWriter) Header() http.Header {
+	return http.Header{}
+}
+
+func (n *NoOpResponseWriter) Write([]byte) (int, error) {
+	return 0, nil
+}
+
+func (n *NoOpResponseWriter) WriteHeader(statusCode int) {}
+
 func (rc *ResponseCapture) GetResponseData() tracing.ResponseData {
 	body := rc.BodyBuffer.String()
 	status := rc.Status
@@ -35,8 +47,6 @@ func (rc *ResponseCapture) GetResponseData() tracing.ResponseData {
 			body = rc.Header().Get("grpc-message")
 			status = toHttpError(statusCode)
 		}
-	} else {
-		http.Error(rc, "Injected fault: HTTP error", rc.Status)
 	}
 
 	return tracing.ResponseData{

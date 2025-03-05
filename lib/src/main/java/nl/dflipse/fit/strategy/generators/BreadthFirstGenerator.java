@@ -7,11 +7,11 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.HistoricStore;
 import nl.dflipse.fit.strategy.util.AllCombinationIterator;
-import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
 /*
@@ -29,10 +29,10 @@ public class BreadthFirstGenerator implements Generator, FeedbackHandler<Void> {
 
     public BreadthFirstGenerator() {
         // DelayFault.fromDelayMs(1000),
-        // ErrorFault.fromError(ErrorFault.HttpError.REQUEST_TIMEOUT)
+        // ErrorFault.fromError(HttpError.REQUEST_TIMEOUT)
 
         this(List.of(
-                ErrorFault.fromError(ErrorFault.HttpError.SERVICE_UNAVAILABLE)));
+                ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE)));
     }
 
     @Override

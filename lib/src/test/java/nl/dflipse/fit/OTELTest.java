@@ -13,6 +13,8 @@ import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.net.URIBuilder;
 import static org.junit.Assert.assertEquals;
 
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
+import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.controller.RemoteController;
 import nl.dflipse.fit.util.HttpResponse;
@@ -70,8 +72,7 @@ public class OTELTest {
         String inspectUrl = controller.collectorUrl + "/v1/get/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
-        boolean containsError = faultload.getFaults().stream()
-                .anyMatch(f -> f.getMode().getType().equals("HTTP_ERROR"));
+        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
         int expectedResponse = containsError ? 500 : 200;
         int actualResponse = response.statusCode;
         assertEquals(expectedResponse, actualResponse);
@@ -102,8 +103,7 @@ public class OTELTest {
         String inspectUrl = controller.collectorUrl + "/v1/get/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
-        boolean containsError = faultload.getFaults().stream()
-                .anyMatch(f -> f.getMode().getType().equals("HTTP_ERROR"));
+        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
         int expectedResponse = containsError ? 500 : 200;
         int actualResponse = response.statusCode;
         assertEquals(expectedResponse, actualResponse);

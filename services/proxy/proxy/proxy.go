@@ -116,7 +116,10 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			FaultUid: faultUid,
 		}
 
-		capture := &ResponseCapture{ResponseWriter: w, Status: http.StatusOK}
+		capture := &ResponseCapture{
+			ResponseWriter: w,
+			Status:         http.StatusOK,
+		}
 
 		var proxyState ProxyState = ProxyState{
 			InjectedFault:      nil,

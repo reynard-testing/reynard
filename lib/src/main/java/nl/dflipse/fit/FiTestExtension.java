@@ -15,18 +15,17 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
+import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
-import nl.dflipse.fit.strategy.generators.BreadthFirstGenerator;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
-import nl.dflipse.fit.strategy.generators.RandomPowersetGenerator;
 import nl.dflipse.fit.strategy.handlers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
-import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
@@ -50,13 +49,18 @@ public class FiTestExtension
             annotation = context.getRequiredTestClass().getAnnotation(FiTest.class);
         }
 
+        var modes = List.of(
+                ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE)
+        // OmissionFault.fromError(HttpError.SERVICE_UNAVAILABLE)
+        );
+
         var failStop = new FailStopPruner();
         var parentChild = new ParentChildPruner();
         var happensBefore = new HappensBeforePruner();
         strategy = new StrategyRunner()
-                // .withGenerator(new RandomPowersetGenerator())
-                // .withGenerator(new BreadthFirstGenerator())
-                .withGenerator(new DepthFirstGenerator())
+                // .withGenerator(new RandomPowersetGenerator(modes))
+                // .withGenerator(new BreadthFirstGenerator(modes))
+                .withGenerator(new DepthFirstGenerator(modes))
                 .withPruner(failStop)
                 .withPruner(parentChild)
                 .withPruner(happensBefore)

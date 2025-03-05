@@ -16,6 +16,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.strategy.generators.BreadthFirstGenerator;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
 import nl.dflipse.fit.strategy.generators.Generator;
@@ -23,7 +24,7 @@ import nl.dflipse.fit.strategy.generators.RandomPowersetGenerator;
 import nl.dflipse.fit.strategy.util.Combinatorics;
 
 public class CompletenessTest {
-    private static FaultMode mode = ErrorFault.fromError(ErrorFault.HttpError.SERVICE_UNAVAILABLE);
+    private static FaultMode mode = ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE);
 
     private static List<FaultUid> faultUids = List.of(
             new FaultUid("x", "y", "123", "p1", 0),

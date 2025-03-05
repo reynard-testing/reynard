@@ -113,10 +113,7 @@ public class FiTestExtension
     }
 
     public void afterAll() {
-        // all done?
-        System.out.println("---- STATS ----");
-        System.out.println("Queued : " + strategy.queuedCount);
-        System.out.println("Pruned : " + strategy.prunedCount);
+        strategy.statistics.report();
     }
 
     // Parameter resolver to inject the current parameter into the test

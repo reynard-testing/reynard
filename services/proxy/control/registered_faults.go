@@ -19,6 +19,12 @@ func (fr *FaultRegister) Register(traceId string, faults []faultload.Fault) {
 	fr.m[traceId] = faults
 }
 
+func (fr *FaultRegister) Remove(traceId string) {
+	fr.Lock()
+	defer fr.Unlock()
+	delete(fr.m, traceId)
+}
+
 func (fr *FaultRegister) Get(traceId string) ([]faultload.Fault, bool) {
 	fr.RLock()
 	defer fr.RUnlock()

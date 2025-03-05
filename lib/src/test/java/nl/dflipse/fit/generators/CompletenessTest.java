@@ -26,10 +26,10 @@ public class CompletenessTest {
     private static FaultMode mode = ErrorFault.fromError(ErrorFault.HttpError.SERVICE_UNAVAILABLE);
 
     private static List<FaultUid> faultUids = List.of(
-            new FaultUid("x", "y", "123", 0),
-            new FaultUid("b", "x", "456", 0),
-            new FaultUid("b", "x", "456", 1),
-            new FaultUid("z", "d", "789", 0));
+            new FaultUid("x", "y", "123", "p1", 0),
+            new FaultUid("b", "x", "456", "p2", 0),
+            new FaultUid("b", "x", "456", "p2", 1),
+            new FaultUid("z", "d", "789", "p3", 0));
 
     private static List<Fault> faults = faultUids
             .stream()

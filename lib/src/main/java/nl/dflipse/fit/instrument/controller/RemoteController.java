@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.FaultController;
+import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class RemoteController implements FaultController {
@@ -22,7 +23,7 @@ public class RemoteController implements FaultController {
         this.collectorUrl = collectorUrl;
     }
 
-    private TraceTreeSpan attemptToGetTrace(Faultload faultload) throws IOException {
+    private TraceAnalysis attemptToGetTrace(Faultload faultload) throws IOException {
         String queryUrl = collectorUrl + "/v1/get-trees/" + faultload.getTraceId();
         Response res = Request.get(queryUrl).execute();
         String body = res.returnContent().asString();
@@ -38,9 +39,10 @@ public class RemoteController implements FaultController {
             throw new IOException("Trace is not fully connected for traceId: " + faultload.getTraceId());
         }
 
-        var trace = orchestratorResponse.get(0);
+        var traceData = orchestratorResponse.get(0);
+        TraceAnalysis trace = new TraceAnalysis(traceData);
 
-        var rootSpanId = trace.span.spanId;
+        var rootSpanId = traceData.span.spanId;
         var expectedRoot = faultload.getTraceParent().parentSpanId;
         if (!rootSpanId.equals(expectedRoot)) {
             throw new IOException("Root span mismatch: " + rootSpanId + " != " + expectedRoot);
@@ -53,7 +55,7 @@ public class RemoteController implements FaultController {
         return trace;
     }
 
-    public TraceTreeSpan getTrace(Faultload faultload) throws IOException {
+    public TraceAnalysis getTrace(Faultload faultload) throws IOException {
         int maxRetries = 5;
 
         for (int attempt = 0; attempt < maxRetries; attempt++) {
@@ -77,7 +79,7 @@ public class RemoteController implements FaultController {
     }
 
     public void registerFaultload(Faultload faultload) {
-        String queryUrl = collectorUrl + "/v1/register_faultload";
+        String queryUrl = collectorUrl + "/v1/faultload/register";
 
         try {
             String jsonBody = faultload.serializeJson();
@@ -88,6 +90,27 @@ public class RemoteController implements FaultController {
             var resBody = res.returnContent().asString(); // Ensure the request is executed
             if (!resBody.equals("OK")) {
                 throw new IOException("Failed to register faultload: " + resBody);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void unregisterFaultload(Faultload faultload) {
+        String queryUrl = collectorUrl + "/v1/faultload/unregister";
+        ObjectMapper mapper = new ObjectMapper();
+        var node = mapper.createObjectNode();
+        node.put("trace_id", faultload.getTraceId());
+
+        try {
+            String jsonBody = node.toString();
+
+            Response res = Request.post(queryUrl)
+                    .bodyString(jsonBody, ContentType.APPLICATION_JSON)
+                    .execute();
+            var resBody = res.returnContent().asString(); // Ensure the request is executed
+            if (!resBody.equals("OK")) {
+                throw new IOException("Failed to unregister faultload: " + resBody);
             }
         } catch (IOException e) {
             e.printStackTrace();

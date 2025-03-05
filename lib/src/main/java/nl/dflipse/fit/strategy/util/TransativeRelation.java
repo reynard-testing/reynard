@@ -13,6 +13,10 @@ public class TransativeRelation<X> {
     private final Map<X, Set<X>> transitiveRelations = new HashMap<>();
 
     public void addRelation(X parent, X child) {
+        if (hasTransativeRelation(child, parent)) {
+            throw new IllegalArgumentException("Adding this relation would create a circular dependency.");
+        }
+
         inverseRelation.put(child, parent);
         relation.computeIfAbsent(parent, k -> new HashSet<>()).add(child);
         transitiveRelations.computeIfAbsent(parent, k -> new HashSet<>()).add(child);

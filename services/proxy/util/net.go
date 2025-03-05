@@ -3,9 +3,19 @@ package util
 import (
 	"net"
 	"strconv"
+	"strings"
 )
 
-func AsHostPort(hostAndPort string) (string, int) {
+func AsHostAndPortFromUrl(url string) string {
+	parts := strings.Split(url, "://")
+	if len(parts) < 2 {
+		return url
+	}
+
+	return parts[1]
+}
+
+func AsHostAndPort(hostAndPort string) (string, int) {
 	host, port, err := net.SplitHostPort(hostAndPort)
 	if err != nil {
 		return "", 0

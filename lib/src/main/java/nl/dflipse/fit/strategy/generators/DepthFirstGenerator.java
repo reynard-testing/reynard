@@ -10,8 +10,8 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.HistoricStore;
 import nl.dflipse.fit.strategy.util.AllCombinationIterator;
-import nl.dflipse.fit.strategy.util.TreeAnalysis;
-import nl.dflipse.fit.strategy.util.TreeAnalysis.TraversalStrategy;
+import nl.dflipse.fit.strategy.util.TraceAnalysis;
+import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
 public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
     private List<FaultMode> modes;
@@ -33,8 +33,7 @@ public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
     @Override
     public Void handleFeedback(FaultloadResult result, HistoricStore history) {
         if (result.isInitial()) {
-            TreeAnalysis treeAnalysis = new TreeAnalysis(result.trace);
-            potentialFaults = treeAnalysis.getFaultUids(TraversalStrategy.DEPTH_FIRST);
+            potentialFaults = result.trace.getFaultUids(TraversalStrategy.DEPTH_FIRST);
 
             for (var fault : potentialFaults) {
                 System.out.println("[DFS] Found fault: " + fault);

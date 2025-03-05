@@ -1,12 +1,16 @@
 package nl.dflipse.fit.strategy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class StrategyStatistics {
     private Map<String, Integer> generatorCount = new HashMap<>();
     private Map<String, Integer> prunerCount = new HashMap<>();
+    private List<Long> timings = new ArrayList<>();
 
+    private int totalRun = 0;
     private int totalGenerated = 0;
     private int totalPruned = 0;
 
@@ -21,6 +25,18 @@ public class StrategyStatistics {
 
     public void incrementPruned(int count) {
         totalPruned += count;
+    }
+
+    private long getAverageTime() {
+        return (long) timings.stream()
+                .mapToDouble(Long::doubleValue)
+                .average()
+                .orElse(0.0);
+    }
+
+    public void registerTime(long time) {
+        timings.add(time);
+        totalRun++;
     }
 
     // ---- Helper functions for reporting ----
@@ -64,6 +80,8 @@ public class StrategyStatistics {
         System.out.println(padBoth(" Stats ", maxWidth, "-"));
         System.out.println("Total generated : " + totalGenerated);
         System.out.println("Total pruned    : " + totalPruned);
+        System.out.println("Total run       : " + totalRun);
+        System.out.println("Average time    : " + getAverageTime() + " (ms)");
 
         System.out.println();
         System.out.println(padBoth(" Generators ", maxWidth, "-"));
@@ -81,5 +99,4 @@ public class StrategyStatistics {
             System.out.println(key + " : " + entry.getValue());
         }
     }
-
 }

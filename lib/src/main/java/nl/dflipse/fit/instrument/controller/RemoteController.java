@@ -78,6 +78,7 @@ public class RemoteController implements FaultController {
         throw new IOException("Failed to get trace after " + maxRetries + " attempts");
     }
 
+    @Override
     public void registerFaultload(Faultload faultload) {
         String queryUrl = collectorUrl + "/v1/faultload/register";
 
@@ -96,6 +97,7 @@ public class RemoteController implements FaultController {
         }
     }
 
+    @Override
     public void unregisterFaultload(Faultload faultload) {
         String queryUrl = collectorUrl + "/v1/faultload/unregister";
         ObjectMapper mapper = new ObjectMapper();

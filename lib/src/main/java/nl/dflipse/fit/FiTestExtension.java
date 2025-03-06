@@ -20,6 +20,7 @@ import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
+import nl.dflipse.fit.strategy.StrategyStatistics;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
 import nl.dflipse.fit.strategy.handlers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
@@ -113,10 +114,7 @@ public class FiTestExtension
     }
 
     public void afterAll() {
-        // all done?
-        System.out.println("---- STATS ----");
-        System.out.println("Queued : " + strategy.queuedCount);
-        System.out.println("Pruned : " + strategy.prunedCount);
+        strategy.statistics.report();
     }
 
     // Parameter resolver to inject the current parameter into the test
@@ -154,6 +152,7 @@ public class FiTestExtension
                 return;
             }
 
+            faultload.timer.start();
             controller.registerFaultload(faultload);
         }
     }
@@ -172,7 +171,7 @@ public class FiTestExtension
 
         @Override
         public void afterTestExecution(ExtensionContext context) {
-
+            faultload.timer.stop();
             // Access the queue and test result
             // var testMethod = context.getTestMethod().orElseThrow();
             // var annotation = testMethod.getAnnotation(FiTest.class);

@@ -285,8 +285,15 @@ def get_raw_spans():
 @app.route('/v1/get/<trace_id>', methods=['GET'])
 def get_spans_by_trace_id(trace_id):
     spans, trees = get_trace_tree_for_trace(trace_id)
+
+
+    reports = trace_report_lookup.get(trace_id)
+    report_tree = get_report_tree(trees[0]) if len(trees) == 1 else None 
+
     return {
         "spans": spans,
+        "reports": reports,
+        "report_trees": report_tree,
         "trees": trees
     }, 200
 

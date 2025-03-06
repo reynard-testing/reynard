@@ -366,7 +366,9 @@ async def report_span_id():
     print("Found reported span", span_report, flush=True)
 
     span_report_lookup[span_id] = span_report
-    trace_report_lookup.setdefault(trace_id, []).append(span_report)
+    trace_list = trace_report_lookup.setdefault(trace_id, [])
+    # TODO: replace existing report
+    trace_list.append(span_report)
     return "OK", 200
 
 

@@ -12,9 +12,9 @@ import nl.dflipse.fit.trace.tree.TraceSpanReport;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class TraceAnalysis {
-    private Set<FaultUid> faultUids = new HashSet<>();
-    private Set<Fault> faults = new HashSet<>();
-    private Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
+    private final Set<FaultUid> faultUids = new HashSet<>();
+    private final Set<Fault> faults = new HashSet<>();
+    private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
 
     private boolean isIncomplete = false;
 
@@ -24,15 +24,16 @@ public class TraceAnalysis {
 
     public TraceAnalysis(TraceTreeSpan rootNode, List<TraceSpanReport> reports) {
         // Parent null indicates the root request
-        analyseNode(rootNode, null);
-        findConcurrent();
-
         for (var report : reports) {
             faultUids.add(report.faultUid);
+
             if (report.injectedFault != null) {
                 faults.add(report.injectedFault);
             }
         }
+
+        analyseNode(rootNode, null);
+        findConcurrent();
     }
 
     /** Analyse the node, given the most direct FaultUid ancestor */
@@ -155,11 +156,7 @@ public class TraceAnalysis {
             return fault2 == null;
         }
 
-        if (fault1.equals(fault2)) {
-            return true;
-        }
-
-        return false;
+        return fault1.equals(fault2);
     }
 
     public boolean sameParent(FaultUid fault1, FaultUid fault2) {
@@ -171,9 +168,23 @@ public class TraceAnalysis {
     }
 
     public List<FaultUid> getFaultUids(TraversalStrategy strategy) {
-        List<FaultUid> faults = new ArrayList<>();
-        traverseFaults(faults::add, strategy);
-        return faults;
+        List<FaultUid> foundFaults = new ArrayList<>();
+        traverseFaults(foundFaults::add, strategy);
+
+        // ensure each known fault is present, not just those in the tree
+        int missing = 0;
+        for (var fp : faultUids) {
+            if (!foundFaults.contains(fp)) {
+                foundFaults.add(fp);
+                missing++;
+            }
+        }
+
+        if (missing > 0) {
+            System.out.println("[WARN] Missing " + missing + " faultUids in trace tree!");
+        }
+
+        return foundFaults;
     }
 
     public void traverseFaults(Consumer<FaultUid> consumer, TraversalStrategy strategy) {

@@ -75,13 +75,17 @@ public class StrategyStatistics {
         return map.keySet().stream().mapToInt(String::length).max().orElse(0);
     }
 
+    private String asPercentage(int num, int div) {
+        double percentage = 100d * num / (double) div;
+        return String.format("%1.1f", percentage);
+    }
+
     public void report() {
         int maxWidth = 32;
+        String prunePercentage = asPercentage(totalPruned, totalGenerated);
         System.out.println(padBoth(" Stats ", maxWidth, "-"));
         System.out.println("Total generated     : " + totalGenerated);
-        double percentagePruned = totalPruned / (double) totalGenerated;
-        String percentagePrunedStr = String.format("%1.1f", percentagePruned);
-        System.out.println("Total pruned        : " + totalPruned + " (" + percentagePrunedStr + "%)");
+        System.out.println("Total pruned        : " + totalPruned + " (" + prunePercentage + "%)");
         System.out.println("Total run           : " + totalRun);
         System.out.println("Average time        : " + getAverageTime() + " (ms)");
 
@@ -98,7 +102,8 @@ public class StrategyStatistics {
         System.out.println(padBoth(" Pruners ", maxWidth, "-"));
         for (var entry : prunerCount.entrySet()) {
             String key = padRight(entry.getKey(), maxPrunerKeyLength);
-            System.out.println(key + " : " + entry.getValue());
+            int value = entry.getValue();
+            System.out.println(key + " : " + value + " (" + asPercentage(value, totalGenerated) + "%)");
         }
     }
 }

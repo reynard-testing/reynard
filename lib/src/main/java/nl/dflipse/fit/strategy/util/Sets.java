@@ -76,4 +76,12 @@ public class Sets {
         }
         return false;
     }
+
+    public static <T> T getOnlyElement(Set<T> A) {
+        if (A.size() == 1) {
+            return A.iterator().next();
+        }
+
+        return null;
+    }
 }

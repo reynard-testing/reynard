@@ -6,11 +6,11 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import nl.dflipse.fit.strategy.generators.PowersetGenerator;
+import nl.dflipse.fit.strategy.util.PrunablePowersetIterator;
 
 public class PowersetTree {
 
-    private List<Set<Integer>> expandComplete(PowersetGenerator<Integer> generator) {
+    private List<Set<Integer>> expandComplete(PrunablePowersetIterator<Integer> generator) {
         List<Set<Integer>> result = new ArrayList<>();
         while (generator.hasNext()) {
             result.add(generator.next());
@@ -31,21 +31,21 @@ public class PowersetTree {
 
     @Test
     public void testNull() {
-        PowersetGenerator<Integer> generator = new PowersetGenerator<>(null);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(null);
         assert generator.hasNext() == false;
         assertEqual(List.of(), expandComplete(generator));
     }
 
     @Test
     public void testEmpty() {
-        PowersetGenerator<Integer> generator = new PowersetGenerator<>(new ArrayList<>());
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(new ArrayList<>());
         assertEqual(List.of(Set.of()), expandComplete(generator));
     }
 
     @Test
     public void testOne() {
         List<Integer> elements = List.of(1);
-        PowersetGenerator<Integer> generator = new PowersetGenerator<>(elements);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements);
         var expanded = expandComplete(generator);
         assert expanded.size() == expectedSize(elements.size());
         assertEqual(List.of(Set.of(), Set.of(1)), expanded);
@@ -54,7 +54,7 @@ public class PowersetTree {
     @Test
     public void testTwo() {
         List<Integer> elements = List.of(1, 2);
-        PowersetGenerator<Integer> generator = new PowersetGenerator<>(elements);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements);
         var expanded = expandComplete(generator);
         assertEqual(List.of(
                 Set.of(),
@@ -67,7 +67,7 @@ public class PowersetTree {
     @Test
     public void testThree() {
         List<Integer> elements = List.of(1, 2, 3);
-        PowersetGenerator<Integer> generator = new PowersetGenerator<>(elements);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements);
         var expanded = expandComplete(generator);
         assert expanded.size() == expectedSize(elements.size());
         assertEqual(List.of(
@@ -85,7 +85,7 @@ public class PowersetTree {
     @Test
     public void testFour() {
         List<Integer> elements = List.of(1, 2, 3, 4);
-        PowersetGenerator<Integer> generator = new PowersetGenerator<>(elements);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements);
         var expanded = expandComplete(generator);
         assert expanded.size() == expectedSize(elements.size());
         assertEqual(List.of(
@@ -111,7 +111,7 @@ public class PowersetTree {
     @Test
     public void testFourRemoveSubset() {
         List<Integer> elements = List.of(1, 2, 3, 4);
-        PowersetGenerator<Integer> generator = new PowersetGenerator<>(elements);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements);
         generator.prune(Set.of(2, 3));
         var expanded = expandComplete(generator);
         assertEqual(List.of(
@@ -128,5 +128,90 @@ public class PowersetTree {
                 Set.of(1, 2, 4),
                 Set.of(1, 3, 4)),
                 expanded);
+    }
+
+    @Test
+    public void testFourRemoveSubsetDuring1() {
+        List<Integer> elements = List.of(1, 2, 3, 4);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements);
+        assert Set.of().equals(generator.next());
+        assert Set.of(1).equals(generator.next());
+        assert Set.of(2).equals(generator.next());
+        assert Set.of(3).equals(generator.next());
+        assert Set.of(4).equals(generator.next());
+        assert Set.of(1, 2).equals(generator.next());
+        assert Set.of(1, 3).equals(generator.next());
+        assert Set.of(1, 4).equals(generator.next());
+        assert Set.of(2, 3).equals(generator.next());
+        generator.prune(Set.of(2, 3));
+        assert Set.of(2, 4).equals(generator.next());
+        assert Set.of(3, 4).equals(generator.next());
+        assert Set.of(1, 2, 4).equals(generator.next());
+        assert Set.of(1, 3, 4).equals(generator.next());
+        assert generator.hasNext() == false;
+    }
+
+    @Test
+    public void testFourRemoveSubsetDuring2() {
+        List<Integer> elements = List.of(1, 2, 3, 4);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements);
+        assert Set.of().equals(generator.next());
+        assert Set.of(1).equals(generator.next());
+        assert Set.of(2).equals(generator.next());
+        assert Set.of(3).equals(generator.next());
+        assert Set.of(4).equals(generator.next());
+        assert Set.of(1, 2).equals(generator.next());
+        assert Set.of(1, 3).equals(generator.next());
+        assert Set.of(1, 4).equals(generator.next());
+        assert Set.of(2, 3).equals(generator.next());
+        assert Set.of(2, 4).equals(generator.next());
+        assert Set.of(3, 4).equals(generator.next());
+        assert Set.of(1, 2, 3).equals(generator.next());
+        generator.prune(Set.of(2, 3));
+        assert Set.of(1, 2, 4).equals(generator.next());
+        assert Set.of(1, 3, 4).equals(generator.next());
+        // assert Set.of(2, 3, 4).equals(generator.next());
+        // assert Set.of(1, 2, 3, 4).equals(generator.next());
+        assert generator.hasNext() == false;
+
+    }
+
+    @Test
+    public void testFourRemoveSubsetDuring3() {
+        List<Integer> elements = List.of(1, 2, 3, 4);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements);
+        assert Set.of().equals(generator.next());
+        assert Set.of(1).equals(generator.next());
+        assert Set.of(2).equals(generator.next());
+        assert Set.of(3).equals(generator.next());
+        assert Set.of(4).equals(generator.next());
+        assert Set.of(1, 2).equals(generator.next());
+        assert Set.of(1, 3).equals(generator.next());
+        assert Set.of(1, 4).equals(generator.next());
+        assert Set.of(2, 3).equals(generator.next());
+        assert Set.of(2, 4).equals(generator.next());
+        assert Set.of(3, 4).equals(generator.next());
+        assert Set.of(1, 2, 3).equals(generator.next());
+        assert Set.of(1, 2, 4).equals(generator.next());
+        assert Set.of(1, 3, 4).equals(generator.next());
+        assert Set.of(2, 3, 4).equals(generator.next());
+        generator.prune(Set.of(2, 3));
+        // assert Set.of(1, 2, 3, 4).equals(generator.next());
+        assert generator.hasNext() == false;
+    }
+
+    @Test
+    public void testFivePrunedSize() {
+        List<Integer> elements = List.of(1, 2, 3, 4, 5);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements);
+        generator.prune(Set.of(1, 2));
+        int expectedCount = 32 - 8;
+
+        int count = 0;
+        while (generator.hasNext()) {
+            generator.next();
+        }
+
+        assert expectedCount == count;
     }
 }

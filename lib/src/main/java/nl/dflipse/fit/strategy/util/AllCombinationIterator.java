@@ -5,7 +5,6 @@ package nl.dflipse.fit.strategy.util;
  * Copyright 2009-2016 Dmytro Paukov d.paukov@gmail.com
  */
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 

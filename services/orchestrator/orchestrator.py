@@ -86,6 +86,7 @@ class TraceNode:
 # Local in-memory storage
 span_lookup: dict[str, Span] = {}
 span_report_lookup: dict[str, ReportedSpan] = {}
+trace_report_lookup: dict[str, list[ReportedSpan]] = {}
 
 collected_spans: list[Span] = []
 collected_raw: list = []
@@ -295,11 +296,44 @@ def get_tree_by_trace_id(trace_id):
     _, trees = get_trace_tree_for_trace(trace_id)
     return trees, 200
 
+def get_report_tree_children(children: list[TraceNode]) -> list[TraceNode]:
+    res = []
+    for child in children:
+        res += get_report_tree(child)
+    return res
+
+def get_report_tree(node: TraceNode) -> list[TraceNode]:
+    is_report_node = node.report != None or node.span.span_id == "0000000000000001"
+
+    if is_report_node:
+        return [TraceNode(
+            span=node.span,
+            report=node.report,
+            children=get_report_tree_children(node.children)
+        )]
+    return get_report_tree_children(node.children)
+
+@app.route('/v1/get-report-tree/<trace_id>', methods=['GET'])
+def get_report_tree_by_trace_id(trace_id):
+    _, trees = get_trace_tree_for_trace(trace_id)
+
+    if len(trees) != 1:
+        return [], 404
+    
+    report_tree = get_report_tree(trees[0])
+    return report_tree, 200
+
+@app.route('/v1/get-reports/<trace_id>', methods=['GET'])
+def get_reports_by_trace_id(trace_id):
+    reports = trace_report_lookup.get(trace_id)
+    return reports, 200
+
 
 @app.route('/v1/link', methods=['POST'])
 async def report_span_id():
     data = request.get_json()
     span_id = data.get('span_id')
+    trace_id = data.get('trace_id')
     uid = data.get('uid')
     injected_fault = data.get('injected_fault')
     response = data.get('response')
@@ -325,6 +359,7 @@ async def report_span_id():
     print("Found reported span", span_report, flush=True)
 
     span_report_lookup[span_id] = span_report
+    trace_report_lookup.setdefault(trace_id, []).append(span_report)
     return "OK", 200
 
 

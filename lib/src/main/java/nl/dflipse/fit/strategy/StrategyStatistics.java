@@ -78,10 +78,12 @@ public class StrategyStatistics {
     public void report() {
         int maxWidth = 32;
         System.out.println(padBoth(" Stats ", maxWidth, "-"));
-        System.out.println("Total generated : " + totalGenerated);
-        System.out.println("Total pruned    : " + totalPruned);
-        System.out.println("Total run       : " + totalRun);
-        System.out.println("Average time    : " + getAverageTime() + " (ms)");
+        System.out.println("Total generated     : " + totalGenerated);
+        double percentagePruned = totalPruned / (double) totalGenerated;
+        String percentagePrunedStr = String.format("%1.1f", percentagePruned);
+        System.out.println("Total pruned        : " + totalPruned + " (" + percentagePrunedStr + "%)");
+        System.out.println("Total run           : " + totalRun);
+        System.out.println("Average time        : " + getAverageTime() + " (ms)");
 
         System.out.println();
         System.out.println(padBoth(" Generators ", maxWidth, "-"));

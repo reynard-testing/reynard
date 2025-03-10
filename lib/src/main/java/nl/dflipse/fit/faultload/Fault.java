@@ -18,4 +18,8 @@ public record Fault(
   public FaultMode getMode() {
     return mode;
   }
+
+  public Fault applyMask(FaultUid mask) {
+    return new Fault(uid.applyMask(mask), mode);
+  }
 }

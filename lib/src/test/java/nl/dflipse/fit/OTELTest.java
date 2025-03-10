@@ -1,9 +1,7 @@
 package nl.dflipse.fit;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
@@ -30,7 +28,7 @@ public class OTELTest {
         return controller;
     }
 
-    @FiTest
+    @FiTest(maskPayload = true)
     public void testShipping(Faultload faultload) throws URISyntaxException {
         String port = "8080";
         // String port = "64839";
@@ -69,7 +67,7 @@ public class OTELTest {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        String inspectUrl = controller.collectorUrl + "/v1/trace/" + faultload.getTraceId();
+        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
         boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
@@ -78,7 +76,7 @@ public class OTELTest {
         // assertEquals(expectedResponse, actualResponse);
     }
 
-    @FiTest
+    @FiTest(maskPayload = true)
     public void testRecommendations(Faultload faultload) throws URISyntaxException, IOException {
         String port = "8080";
         // String port = "64839";
@@ -100,7 +98,7 @@ public class OTELTest {
                 .execute();
         HttpResponse response = res.handleResponse(new HttpResponseHandler());
 
-        String inspectUrl = controller.collectorUrl + "/v1/trace/" + faultload.getTraceId();
+        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
         boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);

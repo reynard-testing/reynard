@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.pruners.Pruner;
@@ -13,21 +14,19 @@ import nl.dflipse.fit.strategy.util.Pair;
 public class StrategyRunner {
     public List<Faultload> queue;
     public HistoricStore history;
-    public Set<Faultload> prunedFaultloads;
 
-    public List<FeedbackHandler<Void>> analyzers;
-    public List<Generator> generators;
-    public List<Pruner> pruners;
+    public Set<Faultload> prunedFaultloads = new HashSet<>();
+
+    public List<FeedbackHandler<Void>> analyzers = new ArrayList<>();
+    public List<Generator> generators = new ArrayList<>();
+    public List<Pruner> pruners = new ArrayList<>();
 
     public StrategyStatistics statistics = new StrategyStatistics();
 
+    public FaultUid mask = null;
+
     public StrategyRunner() {
         history = new HistoricStore();
-        prunedFaultloads = new HashSet<>();
-
-        generators = new ArrayList<>();
-        pruners = new ArrayList<>();
-        analyzers = new ArrayList<>();
 
         // Initialize the queue with an empty faultload
         queue = new ArrayList<>();
@@ -36,6 +35,11 @@ public class StrategyRunner {
 
     public StrategyRunner withGenerator(Generator generator) {
         generators.add(generator);
+        return this;
+    }
+
+    public StrategyRunner withMask(FaultUid mask) {
+        this.mask = mask;
         return this;
     }
 
@@ -59,7 +63,11 @@ public class StrategyRunner {
 
     public Pair<Integer, Integer> generateAndPrune() {
         // Generate new faultloads
-        List<Faultload> newFaultloads = generate();
+        // and apply the mask
+        List<Faultload> newFaultloads = generate()
+                .stream()
+                .map(f -> f.applyMask(mask))
+                .toList();
 
         queue.addAll(newFaultloads);
 
@@ -68,11 +76,7 @@ public class StrategyRunner {
         return new Pair<>(newFaultloads.size(), pruned);
     }
 
-    public void handleResult(FaultloadResult result) {
-        statistics.registerTime(result.faultload.timer);
-        history.add(result);
-        analyze(result);
-
+    public Pair<Integer, Integer> generateAndPruneTillNext() {
         int generated = 0;
         int pruned = 0;
 
@@ -92,6 +96,18 @@ public class StrategyRunner {
                 break;
             }
         }
+
+        return new Pair<>(generated, pruned);
+    }
+
+    public void handleResult(FaultloadResult result) {
+        statistics.registerTime(result.faultload.timer);
+        history.add(result);
+        analyze(result);
+
+        var res = generateAndPruneTillNext();
+        int generated = res.getFirst();
+        int pruned = res.getSecond();
 
         System.out.println("[Strategy] Generated " + generated + " new faultloads, pruned " + pruned + " faultloads");
     }

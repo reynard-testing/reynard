@@ -22,9 +22,19 @@ public class TraceAnalysis {
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
     UndirectedRelation<FaultUid> concurrentRelation = new UndirectedRelation<>();
 
+    private FaultUid uidMask;
+
     public TraceAnalysis(TraceTreeSpan rootNode, List<TraceSpanReport> reports) {
+        this(rootNode, reports, null);
+    }
+
+    public TraceAnalysis(TraceTreeSpan rootNode, List<TraceSpanReport> reports, FaultUid mask) {
+
+        var maskedReports = reports.stream()
+                .map(report -> report.applyMask(mask)).toList();
+
         // Parent null indicates the root request
-        for (var report : reports) {
+        for (var report : maskedReports) {
             faultUids.add(report.faultUid);
 
             if (report.injectedFault != null) {
@@ -32,7 +42,7 @@ public class TraceAnalysis {
             }
         }
 
-        analyseNode(rootNode, null);
+        analyseNode(rootNode.applyMask(mask), null);
         findConcurrent();
     }
 
@@ -47,7 +57,7 @@ public class TraceAnalysis {
 
             // Save the parent-child relation
             // Update the most direct parent
-            var child = node.report.faultUid;
+            var child = node.report.faultUid.applyMask(uidMask);
             parentChildRelation.addRelation(parent, child);
             nextParent = child;
 
@@ -117,6 +127,14 @@ public class TraceAnalysis {
         return isIncomplete;
     }
 
+    private FaultUid mask(FaultUid faultUid) {
+        if (uidMask == null) {
+            return null;
+        }
+
+        return faultUid.applyMask(uidMask);
+    }
+
     public List<Pair<FaultUid, FaultUid>> getRelations() {
         return parentChildRelation.getRelations();
     }
@@ -126,29 +144,30 @@ public class TraceAnalysis {
     }
 
     public FaultUid getParent(FaultUid faultUid) {
-        return parentChildRelation.getParent(faultUid);
+        return parentChildRelation.getParent(mask(faultUid));
     }
 
     public Set<FaultUid> getDecendants(FaultUid parent) {
-        return parentChildRelation.getDecendants(parent);
+        return parentChildRelation.getDecendants(mask(parent));
     }
 
     public Set<FaultUid> getChildren(FaultUid parent) {
-        return parentChildRelation.getChildren(parent);
+        return parentChildRelation.getChildren(mask(parent));
     }
 
     public List<FaultUid> getParents(FaultUid parent) {
-        List<FaultUid> parents = parentChildRelation.getParents(parent);
+        List<FaultUid> parents = parentChildRelation.getParents(mask(parent));
         parents.add(null);
         return parents;
     }
 
     public FaultUid getFirstCommonAncestor(FaultUid fault1, FaultUid fault2) {
-        return parentChildRelation.getFirstCommonAncestor(fault1, fault2);
+        return parentChildRelation.getFirstCommonAncestor(
+                mask(fault1), mask(fault2));
     }
 
     public boolean isDecendantOf(FaultUid parent, FaultUid child) {
-        return parentChildRelation.hasTransativeRelation(parent, child);
+        return parentChildRelation.hasTransativeRelation(mask(parent), mask(child));
     }
 
     public boolean isEqual(FaultUid fault1, FaultUid fault2) {
@@ -156,11 +175,11 @@ public class TraceAnalysis {
             return fault2 == null;
         }
 
-        return fault1.equals(fault2);
+        return mask(fault1).equals(mask(fault2));
     }
 
     public boolean sameParent(FaultUid fault1, FaultUid fault2) {
-        return isEqual(getParent(fault1), getParent(fault2));
+        return isEqual(getParent(mask(fault1)), getParent(mask(fault2)));
     }
 
     public enum TraversalStrategy {

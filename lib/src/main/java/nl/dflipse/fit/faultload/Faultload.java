@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import nl.dflipse.fit.trace.TraceParent;
 import nl.dflipse.fit.trace.TraceState;
@@ -77,6 +78,19 @@ public class Faultload {
 
     public TraceState getTraceState() {
         return traceState;
+    }
+
+    public Faultload applyMask(FaultUid mask) {
+        if (mask == null) {
+            return this;
+        }
+
+        Set<Fault> faults = getFaults();
+        Set<Fault> maskedFaults = faults.stream()
+                .map(f -> new Fault(f.getUid().applyMask(mask), f.getMode()))
+                .collect(Collectors.toSet());
+
+        return new Faultload(maskedFaults);
     }
 
     public int size() {

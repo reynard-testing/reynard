@@ -9,20 +9,25 @@ import org.apache.hc.core5.http.ContentType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 
 public class RemoteController implements FaultController {
 
-    public String collectorUrl;
+    public String apiHost;
 
     public RemoteController(String collectorUrl) {
-        this.collectorUrl = collectorUrl;
+        this.apiHost = collectorUrl;
     }
 
-    private TraceAnalysis attemptToGetTrace(Faultload faultload) throws IOException {
-        String queryUrl = collectorUrl + "/v1/trace/" + faultload.getTraceId();
+    public RemoteController() {
+        this.apiHost = null;
+    }
+
+    private TraceAnalysis attemptToGetTrace(Faultload faultload, FaultUid mask) throws IOException {
+        String queryUrl = apiHost + "/v1/trace/" + faultload.getTraceId();
         Response res = Request.get(queryUrl).execute();
         String body = res.returnContent().asString();
         ControllerResponse response = new ObjectMapper().readValue(body,
@@ -40,7 +45,7 @@ public class RemoteController implements FaultController {
         var traceTreeRoot = response.trees.get(0);
         var traceReports = response.reports;
 
-        TraceAnalysis trace = new TraceAnalysis(traceTreeRoot, traceReports);
+        TraceAnalysis trace = new TraceAnalysis(traceTreeRoot, traceReports, mask);
 
         var rootSpanId = traceTreeRoot.span.spanId;
         var expectedRoot = faultload.getTraceParent().parentSpanId;
@@ -57,11 +62,20 @@ public class RemoteController implements FaultController {
 
     @Override
     public TraceAnalysis getTrace(Faultload faultload) throws IOException {
+        return getTrace(faultload, null);
+    }
+
+    @Override
+    public TraceAnalysis getTrace(Faultload faultload, FaultUid mask) throws IOException {
+        if (apiHost == null) {
+            throw new IllegalStateException("Collector URL not set");
+        }
+
         int maxRetries = 5;
 
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
-                return attemptToGetTrace(faultload);
+                return attemptToGetTrace(faultload, mask);
             } catch (IOException e) {
                 if (attempt == maxRetries - 1) {
                     throw e;
@@ -81,7 +95,7 @@ public class RemoteController implements FaultController {
 
     @Override
     public void registerFaultload(Faultload faultload) {
-        String queryUrl = collectorUrl + "/v1/faultload/register";
+        String queryUrl = apiHost + "/v1/faultload/register";
 
         try {
             String jsonBody = faultload.serializeJson();
@@ -100,7 +114,7 @@ public class RemoteController implements FaultController {
 
     @Override
     public void unregisterFaultload(Faultload faultload) {
-        String queryUrl = collectorUrl + "/v1/faultload/unregister";
+        String queryUrl = apiHost + "/v1/faultload/unregister";
         ObjectMapper mapper = new ObjectMapper();
         var node = mapper.createObjectNode();
         node.put("trace_id", faultload.getTraceId());

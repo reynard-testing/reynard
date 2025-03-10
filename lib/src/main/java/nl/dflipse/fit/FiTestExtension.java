@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 
+import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.HttpError;
@@ -30,6 +31,7 @@ import nl.dflipse.fit.strategy.util.TraceAnalysis;
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
     private StrategyRunner strategy;
+    private FaultUid mask;
 
     @Override
     public boolean supportsTestTemplate(ExtensionContext context) {
@@ -55,17 +57,18 @@ public class FiTestExtension
                 ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR),
                 ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
-        var failStop = new FailStopPruner();
-        var parentChild = new ParentChildPruner();
-        var happensBefore = new HappensBeforePruner();
         strategy = new StrategyRunner()
                 // .withGenerator(new RandomPowersetGenerator(modes))
                 // .withGenerator(new BreadthFirstGenerator(modes))
                 .withGenerator(new DepthFirstGenerator(modes))
-                .withPruner(failStop)
-                .withPruner(parentChild)
-                .withPruner(happensBefore)
+                .withPruner(new FailStopPruner())
+                .withPruner(new ParentChildPruner())
+                .withPruner(new HappensBeforePruner())
                 .withAnalyzer(new RedundancyAnalyzer());
+
+        if (annotation.maskPayload()) {
+            strategy.withMask(FaultUid.payloadMask);
+        }
 
         Class<?> testClass = context.getRequiredTestClass();
         FaultController controller;
@@ -118,7 +121,7 @@ public class FiTestExtension
     }
 
     // Parameter resolver to inject the current parameter into the test
-    private static class QueueParameterResolver implements ParameterResolver {
+    private class QueueParameterResolver implements ParameterResolver {
         private final Faultload faultload;
 
         QueueParameterResolver(Faultload faultload) {
@@ -137,7 +140,7 @@ public class FiTestExtension
     }
 
     // Before each test, register the faultload with the proxies
-    private static class BeforeTestExtension implements BeforeTestExecutionCallback {
+    private class BeforeTestExtension implements BeforeTestExecutionCallback {
         private final Faultload faultload;
         private final FaultController controller;
 
@@ -161,7 +164,7 @@ public class FiTestExtension
     }
 
     // After each test, handle the result and update the strategy
-    private static class AfterTestExtension implements AfterTestExecutionCallback {
+    private class AfterTestExtension implements AfterTestExecutionCallback {
         private final Faultload faultload;
         private final StrategyRunner strategy;
         private final FaultController controller;
@@ -188,7 +191,7 @@ public class FiTestExtension
 
             faultload.timer.start("handleResult");
             try {
-                TraceAnalysis trace = controller.getTrace(faultload);
+                TraceAnalysis trace = controller.getTrace(faultload, strategy.mask);
                 FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
                 strategy.handleResult(result);
             } catch (IOException e) {

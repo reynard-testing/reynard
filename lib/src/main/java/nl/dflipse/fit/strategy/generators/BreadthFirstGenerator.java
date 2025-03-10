@@ -39,8 +39,10 @@ public class BreadthFirstGenerator implements Generator, FeedbackHandler<Void> {
             }
 
             iterator = new AllCombinationIterator<FaultUid>(potentialFaults);
+            long expectedSize = (long) Math.pow(1 + modes.size(), potentialFaults.size());
             System.out
-                    .println("[BFS] Found " + potentialFaults.size() + " fault points. Will generate " + iterator.size()
+                    .println("[BFS] Found " + potentialFaults.size() + " fault points. Will generate at most "
+                            + expectedSize
                             + " new combinations");
 
         }

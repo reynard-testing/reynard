@@ -13,8 +13,9 @@ import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class TraceAnalysis {
     private final Set<FaultUid> faultUids = new HashSet<>();
-    private final Set<Fault> faults = new HashSet<>();
+    private final Set<Fault> injectedFaults = new HashSet<>();
     private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
+    private final List<TraceSpanReport> reports = new ArrayList<>();
 
     private boolean isIncomplete = false;
 
@@ -23,12 +24,13 @@ public class TraceAnalysis {
     UndirectedRelation<FaultUid> concurrentRelation = new UndirectedRelation<>();
 
     public TraceAnalysis(TraceTreeSpan rootNode, List<TraceSpanReport> reports) {
+        this.reports.addAll(reports);
         // Parent null indicates the root request
         for (var report : reports) {
             faultUids.add(report.faultUid);
 
             if (report.injectedFault != null) {
-                faults.add(report.injectedFault);
+                injectedFaults.add(report.injectedFault);
             }
         }
 
@@ -109,8 +111,12 @@ public class TraceAnalysis {
         return faultUids;
     }
 
-    public Set<Fault> getFaults() {
-        return faults;
+    public Set<Fault> getInjectedFaults() {
+        return injectedFaults;
+    }
+
+    public List<TraceSpanReport> getReports() {
+        return reports;
     }
 
     public boolean isIncomplete() {

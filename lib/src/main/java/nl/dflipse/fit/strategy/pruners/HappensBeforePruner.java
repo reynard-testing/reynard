@@ -32,7 +32,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
         } else {
             // if a single fault causes others to disappear
             // their combination is redundant
-            var injectedErrorFaults = result.trace.getFaults()
+            var injectedErrorFaults = result.trace.getInjectedFaults()
                     .stream()
                     .filter(fault -> fault.getMode().getType().equals(ErrorFault.FAULT_TYPE))
                     .map(fault -> fault.getUid())

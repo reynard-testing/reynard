@@ -52,6 +52,7 @@ class Faultload:
 @dataclass
 class ReportedSpan:
     # Proxy reported data
+    trace_id: str
     span_id: str
     uid: FaultUid
     injected_fault: Fault

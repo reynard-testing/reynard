@@ -22,6 +22,7 @@ import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
+import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
@@ -61,6 +62,7 @@ public class FiTestExtension
                 .withGenerator(new DepthFirstGenerator(modes))
                 .withPruner(new FailStopPruner())
                 .withPruner(new ParentChildPruner())
+                .withPruner(new ErrorPropogationPruner())
                 .withPruner(new HappensBeforePruner())
                 .withAnalyzer(new RedundancyAnalyzer());
 
@@ -100,8 +102,8 @@ public class FiTestExtension
         return new TestTemplateInvocationContext() {
             @Override
             public String getDisplayName(int invocationIndex) {
-                return "[" + invocationIndex + "] TraceId=" + faultload.getTraceId() + " Faults="
-                        + faultload.readableString();
+                return "[" + invocationIndex + "] TraceId=" + faultload.getTraceId() + " Faultload="
+                        + faultload.getFaultload().readableString();
             }
 
             @Override

@@ -19,7 +19,7 @@ public class FaultloadResult {
 
     public Set<Fault> getNotInjectedFaults() {
         var intendedFaults = faultload.getFaultload().faultSet();
-        var injectedFaults = trace.getFaults();
+        var injectedFaults = trace.getInjectedFaults();
         var notInjectedFaults = Sets.difference(intendedFaults, injectedFaults);
         return notInjectedFaults;
     }

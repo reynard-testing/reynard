@@ -39,8 +39,11 @@ public class RandomPowersetGenerator implements Generator, FeedbackHandler<Void>
             var shuffledFaults = new ArrayList<>(potentialFaults);
             Collections.shuffle(shuffledFaults);
             iterator = new PowersetIterator<FaultUid>(shuffledFaults, false);
+
+            long expectedSize = (long) Math.pow(1 + modes.size(), potentialFaults.size());
             System.out
-                    .println("[RG] Found " + potentialFaults.size() + " fault points. Will generate " + iterator.size()
+                    .println("[RG] Found " + potentialFaults.size() + " fault points. Will generate at most"
+                            + expectedSize
                             + " new combinations");
         }
 

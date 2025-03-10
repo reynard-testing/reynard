@@ -13,4 +13,8 @@ public class TraceSpanResponse {
 
     @JsonProperty("body")
     public String body;
+
+    public boolean isErrenous() {
+        return !(status >= 200 && status < 300);
+    }
 }

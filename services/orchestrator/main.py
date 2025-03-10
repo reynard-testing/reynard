@@ -247,6 +247,7 @@ async def report_span_id():
     if report_store.has_span_id(span_id):
         existing_report = report_store.get_by_span_id(span_id)
         existing_report.response = responseData
+        existing_report.injected_fault = injected_fault
         print("Updated reported span", span_report, flush=True)
     else:
         report_store.add(span_report)

@@ -29,7 +29,7 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
 
         // get the intended faults in the faultload
         Set<Fault> intendedFaults = result.faultload.getFaultload().faultSet();
-        Set<Fault> injectedFaults = result.trace.getFaults();
+        Set<Fault> injectedFaults = result.trace.getInjectedFaults();
         Set<Fault> notInjectedFaults = result.getNotInjectedFaults();
 
         if (notInjectedFaults.size() == intendedFaults.size()) {

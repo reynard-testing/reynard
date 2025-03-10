@@ -1,4 +1,4 @@
-from .models import Span
+from .models import Span, TraceTreeNode
 
 
 class SpanStore:
@@ -11,6 +11,9 @@ class SpanStore:
         self.spans_by_span_id[span.span_id] = span
         self.spans_by_trace_id.setdefault(span.trace_id, []).append(span)
         return span
+
+    def has_span_id(self, span_id: str) -> bool:
+        return span_id in self.spans_by_span_id
 
     def get_by_span_id(self, span_id: str) -> Span:
         return self.spans_by_span_id.get(span_id, None)

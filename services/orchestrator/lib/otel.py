@@ -48,13 +48,9 @@ def getErrorStatus(span: dict) -> tuple[bool, str]:
 # handle a single OTEL span
 
 
-def otelScopedSpanToSpans(span: dict, service_name: str):
+def otelScopedSpanToSpan(span: dict, service_name: str) -> Span:
     # Get fields
     trace_id = to_id(span.get('traceId', None), 16)
-
-    if trace_id not in trace_ids:
-        return
-
     span_id = to_id(span.get('spanId', None), 8)
     parent_span_id = to_id(span.get('parentSpanId', None), 8)
 
@@ -93,7 +89,7 @@ def otelResourceSpanToSpans(scoped_spans) -> list[Span]:
     scope_spans = scoped_spans['scopeSpans']
     for scoped_spans in scope_spans:
         for scoped_span_entry in scoped_spans['spans']:
-            spans += otelScopedSpanToSpans(scoped_span_entry, service_name)
+            spans.append(otelScopedSpanToSpan(scoped_span_entry, service_name))
     return spans
 
 
@@ -101,7 +97,7 @@ def otelTraceExportToSpans(data: dict) -> list[Span]:
     """Find and convert spans in single export"""
     spans: list[Span] = []
     for resource_span in data['resourceSpans']:
-        spans += otelResourceSpanToSpans(resource_span)
+        spans.extend(otelResourceSpanToSpans(resource_span))
     return spans
 
 

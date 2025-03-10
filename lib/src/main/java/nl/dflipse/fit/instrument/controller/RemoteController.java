@@ -22,7 +22,7 @@ public class RemoteController implements FaultController {
     }
 
     private TraceAnalysis attemptToGetTrace(Faultload faultload) throws IOException {
-        String queryUrl = collectorUrl + "/v1/get/" + faultload.getTraceId();
+        String queryUrl = collectorUrl + "/v1/trace/" + faultload.getTraceId();
         Response res = Request.get(queryUrl).execute();
         String body = res.returnContent().asString();
         ControllerResponse response = new ObjectMapper().readValue(body,

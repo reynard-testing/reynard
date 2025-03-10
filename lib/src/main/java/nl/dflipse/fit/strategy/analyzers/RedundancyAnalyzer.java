@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.handlers;
+package nl.dflipse.fit.strategy.analyzers;
 
 import java.util.List;
 import java.util.Set;

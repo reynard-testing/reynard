@@ -63,11 +63,7 @@ public class RandomPowersetGenerator implements Generator, FeedbackHandler<Void>
             return List.of();
         }
 
-        List<Faultload> faultLoads = new ArrayList<>();
-        for (var mode : modes) {
-            faultLoads.add(new Faultload(GeneratorUtil.asFaults(nextCombination, mode)));
-        }
-
+        List<Faultload> faultLoads = GeneratorUtil.allCombinations(modes, nextCombination);
         return faultLoads;
     }
 

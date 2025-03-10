@@ -20,9 +20,8 @@ import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
-import nl.dflipse.fit.strategy.StrategyStatistics;
+import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
-import nl.dflipse.fit.strategy.handlers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
@@ -51,9 +50,10 @@ public class FiTestExtension
         }
 
         var modes = List.of(
-                ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE)
-        // OmissionFault.fromError(HttpError.SERVICE_UNAVAILABLE)
-        );
+                ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE),
+                ErrorFault.fromError(HttpError.BAD_GATEWAY),
+                ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR),
+                ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
         var failStop = new FailStopPruner();
         var parentChild = new ParentChildPruner();

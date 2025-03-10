@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.strategy.util.Combinatorics;
+import nl.dflipse.fit.strategy.util.Pair;
 
 public class GeneratorUtil {
 
@@ -22,19 +25,30 @@ public class GeneratorUtil {
     return faults;
   }
 
-  public static List<Faultload> allFaults(List<FaultMode> modes, List<List<FaultUid>> faultCombinations) {
-    List<Faultload> faultLoads = new ArrayList<>();
+  public static <X, Y> List<Pair<X, Y>> cartesianProduct(List<X> xs, List<Y> ys) {
+    List<Pair<X, Y>> pairs = new ArrayList<>();
 
-    for (var combination : faultCombinations) {
-      if (combination.isEmpty()) {
-        continue;
-      }
-
-      for (var mode : modes) {
-        faultLoads.add(new Faultload(asFaults(combination, mode)));
+    for (var x : xs) {
+      for (var y : ys) {
+        pairs.add(new Pair<>(x, y));
       }
     }
 
-    return faultLoads;
+    return pairs;
+  }
+
+  public static List<Faultload> allCombinations(List<FaultMode> modes, List<FaultUid> points) {
+    // Generate all combinations of faults
+    var combinations = Combinatorics.cartesianCombinations(points, modes);
+
+    return combinations.stream()
+        // Convert list of pairs to set of faults
+        .map(faults -> faults
+            .stream()
+            .map(pair -> new Fault(pair.first(), pair.second()))
+            .collect(Collectors.toSet()))
+        // Convert set of faults to faultload
+        .map(Faultload::new)
+        .toList();
   }
 }

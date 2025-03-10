@@ -39,6 +39,34 @@ public class Combinatorics {
             res.add(it.next());
         }
         return res;
-
     }
+
+    // Generate all unique lists of pairs of elements from xs and ys
+    // where xs is always present
+    public static <X, Y> List<List<Pair<X, Y>>> cartesianCombinations(List<X> xs, List<Y> ys) {
+        List<List<Pair<X, Y>>> res = List.of(List.of());
+
+        if (xs.isEmpty() || ys.isEmpty()) {
+            return res;
+        }
+
+        for (var x : xs) {
+            List<List<Pair<X, Y>>> newRes = new ArrayList<>();
+
+            for (var l : res) {
+                for (var y : ys) {
+                    // create a new list with the new pair
+                    Pair<X, Y> pair = new Pair<>(x, y);
+                    List<Pair<X, Y>> newList = new ArrayList<>(l);
+                    newList.add(pair);
+                    newRes.add(newList);
+                }
+            }
+
+            res = newRes;
+        }
+
+        return res;
+    }
+
 }

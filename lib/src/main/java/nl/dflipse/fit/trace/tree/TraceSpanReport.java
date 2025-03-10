@@ -11,6 +11,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 @JsonSerialize
 @JsonDeserialize
 public class TraceSpanReport {
+    @JsonProperty("trace_id")
+    public String traceId;
+
     @JsonProperty("span_id")
     public String spanId;
 

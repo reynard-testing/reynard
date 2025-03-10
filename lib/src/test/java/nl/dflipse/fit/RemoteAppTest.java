@@ -30,7 +30,7 @@ public class RemoteAppTest {
                 .addHeader("tracestate", faultload.getTraceState().toString())
                 .execute();
 
-        String inspectUrl = "http://localhost:5000/v1/get/" + faultload.getTraceId();
+        String inspectUrl = "http://localhost:5000/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/"
                 + faultload.getTraceId();
 

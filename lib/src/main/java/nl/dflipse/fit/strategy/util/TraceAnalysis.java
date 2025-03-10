@@ -8,12 +8,13 @@ import java.util.function.Consumer;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
+import nl.dflipse.fit.trace.tree.TraceSpanReport;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class TraceAnalysis {
-    private Set<FaultUid> faultUids = new HashSet<>();
-    private Set<Fault> faults = new HashSet<>();
-    private Set<TraceTreeSpan> faultInjectionPoints = new HashSet<>();
+    private final Set<FaultUid> faultUids = new HashSet<>();
+    private final Set<Fault> faults = new HashSet<>();
+    private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
 
     private boolean isIncomplete = false;
 
@@ -21,8 +22,16 @@ public class TraceAnalysis {
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
     UndirectedRelation<FaultUid> concurrentRelation = new UndirectedRelation<>();
 
-    public TraceAnalysis(TraceTreeSpan rootNode) {
+    public TraceAnalysis(TraceTreeSpan rootNode, List<TraceSpanReport> reports) {
         // Parent null indicates the root request
+        for (var report : reports) {
+            faultUids.add(report.faultUid);
+
+            if (report.injectedFault != null) {
+                faults.add(report.injectedFault);
+            }
+        }
+
         analyseNode(rootNode, null);
         findConcurrent();
     }
@@ -34,8 +43,7 @@ public class TraceAnalysis {
         // Check if the node has a report from a fault injection proxy
         if (node.hasReport()) {
             // Save the faultUid
-            faultInjectionPoints.add(node);
-            faultUids.add(node.report.faultUid);
+            treeFaultPoints.add(node);
 
             // Save the parent-child relation
             // Update the most direct parent
@@ -57,11 +65,6 @@ public class TraceAnalysis {
             // if (node.children.isEmpty()) {
             // isIncomplete = true;
             // }
-
-            // Save the fault
-            if (node.report.injectedFault != null) {
-                faults.add(node.report.injectedFault);
-            }
         }
 
         for (var child : node.children) {
@@ -90,7 +93,7 @@ public class TraceAnalysis {
     }
 
     private void findConcurrent() {
-        var fiArray = faultInjectionPoints.toArray(new TraceTreeSpan[0]);
+        var fiArray = treeFaultPoints.toArray(new TraceTreeSpan[0]);
 
         for (int i = 0; i < fiArray.length; i++) {
             for (int j = i + 1; j < fiArray.length; j++) {
@@ -153,11 +156,7 @@ public class TraceAnalysis {
             return fault2 == null;
         }
 
-        if (fault1.equals(fault2)) {
-            return true;
-        }
-
-        return false;
+        return fault1.equals(fault2);
     }
 
     public boolean sameParent(FaultUid fault1, FaultUid fault2) {
@@ -169,9 +168,23 @@ public class TraceAnalysis {
     }
 
     public List<FaultUid> getFaultUids(TraversalStrategy strategy) {
-        List<FaultUid> faults = new ArrayList<>();
-        traverseFaults(faults::add, strategy);
-        return faults;
+        List<FaultUid> foundFaults = new ArrayList<>();
+        traverseFaults(foundFaults::add, strategy);
+
+        // ensure each known fault is present, not just those in the tree
+        int missing = 0;
+        for (var fp : faultUids) {
+            if (!foundFaults.contains(fp)) {
+                foundFaults.add(fp);
+                missing++;
+            }
+        }
+
+        if (missing > 0) {
+            System.out.println("[WARN] Missing " + missing + " faultUids in trace tree!");
+        }
+
+        return foundFaults;
     }
 
     public void traverseFaults(Consumer<FaultUid> consumer, TraversalStrategy strategy) {

@@ -26,6 +26,7 @@ func (s ProxyState) asReport(metadata tracing.RequestMetadata) tracing.RequestRe
 	}
 
 	return tracing.RequestReport{
+		TraceId:       metadata.TraceId,
 		SpanId:        metadata.SpanId,
 		FaultUid:      metadata.FaultUid,
 		InjectedFault: s.InjectedFault,

@@ -112,6 +112,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		log.Printf("Determined Fault UID: %s\n", faultUid.String())
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
+			TraceId:  parent.TraceID,
 			SpanId:   parent.ParentID,
 			FaultUid: faultUid,
 		}

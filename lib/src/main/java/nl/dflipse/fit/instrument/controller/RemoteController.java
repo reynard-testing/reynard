@@ -1,7 +1,6 @@
 package nl.dflipse.fit.instrument.controller;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
@@ -13,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
-import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class RemoteController implements FaultController {
 
@@ -24,25 +22,27 @@ public class RemoteController implements FaultController {
     }
 
     private TraceAnalysis attemptToGetTrace(Faultload faultload) throws IOException {
-        String queryUrl = collectorUrl + "/v1/get-trees/" + faultload.getTraceId();
+        String queryUrl = collectorUrl + "/v1/trace/" + faultload.getTraceId();
         Response res = Request.get(queryUrl).execute();
         String body = res.returnContent().asString();
-        List<TraceTreeSpan> orchestratorResponse = new ObjectMapper().readValue(body,
-                new TypeReference<List<TraceTreeSpan>>() {
+        ControllerResponse response = new ObjectMapper().readValue(body,
+                new TypeReference<ControllerResponse>() {
                 });
 
-        if (orchestratorResponse.isEmpty()) {
+        if (response.trees.isEmpty()) {
             throw new IOException("Empty trace tree found for traceId: " + faultload.getTraceId());
         }
 
-        if (orchestratorResponse.size() > 1) {
+        if (response.trees.size() > 1) {
             throw new IOException("Trace is not fully connected for traceId: " + faultload.getTraceId());
         }
 
-        var traceData = orchestratorResponse.get(0);
-        TraceAnalysis trace = new TraceAnalysis(traceData);
+        var traceTreeRoot = response.trees.get(0);
+        var traceReports = response.reports;
 
-        var rootSpanId = traceData.span.spanId;
+        TraceAnalysis trace = new TraceAnalysis(traceTreeRoot, traceReports);
+
+        var rootSpanId = traceTreeRoot.span.spanId;
         var expectedRoot = faultload.getTraceParent().parentSpanId;
         if (!rootSpanId.equals(expectedRoot)) {
             throw new IOException("Root span mismatch: " + rootSpanId + " != " + expectedRoot);
@@ -55,6 +55,7 @@ public class RemoteController implements FaultController {
         return trace;
     }
 
+    @Override
     public TraceAnalysis getTrace(Faultload faultload) throws IOException {
         int maxRetries = 5;
 
@@ -78,6 +79,7 @@ public class RemoteController implements FaultController {
         throw new IOException("Failed to get trace after " + maxRetries + " attempts");
     }
 
+    @Override
     public void registerFaultload(Faultload faultload) {
         String queryUrl = collectorUrl + "/v1/faultload/register";
 
@@ -96,6 +98,7 @@ public class RemoteController implements FaultController {
         }
     }
 
+    @Override
     public void unregisterFaultload(Faultload faultload) {
         String queryUrl = collectorUrl + "/v1/faultload/unregister";
         ObjectMapper mapper = new ObjectMapper();

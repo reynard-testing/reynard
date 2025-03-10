@@ -69,7 +69,7 @@ public class OTELTest {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        String inspectUrl = controller.collectorUrl + "/v1/get/" + faultload.getTraceId();
+        String inspectUrl = controller.collectorUrl + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
         boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
@@ -100,7 +100,7 @@ public class OTELTest {
                 .execute();
         HttpResponse response = res.handleResponse(new HttpResponseHandler());
 
-        String inspectUrl = controller.collectorUrl + "/v1/get/" + faultload.getTraceId();
+        String inspectUrl = controller.collectorUrl + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
         boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);

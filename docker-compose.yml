@@ -13,7 +13,6 @@ services:
 
   orchestrator:
     image: fit-otel-orchestrator:latest
-    command: flask --app orchestrator.py run --host=0.0.0.0
     ports:
       - "5000:5000"
     environment:

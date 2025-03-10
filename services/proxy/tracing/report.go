@@ -17,6 +17,7 @@ type ResponseData struct {
 }
 
 type RequestReport struct {
+	TraceId       string             `json:"trace_id"`
 	SpanId        string             `json:"span_id"`
 	FaultUid      faultload.FaultUid `json:"uid"`
 	InjectedFault *faultload.Fault   `json:"injected_fault"`
@@ -24,6 +25,7 @@ type RequestReport struct {
 }
 
 type RequestMetadata struct {
+	TraceId  string
 	SpanId   string
 	FaultUid faultload.FaultUid
 }

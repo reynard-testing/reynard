@@ -37,7 +37,7 @@ public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
             iterator = new AllCombinationIterator<FaultUid>(potentialFaults);
             long expectedSize = (long) Math.pow(1 + modes.size(), potentialFaults.size());
             System.out
-                    .println("[DFS] Found " + potentialFaults.size() + " fault points. Will generate at most"
+                    .println("[DFS] Found " + potentialFaults.size() + " fault points. Will generate at most "
                             + expectedSize
                             + " new combinations");
         }

@@ -42,7 +42,7 @@ public class RandomPowersetGenerator implements Generator, FeedbackHandler<Void>
 
             long expectedSize = (long) Math.pow(1 + modes.size(), potentialFaults.size());
             System.out
-                    .println("[RG] Found " + potentialFaults.size() + " fault points. Will generate at most"
+                    .println("[RG] Found " + potentialFaults.size() + " fault points. Will generate at most "
                             + expectedSize
                             + " new combinations");
         }

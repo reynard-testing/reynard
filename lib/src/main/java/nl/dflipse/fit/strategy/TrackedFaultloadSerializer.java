@@ -1,30 +1,29 @@
 package nl.dflipse.fit.strategy;
 
-import java.util.Set;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
+import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 
-public class TestCaseSerializer {
+public class TrackedFaultloadSerializer {
   private final static ObjectMapper mapper = new ObjectMapper();
 
-  public static String serializeJson(TrackedFaultload testCase) {
+  public static String serializeJson(TrackedFaultload faultload) {
     var obj = mapper.createObjectNode();
-    obj.set("faults", serializeFaults(testCase.getFaultload().faultSet()));
-    obj.set("trace_id", stringNode(testCase.getTraceId()));
+    obj.set("faults", serializeFaults(faultload.getFaultload()));
+    obj.set("trace_id", stringNode(faultload.getTraceId()));
 
     return obj.toString();
   }
 
-  public static JsonNode serializeFaults(Set<Fault> faults) {
+  public static JsonNode serializeFaults(Faultload faultload) {
     ArrayNode array = mapper.createArrayNode();
 
-    for (Fault fault : faults) {
+    for (Fault fault : faultload.faultSet()) {
       array.add(serializeFault(fault));
     }
 

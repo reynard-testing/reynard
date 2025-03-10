@@ -63,10 +63,6 @@ public class Faultload {
         return false;
     }
 
-    public long getDurationMs() {
-        return timer.durationMs();
-    }
-
     public String serializeJson() {
         return FaultloadSerializer.serializeJson(this);
     }

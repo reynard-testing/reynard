@@ -19,8 +19,7 @@ public class StrategyRunner {
     public List<Generator> generators;
     public List<Pruner> pruners;
 
-    public int prunedCount = 0;
-    public int queuedCount = 0;
+    public StrategyStatistics statistics = new StrategyStatistics();
 
     public StrategyRunner() {
         history = new HistoricStore();
@@ -61,8 +60,6 @@ public class StrategyRunner {
     public Pair<Integer, Integer> generateAndPrune() {
         // Generate new faultloads
         List<Faultload> newFaultloads = generate();
-        queuedCount += newFaultloads.size();
-        // TODO: ignore previously pruned faultloads
 
         queue.addAll(newFaultloads);
 
@@ -72,6 +69,7 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
+        statistics.registerTime(result.faultload.timer);
         history.add(result);
         analyze(result);
 
@@ -105,8 +103,11 @@ public class StrategyRunner {
             throw new RuntimeException("[Strategy] No generators are available, make sure to register at least one!");
         }
 
+        // TODO: ignore previously pruned faultloads
         for (Generator generator : generators) {
-            newFaultloads.addAll(generator.generate());
+            var generated = generator.generate();
+            statistics.incrementGenerator(generator.getClass().getSimpleName(), generated.size());
+            newFaultloads.addAll(generated);
         }
 
         return newFaultloads;
@@ -135,16 +136,22 @@ public class StrategyRunner {
         List<Faultload> toRemove = new ArrayList<>();
 
         for (var faultload : this.queue) {
+            boolean shouldPrune = false;
+
             for (Pruner pruner : pruners) {
                 if (pruner.prune(faultload, history)) {
-                    prunedFaultloads.add(faultload);
-                    toRemove.add(faultload);
-                    break;
+                    shouldPrune = true;
+                    statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
                 }
+            }
+
+            if (shouldPrune) {
+                toRemove.add(faultload);
+                prunedFaultloads.add(faultload);
             }
         }
 
-        this.prunedCount += toRemove.size();
+        statistics.incrementPruned(toRemove.size());
         this.queue.removeAll(toRemove);
         this.prunedFaultloads.addAll(toRemove);
         return toRemove.size();

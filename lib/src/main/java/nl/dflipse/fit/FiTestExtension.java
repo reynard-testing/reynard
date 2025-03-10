@@ -20,6 +20,7 @@ import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
+import nl.dflipse.fit.strategy.StrategyStatistics;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
 import nl.dflipse.fit.strategy.handlers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
@@ -113,10 +114,7 @@ public class FiTestExtension
     }
 
     public void afterAll() {
-        // all done?
-        System.out.println("---- STATS ----");
-        System.out.println("Queued : " + strategy.queuedCount);
-        System.out.println("Pruned : " + strategy.prunedCount);
+        strategy.statistics.report();
     }
 
     // Parameter resolver to inject the current parameter into the test
@@ -154,7 +152,11 @@ public class FiTestExtension
                 return;
             }
 
+            faultload.timer.start();
+            faultload.timer.start("registerFaultload");
             controller.registerFaultload(faultload);
+            faultload.timer.stop("registerFaultload");
+            faultload.timer.start("testMethod");
         }
     }
 
@@ -172,7 +174,7 @@ public class FiTestExtension
 
         @Override
         public void afterTestExecution(ExtensionContext context) {
-
+            faultload.timer.stop("testMethod");
             // Access the queue and test result
             // var testMethod = context.getTestMethod().orElseThrow();
             // var annotation = testMethod.getAnnotation(FiTest.class);
@@ -184,6 +186,7 @@ public class FiTestExtension
                     "Test " + displayName + " with result: "
                             + (testFailed ? "FAIL" : "PASS"));
 
+            faultload.timer.start("handleResult");
             try {
                 TraceAnalysis trace = controller.getTrace(faultload);
                 FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
@@ -191,12 +194,17 @@ public class FiTestExtension
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            faultload.timer.stop("handleResult");
 
+            faultload.timer.start("unregisterFautload");
             try {
                 controller.unregisterFaultload(faultload);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            faultload.timer.stop("unregisterFautload");
+
+            faultload.timer.stop();
         }
     }
 

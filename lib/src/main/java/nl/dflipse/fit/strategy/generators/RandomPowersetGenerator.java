@@ -3,14 +3,17 @@ package nl.dflipse.fit.strategy.generators;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
-import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.HistoricStore;
+import nl.dflipse.fit.strategy.util.PairedCombinationsIterator;
 import nl.dflipse.fit.strategy.util.PowersetIterator;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
@@ -18,17 +21,10 @@ public class RandomPowersetGenerator implements Generator, FeedbackHandler<Void>
     private List<FaultMode> modes;
     private List<FaultUid> potentialFaults;
     private PowersetIterator<FaultUid> iterator;
+    private PairedCombinationsIterator<FaultUid, FaultMode> pairedIterator = null;
 
     public RandomPowersetGenerator(List<FaultMode> modes) {
         this.modes = modes;
-    }
-
-    public RandomPowersetGenerator() {
-        // DelayFault.fromDelayMs(1000),
-        // ErrorFault.fromError(HttpError.REQUEST_TIMEOUT)
-
-        this(List.of(
-                ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE)));
     }
 
     @Override
@@ -53,18 +49,34 @@ public class RandomPowersetGenerator implements Generator, FeedbackHandler<Void>
 
     @Override
     public List<Faultload> generate() {
-        if (!iterator.hasNext()) {
-            return List.of();
+        // If we have exhausted the mode-faultUid pairings
+        // we need to get the next combination
+        if (pairedIterator == null || !pairedIterator.hasNext()) {
+            if (!iterator.hasNext()) {
+                return List.of();
+            }
+
+            List<FaultUid> nextCombination = iterator.next();
+
+            if (nextCombination.isEmpty()) {
+                return List.of();
+            }
+
+            pairedIterator = new PairedCombinationsIterator<FaultUid, FaultMode>(nextCombination, modes);
+
+            if (!pairedIterator.hasNext()) {
+                return List.of();
+            }
         }
 
-        List<FaultUid> nextCombination = iterator.next();
+        // create next faultload
+        var nextPairing = pairedIterator.next();
+        Set<Fault> faults = nextPairing.stream()
+                .map(pair -> new Fault(pair.first(), pair.second()))
+                .collect(Collectors.toSet());
+        Faultload faultLoad = new Faultload(faults);
 
-        if (nextCombination.isEmpty()) {
-            return List.of();
-        }
-
-        List<Faultload> faultLoads = GeneratorUtil.allCombinations(modes, nextCombination);
-        return faultLoads;
+        return List.of(faultLoad);
     }
 
     @Override

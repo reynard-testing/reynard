@@ -1,14 +1,14 @@
 import asyncio
-import base64
 import os
-from dataclasses import dataclass, field
 
 import requests
 
 # import trace
 from flask import Flask, request
-from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
-from google.protobuf.json_format import MessageToDict
+
+from lib.models import Span, ReportedSpan, ResponseData, FaultUid, FaultMode, Fault, Faultload, TraceNode
+from lib.otel import otelTraceExportToSpans, parse_otel_protobuf
+from lib.span_store import SpanStore
 
 app = Flask(__name__)
 
@@ -18,73 +18,8 @@ proxy_list: list[str] = [proxy for proxy in os.getenv(
     'PROXY_LIST', '').split(',') if proxy]
 
 
-@dataclass
-class Span:
-    span_id: str
-    trace_id: str
-    parent_span_id: str
-    name: str
-    start_time: int
-    end_time: int
-    service_name: str
-    trace_state: str
-    is_error: bool
-    error_message: str
-
-
-@dataclass
-class ResponseData:
-    # Proxy reported data
-    status: int
-    body: str
-
-
-@dataclass
-class FaultUid:
-    origin: str
-    destination: str
-    signature: str
-    payload: str
-    count: int
-
-
-@dataclass
-class FaultMode:
-    type: str
-    args: list[str]
-
-
-@dataclass
-class Fault:
-    uid: FaultUid
-    mode: FaultMode
-
-
-@dataclass
-class Faultload:
-    # Faultload data
-    faults: list[Fault]
-    trace_id: str
-
-
-@dataclass
-class ReportedSpan:
-    # Proxy reported data
-    span_id: str
-    uid: FaultUid
-    injected_fault: Fault
-    response: ResponseData
-
-
-@dataclass
-class TraceNode:
-    span: Span
-    report: ReportedSpan
-    children: list['TraceNode'] = field(default_factory=list)
-
-
 # Local in-memory storage
-span_lookup: dict[str, Span] = {}
+span_store = SpanStore()
 span_report_lookup: dict[str, ReportedSpan] = {}
 trace_report_lookup: dict[str, list[ReportedSpan]] = {}
 
@@ -92,125 +27,32 @@ collected_spans: list[Span] = []
 collected_raw: list = []
 
 
-def find_span_by_id(span_id):
-    return span_lookup.get(span_id, None)
-
-
-def add_span(span: Span):
-    collected_spans.append(span)
-    span_lookup[span.span_id] = span
-
-
-# -- Helper functions for OTEL data --
-def get_attribute(attributes, key):
-    for attr in attributes:
-        if attr['key'] == key:
-            value = attr['value']
-            if isinstance(value, dict) and 'stringValue' in value:
-                return value['stringValue']
-            return value
-    return None
-
-
-def to_id(base_id, byte_length=16):
-    if base_id is None:
-        return None
-
-    as_int = int.from_bytes(base64.b64decode(base_id), 'big')
-    return hex(as_int)[2:].zfill(byte_length * 2)
-
-
-def to_int(value):
-    if value is None:
-        return None
-    return int(value)
-
-
-def getErrorStatus(span: dict) -> tuple[bool, str]:
-    status = span.get('status', None)
-    if status is None:
-        return None, None
-
-    code = status.get('code', None)
-    if code is None:
-        return None, None
-
-    errenous = code == "STATUS_CODE_ERROR"
-
-    return errenous, status.get('message', None)
-
-# handle a single OTEL span
-
-
-def handleScopeSpan(span: dict, service_name: str):
-    # Get fields
-    trace_id = to_id(span.get('traceId', None), 16)
-
-    if trace_id not in trace_ids:
-        return
-
-    span_id = to_id(span.get('spanId', None), 8)
-    parent_span_id = to_id(span.get('parentSpanId', None), 8)
-
-    trace_state = span.get('traceState', None)
-
-    name = span.get('name', None)
-    start_time = to_int(span.get('startTimeUnixNano', None))
-    end_time = to_int(span.get('endTimeUnixNano', None))
-
-    is_error, error_message = getErrorStatus(span)
-
-    # update existing span if it exists
-    existing_span = find_span_by_id(span_id)
-
-    if existing_span is not None:
-        # update existing span and return
-        existing_span.is_error = is_error
-        existing_span.error_message = error_message
-        existing_span.end_time = end_time
-        return
-
-    # create NEW span
-    span = Span(
-        span_id=span_id,
-        trace_id=trace_id,
-        parent_span_id=parent_span_id,
-        name=name,
-        start_time=start_time,
-        end_time=end_time,
-        service_name=service_name,
-        trace_state=trace_state,
-        is_error=is_error,
-        error_message=error_message,
-    )
-
-    add_span(span)
-
-
-def handleSpan(span):
-    span_resource_attributes = span['resource']['attributes']
-    service_name = get_attribute(span_resource_attributes, 'service.name')
-
-    scope_spans = span['scopeSpans']
-    for span in scope_spans:
-        for scopedspan in span['spans']:
-            handleScopeSpan(scopedspan, service_name)
-
-
-def parse_protobuf(data):
-    request_proto = ExportTraceServiceRequest()
-    request_proto.ParseFromString(data)
-    return MessageToDict(request_proto)
-
-
 @app.route('/v1/traces', methods=['POST'])
 def collect():
+    # parse data
     raw_data = request.data
-    data_dict = parse_protobuf(raw_data)
+    data_dict = parse_otel_protobuf(raw_data)
+
+    # store raw data
     collected_raw.append(data_dict)
 
-    for span in data_dict['resourceSpans']:
-        handleSpan(span)
+    spans = otelTraceExportToSpans(data_dict)
+    for span in spans:
+        # ignore spans that are not part of a trace of interest
+        if span.trace_id not in trace_ids:
+            continue
+
+        # if the span already exists, update it
+        existing_span = span_store.get_by_span_id(span.span_id)
+        if existing_span is not None:
+            # update existing span and return
+            existing_span.is_error = span.is_error
+            existing_span.error_message = span.error_message
+            existing_span.end_time = span.end_time
+            continue
+
+        # otherwise, add the span
+        span_store.add(span)
 
     return "Data collected", 200
 
@@ -286,9 +128,8 @@ def get_raw_spans():
 def get_spans_by_trace_id(trace_id):
     spans, trees = get_trace_tree_for_trace(trace_id)
 
-
     reports = trace_report_lookup.get(trace_id)
-    report_tree = get_report_tree(trees[0]) if len(trees) == 1 else None 
+    report_tree = get_report_tree(trees[0]) if len(trees) == 1 else None
 
     return {
         "spans": spans,
@@ -303,11 +144,13 @@ def get_tree_by_trace_id(trace_id):
     _, trees = get_trace_tree_for_trace(trace_id)
     return trees, 200
 
+
 def get_report_tree_children(children: list[TraceNode]) -> list[TraceNode]:
     res = []
     for child in children:
         res += get_report_tree(child)
     return res
+
 
 def get_report_tree(node: TraceNode) -> list[TraceNode]:
     is_report_node = node.report != None or node.span.span_id == "0000000000000001"
@@ -320,15 +163,17 @@ def get_report_tree(node: TraceNode) -> list[TraceNode]:
         )]
     return get_report_tree_children(node.children)
 
+
 @app.route('/v1/get-report-tree/<trace_id>', methods=['GET'])
 def get_report_tree_by_trace_id(trace_id):
     _, trees = get_trace_tree_for_trace(trace_id)
 
     if len(trees) != 1:
         return [], 404
-    
+
     report_tree = get_report_tree(trees[0])
     return report_tree, 200
+
 
 @app.route('/v1/get-reports/<trace_id>', methods=['GET'])
 def get_reports_by_trace_id(trace_id):

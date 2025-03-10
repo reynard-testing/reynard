@@ -4,38 +4,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import nl.dflipse.fit.trace.TraceParent;
-import nl.dflipse.fit.trace.TraceState;
-import nl.dflipse.fit.util.TaggedTimer;
-
-public class Faultload {
-    private final Set<Fault> faults;
-
-    private TraceParent traceParent;
-    private TraceState traceState;
-
-    public TaggedTimer timer = new TaggedTimer();
-
-    public Faultload() {
-        this(new HashSet<>());
-    }
-
-    public Faultload(Set<Fault> faults) {
-        this.faults = faults;
-        traceParent = new TraceParent();
-
-        traceState = new TraceState();
-        traceState.set("fit", "1");
-    }
-
-    public Set<Fault> getFaults() {
-        return faults;
-    }
+public record Faultload(Set<Fault> faultSet) {
 
     public Set<FaultUid> getFaultUids() {
         Set<FaultUid> faultUids = new HashSet<>();
-        for (Fault fault : faults) {
+        for (Fault fault : faultSet) {
             faultUids.add(fault.getUid());
         }
         return faultUids;
@@ -44,7 +19,7 @@ public class Faultload {
     public String readableString() {
         List<String> readableFaults = new ArrayList<>();
 
-        for (Fault fault : faults) {
+        for (Fault fault : faultSet) {
             readableFaults.add(fault.getUid().toString() + "(" + fault.getMode().getType() + " "
                     + fault.getMode().getArgs() + ")");
         }
@@ -52,8 +27,14 @@ public class Faultload {
         return String.join(", ", readableFaults);
     }
 
+    public Set<Fault> ofType(String faultType) {
+        return faultSet.stream()
+                .filter(fault -> fault.getMode().getType().equals(faultType))
+                .collect(Collectors.toSet());
+    }
+
     public boolean hasFaultMode(String... faultType) {
-        for (Fault fault : faults) {
+        for (Fault fault : faultSet) {
             for (String type : faultType) {
                 if (fault.getMode().getType().equals(type)) {
                     return true;
@@ -63,23 +44,7 @@ public class Faultload {
         return false;
     }
 
-    public String serializeJson() {
-        return FaultloadSerializer.serializeJson(this);
-    }
-
-    public String getTraceId() {
-        return traceParent.traceId;
-    }
-
-    public TraceParent getTraceParent() {
-        return traceParent;
-    }
-
-    public TraceState getTraceState() {
-        return traceState;
-    }
-
     public int size() {
-        return faults.size();
+        return faultSet.size();
     }
 }

@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import nl.dflipse.fit.strategy.util.PrunablePowersetIterator;
 
-public class PowersetTree {
+public class PowersetTreeTest {
 
     private List<Set<Integer>> expandComplete(PrunablePowersetIterator<Integer> generator) {
         List<Set<Integer>> result = new ArrayList<>();

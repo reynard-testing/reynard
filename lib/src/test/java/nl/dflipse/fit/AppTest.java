@@ -13,9 +13,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
+import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
+import nl.dflipse.fit.strategy.TrackedFaultload;
 
 /**
  * FI test the app
@@ -72,7 +75,7 @@ public class AppTest {
     }
 
     @FiTest
-    public void testApp(Faultload faultload) throws IOException {
+    public void testApp(TrackedFaultload faultload) throws IOException {
         int frontendPort = frontend.getMappedPort(8080);
         String queryUrl = "http://localhost:" + frontendPort + "/hotels?inDate=2015-04-09&outDate=2015-04-10";
 
@@ -85,8 +88,7 @@ public class AppTest {
         String traceUrl = "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/"
                 + faultload.getTraceId();
 
-        boolean containsError = faultload.getFaults().stream()
-                .anyMatch(f -> f.getMode().getType().equals("HTTP_ERROR"));
+        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
         int expectedResponse = containsError ? 500 : 200;
         int actualResponse = res.returnResponse().getCode();
         assertEquals(expectedResponse, actualResponse);

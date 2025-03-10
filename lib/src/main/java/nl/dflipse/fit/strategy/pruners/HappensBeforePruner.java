@@ -119,7 +119,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
         // redundant.
 
         Set<FaultUid> errorFaults = faultload
-                .getFaults()
+                .faultSet()
                 .stream()
                 .filter(fault -> fault.getMode().getType().equals(ErrorFault.FAULT_TYPE))
                 .map(fault -> fault.getUid())

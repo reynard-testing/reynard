@@ -72,7 +72,7 @@ public class CompletenessTest {
             }
 
             for (var faultload : faultloads) {
-                Set<Fault> faultsInLoad = faultload.getFaults();
+                Set<Fault> faultsInLoad = faultload.faultSet();
                 toGenerate.remove(faultsInLoad);
                 casesGenerated++;
             }

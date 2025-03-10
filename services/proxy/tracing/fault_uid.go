@@ -27,12 +27,15 @@ func getEnvOrDefault(envVar, defaultValue string) string {
 	return value
 }
 
-func FaultUidFromRequest(r *http.Request, destination string) faultload.FaultUid {
+func FaultUidFromRequest(r *http.Request, destination string, maskPayload bool) faultload.FaultUid {
 	traceId := getTraceId(r)
 	signature := getCallSignature(r)
 	origin := getOrigin(r)
 	// destination := getDestination(r)
-	payload := getPayloadHash(r)
+	payload := "*"
+	if !maskPayload {
+		payload = getPayloadHash(r)
+	}
 	invocationCount := getInvocationCount(origin, signature, payload, traceId)
 
 	return faultload.FaultUid{

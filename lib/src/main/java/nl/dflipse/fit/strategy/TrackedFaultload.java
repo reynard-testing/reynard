@@ -51,7 +51,7 @@ public class TrackedFaultload {
     }
 
     public String serializeJson() {
-        return TestCaseSerializer.serializeJson(this);
+        return TrackedFaultloadSerializer.serializeJson(this);
     }
 
     public String getTraceId() {

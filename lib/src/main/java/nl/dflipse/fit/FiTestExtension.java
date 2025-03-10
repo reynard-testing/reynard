@@ -153,7 +153,10 @@ public class FiTestExtension
             }
 
             faultload.timer.start();
+            faultload.timer.start("registerFaultload");
             controller.registerFaultload(faultload);
+            faultload.timer.stop("registerFaultload");
+            faultload.timer.start("testMethod");
         }
     }
 
@@ -171,7 +174,7 @@ public class FiTestExtension
 
         @Override
         public void afterTestExecution(ExtensionContext context) {
-            faultload.timer.stop();
+            faultload.timer.stop("testMethod");
             // Access the queue and test result
             // var testMethod = context.getTestMethod().orElseThrow();
             // var annotation = testMethod.getAnnotation(FiTest.class);
@@ -183,6 +186,7 @@ public class FiTestExtension
                     "Test " + displayName + " with result: "
                             + (testFailed ? "FAIL" : "PASS"));
 
+            faultload.timer.start("handleResult");
             try {
                 TraceAnalysis trace = controller.getTrace(faultload);
                 FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
@@ -190,12 +194,17 @@ public class FiTestExtension
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            faultload.timer.stop("handleResult");
 
+            faultload.timer.start("unregisterFautload");
             try {
                 controller.unregisterFaultload(faultload);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            faultload.timer.stop("unregisterFautload");
+
+            faultload.timer.stop();
         }
     }
 

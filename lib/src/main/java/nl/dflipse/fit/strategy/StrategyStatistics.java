@@ -2,13 +2,19 @@ package nl.dflipse.fit.strategy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import nl.dflipse.fit.strategy.util.Pair;
+import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyStatistics {
     private Map<String, Integer> generatorCount = new HashMap<>();
     private Map<String, Integer> prunerCount = new HashMap<>();
-    private List<Long> timings = new ArrayList<>();
+    private List<Pair<String, Long>> timings = new ArrayList<>();
+    private Set<String> tags = new HashSet<>();
 
     private int totalRun = 0;
     private int totalGenerated = 0;
@@ -27,15 +33,20 @@ public class StrategyStatistics {
         totalPruned += count;
     }
 
-    private long getAverageTime() {
+    private long getAverageTime(String tag) {
         return (long) timings.stream()
-                .mapToDouble(Long::doubleValue)
+                .filter(entry -> entry.first().equals(tag))
+                .mapToLong(Pair::second)
                 .average()
                 .orElse(0.0);
     }
 
-    public void registerTime(long time) {
-        timings.add(time);
+    public void registerTime(TaggedTimer timer) {
+        for (var entry : timer.getTimings()) {
+            timings.add(entry);
+            tags.add(entry.first());
+        }
+
         totalRun++;
     }
 
@@ -75,6 +86,10 @@ public class StrategyStatistics {
         return map.keySet().stream().mapToInt(String::length).max().orElse(0);
     }
 
+    private int getMaxKeyLength(Set<String> set) {
+        return set.stream().mapToInt(String::length).max().orElse(0);
+    }
+
     private String asPercentage(int num, int div) {
         double percentage = 100d * num / (double) div;
         return String.format("%1.1f", percentage);
@@ -87,7 +102,15 @@ public class StrategyStatistics {
         System.out.println("Total generated     : " + totalGenerated);
         System.out.println("Total pruned        : " + totalPruned + " (" + prunePercentage + "%)");
         System.out.println("Total run           : " + totalRun);
-        System.out.println("Average time        : " + getAverageTime() + " (ms)");
+
+        System.out.println();
+        System.out.println(padBoth(" Timings ", maxWidth, "-"));
+        int maxTimingKeyLength = getMaxKeyLength(tags);
+        for (String tag : tags) {
+            String readableKey = tag.equals(TaggedTimer.DEFAULT_TAG) ? "Total" : tag;
+            String key = padRight(readableKey, maxTimingKeyLength);
+            System.out.println(key + " : " + getAverageTime(tag) + " (ms)");
+        }
 
         System.out.println();
         System.out.println(padBoth(" Generators ", maxWidth, "-"));

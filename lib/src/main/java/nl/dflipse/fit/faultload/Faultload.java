@@ -7,7 +7,7 @@ import java.util.Set;
 
 import nl.dflipse.fit.trace.TraceParent;
 import nl.dflipse.fit.trace.TraceState;
-import nl.dflipse.fit.util.Timer;
+import nl.dflipse.fit.util.TaggedTimer;
 
 public class Faultload {
     private final Set<Fault> faults;
@@ -15,7 +15,7 @@ public class Faultload {
     private TraceParent traceParent;
     private TraceState traceState;
 
-    public Timer timer = new Timer();
+    public TaggedTimer timer = new TaggedTimer();
 
     public Faultload() {
         this(new HashSet<>());
@@ -61,10 +61,6 @@ public class Faultload {
             }
         }
         return false;
-    }
-
-    public long getDurationMs() {
-        return timer.durationMs();
     }
 
     public String serializeJson() {

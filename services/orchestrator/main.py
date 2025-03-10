@@ -237,6 +237,7 @@ async def report_span_id():
     )
 
     span_report = ReportedSpan(
+        trace_id=trace_id,
         span_id=span_id,
         uid=faultUid,
         injected_fault=injected_fault,

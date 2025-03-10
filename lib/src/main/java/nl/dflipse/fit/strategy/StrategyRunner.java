@@ -69,7 +69,7 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
-        statistics.registerTime(result.faultload.getDurationMs());
+        statistics.registerTime(result.faultload.timer);
         history.add(result);
         analyze(result);
 

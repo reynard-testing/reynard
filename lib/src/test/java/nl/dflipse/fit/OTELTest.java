@@ -17,6 +17,7 @@ import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.controller.RemoteController;
+import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.util.HttpResponse;
 import nl.dflipse.fit.util.HttpResponseHandler;
 
@@ -30,8 +31,8 @@ public class OTELTest {
         return controller;
     }
 
-    @FiTest
-    public void testShipping(Faultload faultload) throws URISyntaxException {
+    @FiTest(maskPayload = true)
+    public void testShipping(TrackedFaultload faultload) throws URISyntaxException {
         String port = "8080";
         // String port = "64839";
 
@@ -69,7 +70,7 @@ public class OTELTest {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        String inspectUrl = controller.collectorUrl + "/v1/trace/" + faultload.getTraceId();
+        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
         boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
@@ -78,8 +79,8 @@ public class OTELTest {
         // assertEquals(expectedResponse, actualResponse);
     }
 
-    @FiTest
-    public void testRecommendations(Faultload faultload) throws URISyntaxException, IOException {
+    @FiTest(maskPayload = true)
+    public void testRecommendations(TrackedFaultload faultload) throws URISyntaxException, IOException {
         String port = "8080";
         // String port = "64839";
 
@@ -100,7 +101,7 @@ public class OTELTest {
                 .execute();
         HttpResponse response = res.handleResponse(new HttpResponseHandler());
 
-        String inspectUrl = controller.collectorUrl + "/v1/trace/" + faultload.getTraceId();
+        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
         boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);

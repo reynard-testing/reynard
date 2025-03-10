@@ -21,6 +21,8 @@ public class StrategyRunner {
 
     public StrategyStatistics statistics = new StrategyStatistics();
 
+    private boolean withPayloadMasking = false;
+
     public StrategyRunner() {
         history = new HistoricStore();
         prunedFaultloads = new HashSet<>();
@@ -31,7 +33,12 @@ public class StrategyRunner {
 
         // Initialize the queue with an empty faultload
         queue = new ArrayList<>();
-        queue.add(new Faultload());
+        queue.add(new Faultload(Set.of()));
+    }
+
+    public StrategyRunner withPayloadMasking() {
+        withPayloadMasking = true;
+        return this;
     }
 
     public StrategyRunner withGenerator(Generator generator) {
@@ -49,12 +56,18 @@ public class StrategyRunner {
         return this;
     }
 
-    public Faultload nextFaultload() {
+    public TrackedFaultload nextFaultload() {
         if (queue.isEmpty()) {
             return null;
         }
 
-        return queue.remove(0);
+        var queued = queue.remove(0);
+        var tracked = new TrackedFaultload(queued);
+        if (withPayloadMasking) {
+            tracked.withMaskPayload();
+        }
+
+        return tracked;
     }
 
     public Pair<Integer, Integer> generateAndPrune() {
@@ -68,11 +81,7 @@ public class StrategyRunner {
         return new Pair<>(newFaultloads.size(), pruned);
     }
 
-    public void handleResult(FaultloadResult result) {
-        statistics.registerTime(result.faultload.timer);
-        history.add(result);
-        analyze(result);
-
+    public Pair<Integer, Integer> generateAndPruneTillNext() {
         int generated = 0;
         int pruned = 0;
 
@@ -92,6 +101,18 @@ public class StrategyRunner {
                 break;
             }
         }
+
+        return new Pair<>(generated, pruned);
+    }
+
+    public void handleResult(FaultloadResult result) {
+        statistics.registerTime(result.faultload.timer);
+        history.add(result);
+        analyze(result);
+
+        var res = generateAndPruneTillNext();
+        int generated = res.getFirst();
+        int pruned = res.getSecond();
 
         System.out.println("[Strategy] Generated " + generated + " new faultloads, pruned " + pruned + " faultloads");
     }

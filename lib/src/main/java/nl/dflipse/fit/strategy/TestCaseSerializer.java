@@ -1,4 +1,4 @@
-package nl.dflipse.fit.faultload;
+package nl.dflipse.fit.strategy;
 
 import java.util.Set;
 
@@ -6,15 +6,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+import nl.dflipse.fit.faultload.Fault;
+import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 
-public class FaultloadSerializer {
+public class TestCaseSerializer {
   private final static ObjectMapper mapper = new ObjectMapper();
 
-  public static String serializeJson(Faultload faultload) {
+  public static String serializeJson(TrackedFaultload testCase) {
     var obj = mapper.createObjectNode();
-    obj.set("faults", serializeFaults(faultload.getFaults()));
-    obj.set("trace_id", stringNode(faultload.getTraceId()));
+    obj.set("faults", serializeFaults(testCase.getFaultload().faultSet()));
+    obj.set("trace_id", stringNode(testCase.getTraceId()));
 
     return obj.toString();
   }

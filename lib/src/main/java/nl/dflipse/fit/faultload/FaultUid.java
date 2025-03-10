@@ -34,6 +34,26 @@ public record FaultUid(String origin, String destination, String signature, Stri
         return origin + ">" + destination + ":" + signature + "(" + payload + ")#" + count;
     }
 
+    private boolean isMasked(String value) {
+        return value == null || value.equals("*");
+    }
+
+    private boolean isMasked(int value) {
+        return value < 0;
+    }
+
+    public FaultUid applyMask(FaultUid mask) {
+        if (mask == null) {
+            return this;
+        }
+        String maskedOrigin = isMasked(mask.origin) ? mask.origin : origin;
+        String maskedDestination = isMasked(mask.destination) ? mask.destination : destination;
+        String maskedSignature = isMasked(mask.signature) ? mask.signature : signature;
+        String maskedPayload = isMasked(mask.payload) ? mask.payload : payload;
+        int maskedCount = isMasked(mask.count) ? mask.count : count;
+        return new FaultUid(maskedOrigin, maskedDestination, maskedSignature, maskedPayload, maskedCount);
+    }
+
     private boolean matches(String a, String b) {
         return a == null || b == null || a == "*" || b == "*" || a.equals(b);
     }

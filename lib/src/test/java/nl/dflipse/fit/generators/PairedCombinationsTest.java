@@ -9,7 +9,7 @@ import nl.dflipse.fit.strategy.util.Combinatorics;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.PairedCombinationsIterator;
 
-public class PairedCombinations {
+public class PairedCombinationsTest {
 
     @Test
     public void testEmptyList() {

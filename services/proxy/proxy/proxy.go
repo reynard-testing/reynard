@@ -108,7 +108,11 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// determine the span ID for the current request
 		// and report the link to the parent span
 		log.Printf("Faults registered for this trace: %s\n", faults)
-		faultUid := tracing.FaultUidFromRequest(r, destination)
+		shouldMaskPayload := state.GetWithDefault("mask", "0") == "1"
+		if shouldMaskPayload {
+			log.Printf("Payload masking enabled.\n")
+		}
+		faultUid := tracing.FaultUidFromRequest(r, destination, shouldMaskPayload)
 		log.Printf("Determined Fault UID: %s\n", faultUid.String())
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{

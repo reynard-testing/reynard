@@ -1,7 +1,9 @@
 package tracing
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -11,9 +13,11 @@ import (
 	"dflipse.nl/fit-proxy/faultload"
 )
 
-var ServiceName string = os.Getenv("SERVICE_NAME")
-var stackName string = os.Getenv("STACK_NAME")
-var pathPrefix string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
+var (
+	ServiceName string = os.Getenv("SERVICE_NAME")
+	stackPrefix string = os.Getenv("STACK_PREFIX")
+	pathPrefix  string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
+)
 
 func getEnvOrDefault(envVar, defaultValue string) string {
 	value := os.Getenv(envVar)
@@ -23,25 +27,52 @@ func getEnvOrDefault(envVar, defaultValue string) string {
 	return value
 }
 
-func FaultUidFromRequest(r *http.Request) faultload.FaultUid {
+func FaultUidFromRequest(r *http.Request, destination string, maskPayload bool) faultload.FaultUid {
 	traceId := getTraceId(r)
 	signature := getCallSignature(r)
-	clientName := getOriginatingService(r)
-	// clientName := r.RemoteAddr
-	invocationCount := getInvocationCount(clientName, signature, traceId)
+	origin := getOrigin(r)
+	// destination := getDestination(r)
+	payload := "*"
+	if !maskPayload {
+		payload = getPayloadHash(r)
+	}
+	invocationCount := getInvocationCount(origin, signature, payload, traceId)
 
 	return faultload.FaultUid{
-		Origin:      clientName,
-		Destination: ServiceName,
+		Origin:      origin,
+		Destination: destination,
 		Signature:   signature,
+		Payload:     payload,
 		Count:       invocationCount,
 	}
 }
 
-func getInvocationCount(clientName, signature, traceId string) int {
-	key := fmt.Sprintf("%s-%s-%s", clientName, signature, traceId)
+func getInvocationCount(origin, signature, payload, traceId string) int {
+	key := fmt.Sprintf("%s-%s-%s-%s", origin, signature, payload, traceId)
 	currentIndex := traceInvocationCounter.GetCount(key)
 	return currentIndex
+}
+
+func getPayloadHash(r *http.Request) string {
+	body := r.Body
+
+	if body == nil {
+		return ""
+	}
+
+	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		log.Printf("Failed to read request body: %v\n", err)
+		return ""
+	}
+	// Reset the body so it can be read again
+	// This is necessary because the proxy will read the body to forward the request
+	r.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
+
+	hash := sha256.Sum256(bodyBytes)
+	// shortHash := hash[:8] // Use only the first 8 bytes of the hash
+	// return fmt.Sprintf("%x", shortHash)
+	return fmt.Sprintf("%x", hash)
 }
 
 func getTraceId(r *http.Request) string {
@@ -58,6 +89,7 @@ func getCallSignature(r *http.Request) string {
 	url := r.URL
 	pathOnly := url.Path
 
+	// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "application/grpc" {
 		withoutPrefix := strings.TrimPrefix(pathOnly, pathPrefix)
@@ -67,36 +99,44 @@ func getCallSignature(r *http.Request) string {
 	return pathOnly
 }
 
-// Returns the hostname of the service that made the request
-func getOriginatingService(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		log.Printf("Failed to get originating service: %v\n", err)
-		return "<none>"
-	}
-
-	names, err := net.LookupAddr(host)
+func GetHostIdentifier(addr string) string {
+	names, err := net.LookupAddr(addr)
 	if err != nil || len(names) == 0 {
 		// Handle the case where no hostname is found
-		return host // Return the IP as fallback
+		return addr // Return the IP as fallback
 	}
 	// Extract service name from the FQDN
-	log.Print(names)
+	log.Printf("Hostnames: %s\n", names)
 	fqdn := names[0]
 	parts := strings.Split(fqdn, ".")
 	if len(parts) == 0 {
 		return fqdn
 	}
 
-	fullStackName := parts[0] // The first part of the FQDN is usually the service name
-	serviceId := strings.TrimPrefix(fullStackName, stackName+"-")
+	serviceName := parts[0]
+	serviceWithoutPrefix := strings.TrimPrefix(serviceName, stackPrefix)
+	return serviceWithoutPrefix
+}
 
-	// Split the service name on "-"
-	serviceParts := strings.Split(serviceId, "-")
-	if len(serviceParts) == 0 {
-		return serviceId
+// Returns the hostname of the service that made the request
+func getOrigin(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		log.Printf("Failed to get originating service: %v\n", err)
+		return "<none>"
 	}
 
-	serviceName := serviceParts[0]
-	return serviceName
+	log.Printf("Remote address: %s\n", r.RemoteAddr)
+	return GetHostIdentifier(host)
 }
+
+// Deprecated, use the config's destination instead
+// func getDestination(r *http.Request) string {
+// 	host, _, err := net.SplitHostPort(r.Host)
+// 	if err != nil {
+// 		log.Printf("Failed to get destination: %v\n", err)
+// 		return "<none>"
+// 	}
+
+// 	return GetHostIdentifier(host)
+// }

@@ -1,10 +1,7 @@
 package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Combinatorics {
     public static <T> List<List<T>> generatePowerSet(List<T> originalSet) {
@@ -35,20 +32,41 @@ public class Combinatorics {
         return powerSet;
     }
 
-    // public static <T> Stream<List<T>> streamPowerSet(List<T> originalSet) {
-    // if (originalSet.isEmpty()) {
-    // return Stream.of(Collections.emptyList());
-    // }
+    public static <T> List<List<T>> combinations(List<T> originalSet, int k) {
+        List<List<T>> res = new ArrayList<>();
+        var it = new SimpleCombinationIterator<>(originalSet, k);
+        while (it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
 
-    // T head = originalSet.get(0);
-    // List<T> rest = originalSet.subList(1, originalSet.size());
+    // Generate all unique lists of pairs of elements from xs and ys
+    // where xs is always present
+    public static <X, Y> List<List<Pair<X, Y>>> cartesianCombinations(List<X> xs, List<Y> ys) {
+        List<List<Pair<X, Y>>> res = List.of(List.of());
 
-    // // Recursively generate power set using streams
-    // return generatePowerSet(rest)
-    // .flatMap(subset -> Stream.of(
-    // subset, // Without head
-    // Stream.concat(Stream.of(head), subset.stream()) // With head
-    // .collect(Collectors.toList()) // Convert back to list
-    // ));
-    // }
+        if (xs.isEmpty() || ys.isEmpty()) {
+            return res;
+        }
+
+        for (var x : xs) {
+            List<List<Pair<X, Y>>> newRes = new ArrayList<>();
+
+            for (var l : res) {
+                for (var y : ys) {
+                    // create a new list with the new pair
+                    Pair<X, Y> pair = new Pair<>(x, y);
+                    List<Pair<X, Y>> newList = new ArrayList<>(l);
+                    newList.add(pair);
+                    newRes.add(newList);
+                }
+            }
+
+            res = newRes;
+        }
+
+        return res;
+    }
+
 }

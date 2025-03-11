@@ -3,7 +3,6 @@ package nl.dflipse.fit;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
@@ -14,9 +13,11 @@ import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.net.URIBuilder;
 
 import static org.junit.Assert.assertEquals;
 
-import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
+import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.controller.RemoteController;
+import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.util.HttpResponse;
 import nl.dflipse.fit.util.HttpResponseHandler;
 
@@ -54,8 +55,8 @@ public class OTELTest {
         }
     }
 
-    @FiTest
-    public void testShipping(Faultload faultload) throws URISyntaxException {
+    @FiTest(maskPayload = true)
+    public void testShipping(TrackedFaultload faultload) throws URISyntaxException {
         String port = "8080";
         // String port = "64839";
 
@@ -93,18 +94,17 @@ public class OTELTest {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        String inspectUrl = controller.collectorUrl + "/v1/get/" + faultload.getTraceId();
+        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
-        boolean containsError = faultload.getFaults().stream()
-                .anyMatch(f -> f.getMode().getType().equals("HTTP_ERROR"));
+        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
         int expectedResponse = containsError ? 500 : 200;
         int actualResponse = response.statusCode;
         assertEquals(expectedResponse, actualResponse);
     }
 
-    @FiTest
-    public void testRecommendations(Faultload faultload) throws URISyntaxException, IOException {
+    @FiTest(maskPayload = true)
+    public void testRecommendations(TrackedFaultload faultload) throws URISyntaxException, IOException {
         String port = "8080";
         // String port = "64839";
 
@@ -125,18 +125,17 @@ public class OTELTest {
                 .execute();
         HttpResponse response = res.handleResponse(new HttpResponseHandler());
 
-        String inspectUrl = controller.collectorUrl + "/v1/get/" + faultload.getTraceId();
+        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
-        boolean containsError = faultload.getFaults().stream()
-                .anyMatch(f -> f.getMode().getType().equals("HTTP_ERROR"));
+        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
         int expectedResponse = containsError ? 500 : 200;
         int actualResponse = response.statusCode;
         assertEquals(expectedResponse, actualResponse);
     }
 
     @FiTest
-    public void testCheckout(Faultload faultload) throws URISyntaxException, IOException {
+    public void testCheckout(TrackedFaultload faultload) throws URISyntaxException, IOException {
         addItemToCart();
 
         String endpoint = "http://localhost:" + PORT + "/api/checkout";
@@ -156,11 +155,10 @@ public class OTELTest {
                 .execute();
         HttpResponse response = res.handleResponse(new HttpResponseHandler());
 
-        String inspectUrl = controller.collectorUrl + "/v1/get/" + faultload.getTraceId();
+        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
-        boolean containsError = faultload.getFaults().stream()
-                .anyMatch(f -> f.getMode().getType().equals("HTTP_ERROR"));
+        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
         int expectedResponse = containsError ? 500 : 200;
         int actualResponse = response.statusCode;
         // assertEquals(expectedResponse, actualResponse);

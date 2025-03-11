@@ -1,0 +1,78 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: --config=/otel-collector-config.yaml
+    volumes:
+      - ./lib/src/main/resources/otel-collector/collector-config-jaeger.yaml:/otel-collector-config.yaml
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - 16686:16686
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
+  orchestrator:
+    image: fit-otel-orchestrator:latest
+    ports:
+      - "5000:5000"
+    environment:
+      - PROXY_LIST=geo:8050,rate:8050,search:8050,profile:8050
+
+  geo:
+    image: fit-proxy:latest
+    environment:
+      - ORCHESTRATOR_HOST=orchestrator:5000
+      - CONTROLLER_PORT=8050
+      - PROXY_HOST=0.0.0.0:8080
+      - PROXY_TARGET=http://geo-service:8080
+      - SERVICE_NAME=geo
+      - USE_HTTP2=true
+  geo-service:
+    image: go-micro-service:latest
+    command: go-micro-services geo
+
+  rate:
+    image: fit-proxy:latest
+    environment:
+      - ORCHESTRATOR_HOST=orchestrator:5000
+      - CONTROLLER_PORT=8050
+      - PROXY_HOST=0.0.0.0:8080
+      - PROXY_TARGET=http://rate-service:8080
+      - SERVICE_NAME=rate
+      - USE_HTTP2=true
+  rate-service:
+    image: go-micro-service:latest
+    command: go-micro-services rate
+  search:
+    image: fit-proxy:latest
+    environment:
+      - ORCHESTRATOR_HOST=orchestrator:5000
+      - CONTROLLER_PORT=8050
+      - PROXY_HOST=0.0.0.0:8080
+      - PROXY_TARGET=http://search-service:8080
+      - SERVICE_NAME=search
+      - USE_HTTP2=true
+  search-service:
+    image: go-micro-service:latest
+    command: go-micro-services search
+
+  profile:
+    image: fit-proxy:latest
+    environment:
+      - ORCHESTRATOR_HOST=orchestrator:5000
+      - CONTROLLER_PORT=8050
+      - PROXY_HOST=0.0.0.0:8080
+      - PROXY_TARGET=http://profile-service:8080
+      - SERVICE_NAME=profile
+      - USE_HTTP2=true
+  profile-service:
+    image: go-micro-service:latest
+    command: go-micro-services profile
+  frontend-service:
+    image: go-micro-service:latest
+    command: go-micro-services frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - search
+      - profile

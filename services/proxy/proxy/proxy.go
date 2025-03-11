@@ -15,10 +15,13 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
+var destination string
+
 func StartProxy(config config.ProxyConfig) {
 	// Set up the proxy host and target
 
 	log.Printf("Reverse proxy for: %s\n", config.Target)
+	log.Printf("Destination: %s\n", config.Destination)
 	log.Printf("Reachable at: %s\n", config.Host)
 
 	// Start an HTTP/2 server with a custom reverse proxy handler
@@ -35,6 +38,7 @@ func StartProxy(config config.ProxyConfig) {
 		Handler: handler,
 	}
 
+	destination = config.Destination
 	err := httpServer.ListenAndServe()
 	// err := httpServer.ListenAndServeTLS("cert.pem", "key.pem") // Requires SSL certificates for HTTP/2
 
@@ -104,15 +108,23 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// determine the span ID for the current request
 		// and report the link to the parent span
 		log.Printf("Faults registered for this trace: %s\n", faults)
-		faultUid := tracing.FaultUidFromRequest(r)
+		shouldMaskPayload := state.GetWithDefault("mask", "0") == "1"
+		if shouldMaskPayload {
+			log.Printf("Payload masking enabled.\n")
+		}
+		faultUid := tracing.FaultUidFromRequest(r, destination, shouldMaskPayload)
 		log.Printf("Determined Fault UID: %s\n", faultUid.String())
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
+			TraceId:  parent.TraceID,
 			SpanId:   parent.ParentID,
 			FaultUid: faultUid,
 		}
 
-		capture := &ResponseCapture{ResponseWriter: w, Status: http.StatusOK}
+		capture := &ResponseCapture{
+			ResponseWriter: w,
+			Status:         http.StatusOK,
+		}
 
 		var proxyState ProxyState = ProxyState{
 			InjectedFault:      nil,

@@ -1,74 +1,86 @@
 package nl.dflipse.fit.strategy.generators;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.util.Combinatorics;
-import nl.dflipse.fit.trace.util.TraceTraversal;
+import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.HistoricStore;
+import nl.dflipse.fit.strategy.util.AllCombinationIterator;
+import nl.dflipse.fit.strategy.util.PairedCombinationsIterator;
+import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
-public class DepthFirstGenerator implements Generator {
-    private boolean first = true;
+public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
     private List<FaultMode> modes;
+    private List<FaultUid> potentialFaults;
+    private AllCombinationIterator<FaultUid> iterator;
+    private PairedCombinationsIterator<FaultUid, FaultMode> pairedIterator;
 
-    private Set<Fault> asFaults(List<FaultUid> ids, FaultMode mode) {
-        Set<Fault> faults = new HashSet<>();
-
-        for (var id : ids) {
-            faults.add(new Fault(id, mode));
-        }
-
-        return faults;
-    }
-
-    public DepthFirstGenerator() {
-        // DelayFault.fromDelayMs(1000),
-        // ErrorFault.fromError(ErrorFault.HttpError.REQUEST_TIMEOUT)
-
-        modes = List.of(
-                ErrorFault.fromError(ErrorFault.HttpError.SERVICE_UNAVAILABLE));
+    public DepthFirstGenerator(List<FaultMode> modes) {
+        this.modes = modes;
     }
 
     @Override
-    public List<Faultload> generate(FaultloadResult result) {
-        if (!first) {
-            return List.of();
-        }
+    public Void handleFeedback(FaultloadResult result, HistoricStore history) {
+        if (result.isInitial()) {
+            potentialFaults = result.trace.getFaultUids(TraversalStrategy.DEPTH_FIRST);
 
-        first = false;
-
-        var potentialFaults = TraceTraversal.depthFirstFaultpoints(result.trace);
-
-        for (var fault : potentialFaults) {
-            System.out.println("[DFS] Found fault: " + fault);
-        }
-
-        var powerSet = Combinatorics.generatePowerSet(potentialFaults);
-        // sort by size, so we can start with the smallest sets first
-        powerSet.sort((set1, set2) -> Integer.compare(set1.size(), set2.size()));
-
-        List<Faultload> newFaultloads = new ArrayList<>();
-        for (var faultIds : powerSet) {
-            if (faultIds.isEmpty()) {
-                // powerset contains the empty set, ignore that one (we already covered it)
-                continue;
+            for (var fault : potentialFaults) {
+                System.out.println("[DFS] Found fault: " + fault);
             }
 
-            for (var mode : modes) {
-                var newFaultload = new Faultload(asFaults(faultIds, mode));
-                newFaultloads.add(newFaultload);
+            iterator = new AllCombinationIterator<FaultUid>(potentialFaults);
+            long expectedSize = (long) Math.pow(1 + modes.size(), potentialFaults.size());
+            System.out
+                    .println("[DFS] Found " + potentialFaults.size() + " fault points. Will generate at most "
+                            + expectedSize
+                            + " new combinations");
+        }
+
+        return null;
+    }
+
+    @Override
+    public List<Faultload> generate() {
+        // If we have exhausted the mode-faultUid pairings
+        // we need to get the next combination
+        if (pairedIterator == null || !pairedIterator.hasNext()) {
+            if (!iterator.hasNext()) {
+                return List.of();
+            }
+
+            List<FaultUid> nextCombination = iterator.next();
+
+            if (nextCombination.isEmpty()) {
+                return List.of();
+            }
+
+            pairedIterator = new PairedCombinationsIterator<FaultUid, FaultMode>(nextCombination, modes);
+
+            if (!pairedIterator.hasNext()) {
+                return List.of();
             }
         }
 
-        System.out.println("[DFS] Planning on testing " + newFaultloads.size() + " combinations!");
-        return newFaultloads;
+        // create next faultload
+        var nextPairing = pairedIterator.next();
+        Set<Fault> faults = nextPairing.stream()
+                .map(pair -> new Fault(pair.first(), pair.second()))
+                .collect(Collectors.toSet());
+        Faultload faultLoad = new Faultload(faults);
+
+        return List.of(faultLoad);
+    }
+
+    @Override
+    public void mockFaultUids(List<FaultUid> faultUids) {
+        this.potentialFaults = faultUids;
+        this.iterator = new AllCombinationIterator<FaultUid>(potentialFaults);
     }
 
 }

@@ -7,15 +7,13 @@ import java.util.List;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.instrument.controller.RemoteController;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
 import nl.dflipse.fit.instrument.services.Jaeger;
 import nl.dflipse.fit.instrument.services.OTELCollectorService;
 import nl.dflipse.fit.instrument.services.OrchestratorService;
-import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
-public class InstrumentedApp implements FaultController {
+public class InstrumentedApp extends RemoteController {
     public Network network;
     private final List<InstrumentedService> proxies = new ArrayList<>();
     private final List<GenericContainer<?>> services = new ArrayList<>();
@@ -31,8 +29,6 @@ public class InstrumentedApp implements FaultController {
     public Jaeger jaeger = null;
     public String jaegerHost = "jaeger";
     public int jaegerPort = 16686;
-
-    private RemoteController controller;
 
     @SuppressWarnings("resource")
     public InstrumentedApp() {
@@ -95,22 +91,6 @@ public class InstrumentedApp implements FaultController {
         return proxyList;
     }
 
-    public TraceTreeSpan getTrace(Faultload faultload) throws IOException {
-        if (controller == null) {
-            throw new IllegalStateException("Controller not initialized. First call start().");
-        }
-
-        return controller.getTrace(faultload);
-    }
-
-    public void registerFaultload(Faultload faultload) {
-        if (controller == null) {
-            throw new IllegalStateException("Controller not initialized. First call start().");
-        }
-
-        controller.registerFaultload(faultload);
-    }
-
     public void start() {
         for (var service : services) {
             service.start();
@@ -118,7 +98,7 @@ public class InstrumentedApp implements FaultController {
 
         int localOrchestratorPort = orchestrator.getMappedPort(5000);
         orchestratorInspectUrl = "http://localhost:" + localOrchestratorPort;
-        controller = new RemoteController(orchestratorInspectUrl);
+        this.apiHost = orchestratorInspectUrl;
     }
 
     public void stop() {

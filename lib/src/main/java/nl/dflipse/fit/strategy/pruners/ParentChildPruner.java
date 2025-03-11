@@ -10,15 +10,14 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.HistoricStore;
 import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.strategy.util.TreeAnalysis;
 
 public class ParentChildPruner implements Pruner, FeedbackHandler<Void> {
-    private TreeAnalysis treeAnalysis;
+    private FaultloadResult initialResult;
 
     @Override
     public Void handleFeedback(FaultloadResult result, HistoricStore history) {
         if (result.isInitial()) {
-            treeAnalysis = new TreeAnalysis(result.trace);
+            initialResult = result;
         }
 
         return null;
@@ -30,7 +29,7 @@ public class ParentChildPruner implements Pruner, FeedbackHandler<Void> {
         // redundant.
 
         Set<FaultUid> errorFaults = faultload
-                .getFaults()
+                .faultSet()
                 .stream()
                 .filter(fault -> fault.getMode().getType().equals(ErrorFault.FAULT_TYPE))
                 .map(fault -> fault.getUid())
@@ -39,8 +38,8 @@ public class ParentChildPruner implements Pruner, FeedbackHandler<Void> {
         boolean isRedundant = Sets.anyPair(errorFaults, (pair) -> {
             var f1 = pair.getFirst();
             var f2 = pair.getSecond();
-            return treeAnalysis.isDecendantOf(f1, f2)
-                    || treeAnalysis.isDecendantOf(f2, f1);
+            return initialResult.trace.isDecendantOf(f1, f2)
+                    || initialResult.trace.isDecendantOf(f2, f1);
         });
 
         return isRedundant;

@@ -11,8 +11,9 @@ import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyStatistics {
-    private Map<String, Integer> generatorCount = new HashMap<>();
-    private Map<String, Integer> prunerCount = new HashMap<>();
+    private Map<String, Long> generatorCount = new HashMap<>();
+    private Map<String, Long> prunerCount = new HashMap<>();
+    private Map<String, Long> prunerEstimates = new HashMap<>();
     private List<Pair<String, Long>> timings = new ArrayList<>();
     private Set<String> tags = new HashSet<>();
 
@@ -21,16 +22,26 @@ public class StrategyStatistics {
     private long totalGenerated = 0;
     private long totalPruned = 0;
 
-    public void incrementGenerator(String generator, int count) {
-        generatorCount.put(generator, generatorCount.getOrDefault(generator, 0) + count);
+    public void incrementGenerator(String generator, long count) {
+        generatorCount.put(generator, generatorCount.getOrDefault(generator, 0L) + count);
         totalGenerated += count;
     }
 
-    public void incrementPruner(String pruner, int count) {
-        prunerCount.put(pruner, prunerCount.getOrDefault(pruner, 0) + count);
+    public void incrementPruner(String pruner, long count) {
+        prunerCount.put(pruner, prunerCount.getOrDefault(pruner, 0L) + count);
+        if (!prunerEstimates.containsKey(pruner)) {
+            prunerEstimates.put(pruner, 0L);
+        }
     }
 
-    public void incrementPruned(int count) {
+    public void incrementEstimatePruner(String pruner, long count) {
+        prunerEstimates.put(pruner, prunerEstimates.getOrDefault(pruner, 0L) + count);
+        if (!prunerCount.containsKey(pruner)) {
+            prunerCount.put(pruner, 0L);
+        }
+    }
+
+    public void incrementPruned(long count) {
         totalPruned += count;
     }
 
@@ -89,7 +100,7 @@ public class StrategyStatistics {
         return padding + s + padding;
     }
 
-    private int getMaxKeyLength(Map<String, Integer> map) {
+    private int getMaxKeyLength(Map<String, Long> map) {
         return map.keySet().stream().mapToInt(String::length).max().orElse(0);
     }
 
@@ -138,8 +149,12 @@ public class StrategyStatistics {
         System.out.println(padBoth(" Pruners ", maxWidth, "-"));
         for (var entry : prunerCount.entrySet()) {
             String key = padRight(entry.getKey(), maxPrunerKeyLength);
-            int value = entry.getValue();
-            System.out.println(key + " : " + value + " (" + asPercentage(value, totalGenerated) + "%)");
+            long value = entry.getValue();
+            long estimateValue = prunerEstimates.get(entry.getKey());
+            System.out.println(
+                    key + " : " + value + " directly (" + asPercentage(value, totalGenerated) + "% of generated)");
+            System.out.println(padRight("", maxPrunerKeyLength) + " : " + estimateValue + " indirectly ("
+                    + asPercentage(estimateValue, totalSize) + "% estimate of space)");
         }
     }
 }

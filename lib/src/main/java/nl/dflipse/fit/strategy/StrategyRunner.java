@@ -136,12 +136,12 @@ public class StrategyRunner {
 
     @SuppressWarnings("rawtypes")
     public void analyze(FaultloadResult result) {
-        FeedbackContext context = new FeedbackContext(this);
         result.faultload.timer.start("StrategyRunner.analyze");
 
         for (var analyzer : analyzers) {
             String name = analyzer.getClass().getSimpleName();
             String tag = name + ".handleFeedback<Analyzer>";
+            FeedbackContext context = new FeedbackContext(this, name);
             result.faultload.timer.start(tag);
             analyzer.handleFeedback(result, context);
             result.faultload.timer.stop(tag);
@@ -151,6 +151,7 @@ public class StrategyRunner {
             if (pruner instanceof FeedbackHandler) {
                 String name = pruner.getClass().getSimpleName();
                 String tag = name + ".handleFeedback<Pruner>";
+                FeedbackContext context = new FeedbackContext(this, name);
                 result.faultload.timer.start(tag);
                 ((FeedbackHandler) pruner).handleFeedback(result, context);
                 result.faultload.timer.stop(tag);
@@ -160,6 +161,7 @@ public class StrategyRunner {
         if (generator instanceof FeedbackHandler) {
             String name = generator.getClass().getSimpleName();
             String tag = name + ".handleFeedback<Generator>";
+            FeedbackContext context = new FeedbackContext(this, name);
             result.faultload.timer.start(tag);
             ((FeedbackHandler) generator).handleFeedback(result, context);
             result.faultload.timer.stop(tag);

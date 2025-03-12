@@ -108,29 +108,46 @@ public class IncreasingSizeGenerator implements Generator {
     }
 
     @Override
-    public void ignoreFaultUidSubset(Set<FaultUid> subset) {
+    public long ignoreFaultUidSubset(Set<FaultUid> subset) {
         boolean isNew = store.ignoreFaultUidSubset(subset);
         if (isNew) {
             spaceIterator.prune(subset);
         }
+
+        int subsetSize = subset.size();
+        return subsetSpaceSize(subsetSize, fidCounter - subsetSize);
     }
 
     @Override
-    public void ignoreFaultSubset(Set<Fault> subset) {
+    public long ignoreFaultSubset(Set<Fault> subset) {
         var prunableSet = store.ignoreFaultSubset(subset);
         if (modeIterator != null && prunableSet != null) {
             modeIterator.prune(prunableSet);
         }
+
+        int subsetSize = subset.size();
+        // The specific subset can only be assigned in one way
+        // so we can ignore the subset size
+        return subsetSpaceSize(0, fidCounter - subsetSize);
     }
 
     @Override
-    public void ignoreFaultload(Faultload faultload) {
+    public long ignoreFaultload(Faultload faultload) {
         store.ignoreFaultload(faultload);
+        return 1;
+    }
+
+    private long subsetSpaceSize(long subsetSize, long faultsSize) {
+        return subsetSpaceSize(modes.size(), subsetSize, faultsSize);
+    }
+
+    private long subsetSpaceSize(long m, long subsetSize, long faultsSize) {
+        return (long) (Math.pow(m, subsetSize) * Math.pow(1 + m, faultsSize));
     }
 
     @Override
     public long spaceSize() {
-        return (long) Math.pow(1 + modes.size(), fidCounter) - 1;
+        return subsetSpaceSize(0, fidCounter);
     }
 
 }

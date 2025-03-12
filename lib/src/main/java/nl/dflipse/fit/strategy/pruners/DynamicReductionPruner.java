@@ -1,7 +1,9 @@
 package nl.dflipse.fit.strategy.pruners;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -13,23 +15,23 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.HistoricStore;
 
 public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
 
     private Map<FaultUid, Set<FaultUid>> causalMap = new HashMap<>();
-    private Map<FaultUid, Set<Integer>> behavioursSeen = new HashMap<>();
-    private Map<FaultUid, Integer> happyPath = new HashMap<>();
+    private List<Map<FaultUid, Integer>> behavioursSeen = new ArrayList<>();
 
     @Override
-    public Void handleFeedback(FaultloadResult result, HistoricStore history) {
-        if (result.isInitial()) {
-            for (var report : result.trace.getReports()) {
-                FaultUid uid = report.faultUid;
-                int behaviour = report.response.status;
-                happyPath.put(uid, behaviour);
-            }
+    public Void handleFeedback(FaultloadResult result) {
+        // update behaviours seen
+        Map<FaultUid, Integer> behaviourMap = new HashMap<>();
+        for (var report : result.trace.getReports()) {
+            FaultUid uid = report.faultUid;
+            int behaviour = report.response.status;
+            behaviourMap.put(uid, behaviour);
         }
+
+        behavioursSeen.add(behaviourMap);
 
         // update causal map
         for (var parentChild : result.trace.getRelations()) {
@@ -43,63 +45,73 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
             causalMap.get(parent).add(child);
         }
 
-        // update behaviours seen
-        for (var report : result.trace.getReports()) {
-            FaultUid uid = report.faultUid;
-            // TODO: the behaviours should correspond to the SAME trace
-            int behaviour = report.response.status;
-
-            if (!behavioursSeen.containsKey(uid)) {
-                behavioursSeen.put(uid, new HashSet<>());
-            }
-
-            behavioursSeen.get(uid).add(behaviour);
-        }
         return null;
     }
 
+    private boolean hasExpectedOutcome(FaultUid faultUid, Fault fault, int observedOutcome) {
+        boolean hasFault = fault != null;
+        boolean faultDisturbs = hasFault && fault.getMode().getType() == ErrorFault.FAULT_TYPE;
+
+        // If we are supposed to inject a fault
+        if (hasFault && faultDisturbs) {
+            int expectedOutcome = Integer.parseInt(fault.getMode().getArgs().get(0));
+            if (expectedOutcome != observedOutcome) {
+                return false;
+            }
+        } else {
+            // If we are not injecting faults, then we should not see any effects
+            if (observedOutcome > 299) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     @Override
-    public boolean prune(Faultload faultload, HistoricStore history) {
+    public boolean prune(Faultload faultload) {
         Map<FaultUid, Fault> faultsByFaultUid = faultload.faultSet()
                 .stream()
                 .collect(Collectors.toMap(Fault::getUid, Function.identity()));
 
-        boolean shouldPrune = true;
-
+        // for all causes
         for (var cause : causalMap.keySet()) {
-            var allEffectsSeen = true;
+            boolean found = false;
 
-            for (var effect : causalMap.get(cause)) {
-                int expectedOutcome = happyPath.get(effect);
+            // there should exist an earlier run
+            for (var behaviour : behavioursSeen) {
+                var allEffectsSeen = true;
 
-                // If we are supposed to inject a fault
-                if (faultsByFaultUid.containsKey(effect)) {
-                    Fault fault = faultsByFaultUid.get(effect);
-                    if (fault.getMode().getType() == ErrorFault.FAULT_TYPE) {
-                        expectedOutcome = Integer.parseInt(fault.getMode().getArgs().get(0));
+                // that has all dependents with the same expected behaviour
+                for (var effect : causalMap.get(cause)) {
+                    boolean hasObservedEffect = behaviour.containsKey(effect);
+                    if (!hasObservedEffect) {
+                        allEffectsSeen = false;
+                        break;
+                    }
+
+                    boolean hasFault = faultsByFaultUid.containsKey(effect);
+                    Fault fault = hasFault ? faultsByFaultUid.get(effect) : null;
+
+                    if (!hasExpectedOutcome(cause, fault, behaviour.get(effect))) {
+                        allEffectsSeen = false;
+                        break;
                     }
                 }
 
-                // if we haven't seen the expected outcome for this effect
-                // then we should not prune
-                if (!behavioursSeen.get(effect).contains(expectedOutcome)) {
-                    allEffectsSeen = false;
+                // if we have seen all effects before, then we might prune
+                if (allEffectsSeen) {
+                    found = true;
                     break;
                 }
             }
 
-            // if we have not seen all effects, then we should not prune
-            if (!allEffectsSeen) {
-                shouldPrune = false;
-                break;
+            if (!found) {
+                return false;
             }
         }
 
-        if (shouldPrune) {
-            return true;
-        }
-
-        return shouldPrune;
+        return true;
     }
 
 }

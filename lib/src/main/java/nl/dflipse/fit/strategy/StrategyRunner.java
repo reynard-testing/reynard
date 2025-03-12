@@ -12,7 +12,6 @@ import nl.dflipse.fit.strategy.util.Pair;
 
 public class StrategyRunner {
     public List<Faultload> queue;
-    public HistoricStore history;
     public Set<Faultload> prunedFaultloads;
 
     public List<FeedbackHandler<Void>> analyzers;
@@ -26,7 +25,6 @@ public class StrategyRunner {
     private boolean reachedLimit = false;
 
     public StrategyRunner() {
-        history = new HistoricStore();
         prunedFaultloads = new HashSet<>();
 
         generators = new ArrayList<>();
@@ -117,7 +115,6 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
-        history.add(result);
         analyze(result);
 
         result.faultload.timer.start("StrategyRunner.generateAndPrune");
@@ -154,7 +151,7 @@ public class StrategyRunner {
             String name = analyzer.getClass().getSimpleName();
             String tag = name + ".handleFeedback<Analyzer>";
             result.faultload.timer.start(tag);
-            analyzer.handleFeedback(result, history);
+            analyzer.handleFeedback(result);
             result.faultload.timer.stop(tag);
         }
 
@@ -163,7 +160,7 @@ public class StrategyRunner {
                 String name = pruner.getClass().getSimpleName();
                 String tag = name + ".handleFeedback<Pruner>";
                 result.faultload.timer.start(tag);
-                ((FeedbackHandler) pruner).handleFeedback(result, history);
+                ((FeedbackHandler) pruner).handleFeedback(result);
                 result.faultload.timer.stop(tag);
             }
         }
@@ -173,7 +170,7 @@ public class StrategyRunner {
                 String name = gen.getClass().getSimpleName();
                 String tag = name + ".handleFeedback<Generator>";
                 result.faultload.timer.start(tag);
-                ((FeedbackHandler) gen).handleFeedback(result, history);
+                ((FeedbackHandler) gen).handleFeedback(result);
                 result.faultload.timer.stop(tag);
             }
         }
@@ -188,7 +185,7 @@ public class StrategyRunner {
             boolean shouldPrune = false;
 
             for (Pruner pruner : pruners) {
-                if (pruner.prune(faultload, history)) {
+                if (pruner.prune(faultload)) {
                     shouldPrune = true;
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
                 }

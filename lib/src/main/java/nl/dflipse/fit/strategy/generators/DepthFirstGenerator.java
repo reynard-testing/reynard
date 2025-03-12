@@ -10,7 +10,6 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.HistoricStore;
 import nl.dflipse.fit.strategy.util.AllCombinationIterator;
 import nl.dflipse.fit.strategy.util.PairedCombinationsIterator;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
@@ -26,7 +25,7 @@ public class DepthFirstGenerator implements Generator, FeedbackHandler<Void> {
     }
 
     @Override
-    public Void handleFeedback(FaultloadResult result, HistoricStore history) {
+    public Void handleFeedback(FaultloadResult result) {
         if (result.isInitial()) {
             potentialFaults = result.trace.getFaultUids(TraversalStrategy.DEPTH_FIRST);
 

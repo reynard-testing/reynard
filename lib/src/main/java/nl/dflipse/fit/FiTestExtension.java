@@ -22,6 +22,7 @@ import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
+import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
@@ -64,6 +65,7 @@ public class FiTestExtension
                 .withPruner(new ParentChildPruner())
                 .withPruner(new ErrorPropogationPruner())
                 .withPruner(new HappensBeforePruner())
+                .withPruner(new DynamicReductionPruner())
                 .withAnalyzer(new RedundancyAnalyzer());
 
         if (annotation.maskPayload()) {
@@ -189,15 +191,18 @@ public class FiTestExtension
                     "Test " + displayName + " with result: "
                             + (testFailed ? "FAIL" : "PASS"));
 
-            faultload.timer.start("handleResult");
             try {
+                faultload.timer.start("getTrace");
                 TraceAnalysis trace = controller.getTrace(faultload);
+                faultload.timer.stop("getTrace");
+
+                faultload.timer.start("handleResult");
                 FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
                 strategy.handleResult(result);
+                faultload.timer.stop("handleResult");
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            faultload.timer.stop("handleResult");
 
             faultload.timer.start("unregisterFautload");
             try {
@@ -208,6 +213,7 @@ public class FiTestExtension
             faultload.timer.stop("unregisterFautload");
 
             faultload.timer.stop();
+            strategy.registerTime(faultload);
         }
     }
 

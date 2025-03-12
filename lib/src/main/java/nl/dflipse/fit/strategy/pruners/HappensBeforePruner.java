@@ -8,7 +8,6 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.HistoricStore;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TransativeRelation;
 
@@ -17,7 +16,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
     private TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
 
     @Override
-    public Void handleFeedback(FaultloadResult result, HistoricStore history) {
+    public Void handleFeedback(FaultloadResult result) {
         if (result.isInitial()) {
             initialResult = result;
 
@@ -114,7 +113,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
     }
 
     @Override
-    public boolean prune(Faultload faultload, HistoricStore history) {
+    public boolean prune(Faultload faultload) {
         // if an http error is injected, and its children are also injected, it is
         // redundant.
 

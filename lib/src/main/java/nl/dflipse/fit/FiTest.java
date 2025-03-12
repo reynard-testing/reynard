@@ -14,5 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(FiTestExtension.class) // Link to the extension
 public @interface FiTest {
     boolean maskPayload() default false;
+
+    long maxTestCases() default 0;
     // Class<? extends FIStrategy> strategy() default DepthFirstStrategy.class;
 }

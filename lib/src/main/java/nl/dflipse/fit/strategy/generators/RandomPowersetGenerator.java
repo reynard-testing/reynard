@@ -7,6 +7,8 @@ import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.util.PowersetIterator;
+
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
 public class RandomPowersetGenerator extends IncreasingSizeGenerator implements FeedbackHandler<Void> {

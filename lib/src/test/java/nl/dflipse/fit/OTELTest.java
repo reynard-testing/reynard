@@ -29,6 +29,7 @@ public class OTELTest {
 
     private static final int PORT = 8080;
     private static final String USER_ID = "6894131c-cab3-4dfe-a5f1-a7086b9f7376";
+    private static final String CURRENCY = "USD";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static FaultController getController() {
@@ -43,7 +44,7 @@ public class OTELTest {
         obj.set("item", itemNode);
         obj.put("userId", USER_ID);
 
-        String endpoint = "http://localhost:" + PORT + "/api/cart?currencyCode=MXN";
+        String endpoint = "http://localhost:" + PORT + "/api/cart?currencyCode=" + CURRENCY;
         try {
             Request.post(new URI(endpoint))
                     .addHeader("Content-Type", "application/json")
@@ -65,7 +66,7 @@ public class OTELTest {
         var builder = new URIBuilder(endpoint);
         builder.addParameter("itemList",
                 "[{\"productId\":\"66VCHSJNUP\",\"quantity\":1}]");
-        builder.addParameter("currencyCode", "USD");
+        builder.addParameter("currencyCode", CURRENCY);
         builder.addParameter("address",
                 "{\"streetAddress\":\"1600+Amphitheatre+Parkway\",\"city\":\"Mountain+View\",\"state\":\"CA\",\"country\":\"United+States\",\"zipCode\":\"94043\"}");
 
@@ -112,7 +113,7 @@ public class OTELTest {
                 + "/api/recommendations";
         var builder = new URIBuilder(endpoint);
         builder.addParameter("productIds", "");
-        builder.addParameter("currencyCode", "USD");
+        builder.addParameter("currencyCode", CURRENCY);
 
         var traceparent = faultload.getTraceParent().toString();
         var tracestate = faultload.getTraceState().toString();
@@ -134,15 +135,17 @@ public class OTELTest {
         assertEquals(expectedResponse, actualResponse);
     }
 
-    @FiTest
+    @FiTest(maskPayload = true)
     public void testCheckout(TrackedFaultload faultload) throws URISyntaxException, IOException {
         addItemToCart();
 
         String endpoint = "http://localhost:" + PORT + "/api/checkout";
         var builder = new URIBuilder(endpoint);
-        builder.addParameter("currencyCode", "USD");
+        builder.addParameter("currencyCode", CURRENCY);
         String payload = "{\"userId\":\"" + USER_ID
-                + "\",\"email\":\"someone@example.com\",\"address\":{\"streetAddress\":\"1600 Amphitheatre Parkway\",\"state\":\"CA\",\"country\":\"United States\",\"city\":\"Mountain View\",\"zipCode\":\"94043\"},\"userCurrency\":\"MXN\",\"creditCard\":{\"creditCardCvv\":672,\"creditCardExpirationMonth\":1,\"creditCardExpirationYear\":2030,\"creditCardNumber\":\"4432-8015-6152-0454\"}}";
+                + "\",\"email\":\"someone@example.com\",\"address\":{\"streetAddress\":\"1600 Amphitheatre Parkway\",\"state\":\"CA\",\"country\":\"United States\",\"city\":\"Mountain View\",\"zipCode\":\"94043\"},\"userCurrency\":\""
+                + CURRENCY
+                + "\",\"creditCard\":{\"creditCardCvv\":672,\"creditCardExpirationMonth\":1,\"creditCardExpirationYear\":2030,\"creditCardNumber\":\"4432-8015-6152-0454\"}}";
 
         var traceparent = faultload.getTraceParent().toString();
         var tracestate = faultload.getTraceState().toString();

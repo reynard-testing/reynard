@@ -21,6 +21,8 @@ public class StrategyRunner {
     public StrategyStatistics statistics = new StrategyStatistics();
 
     private boolean withPayloadMasking = false;
+    private long maxTestCases = 0;
+    private boolean reachedLimit = false;
 
     public StrategyRunner() {
         prunedFaultloads = new HashSet<>();
@@ -34,6 +36,11 @@ public class StrategyRunner {
 
     public StrategyRunner withPayloadMasking() {
         withPayloadMasking = true;
+        return this;
+    }
+
+    public StrategyRunner withMaxTestCases(long max) {
+        maxTestCases = max;
         return this;
     }
 
@@ -101,13 +108,19 @@ public class StrategyRunner {
         return new Pair<>(generated, pruned);
     }
 
+    public void registerTime(TrackedFaultload faultload) {
+        statistics.registerTime(faultload.timer);
+    }
+
     public void handleResult(FaultloadResult result) {
         statistics.registerTime(result.faultload.timer);
         analyze(result);
 
+        result.faultload.timer.start("StrategyRunner.generateAndPrune");
         var res = generateAndPruneTillNext();
         int generated = res.getFirst();
         int pruned = res.getSecond();
+        result.faultload.timer.stop("StrategyRunner.generateAndPrune");
 
         System.out.println("[Strategy] Generated " + generated + " new faultloads, pruned " + pruned + " faultloads");
     }
@@ -126,20 +139,38 @@ public class StrategyRunner {
 
     @SuppressWarnings("rawtypes")
     public void analyze(FaultloadResult result) {
+
         FeedbackContext context = new FeedbackContext(this);
+        result.faultload.timer.start("StrategyRunner.analyze");
+
         for (var analyzer : analyzers) {
+            String name = analyzer.getClass().getSimpleName();
+            String tag = name + ".handleFeedback<Analyzer>";
+            result.faultload.timer.start(tag);
             analyzer.handleFeedback(result, context);
+            result.faultload.timer.stop(tag);
         }
 
         for (Pruner pruner : pruners) {
             if (pruner instanceof FeedbackHandler) {
+                String name = pruner.getClass().getSimpleName();
+                String tag = name + ".handleFeedback<Pruner>";
+                result.faultload.timer.start(tag);
                 ((FeedbackHandler) pruner).handleFeedback(result, context);
+                result.faultload.timer.stop(tag);
             }
         }
 
         if (generator instanceof FeedbackHandler) {
             ((FeedbackHandler) generator).handleFeedback(result, context);
+            String name = generator.getClass().getSimpleName();
+            String tag = name + ".handleFeedback<Generator>";
+            result.faultload.timer.start(tag);
+            ((FeedbackHandler) generator).handleFeedback(result, context);
+            result.faultload.timer.stop(tag);
         }
+        result.faultload.timer.stop("StrategyRunner.analyze");
+
     }
 
     public int prune() {

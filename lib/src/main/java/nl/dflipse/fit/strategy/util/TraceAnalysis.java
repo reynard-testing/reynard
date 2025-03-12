@@ -23,6 +23,10 @@ public class TraceAnalysis {
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
     UndirectedRelation<FaultUid> concurrentRelation = new UndirectedRelation<>();
 
+    public TraceAnalysis(TraceTreeSpan rootNode) {
+        this(rootNode, List.of());
+    }
+
     public TraceAnalysis(TraceTreeSpan rootNode, List<TraceSpanReport> reports) {
         this.reports.addAll(reports);
         // Parent null indicates the root request
@@ -46,6 +50,14 @@ public class TraceAnalysis {
         if (node.hasReport()) {
             // Save the faultUid
             treeFaultPoints.add(node);
+
+            if (!reports.contains(node.report)) {
+                reports.add(node.report);
+            }
+
+            if (node.report.injectedFault != null) {
+                injectedFaults.add(node.report.injectedFault);
+            }
 
             // Save the parent-child relation
             // Update the most direct parent

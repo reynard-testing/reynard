@@ -26,9 +26,13 @@ public class PairedCombinationsIterator<X, Y> implements Iterator<List<Pair<X, Y
 
     private boolean done = false;
 
+    public PairedCombinationsIterator(List<X> xs, Set<Y> ys) {
+        this(xs, List.copyOf(ys));
+    }
+
     public PairedCombinationsIterator(List<X> xs, List<Y> ys) {
         this.xs = xs;
-        this.ys = ys;
+        this.ys = List.copyOf(ys);
 
         maxIndex = ys.size() - 1;
         lastIndex = xs.size() - 1;
@@ -54,62 +58,93 @@ public class PairedCombinationsIterator<X, Y> implements Iterator<List<Pair<X, Y
     }
 
     private boolean increment(int index) {
+        // If we are done, return false
         if (index < 0) {
+            done = true;
             return false;
         }
 
+        // can we increment this index?
+        // then do so
         if (indices[index] < maxIndex) {
             indices[index]++;
-            return true;
-        } else {
-            if (increment(index - 1)) {
-                indices[index] = 0;
-                return true;
-            } else {
-                return false;
+
+            // if we should skip this combination, increment again
+            int skipIndex = getSkipIndex();
+            if (skipIndex == index) {
+                return increment(index);
             }
+
+            return true;
+        }
+
+        // If our left neighbour can be incremented, do so
+        // and reset this index
+        if (increment(index - 1)) {
+            indices[index] = 0;
+            return true;
+        }
+
+        // otherwise, we are done, forward this
+        return false;
+
+    }
+
+    private int getSkipIndex(Map<Integer, Integer> subsetMap) {
+        for (var entry : subsetMap.entrySet()) {
+            if (indices[entry.getKey()] == entry.getValue()) {
+                int maxIndex = subsetMap.entrySet().stream()
+                        .mapToInt(e -> e.getKey())
+                        .max()
+                        .getAsInt();
+                return maxIndex;
+            }
+        }
+
+        return -1;
+    }
+
+    private int getSkipIndex() {
+        if (done) {
+            return -1;
+        }
+
+        for (var subsetMap : pruned) {
+            int skipIndex = getSkipIndex(subsetMap);
+            if (skipIndex >= 0) {
+                return skipIndex;
+            }
+        }
+
+        return -1;
+    }
+
+    public void ensureNextValid() {
+        int skipIndex = getSkipIndex();
+        while (skipIndex >= 0 && !done) {
+            increment(skipIndex);
+            skipIndex = getSkipIndex();
         }
     }
 
     private void increment() {
-        done = !increment(lastIndex);
+        increment(lastIndex);
+        ensureNextValid();
     }
 
-    private boolean shouldSkip(Map<Integer, Integer> subsetMap) {
-        for (var entry : subsetMap.entrySet()) {
-            if (indices[entry.getKey()] != entry.getValue()) {
-                return false;
-            }
+    private String readableIndex() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < indices.length; i++) {
+            sb.append("" + indices[i]);
         }
-
-        return true;
-    }
-
-    private boolean shouldSkip() {
-        if (done) {
-            return false;
-        }
-
-        for (var subsetMap : pruned) {
-            if (shouldSkip(subsetMap)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public void ensureNextValid() {
-        while (shouldSkip()) {
-            increment();
-        }
+        return sb.toString();
     }
 
     @Override
     public List<Pair<X, Y>> next() {
         var res = currentCombination();
+        // System.out.println(readableIndex() + " -> " + res);
         increment();
-        ensureNextValid();
         return res;
     }
 
@@ -129,9 +164,9 @@ public class PairedCombinationsIterator<X, Y> implements Iterator<List<Pair<X, Y
 
         pruned.add(prunedMap);
 
-        if (shouldSkip(prunedMap)) {
-            increment();
-            ensureNextValid();
+        int skipIndex = getSkipIndex(prunedMap);
+        if (skipIndex >= 0) {
+            increment(skipIndex);
         }
     }
 

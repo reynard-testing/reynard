@@ -46,4 +46,8 @@ public class DynamicAnalysisStore {
         return ignoreFaultSubset(Set.copyOf(subset));
     }
 
+    public List<Set<Pair<FaultUid, FaultMode>>> getRedundantFaultSubsets() {
+        return this.redundantFaultSubsets;
+    }
+
 }

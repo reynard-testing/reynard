@@ -13,13 +13,17 @@ import nl.dflipse.fit.strategy.util.PairedCombinationsIterator;
 import nl.dflipse.fit.strategy.util.PrunablePowersetIterator;
 
 public class IncreasingSizeGenerator implements Generator {
-    private List<FaultMode> modes;
+    private Set<FaultMode> modes;
     private PrunablePowersetIterator<FaultUid> spaceIterator;
     private PairedCombinationsIterator<FaultUid, FaultMode> modeIterator;
 
     private DynamicAnalysisStore store = new DynamicAnalysisStore();
 
     public IncreasingSizeGenerator(List<FaultMode> modes) {
+        this.modes = Set.copyOf(modes);
+    }
+
+    public IncreasingSizeGenerator(Set<FaultMode> modes) {
         this.modes = modes;
     }
 
@@ -103,7 +107,9 @@ public class IncreasingSizeGenerator implements Generator {
     @Override
     public void ignoreFaultSubset(Set<Fault> subset) {
         var prunableSet = store.ignoreFaultSubset(subset);
-        modeIterator.prune(prunableSet);
+        if (modeIterator != null) {
+            modeIterator.prune(prunableSet);
+        }
     }
 
 }

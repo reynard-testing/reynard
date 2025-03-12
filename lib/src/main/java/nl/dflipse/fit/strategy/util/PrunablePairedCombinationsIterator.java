@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class PairedCombinationsIterator<X, Y> implements Iterator<List<Pair<X, Y>>> {
+public class PrunablePairedCombinationsIterator<X, Y> implements Iterator<List<Pair<X, Y>>> {
 
     private final List<X> xs;
     private final List<Y> ys;
@@ -26,11 +26,11 @@ public class PairedCombinationsIterator<X, Y> implements Iterator<List<Pair<X, Y
 
     private boolean done = false;
 
-    public PairedCombinationsIterator(List<X> xs, Set<Y> ys) {
+    public PrunablePairedCombinationsIterator(List<X> xs, Set<Y> ys) {
         this(xs, List.copyOf(ys));
     }
 
-    public PairedCombinationsIterator(List<X> xs, List<Y> ys) {
+    public PrunablePairedCombinationsIterator(List<X> xs, List<Y> ys) {
         this.xs = xs;
         this.ys = List.copyOf(ys);
 

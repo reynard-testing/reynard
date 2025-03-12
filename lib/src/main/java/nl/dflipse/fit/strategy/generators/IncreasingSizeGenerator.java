@@ -9,13 +9,13 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
-import nl.dflipse.fit.strategy.util.PairedCombinationsIterator;
+import nl.dflipse.fit.strategy.util.PrunablePairedCombinationsIterator;
 import nl.dflipse.fit.strategy.util.PrunablePowersetIterator;
 
 public class IncreasingSizeGenerator implements Generator {
     private Set<FaultMode> modes;
     private PrunablePowersetIterator<FaultUid> spaceIterator;
-    private PairedCombinationsIterator<FaultUid, FaultMode> modeIterator;
+    private PrunablePairedCombinationsIterator<FaultUid, FaultMode> modeIterator;
 
     private DynamicAnalysisStore store = new DynamicAnalysisStore();
 
@@ -62,7 +62,7 @@ public class IncreasingSizeGenerator implements Generator {
             return false;
         }
 
-        modeIterator = new PairedCombinationsIterator<FaultUid, FaultMode>(nextCombination, modes);
+        modeIterator = new PrunablePairedCombinationsIterator<FaultUid, FaultMode>(nextCombination, modes);
 
         // Prune the mode iterator based on the redundant fault subsets
         for (var prunedFaults : store.getRedundantFaultSubsets()) {
@@ -100,14 +100,16 @@ public class IncreasingSizeGenerator implements Generator {
 
     @Override
     public void ignoreFaultUidSubset(Set<FaultUid> subset) {
-        store.ignoreFaultUidSubset(subset);
-        spaceIterator.prune(subset);
+        boolean isNew = store.ignoreFaultUidSubset(subset);
+        if (isNew) {
+            spaceIterator.prune(subset);
+        }
     }
 
     @Override
     public void ignoreFaultSubset(Set<Fault> subset) {
         var prunableSet = store.ignoreFaultSubset(subset);
-        if (modeIterator != null) {
+        if (modeIterator != null && prunableSet != null) {
             modeIterator.prune(prunableSet);
         }
     }

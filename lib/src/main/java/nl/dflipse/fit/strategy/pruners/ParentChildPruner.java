@@ -7,15 +7,15 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
+import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class ParentChildPruner implements Pruner, FeedbackHandler<Void> {
     private FaultloadResult initialResult;
 
     @Override
-    public Void handleFeedback(FaultloadResult result, DynamicAnalysisStore store) {
+    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             initialResult = result;
         }
@@ -24,7 +24,7 @@ public class ParentChildPruner implements Pruner, FeedbackHandler<Void> {
     }
 
     @Override
-    public boolean prune(Faultload faultload, DynamicAnalysisStore store) {
+    public boolean prune(Faultload faultload) {
         // if an http error is injected, and its children are also injected, it is
         // redundant.
 

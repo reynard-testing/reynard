@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.strategy.FaultloadResult;
+import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class RedundancyAnalyzer implements FeedbackHandler<Void> {
@@ -75,7 +75,7 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
     }
 
     @Override
-    public Void handleFeedback(FaultloadResult result, DynamicAnalysisStore store) {
+    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             initialResult = result;
             return null;

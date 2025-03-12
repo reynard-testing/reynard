@@ -8,16 +8,14 @@ import java.util.Set;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.pruners.Pruner;
-import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.Pair;
 
 public class StrategyRunner {
     public List<Faultload> queue;
-    public DynamicAnalysisStore store;
     public Set<Faultload> prunedFaultloads;
 
     public List<FeedbackHandler<Void>> analyzers;
-    public List<Generator> generators;
+    public Generator generator = null;
     public List<Pruner> pruners;
 
     public StrategyStatistics statistics = new StrategyStatistics();
@@ -25,10 +23,7 @@ public class StrategyRunner {
     private boolean withPayloadMasking = false;
 
     public StrategyRunner() {
-        store = new DynamicAnalysisStore();
         prunedFaultloads = new HashSet<>();
-
-        generators = new ArrayList<>();
         pruners = new ArrayList<>();
         analyzers = new ArrayList<>();
 
@@ -43,7 +38,7 @@ public class StrategyRunner {
     }
 
     public StrategyRunner withGenerator(Generator generator) {
-        generators.add(generator);
+        this.generator = generator;
         return this;
     }
 
@@ -118,38 +113,32 @@ public class StrategyRunner {
     }
 
     public List<Faultload> generate() {
-        List<Faultload> newFaultloads = new ArrayList<>();
-
-        if (generators.isEmpty()) {
+        if (generator == null) {
             throw new RuntimeException("[Strategy] No generators are available, make sure to register at least one!");
         }
 
         // TODO: ignore previously pruned faultloads
-        for (Generator generator : generators) {
-            var generated = generator.generate();
-            statistics.incrementGenerator(generator.getClass().getSimpleName(), generated.size());
-            newFaultloads.addAll(generated);
-        }
+        var generated = generator.generate();
+        statistics.incrementGenerator(generator.getClass().getSimpleName(), generated.size());
 
-        return newFaultloads;
+        return generated;
     }
 
     @SuppressWarnings("rawtypes")
     public void analyze(FaultloadResult result) {
+        FeedbackContext context = new FeedbackContext(this);
         for (var analyzer : analyzers) {
-            analyzer.handleFeedback(result, store);
+            analyzer.handleFeedback(result, context);
         }
 
         for (Pruner pruner : pruners) {
             if (pruner instanceof FeedbackHandler) {
-                ((FeedbackHandler) pruner).handleFeedback(result, store);
+                ((FeedbackHandler) pruner).handleFeedback(result, context);
             }
         }
 
-        for (Generator gen : generators) {
-            if (gen instanceof FeedbackHandler) {
-                ((FeedbackHandler) gen).handleFeedback(result, store);
-            }
+        if (generator instanceof FeedbackHandler) {
+            ((FeedbackHandler) generator).handleFeedback(result, context);
         }
     }
 
@@ -160,7 +149,7 @@ public class StrategyRunner {
             boolean shouldPrune = false;
 
             for (Pruner pruner : pruners) {
-                if (pruner.prune(faultload, store)) {
+                if (pruner.prune(faultload)) {
                     shouldPrune = true;
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
                 }

@@ -14,16 +14,27 @@ public class DynamicAnalysisStore {
     private List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private List<Set<Pair<FaultUid, FaultMode>>> redundantFaultSubsets = new ArrayList<>();
 
-    public void ignoreFaultUidSubset(Set<FaultUid> subset) {
+    public boolean ignoreFaultUidSubset(Set<FaultUid> subset) {
+        // If the subset is already in the list of redundant subsets
+        // Or if the subset is a subset of an already redundant subset
+        // Then we can ignore this subset
+        for (var redundant : this.redundantUidSubsets) {
+            if (redundant.containsAll(subset)) {
+                return false;
+            }
+        }
+
+        // This is a novel redundant subset, lets add it!
         this.redundantUidSubsets.add(subset);
+        return true;
     }
 
-    public void ignoreFaultUidSubset(FaultUid... subset) {
-        ignoreFaultUidSubset(Set.of(subset));
+    public boolean ignoreFaultUidSubset(FaultUid... subset) {
+        return ignoreFaultUidSubset(Set.of(subset));
     }
 
-    public void ignoreFaultUidSubset(List<FaultUid> subset) {
-        ignoreFaultUidSubset(Set.copyOf(subset));
+    public boolean ignoreFaultUidSubset(List<FaultUid> subset) {
+        return ignoreFaultUidSubset(Set.copyOf(subset));
     }
 
     private Set<Pair<FaultUid, FaultMode>> convertFaultsToPairs(Set<Fault> faults) {
@@ -34,6 +45,16 @@ public class DynamicAnalysisStore {
 
     public Set<Pair<FaultUid, FaultMode>> ignoreFaultSubset(Set<Fault> subset) {
         var pairs = convertFaultsToPairs(subset);
+
+        // If the subset is already in the list of redundant subsets
+        // Or if the subset is a subset of an already redundant subset
+        // Then we can ignore this subset
+        for (var redundant : this.redundantFaultSubsets) {
+            if (redundant.containsAll(pairs)) {
+                return redundant;
+            }
+        }
+
         this.redundantFaultSubsets.add(pairs);
         return pairs;
     }

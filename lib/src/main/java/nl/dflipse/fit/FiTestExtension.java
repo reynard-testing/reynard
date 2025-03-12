@@ -119,6 +119,7 @@ public class FiTestExtension
     }
 
     public void afterAll() {
+        strategy.statistics.setSize(strategy.generator.spaceSize());
         strategy.statistics.report();
     }
 
@@ -190,6 +191,8 @@ public class FiTestExtension
             System.out.println(
                     "Test " + displayName + " with result: "
                             + (testFailed ? "FAIL" : "PASS"));
+
+            strategy.statistics.registerRun();
 
             try {
                 faultload.timer.start("getTrace");

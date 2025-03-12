@@ -14,5 +14,9 @@ public interface Generator {
 
     public void ignoreFaultSubset(Set<Fault> subset);
 
+    public void ignoreFaultload(Faultload faultload);
+
     public List<Faultload> generate();
+
+    public long spaceSize();
 }

@@ -16,9 +16,10 @@ public class StrategyStatistics {
     private List<Pair<String, Long>> timings = new ArrayList<>();
     private Set<String> tags = new HashSet<>();
 
-    private int totalRun = 0;
-    private int totalGenerated = 0;
-    private int totalPruned = 0;
+    private long totalRun = 0;
+    private long totalSize = 0;
+    private long totalGenerated = 0;
+    private long totalPruned = 0;
 
     public void incrementGenerator(String generator, int count) {
         generatorCount.put(generator, generatorCount.getOrDefault(generator, 0) + count);
@@ -31,6 +32,10 @@ public class StrategyStatistics {
 
     public void incrementPruned(int count) {
         totalPruned += count;
+    }
+
+    public void setSize(long size) {
+        totalSize = size;
     }
 
     private long getAverageTime(String tag) {
@@ -46,7 +51,9 @@ public class StrategyStatistics {
             timings.add(entry);
             tags.add(entry.first());
         }
+    }
 
+    public void registerRun() {
         totalRun++;
     }
 
@@ -90,18 +97,24 @@ public class StrategyStatistics {
         return set.stream().mapToInt(String::length).max().orElse(0);
     }
 
-    private String asPercentage(int num, int div) {
+    private String asPercentage(long num, long div) {
         double percentage = 100d * num / (double) div;
         return String.format("%1.1f", percentage);
     }
 
     public void report() {
         int maxWidth = 32;
+        long fullSpace = totalSize + 1;
         String prunePercentage = asPercentage(totalPruned, totalGenerated);
+        String generatePercentage = asPercentage(totalGenerated, totalSize);
+        String runPercentage = asPercentage(totalRun, fullSpace);
+        String reductionPercentage = asPercentage(fullSpace - totalRun, fullSpace);
+
         System.out.println(padBoth(" Stats ", maxWidth, "-"));
-        System.out.println("Total generated     : " + totalGenerated);
-        System.out.println("Total pruned        : " + totalPruned + " (" + prunePercentage + "%)");
-        System.out.println("Total run           : " + totalRun);
+        System.out.println("Complete space size : " + fullSpace + " (" + reductionPercentage + "% reduction)");
+        System.out.println("Total generated     : " + totalGenerated + " (" + generatePercentage + "% of space)");
+        System.out.println("Total pruned        : " + totalPruned + " (" + prunePercentage + "% of generated)");
+        System.out.println("Total run           : " + totalRun + " (" + runPercentage + "% of full space)");
 
         System.out.println();
         System.out.println(padBoth(" Timings ", maxWidth, "-"));

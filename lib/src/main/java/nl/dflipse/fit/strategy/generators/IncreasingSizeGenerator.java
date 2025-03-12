@@ -17,6 +17,7 @@ public class IncreasingSizeGenerator implements Generator {
     private PrunablePowersetIterator<FaultUid> spaceIterator;
     private PrunablePairedCombinationsIterator<FaultUid, FaultMode> modeIterator;
 
+    private int fidCounter = 0;
     private DynamicAnalysisStore store = new DynamicAnalysisStore();
 
     public IncreasingSizeGenerator(List<FaultMode> modes) {
@@ -31,6 +32,7 @@ public class IncreasingSizeGenerator implements Generator {
     public void reportFaultUids(List<FaultUid> potentialFaults) {
         if (this.spaceIterator == null) {
             this.spaceIterator = new PrunablePowersetIterator<FaultUid>(potentialFaults, true);
+            fidCounter = potentialFaults.size();
             long expectedSize = spaceIterator.size(modes.size());
             System.out.println(
                     "[Generator] Found " + potentialFaults.size() + " fault points. Will generate at most "
@@ -46,6 +48,7 @@ public class IncreasingSizeGenerator implements Generator {
             }
 
             long newSize = spaceIterator.size(m) - oldSize;
+            fidCounter += newSize;
             System.out.println("[Generator] Added " + newSize + " new test cases");
         }
     }
@@ -95,6 +98,12 @@ public class IncreasingSizeGenerator implements Generator {
                 .collect(Collectors.toSet());
         Faultload faultLoad = new Faultload(faults);
 
+        // if we should skip this specific faultload
+        // then we should generate the next one
+        if (store.hasFaultload(faultLoad)) {
+            return generate();
+        }
+
         return List.of(faultLoad);
     }
 
@@ -112,6 +121,16 @@ public class IncreasingSizeGenerator implements Generator {
         if (modeIterator != null && prunableSet != null) {
             modeIterator.prune(prunableSet);
         }
+    }
+
+    @Override
+    public void ignoreFaultload(Faultload faultload) {
+        store.ignoreFaultload(faultload);
+    }
+
+    @Override
+    public long spaceSize() {
+        return (long) Math.pow(1 + modes.size(), fidCounter) - 1;
     }
 
 }

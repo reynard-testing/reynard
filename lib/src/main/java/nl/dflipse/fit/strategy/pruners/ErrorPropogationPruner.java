@@ -14,7 +14,7 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 
 public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
-
+    private List<Set<Fault>> redundantFautloads = new ArrayList<>();
     private List<Set<Fault>> redundantSubsets = new ArrayList<>();
 
     @Override
@@ -34,17 +34,30 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
                 FaultMode faultMode = new FaultMode(ErrorFault.FAULT_TYPE, List.of("" + report.response.status));
                 Fault responseFault = new Fault(report.faultUid, faultMode);
 
+                // We don't need to check for this exact fault, as it is already
+                // been tested
+                redundantFautloads.add(Set.of(responseFault));
+
+                // We also don't need to check for the subset of this fault
+                // and its causes
                 Set<Fault> newRedundantSubset = new HashSet<>(injectedFaults);
                 newRedundantSubset.add(responseFault);
 
                 redundantSubsets.add(newRedundantSubset);
             }
         }
+
         return null;
     }
 
     @Override
     public boolean prune(Faultload faultload) {
+        for (var redundantFaultload : redundantFautloads) {
+            if (faultload.faultSet().equals(redundantFaultload)) {
+                return true;
+            }
+        }
+
         for (var redundantSubset : redundantSubsets) {
             if (faultload.faultSet().containsAll(redundantSubset)) {
                 return true;

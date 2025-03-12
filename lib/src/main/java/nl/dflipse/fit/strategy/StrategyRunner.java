@@ -8,11 +8,12 @@ import java.util.Set;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.pruners.Pruner;
+import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.Pair;
 
 public class StrategyRunner {
     public List<Faultload> queue;
-    public HistoricStore history;
+    public DynamicAnalysisStore store;
     public Set<Faultload> prunedFaultloads;
 
     public List<FeedbackHandler<Void>> analyzers;
@@ -24,7 +25,7 @@ public class StrategyRunner {
     private boolean withPayloadMasking = false;
 
     public StrategyRunner() {
-        history = new HistoricStore();
+        store = new DynamicAnalysisStore();
         prunedFaultloads = new HashSet<>();
 
         generators = new ArrayList<>();
@@ -107,7 +108,6 @@ public class StrategyRunner {
 
     public void handleResult(FaultloadResult result) {
         statistics.registerTime(result.faultload.timer);
-        history.add(result);
         analyze(result);
 
         var res = generateAndPruneTillNext();
@@ -137,18 +137,18 @@ public class StrategyRunner {
     @SuppressWarnings("rawtypes")
     public void analyze(FaultloadResult result) {
         for (var analyzer : analyzers) {
-            analyzer.handleFeedback(result, history);
+            analyzer.handleFeedback(result, store);
         }
 
         for (Pruner pruner : pruners) {
             if (pruner instanceof FeedbackHandler) {
-                ((FeedbackHandler) pruner).handleFeedback(result, history);
+                ((FeedbackHandler) pruner).handleFeedback(result, store);
             }
         }
 
         for (Generator gen : generators) {
             if (gen instanceof FeedbackHandler) {
-                ((FeedbackHandler) gen).handleFeedback(result, history);
+                ((FeedbackHandler) gen).handleFeedback(result, store);
             }
         }
     }
@@ -160,7 +160,7 @@ public class StrategyRunner {
             boolean shouldPrune = false;
 
             for (Pruner pruner : pruners) {
-                if (pruner.prune(faultload, history)) {
+                if (pruner.prune(faultload, store)) {
                     shouldPrune = true;
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
                 }

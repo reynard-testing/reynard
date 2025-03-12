@@ -7,16 +7,21 @@ import java.util.List;
 import java.util.Set;
 
 public class PrunablePowersetIterator<T> implements Iterator<Set<T>> {
+    private final List<T> elements;
     private final List<PowersetExpander<T>> toExpand = new ArrayList<>();
     private final List<Set<T>> pruned = new ArrayList<>();
 
     public record PowersetExpander<T>(Set<T> value, List<T> expansion) {
     }
 
-    public PrunablePowersetIterator(List<T> elements) {
-        // this.elements = elements;
+    public PrunablePowersetIterator(List<T> elements, boolean skipEmptySet) {
+        this.elements = elements;
+
         if (elements != null) {
             toExpand.add(new PowersetExpander<>(Set.of(), elements));
+            if (skipEmptySet) {
+                this.next();
+            }
         }
     }
 
@@ -84,11 +89,31 @@ public class PrunablePowersetIterator<T> implements Iterator<Set<T>> {
         }
     }
 
+    // Add new element to explore
+    public void add(T element) {
+        elements.add(element);
+        toExpand.add(new PowersetExpander<>(Set.of(element), elements));
+    }
+
     public void prune(Set<T> subset) {
         pruned.add(subset);
 
         // Remove pruned nodes
         toExpand.removeIf(expander -> expander.value.containsAll(subset));
         toExpand.replaceAll(node -> pruneExtensionsFor(node, subset));
+    }
+
+    public long size(int m) {
+        long sum = 0;
+        for (var el : toExpand) {
+            long contribution = (long) (Math.pow(m, el.value.size()) * Math.pow(1 + m, el.expansion.size()));
+            sum += contribution;
+        }
+
+        return sum;
+    }
+
+    public long size() {
+        return size(1);
     }
 }

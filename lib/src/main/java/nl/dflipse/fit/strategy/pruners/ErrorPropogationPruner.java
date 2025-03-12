@@ -11,14 +11,14 @@ import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.HistoricStore;
+import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 
 public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
 
     private List<Set<Fault>> redundantSubsets = new ArrayList<>();
 
     @Override
-    public Void handleFeedback(FaultloadResult result, HistoricStore history) {
+    public Void handleFeedback(FaultloadResult result, DynamicAnalysisStore store) {
         Set<Fault> injectedFaults = result.trace.getInjectedFaults();
 
         for (var report : result.trace.getReports()) {
@@ -44,7 +44,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
     }
 
     @Override
-    public boolean prune(Faultload faultload, HistoricStore history) {
+    public boolean prune(Faultload faultload, DynamicAnalysisStore store) {
         for (var redundantSubset : redundantSubsets) {
             if (faultload.faultSet().containsAll(redundantSubset)) {
                 return true;

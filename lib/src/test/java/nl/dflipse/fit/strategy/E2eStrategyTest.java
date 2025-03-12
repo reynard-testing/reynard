@@ -25,17 +25,27 @@ public class E2eStrategyTest {
         }
 
         @Override
-        public void mockFaultUids(List<FaultUid> faultUids) {
-            return;
-        }
-
-        @Override
         public List<Faultload> generate() {
             if (queue.isEmpty()) {
                 return null;
             }
 
             return List.of(queue.remove(0));
+        }
+
+        @Override
+        public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
+            return;
+        }
+
+        @Override
+        public void ignoreFaultUidSubset(Set<FaultUid> subset) {
+            return;
+        }
+
+        @Override
+        public void ignoreFaultSubset(Set<Fault> subset) {
+            return;
         }
     }
 

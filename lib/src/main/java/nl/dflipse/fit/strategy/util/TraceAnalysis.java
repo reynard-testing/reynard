@@ -51,34 +51,37 @@ public class TraceAnalysis {
             // Save the faultUid
             treeFaultPoints.add(node);
 
-            if (!reports.contains(node.report)) {
-                reports.add(node.report);
+            for (var report : node.reports) {
+                if (!reports.contains(report)) {
+                    reports.add(report);
+                }
+
+                if (report.injectedFault != null) {
+                    injectedFaults.add(report.injectedFault);
+                }
+
+                // Save the parent-child relation
+                // Update the most direct parent
+                var child = report.faultUid;
+                parentChildRelation.addRelation(parent, child);
+                nextParent = child;
+
+                // Check if the node is incomplete
+                // If the response is null, the fault point was reached, but the response was
+                // not yet received
+                if (report.response == null) {
+                    isIncomplete = true;
+                }
+
+                // If a remote call is detected (so our own proxy)
+                // But no children exist.
+                // TODO: is this solvable? Often is a misconfiguration, but we can still
+                // exercise the FI point.
+                // if (node.children.isEmpty()) {
+                // isIncomplete = true;
+                // }
             }
 
-            if (node.report.injectedFault != null) {
-                injectedFaults.add(node.report.injectedFault);
-            }
-
-            // Save the parent-child relation
-            // Update the most direct parent
-            var child = node.report.faultUid;
-            parentChildRelation.addRelation(parent, child);
-            nextParent = child;
-
-            // Check if the node is incomplete
-            // If the response is null, the fault point was reached, but the response was
-            // not yet received
-            if (node.report.response == null) {
-                isIncomplete = true;
-            }
-
-            // If a remote call is detected (so our own proxy)
-            // But no children exist.
-            // TODO: is this solvable? Often is a misconfiguration, but we can still
-            // exercise the FI point.
-            // if (node.children.isEmpty()) {
-            // isIncomplete = true;
-            // }
         }
 
         for (var child : node.children) {
@@ -102,7 +105,8 @@ public class TraceAnalysis {
         }
 
         if (timeOverlap(n1, n2)) {
-            concurrentRelation.addRelation(n1.report.faultUid, n2.report.faultUid);
+            // TODO: complete
+            // concurrentRelation.addRelation(n1.report.faultUid, n2.report.faultUid);
         }
     }
 

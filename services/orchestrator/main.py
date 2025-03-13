@@ -98,12 +98,12 @@ def get_report_tree_children(children: list[TraceTreeNode]) -> list[TraceTreeNod
 
 
 def get_report_tree(node: TraceTreeNode) -> list[TraceTreeNode]:
-    is_report_node = node.report != None or node.span.span_id == CLIENT_ROOT_SPAN_ID
+    is_report_node = len(node.reports) == 0 or node.span.span_id == CLIENT_ROOT_SPAN_ID
 
     if is_report_node:
         return [TraceTreeNode(
             span=node.span,
-            report=node.report,
+            reports=node.reports,
             children=get_report_tree_children(node.children)
         )]
 

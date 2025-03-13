@@ -62,5 +62,5 @@ class ReportedSpan:
 @dataclass
 class TraceTreeNode:
     span: Span
-    report: ReportedSpan
+    reports: list['ReportedSpan'] = field(default_factory=list)
     children: list['TraceTreeNode'] = field(default_factory=list)

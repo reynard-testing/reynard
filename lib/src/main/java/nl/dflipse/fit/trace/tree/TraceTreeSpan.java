@@ -2,10 +2,9 @@ package nl.dflipse.fit.trace.tree;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonSerialize
 @JsonDeserialize
@@ -16,10 +15,10 @@ public class TraceTreeSpan {
     @JsonProperty("span")
     public TraceSpan span;
 
-    @JsonProperty("report")
-    public TraceSpanReport report;
+    @JsonProperty("reports")
+    public List<TraceSpanReport> reports;
 
     public boolean hasReport() {
-        return report != null;
+        return !reports.isEmpty();
     }
 }

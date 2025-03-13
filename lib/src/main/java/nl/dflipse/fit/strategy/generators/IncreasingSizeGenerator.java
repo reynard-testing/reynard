@@ -30,6 +30,10 @@ public class IncreasingSizeGenerator implements Generator {
 
     @Override
     public void reportFaultUids(List<FaultUid> potentialFaults) {
+        if (potentialFaults == null || potentialFaults.isEmpty()) {
+            return;
+        }
+
         if (this.spaceIterator == null) {
             this.spaceIterator = new PrunablePowersetIterator<FaultUid>(potentialFaults, true);
             fidCounter = potentialFaults.size();

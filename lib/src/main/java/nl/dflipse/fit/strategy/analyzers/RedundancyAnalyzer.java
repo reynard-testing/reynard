@@ -89,7 +89,9 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
         detectRandomFaults(appeared, disappeared);
 
         // Report newly found points
-        context.reportFaultUids(List.copyOf(appeared));
+        if (!appeared.isEmpty()) {
+            context.reportFaultUids(List.copyOf(appeared));
+        }
 
         return null;
     }

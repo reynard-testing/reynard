@@ -13,6 +13,10 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 
 public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
+
+    // TODO: if all failure modes result in the same behaviour
+    // We can mark fids instead of faults
+
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         Set<Fault> injectedFaults = result.trace.getInjectedFaults();

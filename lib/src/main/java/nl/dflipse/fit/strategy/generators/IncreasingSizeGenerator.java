@@ -76,11 +76,7 @@ public class IncreasingSizeGenerator implements Generator {
             modeIterator.prune(prunedFaults);
         }
 
-        if (!modeIterator.hasNext()) {
-            return false;
-        }
-
-        return true;
+        return modeIterator.hasNext();
     }
 
     @Override

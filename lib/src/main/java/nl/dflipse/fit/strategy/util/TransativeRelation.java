@@ -13,6 +13,11 @@ public class TransativeRelation<X> {
     private final Map<X, Set<X>> transitiveRelations = new HashMap<>();
 
     public void addRelation(X parent, X child) {
+        if ((parent == null && child == null) || (parent != null && parent.equals(child))) {
+            throw new IllegalArgumentException(
+                    "Cannot relate two equal items, this will create a circular dependency.");
+        }
+
         if (hasTransativeRelation(child, parent)) {
             throw new IllegalArgumentException("Adding this relation would create a circular dependency.");
         }

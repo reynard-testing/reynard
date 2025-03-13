@@ -15,18 +15,18 @@ public class PrunablePowersetIterator<T> implements Iterator<Set<T>> {
     }
 
     public PrunablePowersetIterator(List<T> elements, boolean skipEmptySet) {
-        this.elements = elements;
+        this.elements = new ArrayList<>(elements);
 
-        if (elements != null) {
-            toExpand.add(new PowersetExpander<>(Set.of(), elements));
+        if (!elements.isEmpty()) {
+            toExpand.add(new PowersetExpander<>(Set.of(), List.copyOf(elements)));
             if (skipEmptySet) {
-                this.next();
+                this.skip();
             }
         }
     }
 
     public void expand(PowersetExpander<T> node) {
-        if (node.expansion.isEmpty()) {
+        if (node == null || node.expansion.isEmpty()) {
             return;
         }
 
@@ -64,6 +64,10 @@ public class PrunablePowersetIterator<T> implements Iterator<Set<T>> {
         return hasMore;
     }
 
+    public void skip() {
+        expand(toExpand.remove(0));
+    }
+
     @Override
     public Set<T> next() {
         PowersetExpander<T> node = toExpand.remove(0);
@@ -92,7 +96,7 @@ public class PrunablePowersetIterator<T> implements Iterator<Set<T>> {
     // Add new element to explore
     public void add(T element) {
         elements.add(element);
-        toExpand.add(new PowersetExpander<>(Set.of(element), elements));
+        toExpand.add(new PowersetExpander<>(Set.of(element), List.copyOf(elements)));
     }
 
     public void prune(Set<T> subset) {

@@ -228,7 +228,7 @@ async def report_span_id():
             body=response.get('body')
         )
 
-    faultUid = FaultUid(
+    fault_uid = FaultUid(
         origin=uid.get('origin'),
         signature=uid.get('signature'),
         count=uid.get('count'),
@@ -239,13 +239,13 @@ async def report_span_id():
     span_report = ReportedSpan(
         trace_id=trace_id,
         span_id=span_id,
-        uid=faultUid,
+        uid=fault_uid,
         injected_fault=injected_fault,
         response=responseData,
     )
 
-    if report_store.has_span_id(span_id):
-        existing_report = report_store.get_by_span_id(span_id)
+    if report_store.has_fault_uid_for_trace(trace_id, fault_uid):
+        existing_report = report_store.get_by_trace_and_fault_uid(trace_id, fault_uid)
         existing_report.response = responseData
         existing_report.injected_fault = injected_fault
         print("Updated reported span", span_report, flush=True)

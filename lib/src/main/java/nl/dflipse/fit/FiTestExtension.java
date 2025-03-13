@@ -61,12 +61,15 @@ public class FiTestExtension
                 // .withGenerator(new RandomPowersetGenerator(modes))
                 // .withGenerator(new BreadthFirstGenerator(modes))
                 .withGenerator(new DepthFirstGenerator(modes))
-                .withPruner(new FailStopPruner())
                 .withPruner(new ParentChildPruner())
                 .withPruner(new ErrorPropogationPruner())
                 .withPruner(new HappensBeforePruner())
                 .withPruner(new DynamicReductionPruner())
                 .withAnalyzer(new RedundancyAnalyzer());
+
+        if (annotation.failStop()) {
+            strategy.withPruner(new FailStopPruner());
+        }
 
         if (annotation.maskPayload()) {
             strategy.withPayloadMasking();

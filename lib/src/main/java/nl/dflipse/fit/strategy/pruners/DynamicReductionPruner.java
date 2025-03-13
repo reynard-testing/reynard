@@ -49,19 +49,19 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
         return null;
     }
 
-    private boolean hasExpectedOutcome(FaultUid faultUid, Fault fault, int observedOutcome) {
+    private boolean hasExpectedOutcome(Fault fault, int observedStatus) {
         boolean hasFault = fault != null;
-        boolean faultDisturbs = hasFault && fault.getMode().getType() == ErrorFault.FAULT_TYPE;
+        boolean faultDisturbs = hasFault && fault.getMode().getType().equals(ErrorFault.FAULT_TYPE);
 
         // If we are supposed to inject a fault
         if (hasFault && faultDisturbs) {
-            int expectedOutcome = Integer.parseInt(fault.getMode().getArgs().get(0));
-            if (expectedOutcome != observedOutcome) {
+            int expectedStatusCode = Integer.parseInt(fault.getMode().getArgs().get(0));
+            if (expectedStatusCode != observedStatus) {
                 return false;
             }
         } else {
             // If we are not injecting faults, then we should not see any effects
-            if (observedOutcome > 299) {
+            if (observedStatus > 299) {
                 return false;
             }
         }
@@ -94,7 +94,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
                     boolean hasFault = faultsByFaultUid.containsKey(effect);
                     Fault fault = hasFault ? faultsByFaultUid.get(effect) : null;
 
-                    if (!hasExpectedOutcome(cause, fault, behaviour.get(effect))) {
+                    if (!hasExpectedOutcome(fault, behaviour.get(effect))) {
                         allEffectsSeen = false;
                         break;
                     }
@@ -112,6 +112,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
             }
         }
 
+        System.out.println("[DR Pruner] Found redundant fautload " + faultload);
         return true;
     }
 

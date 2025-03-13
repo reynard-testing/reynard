@@ -52,7 +52,7 @@ public class TraceAnalysis {
             treeFaultPoints.add(node);
 
             for (var report : node.reports) {
-                if (!reports.contains(report)) {
+                if (!faultUids.contains(report.faultUid)) {
                     reports.add(report);
                 }
 

@@ -31,7 +31,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
                 Fault responseFault = new Fault(report.faultUid, faultMode);
 
                 System.out.println(
-                        "[ErrorPropagation] Found that faults " + injectedFaults + " causes error " + responseFault);
+                        "[ErrorPropagation] Found that fault(s) " + injectedFaults + " causes error " + responseFault);
 
                 // We don't need to check for this exact fault, as it is already
                 // been tested

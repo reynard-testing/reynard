@@ -67,6 +67,10 @@ public class FiTestExtension
                 .withPruner(new DynamicReductionPruner())
                 .withAnalyzer(new RedundancyAnalyzer());
 
+        if (annotation.maxTestCases() > 0) {
+            strategy.withMaxTestCases(annotation.maxTestCases());
+        }
+
         if (annotation.failStop()) {
             strategy.withPruner(new FailStopPruner());
         }

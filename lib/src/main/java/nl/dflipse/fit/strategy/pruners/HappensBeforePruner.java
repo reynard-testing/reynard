@@ -7,6 +7,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
+import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TransativeRelation;
@@ -16,7 +17,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
     private TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
 
     @Override
-    public Void handleFeedback(FaultloadResult result) {
+    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             initialResult = result;
 

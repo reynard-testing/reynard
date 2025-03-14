@@ -10,6 +10,7 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
+import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 
 public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
@@ -17,7 +18,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
     private List<Set<Fault>> redundantSubsets = new ArrayList<>();
 
     @Override
-    public Void handleFeedback(FaultloadResult result) {
+    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         Set<Fault> injectedFaults = result.trace.getInjectedFaults();
 
         for (var report : result.trace.getReports()) {

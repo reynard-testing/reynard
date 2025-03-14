@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.Test;
 import nl.dflipse.fit.strategy.util.Combinatorics;
 import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.strategy.util.PairedCombinationsIterator;
+import nl.dflipse.fit.strategy.util.PrunablePairedCombinationsIterator;
 
 public class PairedCombinationsTest {
 
@@ -157,7 +157,7 @@ public class PairedCombinationsTest {
         List<String> ys = List.of("a", "b", "c", "d", "e");
 
         var res1 = Combinatorics.cartesianCombinations(xs, ys);
-        var resIt = new PairedCombinationsIterator<>(xs, ys);
+        var resIt = new PrunablePairedCombinationsIterator<>(xs, ys);
 
         // Then
         for (var l : res1) {

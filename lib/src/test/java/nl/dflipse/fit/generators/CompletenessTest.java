@@ -60,7 +60,7 @@ public class CompletenessTest {
     public void testAllCombinationsGenerated(Generator generator) {
         // Arrange: keep track of all combinations that need to be generated
         Set<Set<Fault>> toGenerate = new HashSet<>(powersetSet);
-        generator.mockFaultUids(faultUids);
+        generator.reportFaultUids(faultUids);
         int casesGenerated = 0;
         int shouldGenerate = powersetSet.size();
 

@@ -32,15 +32,6 @@ public class Combinatorics {
         return powerSet;
     }
 
-    public static <T> List<List<T>> combinations(List<T> originalSet, int k) {
-        List<List<T>> res = new ArrayList<>();
-        var it = new SimpleCombinationIterator<>(originalSet, k);
-        while (it.hasNext()) {
-            res.add(it.next());
-        }
-        return res;
-    }
-
     // Generate all unique lists of pairs of elements from xs and ys
     // where xs is always present
     public static <X, Y> List<List<Pair<X, Y>>> cartesianCombinations(List<X> xs, List<Y> ys) {

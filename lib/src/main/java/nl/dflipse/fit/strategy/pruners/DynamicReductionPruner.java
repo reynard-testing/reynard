@@ -14,6 +14,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
+import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 
 public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
@@ -22,7 +23,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
     private List<Map<FaultUid, Integer>> behavioursSeen = new ArrayList<>();
 
     @Override
-    public Void handleFeedback(FaultloadResult result) {
+    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         // update behaviours seen
         Map<FaultUid, Integer> behaviourMap = new HashMap<>();
         for (var report : result.trace.getReports()) {

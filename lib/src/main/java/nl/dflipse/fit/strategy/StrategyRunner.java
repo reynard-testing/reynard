@@ -15,7 +15,7 @@ public class StrategyRunner {
     public Set<Faultload> prunedFaultloads;
 
     public List<FeedbackHandler<Void>> analyzers;
-    public List<Generator> generators;
+    public Generator generator = null;
     public List<Pruner> pruners;
 
     public StrategyStatistics statistics = new StrategyStatistics();
@@ -26,8 +26,6 @@ public class StrategyRunner {
 
     public StrategyRunner() {
         prunedFaultloads = new HashSet<>();
-
-        generators = new ArrayList<>();
         pruners = new ArrayList<>();
         analyzers = new ArrayList<>();
 
@@ -47,7 +45,7 @@ public class StrategyRunner {
     }
 
     public StrategyRunner withGenerator(Generator generator) {
-        generators.add(generator);
+        this.generator = generator;
         return this;
     }
 
@@ -115,6 +113,7 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
+        statistics.registerTime(result.faultload.timer);
         analyze(result);
 
         result.faultload.timer.start("StrategyRunner.generateAndPrune");
@@ -127,31 +126,28 @@ public class StrategyRunner {
     }
 
     public List<Faultload> generate() {
-        List<Faultload> newFaultloads = new ArrayList<>();
-
-        if (generators.isEmpty()) {
+        if (generator == null) {
             throw new RuntimeException("[Strategy] No generators are available, make sure to register at least one!");
         }
 
         // TODO: ignore previously pruned faultloads
-        for (Generator generator : generators) {
-            var generated = generator.generate();
-            statistics.incrementGenerator(generator.getClass().getSimpleName(), generated.size());
-            newFaultloads.addAll(generated);
-        }
+        var generated = generator.generate();
+        statistics.incrementGenerator(generator.getClass().getSimpleName(), generated.size());
 
-        return newFaultloads;
+        return generated;
     }
 
     @SuppressWarnings("rawtypes")
     public void analyze(FaultloadResult result) {
+
+        FeedbackContext context = new FeedbackContext(this);
         result.faultload.timer.start("StrategyRunner.analyze");
 
         for (var analyzer : analyzers) {
             String name = analyzer.getClass().getSimpleName();
             String tag = name + ".handleFeedback<Analyzer>";
             result.faultload.timer.start(tag);
-            analyzer.handleFeedback(result);
+            analyzer.handleFeedback(result, context);
             result.faultload.timer.stop(tag);
         }
 
@@ -160,22 +156,21 @@ public class StrategyRunner {
                 String name = pruner.getClass().getSimpleName();
                 String tag = name + ".handleFeedback<Pruner>";
                 result.faultload.timer.start(tag);
-                ((FeedbackHandler) pruner).handleFeedback(result);
+                ((FeedbackHandler) pruner).handleFeedback(result, context);
                 result.faultload.timer.stop(tag);
             }
         }
 
-        for (Generator gen : generators) {
-            if (gen instanceof FeedbackHandler) {
-                String name = gen.getClass().getSimpleName();
-                String tag = name + ".handleFeedback<Generator>";
-                result.faultload.timer.start(tag);
-                ((FeedbackHandler) gen).handleFeedback(result);
-                result.faultload.timer.stop(tag);
-            }
+        if (generator instanceof FeedbackHandler) {
+            ((FeedbackHandler) generator).handleFeedback(result, context);
+            String name = generator.getClass().getSimpleName();
+            String tag = name + ".handleFeedback<Generator>";
+            result.faultload.timer.start(tag);
+            ((FeedbackHandler) generator).handleFeedback(result, context);
+            result.faultload.timer.stop(tag);
         }
-
         result.faultload.timer.stop("StrategyRunner.analyze");
+
     }
 
     public int prune() {

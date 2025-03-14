@@ -43,7 +43,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
 
                 // We don't need to check for this exact fault, as it is already
                 // been tested
-                // context.pruneFaultload(new Faultload(Set.of(responseFault)));
+                context.pruneFaultload(new Faultload(Set.of(responseFault)));
                 redundantFautloads.add(Set.of(responseFault));
 
                 // We also don't need to check for the subset of this fault
@@ -51,7 +51,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
                 Set<Fault> newRedundantSubset = new HashSet<>(injectedFaults);
                 newRedundantSubset.add(responseFault);
 
-                // context.pruneFaultSubset(newRedundantSubset);
+                context.pruneFaultSubset(newRedundantSubset);
                 redundantSubsets.add(newRedundantSubset);
             }
         }

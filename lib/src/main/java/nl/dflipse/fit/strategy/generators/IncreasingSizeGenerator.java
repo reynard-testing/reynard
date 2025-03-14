@@ -132,8 +132,9 @@ public class IncreasingSizeGenerator implements Generator {
         }
 
         int subsetSize = subset.size();
-        // The specific subset can only be assigned in one way
-        // so we can ignore the subset size
+        // All subsets that contain this subset, the faults are fixed.
+        // E.g., only 1 way to assign the subset items
+        // so the others (the front) can be assigned in any way
         return subsetSpaceSize(0, fidCounter - subsetSize);
     }
 
@@ -143,12 +144,12 @@ public class IncreasingSizeGenerator implements Generator {
         return 1;
     }
 
-    private long subsetSpaceSize(long subsetSize, long faultsSize) {
-        return subsetSpaceSize(modes.size(), subsetSize, faultsSize);
+    private long subsetSpaceSize(long subsetSize, long frontSize) {
+        return subsetSpaceSize(modes.size(), subsetSize, frontSize);
     }
 
-    private long subsetSpaceSize(long m, long subsetSize, long faultsSize) {
-        return (long) (Math.pow(m, subsetSize) * Math.pow(1 + m, faultsSize));
+    private long subsetSpaceSize(long m, long subsetSize, long frontSize) {
+        return (long) (Math.pow(m, subsetSize) * Math.pow(1 + m, frontSize));
     }
 
     @Override

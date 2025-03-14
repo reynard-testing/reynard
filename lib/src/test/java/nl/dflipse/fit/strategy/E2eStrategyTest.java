@@ -1,11 +1,10 @@
 package nl.dflipse.fit.strategy;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import nl.dflipse.fit.faultload.Fault;
@@ -39,18 +38,18 @@ public class E2eStrategyTest {
         }
 
         @Override
-        public void ignoreFaultUidSubset(Set<FaultUid> subset) {
-            return;
+        public long ignoreFaultUidSubset(Set<FaultUid> subset) {
+            return 0;
         }
 
         @Override
-        public void ignoreFaultSubset(Set<Fault> subset) {
-            return;
+        public long ignoreFaultSubset(Set<Fault> subset) {
+            return 0;
         }
 
         @Override
-        public void ignoreFaultload(Faultload faultload) {
-            return;
+        public long ignoreFaultload(Faultload faultload) {
+            return 0;
         }
 
         @Override

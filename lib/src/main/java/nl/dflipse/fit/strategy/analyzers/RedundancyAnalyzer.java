@@ -1,5 +1,6 @@
 package nl.dflipse.fit.strategy.analyzers;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -12,11 +13,12 @@ import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class RedundancyAnalyzer implements FeedbackHandler<Void> {
+    private Set<FaultUid> detectedUids = new HashSet<>();
     private FaultloadResult initialResult;
 
     private Set<FaultUid> analyzeAppearedFaultUids(FaultloadResult result) {
         var presentFaultUids = result.trace.getFaultUids();
-        var appearedFaultUids = Sets.difference(presentFaultUids, initialResult.trace.getFaultUids());
+        var appearedFaultUids = Sets.difference(presentFaultUids, detectedUids);
 
         if (!appearedFaultUids.isEmpty()) {
             System.out.println("New fault points appeared: " + appearedFaultUids);
@@ -35,6 +37,7 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
         if (notInjectedFaults.size() == intendedFaults.size()) {
             System.out.println("No faults were injected!");
             System.out.println("There is a high likelyhood of the fault injection not working correctly!");
+            System.out.println("Missing: " + intendedFaults);
         } else if (!notInjectedFaults.isEmpty()) {
             System.out.println("Not all faults were injected, missing:" + notInjectedFaults);
             System.out.println("This can be due to redundant faults or a bug in the fault injection!");
@@ -78,6 +81,7 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             initialResult = result;
+            detectedUids.addAll(initialResult.trace.getFaultUids());
             return null;
         }
 
@@ -86,6 +90,12 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
         var appeared = analyzeAppearedFaultUids(result);
         var disappeared = analyzeDisappearedFaults(result);
         detectRandomFaults(appeared, disappeared);
+
+        // Report newly found points
+        if (!appeared.isEmpty()) {
+            context.reportFaultUids(List.copyOf(appeared));
+            detectedUids.addAll(appeared);
+        }
 
         return null;
     }

@@ -14,7 +14,7 @@ import nl.dflipse.fit.strategy.util.TransativeRelation;
 
 public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
     private FaultloadResult initialResult;
-    private TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
+    private final TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
 
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
@@ -22,11 +22,11 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
             initialResult = result;
 
             // add the parent-child relations
-            for (var pair : result.trace.getRelations()) {
-                var parent = pair.getFirst();
-                var child = pair.getSecond();
-                happensBefore.addRelation(parent, child);
-            }
+            // for (var pair : result.trace.getRelations()) {
+            // var parent = pair.getFirst();
+            // var child = pair.getSecond();
+            // happensBefore.addRelation(parent, child);
+            // }
 
             return null;
         } else {
@@ -42,7 +42,8 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
                 return null;
             }
 
-            var cause = injectedErrorFaults.iterator().next();
+            // if we have a singular cause
+            var cause = Sets.getOnlyElement(injectedErrorFaults);
 
             var faultsInTrace = result.trace.getFaultUids();
             var dissappearedFaults = initialResult.trace.getFaultUids()
@@ -52,11 +53,10 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
                     .filter(f -> !happensBefore.hasTransativeRelation(cause, f))
                     .collect(Collectors.toSet());
 
-            if (injectedErrorFaults.size() == 1 && dissappearedFaults.size() > 0) {
-                var injectedFault = injectedErrorFaults.iterator().next();
-
+            // that makes others disappear
+            if (!dissappearedFaults.isEmpty()) {
                 for (var notInjectedFault : dissappearedFaults) {
-                    handleHappensBefore(injectedFault, notInjectedFault);
+                    handleHappensBefore(cause, notInjectedFault);
                 }
             }
             return null;
@@ -94,7 +94,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
             happensBefore.addRelation(cause, effect);
 
             for (var ancestralCause : causeAncestors) {
-                if (ancestralCause.equals(effectParent)) {
+                if (ancestralCause.equals(effectParent) || ancestralCause.equals(effect)) {
                     break;
                 }
 

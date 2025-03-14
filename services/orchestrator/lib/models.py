@@ -15,13 +15,13 @@ class Span:
     error_message: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class ResponseData:
     status: int
     body: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class FaultUid:
     origin: str
     destination: str
@@ -30,19 +30,19 @@ class FaultUid:
     count: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class FaultMode:
     type: str
     args: list[str]
 
 
-@dataclass
+@dataclass(frozen=True)
 class Fault:
     uid: FaultUid
     mode: FaultMode
 
 
-@dataclass
+@dataclass(frozen=True)
 class Faultload:
     # Faultload data
     faults: list[Fault]
@@ -62,5 +62,5 @@ class ReportedSpan:
 @dataclass
 class TraceTreeNode:
     span: Span
-    report: ReportedSpan
+    reports: list['ReportedSpan'] = field(default_factory=list)
     children: list['TraceTreeNode'] = field(default_factory=list)

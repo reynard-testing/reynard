@@ -33,13 +33,15 @@ public class PowersetTreeTest {
     public void testNull() {
         PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(null, false);
         assert generator.hasNext() == false;
-        assertEqual(List.of(), expandComplete(generator));
+        var result = expandComplete(generator);
+        assertEqual(List.of(), result);
     }
 
     @Test
     public void testEmpty() {
         PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(new ArrayList<>(), false);
-        assertEqual(List.of(Set.of()), expandComplete(generator));
+        var result = expandComplete(generator);
+        assertEqual(List.of(), result);
     }
 
     @Test
@@ -206,6 +208,25 @@ public class PowersetTreeTest {
         PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(elements, false);
         generator.prune(Set.of(1, 2));
         int expectedCount = 32 - 8;
+
+        int count = 0;
+        while (generator.hasNext()) {
+            generator.next();
+            count++;
+        }
+
+        assert expectedCount == count;
+    }
+
+    @Test
+    public void testAddAllSeperately() {
+        List<Integer> elements = List.of(1, 2, 3, 4, 5);
+        PrunablePowersetIterator<Integer> generator = new PrunablePowersetIterator<>(List.of(), false);
+        for (var el : elements) {
+            generator.add(el);
+        }
+
+        int expectedCount = 32;
 
         int count = 0;
         while (generator.hasNext()) {

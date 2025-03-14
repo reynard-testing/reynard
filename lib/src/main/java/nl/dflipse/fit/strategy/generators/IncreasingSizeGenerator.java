@@ -17,7 +17,7 @@ public class IncreasingSizeGenerator implements Generator {
     private PrunablePowersetIterator<FaultUid> spaceIterator;
     private PrunablePairedCombinationsIterator<FaultUid, FaultMode> modeIterator;
 
-    private int fidCounter = 0;
+    private long fidCounter = 0;
     private DynamicAnalysisStore store = new DynamicAnalysisStore();
 
     public IncreasingSizeGenerator(List<FaultMode> modes) {
@@ -30,6 +30,10 @@ public class IncreasingSizeGenerator implements Generator {
 
     @Override
     public void reportFaultUids(List<FaultUid> potentialFaults) {
+        if (potentialFaults == null || potentialFaults.isEmpty()) {
+            return;
+        }
+
         if (this.spaceIterator == null) {
             this.spaceIterator = new PrunablePowersetIterator<FaultUid>(potentialFaults, true);
             fidCounter = potentialFaults.size();
@@ -48,7 +52,7 @@ public class IncreasingSizeGenerator implements Generator {
             }
 
             long newSize = spaceIterator.size(m) - oldSize;
-            fidCounter += newSize;
+            fidCounter += potentialFaults.size();
             System.out.println("[Generator] Added " + newSize + " new test cases");
         }
     }
@@ -72,11 +76,7 @@ public class IncreasingSizeGenerator implements Generator {
             modeIterator.prune(prunedFaults);
         }
 
-        if (!modeIterator.hasNext()) {
-            return false;
-        }
-
-        return true;
+        return modeIterator.hasNext();
     }
 
     @Override

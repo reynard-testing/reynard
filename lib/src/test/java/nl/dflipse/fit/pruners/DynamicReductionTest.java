@@ -1,13 +1,11 @@
 package nl.dflipse.fit.pruners;
 
-import static org.junit.Assert.assertTrue;
-
 import java.util.Set;
 
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
@@ -118,12 +116,13 @@ public class DynamicReductionTest {
                 .build();
 
         // The empty faultload is pruned
-        Faultload faultload = new Faultload(Set.of(new Fault(spanC2.report.faultUid, injectedFault)));
+        Faultload faultload = new Faultload(Set.of(new Fault(spanC2.reports.get(0).faultUid, injectedFault)));
         TraceAnalysis trace = new TraceAnalysis(spanA2);
         FaultloadResult result2 = new FaultloadResult(new TrackedFaultload(faultload), trace, true);
         pruner.handleFeedback(result2, null);
 
-        Faultload faultloadToPrune = new Faultload(Set.of(new Fault(spanB2.report.faultUid, resultedFault)));
+        Faultload faultloadToPrune = new Faultload(
+                Set.of(new Fault(spanB2.reports.get(0).faultUid, resultedFault)));
         assertTrue(pruner.prune(faultloadToPrune));
     }
 }

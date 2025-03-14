@@ -114,7 +114,9 @@ public class TraceTraversal {
 
         traverseDepthFirst(traceTreeRoot, (node) -> {
             if (node.hasReport()) {
-                faults.add(node.report.faultUid);
+                for (var report : node.reports) {
+                    faults.add(report.faultUid);
+                }
             }
         });
 
@@ -130,7 +132,9 @@ public class TraceTraversal {
 
         traverseBreadthFirst(traceTreeRoot, (node) -> {
             if (node.hasReport()) {
-                faults.add(node.report.faultUid);
+                for (var report : node.reports) {
+                    faults.add(report.faultUid);
+                }
             }
         });
 

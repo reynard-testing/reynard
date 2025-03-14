@@ -16,7 +16,7 @@ public class NodeBuilder {
   private static int spanCounter = 0;
 
   TraceSpan span = new TraceSpan();
-  TraceSpanReport report;
+  List<TraceSpanReport> reports = new ArrayList<>();
   List<TraceTreeSpan> children = new ArrayList<>();
 
   public NodeBuilder(String traceId) {
@@ -61,7 +61,7 @@ public class NodeBuilder {
   public TraceTreeSpan build() {
     TraceTreeSpan node = new TraceTreeSpan();
     node.span = span;
-    node.report = report;
+    node.reports = reports;
     node.children = children;
     return node;
   }
@@ -82,7 +82,7 @@ public class NodeBuilder {
         throw new IllegalStateException("No response set!");
       }
 
-      builder.report = report;
+      builder.reports.add(report);
       return builder;
     }
 

@@ -1,6 +1,5 @@
 package nl.dflipse.fit.strategy.pruners;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,6 +13,10 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 
 public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
+
+    // TODO: if all failure modes result in the same behaviour
+    // We can mark fids instead of faults
+
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         Set<Fault> injectedFaults = result.trace.getInjectedFaults();
@@ -30,6 +33,9 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
             if (isErrenousResponse && !isInjectedError) {
                 FaultMode faultMode = new FaultMode(ErrorFault.FAULT_TYPE, List.of("" + report.response.status));
                 Fault responseFault = new Fault(report.faultUid, faultMode);
+
+                System.out.println(
+                        "[ErrorPropagation] Found that fault(s) " + injectedFaults + " causes error " + responseFault);
 
                 // We don't need to check for this exact fault, as it is already
                 // been tested

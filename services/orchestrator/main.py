@@ -28,14 +28,14 @@ debug_all_spans: list[Span] = []
 debug_raw_exports: list = []
 
 
-def to_trace_tree_nodes(spans: list[Span]) -> list[TraceTreeNode]:
-    return [TraceTreeNode(span, report_store.get_by_span_id(span.span_id)) for span in spans]
+def to_trace_tree_nodes(spans: list[Span], reports: list[ReportedSpan]) -> list[TraceTreeNode]:
+    return [TraceTreeNode(span, [report for report in reports if report.span_id == span.span_id]) for span in spans]
 
 
-def get_trace_tree(spans: list[Span]) -> list[TraceTreeNode]:
+def get_trace_tree(spans: list[Span], reports: list[ReportedSpan]) -> list[TraceTreeNode]:
     """Convert spans to a trace tree (list of root nodes)"""
     # convert to nodes & build lookup
-    tree_nodes = to_trace_tree_nodes(spans)
+    tree_nodes = to_trace_tree_nodes(spans, reports)
     tree_node_by_span_id = {node.span.span_id: node for node in tree_nodes}
 
     # build tree
@@ -66,6 +66,7 @@ def get_trace_tree(spans: list[Span]) -> list[TraceTreeNode]:
 
 def get_trace_tree_for_trace(trace_id: str) -> tuple[list[Span], list[TraceTreeNode]]:
     spans = span_store.get_by_trace_id(trace_id)
+    reports = report_store.get_by_trace_id(trace_id)
 
     # If the clients sends a fictional root span, add it to build the correct tree
     needs_client_root_span = any(
@@ -87,7 +88,7 @@ def get_trace_tree_for_trace(trace_id: str) -> tuple[list[Span], list[TraceTreeN
         spans.append(root_span)
 
     # convert to tree
-    return spans, get_trace_tree(spans)
+    return spans, get_trace_tree(spans, reports)
 
 
 def get_report_tree_children(children: list[TraceTreeNode]) -> list[TraceTreeNode]:
@@ -98,12 +99,12 @@ def get_report_tree_children(children: list[TraceTreeNode]) -> list[TraceTreeNod
 
 
 def get_report_tree(node: TraceTreeNode) -> list[TraceTreeNode]:
-    is_report_node = node.report != None or node.span.span_id == CLIENT_ROOT_SPAN_ID
+    is_report_node = len(node.reports) == 0 or node.span.span_id == CLIENT_ROOT_SPAN_ID
 
     if is_report_node:
         return [TraceTreeNode(
             span=node.span,
-            report=node.report,
+            reports=node.reports,
             children=get_report_tree_children(node.children)
         )]
 
@@ -152,7 +153,7 @@ def collect():
 
 @app.route('/v1/debug/all-trees', methods=['GET'])
 def debug_get_all_span_trees():
-    trees = get_trace_tree(debug_all_spans)
+    trees = get_trace_tree(debug_all_spans, [])
     return {
         "spans": debug_all_spans,
         "trees": trees
@@ -228,7 +229,7 @@ async def report_span_id():
             body=response.get('body')
         )
 
-    faultUid = FaultUid(
+    fault_uid = FaultUid(
         origin=uid.get('origin'),
         signature=uid.get('signature'),
         count=uid.get('count'),
@@ -239,13 +240,13 @@ async def report_span_id():
     span_report = ReportedSpan(
         trace_id=trace_id,
         span_id=span_id,
-        uid=faultUid,
+        uid=fault_uid,
         injected_fault=injected_fault,
         response=responseData,
     )
 
-    if report_store.has_span_id(span_id):
-        existing_report = report_store.get_by_span_id(span_id)
+    if report_store.has_fault_uid_for_trace(trace_id, fault_uid):
+        existing_report = report_store.get_by_trace_and_fault_uid(trace_id, fault_uid)
         existing_report.response = responseData
         existing_report.injected_fault = injected_fault
         print("Updated reported span", span_report, flush=True)

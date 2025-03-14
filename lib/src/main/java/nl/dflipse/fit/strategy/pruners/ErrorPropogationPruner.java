@@ -1,5 +1,6 @@
 package nl.dflipse.fit.strategy.pruners;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,6 +17,9 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
 
     // TODO: if all failure modes result in the same behaviour
     // We can mark fids instead of faults
+
+    private List<Set<Fault>> redundantFautloads = new ArrayList<>();
+    private List<Set<Fault>> redundantSubsets = new ArrayList<>();
 
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
@@ -39,14 +43,16 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
 
                 // We don't need to check for this exact fault, as it is already
                 // been tested
-                context.ignoreFaultload(new Faultload(Set.of(responseFault)));
+                // context.pruneFaultload(new Faultload(Set.of(responseFault)));
+                redundantFautloads.add(Set.of(responseFault));
 
                 // We also don't need to check for the subset of this fault
                 // and its causes
                 Set<Fault> newRedundantSubset = new HashSet<>(injectedFaults);
                 newRedundantSubset.add(responseFault);
 
-                context.ignoreFaultSubset(newRedundantSubset);
+                // context.pruneFaultSubset(newRedundantSubset);
+                redundantSubsets.add(newRedundantSubset);
             }
         }
 
@@ -55,6 +61,19 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
 
     @Override
     public boolean prune(Faultload faultload) {
+
+        for (var redundantFaultload : redundantFautloads) {
+            if (faultload.faultSet().equals(redundantFaultload)) {
+                return true;
+            }
+        }
+
+        for (var redundantSubset : redundantSubsets) {
+            if (faultload.faultSet().containsAll(redundantSubset)) {
+                return true;
+            }
+        }
+
         return false;
     }
 

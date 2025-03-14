@@ -7,12 +7,25 @@ class ReportStore:
     reports_by_trace_id: dict[str, list[ReportedSpan]] = {}
     reports_by_trace_by_fault_uid: dict[str, dict[FaultUid, ReportedSpan]] = {}
 
+    def clear(self):
+        self.spans = []
+        self.spans_by_span_id = {}
+        self.spans_by_trace_id = {}
+
+    def remove_by_trace_id(self, trace_id: str):
+        trace_reports = self.reports_by_trace_id.get(trace_id, [])
+        for trace_repot in trace_reports:
+            self.reports.remove(trace_repot)
+            self.reports_by_span_id[trace_repot.span_id].remove(trace_repot)
+            self.reports_by_trace_by_fault_uid[trace_id].pop(trace_repot.uid)
+        self.reports_by_trace_id.pop(trace_id)
+
     def add(self, report: ReportedSpan):
         self.reports.append(report)
         self.reports_by_span_id.setdefault(report.span_id, []).append(report)
         self.reports_by_trace_id.setdefault(report.trace_id, []).append(report)
-        self.reports_by_trace_by_fault_uid.setdefault(report.trace_id, {}) \
-            [report.uid] = report
+        self.reports_by_trace_by_fault_uid.setdefault(
+            report.trace_id, {})[report.uid] = report
         return report
 
     def has_fault_uid_for_trace(self, trace_id: str, fid: FaultUid) -> bool:
@@ -23,7 +36,8 @@ class ReportStore:
         return self.reports_by_span_id.get(span_id, [])
 
     def get_by_trace_and_fault_uid(self, trace_id: str, fid: FaultUid) -> ReportedSpan:
-        reports_for_trace_by_fault_uid = self.reports_by_trace_by_fault_uid.get(trace_id)
+        reports_for_trace_by_fault_uid = self.reports_by_trace_by_fault_uid.get(
+            trace_id)
         if reports_for_trace_by_fault_uid is None:
             return None
         return reports_for_trace_by_fault_uid.get(fid, None)

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.t;
 
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.HttpError;
@@ -167,7 +168,11 @@ public class FiTestExtension
 
             faultload.timer.start();
             faultload.timer.start("registerFaultload");
-            controller.registerFaultload(faultload);
+            try {
+                controller.registerFaultload(faultload);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to register faultload", e);
+            }
             faultload.timer.stop("registerFaultload");
             faultload.timer.start("testMethod");
         }

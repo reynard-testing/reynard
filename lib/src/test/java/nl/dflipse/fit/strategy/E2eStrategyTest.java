@@ -18,8 +18,14 @@ public class E2eStrategyTest {
     private class DummyGenerator implements Generator {
 
         private List<Faultload> queue;
+        private Set<FaultMode> modes;
 
         public DummyGenerator(List<Faultload> queue) {
+            for (var faultload : queue) {
+                for (var fault : faultload.faultSet()) {
+                    modes.add(fault.getMode());
+                }
+            }
             this.queue = queue;
         }
 
@@ -38,23 +44,33 @@ public class E2eStrategyTest {
         }
 
         @Override
-        public long ignoreFaultUidSubset(Set<FaultUid> subset) {
+        public long pruneFaultUidSubset(Set<FaultUid> subset) {
             return 0;
         }
 
         @Override
-        public long ignoreFaultSubset(Set<Fault> subset) {
+        public long pruneFaultSubset(Set<Fault> subset) {
             return 0;
         }
 
         @Override
-        public long ignoreFaultload(Faultload faultload) {
+        public long pruneFaultload(Faultload faultload) {
             return 0;
         }
 
         @Override
         public long spaceSize() {
             return 0;
+        }
+
+        @Override
+        public long pruneMixedSubset(Set<Fault> subset, Set<FaultUid> subset2) {
+            return 0;
+        }
+
+        @Override
+        public Set<FaultMode> getFaultModes() {
+            return modes;
         }
     }
 

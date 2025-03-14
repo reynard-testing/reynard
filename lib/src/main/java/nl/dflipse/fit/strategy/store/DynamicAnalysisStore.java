@@ -1,7 +1,9 @@
 package nl.dflipse.fit.strategy.store;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,9 +14,14 @@ import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.util.Pair;
 
 public class DynamicAnalysisStore {
+    private final Set<FaultMode> modes;
     private List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private List<Set<Pair<FaultUid, FaultMode>>> redundantFaultSubsets = new ArrayList<>();
     private List<Faultload> redundantFaultloads = new ArrayList<>();
+
+    public DynamicAnalysisStore(Set<FaultMode> modes) {
+        this.modes = modes;
+    }
 
     public boolean hasFaultUidSubset(Set<FaultUid> subset) {
         for (var redundant : this.redundantUidSubsets) {
@@ -76,6 +83,9 @@ public class DynamicAnalysisStore {
         if (hasFaultSubsetFromPairs(pairs)) {
             return null;
         }
+
+        // TODO: if we have all fault modes for a faultuid in the subsets
+        // we can ignore the faultuid
 
         this.redundantFaultSubsets.add(pairs);
         return pairs;

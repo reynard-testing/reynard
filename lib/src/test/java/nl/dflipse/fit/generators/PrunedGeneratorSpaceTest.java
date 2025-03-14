@@ -84,7 +84,7 @@ public class PrunedGeneratorSpaceTest {
         generator.reportFaultUids(pointsTwelve);
 
         for (var fault : pointsTwelve) {
-            generator.ignoreFaultUidSubset(Set.of(fault));
+            generator.pruneFaultUidSubset(Set.of(fault));
         }
 
         var faults = generator.generate();
@@ -113,7 +113,7 @@ public class PrunedGeneratorSpaceTest {
             if (fault == ignored) {
                 continue;
             }
-            generator.ignoreFaultUidSubset(Set.of(fault));
+            generator.pruneFaultUidSubset(Set.of(fault));
         }
 
         assertEquals(expectedSize(1, modes3.size()), getGenerated(generator));
@@ -129,7 +129,7 @@ public class PrunedGeneratorSpaceTest {
             if (ignoredSet.contains(fault)) {
                 continue;
             }
-            generator.ignoreFaultUidSubset(Set.of(fault));
+            generator.pruneFaultUidSubset(Set.of(fault));
         }
 
         assertEquals(expectedSize(2, modes3.size()), getGenerated(generator));
@@ -145,7 +145,7 @@ public class PrunedGeneratorSpaceTest {
             if (ignoredSet.contains(fault)) {
                 continue;
             }
-            generator.ignoreFaultUidSubset(Set.of(fault));
+            generator.pruneFaultUidSubset(Set.of(fault));
         }
 
         assertEquals(expectedSize(4, modes3.size()), getGenerated(generator));
@@ -158,7 +158,7 @@ public class PrunedGeneratorSpaceTest {
         generator.reportFaultUids(pointsThree);
 
         for (var mode : modes5) {
-            generator.ignoreFaultSubset(Set.of(
+            generator.pruneFaultSubset(Set.of(
                     new Fault(pointsThree.get(0), mode)));
         }
 
@@ -174,7 +174,7 @@ public class PrunedGeneratorSpaceTest {
 
         for (int i = 1; i < modes5.size(); i++) {
             var mode = modes5.get(i);
-            generator.ignoreFaultSubset(Set.of(
+            generator.pruneFaultSubset(Set.of(
                     new Fault(pointsThree.get(1), mode)));
         }
 
@@ -201,7 +201,7 @@ public class PrunedGeneratorSpaceTest {
                 }
 
                 var mode = modes.get(i);
-                generator.ignoreFaultSubset(Set.of(new Fault(fault, mode)));
+                generator.pruneFaultSubset(Set.of(new Fault(fault, mode)));
             }
         }
 
@@ -224,7 +224,7 @@ public class PrunedGeneratorSpaceTest {
                 }
 
                 var mode = modes12.get(i);
-                generator.ignoreFaultSubset(Set.of(new Fault(fault, mode)));
+                generator.pruneFaultSubset(Set.of(new Fault(fault, mode)));
             }
         }
 

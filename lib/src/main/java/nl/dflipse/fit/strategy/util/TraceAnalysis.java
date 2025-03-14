@@ -131,6 +131,20 @@ public class TraceAnalysis {
         return injectedFaults;
     }
 
+    public boolean hasFaultMode(String... orType) {
+        return hasFaultMode(Set.of(orType));
+    }
+
+    private boolean hasFaultMode(Set<String> orType) {
+        for (var fault : injectedFaults) {
+            if (orType.contains(fault.mode().type())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public List<TraceSpanReport> getReports() {
         return reports;
     }

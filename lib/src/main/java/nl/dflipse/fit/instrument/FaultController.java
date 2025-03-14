@@ -8,7 +8,7 @@ import nl.dflipse.fit.strategy.util.TraceAnalysis;
 public interface FaultController {
     public TraceAnalysis getTrace(TrackedFaultload faultload) throws IOException;
 
-    public void registerFaultload(TrackedFaultload faultload);
+    public void registerFaultload(TrackedFaultload faultload) throws IOException;
 
-    public void unregisterFaultload(TrackedFaultload faultload);
+    public void unregisterFaultload(TrackedFaultload faultload) throws IOException;
 }

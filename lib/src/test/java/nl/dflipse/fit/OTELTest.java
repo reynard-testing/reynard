@@ -1,25 +1,34 @@
 package nl.dflipse.fit;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.hc.client5.http.fluent.Request;
-import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.core5.http.ContentType;
+import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.net.URIBuilder;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
+import nl.dflipse.fit.faultload.Fault;
+import nl.dflipse.fit.faultload.FaultUid;
+import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
+import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.controller.RemoteController;
+import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.TrackedFaultload;
-import nl.dflipse.fit.util.HttpResponse;
-import nl.dflipse.fit.util.HttpResponseHandler;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * FI test the app
@@ -32,11 +41,17 @@ public class OTELTest {
     private static final String CURRENCY = "USD";
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    private OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .build();
+    public static final MediaType JSON = MediaType.get("application/json");
+
     public static FaultController getController() {
         return controller;
     }
 
-    private void addItemToCart() {
+    private void addItemToCart() throws IOException {
         var obj = mapper.createObjectNode();
         var itemNode = mapper.createObjectNode();
         itemNode.put("productId", "0PUK6V6EV0");
@@ -45,125 +60,158 @@ public class OTELTest {
         obj.put("userId", USER_ID);
 
         String endpoint = "http://localhost:" + PORT + "/api/cart?currencyCode=" + CURRENCY;
-        try {
-            Request.post(new URI(endpoint))
-                    .addHeader("Content-Type", "application/json")
-                    .bodyByteArray(mapper.writeValueAsBytes(obj), ContentType.APPLICATION_JSON)
-                    .execute();
-        } catch (URISyntaxException | IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+
+        RequestBody body = RequestBody.create(mapper.writeValueAsBytes(obj), JSON);
+        Request request = new Request.Builder()
+                // .addHeader("Content-Type", "application/json")
+                .url(endpoint)
+                .post(body)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            return;
         }
     }
 
     @FiTest(maskPayload = true)
-    public void testShipping(TrackedFaultload faultload) throws URISyntaxException {
-        String port = "8080";
-        // String port = "64839";
+    public void testShipping(TrackedFaultload faultload) throws IOException {
 
-        String endpoint = "http://localhost:" + port
-                + "/api/shipping";
-        var builder = new URIBuilder(endpoint);
-        builder.addParameter("itemList",
-                "[{\"productId\":\"66VCHSJNUP\",\"quantity\":1}]");
-        builder.addParameter("currencyCode", CURRENCY);
-        builder.addParameter("address",
-                "{\"streetAddress\":\"1600+Amphitheatre+Parkway\",\"city\":\"Mountain+View\",\"state\":\"CA\",\"country\":\"United+States\",\"zipCode\":\"94043\"}");
-
-        String fullUrl = builder.toString();
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-        var url = builder.build();
-        Response res;
-        HttpResponse response;
-        try {
-            res = Request.get(url)
-                    .addHeader("Accept", "application/json")
-                    .addHeader("traceparent", traceparent)
-                    .addHeader("tracestate", tracestate)
-                    .execute();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-
-        try {
-            response = res.handleResponse(new HttpResponseHandler());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
-        String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
-
-        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
-        int expectedResponse = containsError ? 500 : 200;
-        int actualResponse = response.statusCode;
-        assertEquals(expectedResponse, actualResponse);
-    }
-
-    @FiTest(maskPayload = true)
-    public void testRecommendations(TrackedFaultload faultload) throws URISyntaxException, IOException {
-        String port = "8080";
-        // String port = "64839";
-
-        String endpoint = "http://localhost:" + port
-                + "/api/recommendations";
-        var builder = new URIBuilder(endpoint);
-        builder.addParameter("productIds", "");
-        builder.addParameter("currencyCode", CURRENCY);
+        HttpUrl url = new HttpUrl.Builder()
+                .scheme("http")
+                .host("localhost")
+                .port(PORT)
+                .addPathSegments("api/shipping")
+                .addQueryParameter("itemList",
+                        "[{\"productId\":\"66VCHSJNUP\",\"quantity\":1}]")
+                .addQueryParameter("currencyCode", CURRENCY)
+                .addQueryParameter("address",
+                        "{\"streetAddress\":\"1600+Amphitheatre+Parkway\",\"city\":\"Mountain+View\",\"state\":\"CA\",\"country\":\"United+States\",\"zipCode\":\"94043\"}")
+                .build();
 
         var traceparent = faultload.getTraceParent().toString();
         var tracestate = faultload.getTraceState().toString();
-        var url = builder.build();
 
-        Response res = Request.get(url)
-                .addHeader("Accept", "application/json")
+        Request request = new Request.Builder()
+                .url(url)
                 .addHeader("traceparent", traceparent)
                 .addHeader("tracestate", tracestate)
-                .execute();
-        HttpResponse response = res.handleResponse(new HttpResponseHandler());
+                .build();
 
-        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
-        String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
+        try (Response response = client.newCall(request).execute()) {
+            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
+            String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
-        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
-        int expectedResponse = containsError ? 500 : 200;
-        int actualResponse = response.statusCode;
-        assertEquals(expectedResponse, actualResponse);
+            boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
+            int expectedResponse = containsError ? 500 : 200;
+            int actualResponse = response.code();
+            assertEquals(expectedResponse, actualResponse);
+        }
     }
 
     @FiTest(maskPayload = true)
-    public void testCheckout(TrackedFaultload faultload) throws URISyntaxException, IOException {
+    public void testRecommendations(TrackedFaultload faultload)
+            throws IOException {
+
+        HttpUrl url = new HttpUrl.Builder()
+                .scheme("http")
+                .host("localhost")
+                .port(PORT)
+                .addPathSegments("api/recommendations")
+                .addQueryParameter("productIds", "")
+                .addQueryParameter("currencyCode", CURRENCY)
+                .build();
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
+            String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
+
+            boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
+            int expectedResponse = containsError ? 500 : 200;
+            int actualResponse = response.code();
+            assertEquals(expectedResponse, actualResponse);
+        }
+    }
+
+    @FiTest(maskPayload = true)
+    public void testCheckout(TrackedFaultload faultload) throws IOException {
         addItemToCart();
 
-        String endpoint = "http://localhost:" + PORT + "/api/checkout";
-        var builder = new URIBuilder(endpoint);
-        builder.addParameter("currencyCode", CURRENCY);
+        HttpUrl url = new HttpUrl.Builder()
+                .scheme("http")
+                .host("localhost")
+                .port(PORT)
+                .addPathSegments("api/checkout")
+                .addQueryParameter("productIds", "")
+                .addQueryParameter("currencyCode", CURRENCY)
+                .build();
+
         String payload = "{\"userId\":\"" + USER_ID
                 + "\",\"email\":\"someone@example.com\",\"address\":{\"streetAddress\":\"1600 Amphitheatre Parkway\",\"state\":\"CA\",\"country\":\"United States\",\"city\":\"Mountain View\",\"zipCode\":\"94043\"},\"userCurrency\":\""
                 + CURRENCY
                 + "\",\"creditCard\":{\"creditCardCvv\":672,\"creditCardExpirationMonth\":1,\"creditCardExpirationYear\":2030,\"creditCardNumber\":\"4432-8015-6152-0454\"}}";
+        RequestBody body = RequestBody.create(payload, JSON);
 
         var traceparent = faultload.getTraceParent().toString();
         var tracestate = faultload.getTraceState().toString();
-        var url = builder.build();
 
-        Response res = Request.post(url)
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
                 .addHeader("traceparent", traceparent)
                 .addHeader("tracestate", tracestate)
-                .bodyString(payload, ContentType.APPLICATION_JSON)
-                .execute();
-        HttpResponse response = res.handleResponse(new HttpResponseHandler());
+                .build();
 
-        String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
-        String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
+        try (Response response = client.newCall(request).execute()) {
+            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
+            String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
-        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
-        int expectedResponse = containsError ? 500 : 200;
-        int actualResponse = response.statusCode;
-        // assertEquals(expectedResponse, actualResponse);
+            var traceData = controller.getTrace(faultload);
+
+            boolean containsError = traceData.hasFaultMode(ErrorFault.FAULT_TYPE,
+                    OmissionFault.FAULT_TYPE);
+            int actualResponse = response.code();
+
+            // if (containsError) {
+            // assertTrue(actualResponse >= 500 && actualResponse < 600);
+            // } else {
+            // assertEquals(200, actualResponse);
+            // }
+        }
+
+    }
+
+    @Test
+    public void testCounterExample() throws URISyntaxException, IOException {
+        // checkout>email:/send_order_confirmation(*)#0(HTTP_ERROR
+        // [502]),checkout>cart:oteldemo.CartService/EmptyCart(*)#0(HTTP_ERROR
+        // [504]),frontend>product-catalog:oteldemo.ProductCatalogService/GetProduct(*)#0(HTTP_ERROR
+        // [502])
+        FaultUid fid1 = new FaultUid("checkout", "email", "/send_order_confirmation", "*", 0);
+        FaultUid fid2 = new FaultUid("checkout", "cart", "oteldemo.CartService/EmptyCart", "*", 0);
+        FaultUid fid3 = new FaultUid("frontend", "product-catalog", "oteldemo.ProductCatalogService/GetProduct",
+                "*",
+                0);
+
+        FaultMode mode1 = ErrorFault.fromError(HttpError.BAD_GATEWAY);
+        FaultMode mode2 = ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT);
+
+        Fault f1 = new Fault(fid1, mode1);
+        Fault f2 = new Fault(fid2, mode2);
+        Fault f3 = new Fault(fid3, mode1);
+
+        Faultload faultload = new Faultload(Set.of(f1, f2, f3));
+        TrackedFaultload trackedFaultload = new TrackedFaultload(faultload)
+                .withMaskPayload();
+
+        testCheckout(trackedFaultload);
     }
 }

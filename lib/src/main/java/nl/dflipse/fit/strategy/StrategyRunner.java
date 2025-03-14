@@ -21,8 +21,7 @@ public class StrategyRunner {
     public StrategyStatistics statistics = new StrategyStatistics();
 
     private boolean withPayloadMasking = false;
-    private long maxTestCases = 0;
-    private boolean reachedLimit = false;
+    private long testCasesLeft = -1;
 
     public StrategyRunner() {
         pruners = new ArrayList<>();
@@ -39,7 +38,7 @@ public class StrategyRunner {
     }
 
     public StrategyRunner withMaxTestCases(long max) {
-        maxTestCases = max;
+        testCasesLeft = max;
         return this;
     }
 
@@ -61,6 +60,13 @@ public class StrategyRunner {
     public TrackedFaultload nextFaultload() {
         if (queue.isEmpty()) {
             return null;
+        }
+
+        if (testCasesLeft == 0) {
+            System.out.println("[Strategy] Reached test case limit, stopping!");
+            return null;
+        } else if (testCasesLeft > 0) {
+            testCasesLeft--;
         }
 
         var queued = queue.remove(0);

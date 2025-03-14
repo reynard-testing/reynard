@@ -47,6 +47,16 @@ public class E2eStrategyTest {
         public void ignoreFaultSubset(Set<Fault> subset) {
             return;
         }
+
+        @Override
+        public void ignoreFaultload(Faultload faultload) {
+            return;
+        }
+
+        @Override
+        public long spaceSize() {
+            return 0;
+        }
     }
 
     @Test

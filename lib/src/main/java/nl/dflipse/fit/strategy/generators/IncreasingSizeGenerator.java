@@ -17,6 +17,7 @@ public class IncreasingSizeGenerator implements Generator {
     private PrunablePowersetIterator<FaultUid> spaceIterator;
     private PrunablePairedCombinationsIterator<FaultUid, FaultMode> modeIterator;
 
+    private int fidCounter = 0;
     private DynamicAnalysisStore store = new DynamicAnalysisStore();
 
     public IncreasingSizeGenerator(List<FaultMode> modes) {
@@ -31,6 +32,7 @@ public class IncreasingSizeGenerator implements Generator {
     public void reportFaultUids(List<FaultUid> potentialFaults) {
         if (this.spaceIterator == null) {
             this.spaceIterator = new PrunablePowersetIterator<FaultUid>(potentialFaults, true);
+            fidCounter = potentialFaults.size();
             long expectedSize = spaceIterator.size(modes.size());
             System.out.println(
                     "[Generator] Found " + potentialFaults.size() + " fault points. Will generate at most "
@@ -46,6 +48,7 @@ public class IncreasingSizeGenerator implements Generator {
             }
 
             long newSize = spaceIterator.size(m) - oldSize;
+            fidCounter += newSize;
             System.out.println("[Generator] Added " + newSize + " new test cases");
         }
     }
@@ -95,23 +98,56 @@ public class IncreasingSizeGenerator implements Generator {
                 .collect(Collectors.toSet());
         Faultload faultLoad = new Faultload(faults);
 
+        // if we should skip this specific faultload
+        // then we should generate the next one
+        if (store.hasFaultload(faultLoad)) {
+            return generate();
+        }
+
         return List.of(faultLoad);
     }
 
     @Override
-    public void ignoreFaultUidSubset(Set<FaultUid> subset) {
+    public long ignoreFaultUidSubset(Set<FaultUid> subset) {
         boolean isNew = store.ignoreFaultUidSubset(subset);
         if (isNew) {
             spaceIterator.prune(subset);
         }
+
+        int subsetSize = subset.size();
+        return subsetSpaceSize(subsetSize, fidCounter - subsetSize);
     }
 
     @Override
-    public void ignoreFaultSubset(Set<Fault> subset) {
+    public long ignoreFaultSubset(Set<Fault> subset) {
         var prunableSet = store.ignoreFaultSubset(subset);
         if (modeIterator != null && prunableSet != null) {
             modeIterator.prune(prunableSet);
         }
+
+        int subsetSize = subset.size();
+        // The specific subset can only be assigned in one way
+        // so we can ignore the subset size
+        return subsetSpaceSize(0, fidCounter - subsetSize);
+    }
+
+    @Override
+    public long ignoreFaultload(Faultload faultload) {
+        store.ignoreFaultload(faultload);
+        return 1;
+    }
+
+    private long subsetSpaceSize(long subsetSize, long faultsSize) {
+        return subsetSpaceSize(modes.size(), subsetSize, faultsSize);
+    }
+
+    private long subsetSpaceSize(long m, long subsetSize, long faultsSize) {
+        return (long) (Math.pow(m, subsetSize) * Math.pow(1 + m, faultsSize));
+    }
+
+    @Override
+    public long spaceSize() {
+        return subsetSpaceSize(0, fidCounter);
     }
 
 }

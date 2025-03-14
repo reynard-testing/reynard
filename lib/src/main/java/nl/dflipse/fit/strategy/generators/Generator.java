@@ -10,9 +10,13 @@ import nl.dflipse.fit.faultload.Faultload;
 public interface Generator {
     public void reportFaultUids(List<FaultUid> faultInjectionPoints);
 
-    public void ignoreFaultUidSubset(Set<FaultUid> subset);
+    public long ignoreFaultUidSubset(Set<FaultUid> subset);
 
-    public void ignoreFaultSubset(Set<Fault> subset);
+    public long ignoreFaultSubset(Set<Fault> subset);
+
+    public long ignoreFaultload(Faultload faultload);
 
     public List<Faultload> generate();
+
+    public long spaceSize();
 }

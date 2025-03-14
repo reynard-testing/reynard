@@ -11,26 +11,42 @@ import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyStatistics {
-    private Map<String, Integer> generatorCount = new HashMap<>();
-    private Map<String, Integer> prunerCount = new HashMap<>();
+    private Map<String, Long> generatorCount = new HashMap<>();
+    private Map<String, Long> prunerCount = new HashMap<>();
+    private Map<String, Long> prunerEstimates = new HashMap<>();
     private List<Pair<String, Long>> timings = new ArrayList<>();
     private Set<String> tags = new HashSet<>();
 
-    private int totalRun = 0;
-    private int totalGenerated = 0;
-    private int totalPruned = 0;
+    private long totalRun = 0;
+    private long totalSize = 0;
+    private long totalGenerated = 0;
+    private long totalPruned = 0;
 
-    public void incrementGenerator(String generator, int count) {
-        generatorCount.put(generator, generatorCount.getOrDefault(generator, 0) + count);
+    public void incrementGenerator(String generator, long count) {
+        generatorCount.put(generator, generatorCount.getOrDefault(generator, 0L) + count);
         totalGenerated += count;
     }
 
-    public void incrementPruner(String pruner, int count) {
-        prunerCount.put(pruner, prunerCount.getOrDefault(pruner, 0) + count);
+    public void incrementPruner(String pruner, long count) {
+        prunerCount.put(pruner, prunerCount.getOrDefault(pruner, 0L) + count);
+        if (!prunerEstimates.containsKey(pruner)) {
+            prunerEstimates.put(pruner, 0L);
+        }
     }
 
-    public void incrementPruned(int count) {
+    public void incrementEstimatePruner(String pruner, long count) {
+        prunerEstimates.put(pruner, prunerEstimates.getOrDefault(pruner, 0L) + count);
+        if (!prunerCount.containsKey(pruner)) {
+            prunerCount.put(pruner, 0L);
+        }
+    }
+
+    public void incrementPruned(long count) {
         totalPruned += count;
+    }
+
+    public void setSize(long size) {
+        totalSize = size;
     }
 
     private long getAverageTime(String tag) {
@@ -46,7 +62,9 @@ public class StrategyStatistics {
             timings.add(entry);
             tags.add(entry.first());
         }
+    }
 
+    public void registerRun() {
         totalRun++;
     }
 
@@ -82,7 +100,7 @@ public class StrategyStatistics {
         return padding + s + padding;
     }
 
-    private int getMaxKeyLength(Map<String, Integer> map) {
+    private int getMaxKeyLength(Map<String, Long> map) {
         return map.keySet().stream().mapToInt(String::length).max().orElse(0);
     }
 
@@ -90,18 +108,24 @@ public class StrategyStatistics {
         return set.stream().mapToInt(String::length).max().orElse(0);
     }
 
-    private String asPercentage(int num, int div) {
+    private String asPercentage(long num, long div) {
         double percentage = 100d * num / (double) div;
         return String.format("%1.1f", percentage);
     }
 
     public void report() {
         int maxWidth = 32;
+        long fullSpace = totalSize + 1;
         String prunePercentage = asPercentage(totalPruned, totalGenerated);
+        String generatePercentage = asPercentage(totalGenerated, totalSize);
+        String runPercentage = asPercentage(totalRun, fullSpace);
+        String reductionPercentage = asPercentage(fullSpace - totalRun, fullSpace);
+
         System.out.println(padBoth(" Stats ", maxWidth, "-"));
-        System.out.println("Total generated     : " + totalGenerated);
-        System.out.println("Total pruned        : " + totalPruned + " (" + prunePercentage + "%)");
-        System.out.println("Total run           : " + totalRun);
+        System.out.println("Complete space size : " + fullSpace + " (" + reductionPercentage + "% reduction)");
+        System.out.println("Total generated     : " + totalGenerated + " (" + generatePercentage + "% of space)");
+        System.out.println("Total pruned        : " + totalPruned + " (" + prunePercentage + "% of generated)");
+        System.out.println("Total run           : " + totalRun + " (" + runPercentage + "% of full space)");
 
         System.out.println();
         System.out.println(padBoth(" Timings ", maxWidth, "-"));
@@ -125,8 +149,12 @@ public class StrategyStatistics {
         System.out.println(padBoth(" Pruners ", maxWidth, "-"));
         for (var entry : prunerCount.entrySet()) {
             String key = padRight(entry.getKey(), maxPrunerKeyLength);
-            int value = entry.getValue();
-            System.out.println(key + " : " + value + " (" + asPercentage(value, totalGenerated) + "%)");
+            long value = entry.getValue();
+            long estimateValue = prunerEstimates.get(entry.getKey());
+            System.out.println(
+                    key + " : " + value + " directly (" + asPercentage(value, totalGenerated) + "% of generated)");
+            System.out.println(padRight("", maxPrunerKeyLength) + " : " + estimateValue + " indirectly ("
+                    + asPercentage(estimateValue, totalSize) + "% estimate of space)");
         }
     }
 }

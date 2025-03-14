@@ -12,10 +12,10 @@ import nl.dflipse.fit.strategy.util.Pair;
 
 public class StrategyRunner {
     public List<Faultload> queue;
-    public Set<Faultload> prunedFaultloads;
+
+    public Generator generator = null;
 
     public List<FeedbackHandler<Void>> analyzers;
-    public Generator generator = null;
     public List<Pruner> pruners;
 
     public StrategyStatistics statistics = new StrategyStatistics();
@@ -25,7 +25,6 @@ public class StrategyRunner {
     private boolean reachedLimit = false;
 
     public StrategyRunner() {
-        prunedFaultloads = new HashSet<>();
         pruners = new ArrayList<>();
         analyzers = new ArrayList<>();
 
@@ -113,7 +112,6 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
-        statistics.registerTime(result.faultload.timer);
         analyze(result);
 
         result.faultload.timer.start("StrategyRunner.generateAndPrune");
@@ -130,7 +128,6 @@ public class StrategyRunner {
             throw new RuntimeException("[Strategy] No generators are available, make sure to register at least one!");
         }
 
-        // TODO: ignore previously pruned faultloads
         var generated = generator.generate();
         statistics.incrementGenerator(generator.getClass().getSimpleName(), generated.size());
 
@@ -139,13 +136,12 @@ public class StrategyRunner {
 
     @SuppressWarnings("rawtypes")
     public void analyze(FaultloadResult result) {
-
-        FeedbackContext context = new FeedbackContext(this);
         result.faultload.timer.start("StrategyRunner.analyze");
 
         for (var analyzer : analyzers) {
             String name = analyzer.getClass().getSimpleName();
             String tag = name + ".handleFeedback<Analyzer>";
+            FeedbackContext context = new FeedbackContext(this, name);
             result.faultload.timer.start(tag);
             analyzer.handleFeedback(result, context);
             result.faultload.timer.stop(tag);
@@ -155,6 +151,7 @@ public class StrategyRunner {
             if (pruner instanceof FeedbackHandler) {
                 String name = pruner.getClass().getSimpleName();
                 String tag = name + ".handleFeedback<Pruner>";
+                FeedbackContext context = new FeedbackContext(this, name);
                 result.faultload.timer.start(tag);
                 ((FeedbackHandler) pruner).handleFeedback(result, context);
                 result.faultload.timer.stop(tag);
@@ -162,19 +159,20 @@ public class StrategyRunner {
         }
 
         if (generator instanceof FeedbackHandler) {
-            ((FeedbackHandler) generator).handleFeedback(result, context);
             String name = generator.getClass().getSimpleName();
             String tag = name + ".handleFeedback<Generator>";
+            FeedbackContext context = new FeedbackContext(this, name);
             result.faultload.timer.start(tag);
             ((FeedbackHandler) generator).handleFeedback(result, context);
             result.faultload.timer.stop(tag);
         }
+
         result.faultload.timer.stop("StrategyRunner.analyze");
 
     }
 
     public int prune() {
-        List<Faultload> toRemove = new ArrayList<>();
+        Set<Faultload> toRemove = new HashSet<>();
 
         for (var faultload : this.queue) {
             boolean shouldPrune = false;
@@ -188,13 +186,11 @@ public class StrategyRunner {
 
             if (shouldPrune) {
                 toRemove.add(faultload);
-                prunedFaultloads.add(faultload);
             }
         }
 
         statistics.incrementPruned(toRemove.size());
         this.queue.removeAll(toRemove);
-        this.prunedFaultloads.addAll(toRemove);
         return toRemove.size();
     }
 }

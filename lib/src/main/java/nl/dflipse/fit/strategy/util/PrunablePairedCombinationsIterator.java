@@ -148,7 +148,7 @@ public class PrunablePairedCombinationsIterator<X, Y> implements Iterator<List<P
     @Override
     public List<Pair<X, Y>> next() {
         var res = currentCombination();
-        String readableIndex = readableIndex();
+        // String readableIndex = readableIndex();
         increment();
         return res;
     }

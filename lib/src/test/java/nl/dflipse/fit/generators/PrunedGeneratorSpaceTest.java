@@ -314,6 +314,7 @@ public class PrunedGeneratorSpaceTest {
             }
 
             boolean contains = allFaultloads2.contains(faultload);
+
             if (shouldPrune) {
                 if (contains) {
                     assert false;

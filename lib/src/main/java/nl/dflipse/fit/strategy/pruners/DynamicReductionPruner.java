@@ -35,7 +35,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
         behavioursSeen.add(behaviourMap);
 
         // update causal map
-        for (var parentChild : result.trace.getRelations()) {
+        for (var parentChild : result.trace.getParentsAndChildren()) {
             FaultUid parent = parentChild.first();
             FaultUid child = parentChild.second();
 
@@ -51,11 +51,11 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
 
     private boolean hasExpectedOutcome(Fault fault, int observedStatus) {
         boolean hasFault = fault != null;
-        boolean faultDisturbs = hasFault && fault.getMode().getType().equals(ErrorFault.FAULT_TYPE);
+        boolean faultDisturbs = hasFault && fault.mode().getType().equals(ErrorFault.FAULT_TYPE);
 
         // If we are supposed to inject a fault
         if (hasFault && faultDisturbs) {
-            int expectedStatusCode = Integer.parseInt(fault.getMode().getArgs().get(0));
+            int expectedStatusCode = Integer.parseInt(fault.mode().getArgs().get(0));
             if (expectedStatusCode != observedStatus) {
                 return false;
             }
@@ -73,7 +73,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
     public boolean prune(Faultload faultload) {
         Map<FaultUid, Fault> faultsByFaultUid = faultload.faultSet()
                 .stream()
-                .collect(Collectors.toMap(Fault::getUid, Function.identity()));
+                .collect(Collectors.toMap(Fault::uid, Function.identity()));
 
         // for all causes
         for (var cause : causalMap.keySet()) {

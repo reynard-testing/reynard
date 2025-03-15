@@ -96,8 +96,8 @@ public class NodeBuilder {
       this.builder.span.errorMessage = body;
       this.builder.span.isError = true;
 
-      if (fault.getMode().getType() == ErrorFault.FAULT_TYPE) {
-        int statusCode = Integer.parseInt(fault.getMode().getArgs().get(0));
+      if (fault.mode().getType() == ErrorFault.FAULT_TYPE) {
+        int statusCode = Integer.parseInt(fault.mode().getArgs().get(0));
         TraceSpanResponse response = new TraceSpanResponse();
         response.status = statusCode;
         response.body = body;

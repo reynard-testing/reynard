@@ -56,7 +56,7 @@ public class DynamicAnalysisStore {
 
     private Set<Pair<FaultUid, FaultMode>> convertFaultsToPairs(Set<Fault> faults) {
         return faults.stream()
-                .map(fault -> new Pair<FaultUid, FaultMode>(fault.getUid(), fault.getMode()))
+                .map(fault -> new Pair<FaultUid, FaultMode>(fault.uid(), fault.mode()))
                 .collect(Collectors.toSet());
     }
 
@@ -97,6 +97,14 @@ public class DynamicAnalysisStore {
 
     public Set<Pair<FaultUid, FaultMode>> ignoreFaultSubset(List<Fault> subset) {
         return ignoreFaultSubset(Set.copyOf(subset));
+    }
+
+    public List<Faultload> getRedundantFaultloads() {
+        return this.redundantFaultloads;
+    }
+
+    public List<Set<FaultUid>> getRedundantUidSubsets() {
+        return this.redundantUidSubsets;
     }
 
     public List<Set<Pair<FaultUid, FaultMode>>> getRedundantFaultSubsets() {

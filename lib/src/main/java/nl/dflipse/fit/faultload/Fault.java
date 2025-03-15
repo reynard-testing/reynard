@@ -11,11 +11,4 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public record Fault(
     @JsonProperty("uid") FaultUid uid,
     @JsonProperty("mode") FaultMode mode) {
-  public FaultUid getUid() {
-    return uid;
-  }
-
-  public FaultMode getMode() {
-    return mode;
-  }
 }

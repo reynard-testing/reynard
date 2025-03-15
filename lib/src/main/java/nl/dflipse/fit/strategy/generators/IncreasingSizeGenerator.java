@@ -38,6 +38,11 @@ public class IncreasingSizeGenerator implements Generator {
 
         if (this.spaceIterator == null) {
             this.spaceIterator = new PrunablePowersetIterator<FaultUid>(potentialFaults, true);
+
+            for (var prunedFaults : store.getRedundantUidSubsets()) {
+                spaceIterator.prune(prunedFaults);
+            }
+
             fidCounter = potentialFaults.size();
             long expectedSize = spaceIterator.size(modes.size());
             System.out.println(
@@ -116,7 +121,7 @@ public class IncreasingSizeGenerator implements Generator {
     @Override
     public long pruneFaultUidSubset(Set<FaultUid> subset) {
         boolean isNew = store.ignoreFaultUidSubset(subset);
-        if (isNew) {
+        if (isNew && spaceIterator != null) {
             spaceIterator.prune(subset);
         }
 

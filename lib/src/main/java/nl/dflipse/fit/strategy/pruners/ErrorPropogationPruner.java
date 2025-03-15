@@ -32,7 +32,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
 
             boolean isErrenousResponse = report.response.isErrenous();
             boolean isInjectedError = report.injectedFault != null
-                    && report.injectedFault.getMode().getType().equals(ErrorFault.FAULT_TYPE);
+                    && report.injectedFault.mode().getType().equals(ErrorFault.FAULT_TYPE);
 
             if (isErrenousResponse && !isInjectedError) {
                 FaultMode faultMode = new FaultMode(ErrorFault.FAULT_TYPE, List.of("" + report.response.status));
@@ -61,7 +61,6 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
 
     @Override
     public boolean prune(Faultload faultload) {
-
         for (var redundantFaultload : redundantFautloads) {
             if (faultload.faultSet().equals(redundantFaultload)) {
                 return true;

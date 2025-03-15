@@ -23,7 +23,7 @@ public class E2eStrategyTest {
         public DummyGenerator(List<Faultload> queue) {
             for (var faultload : queue) {
                 for (var fault : faultload.faultSet()) {
-                    modes.add(fault.getMode());
+                    modes.add(fault.mode());
                 }
             }
             this.queue = queue;

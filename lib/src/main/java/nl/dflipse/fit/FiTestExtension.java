@@ -61,11 +61,11 @@ public class FiTestExtension
                 // .withGenerator(new RandomPowersetGenerator(modes))
                 // .withGenerator(new BreadthFirstGenerator(modes))
                 .withGenerator(new DepthFirstGenerator(modes))
+                .withAnalyzer(new RedundancyAnalyzer())
                 .withPruner(new ParentChildPruner())
                 .withPruner(new ErrorPropogationPruner())
                 .withPruner(new HappensBeforePruner())
-                .withPruner(new DynamicReductionPruner())
-                .withAnalyzer(new RedundancyAnalyzer());
+                .withPruner(new DynamicReductionPruner());
 
         if (annotation.maxTestCases() > 0) {
             strategy.withMaxTestCases(annotation.maxTestCases());

@@ -48,7 +48,7 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
 
     private void detectRandomFaults(Set<FaultUid> appeared, Set<Fault> disappeared) {
         for (var fault : disappeared) {
-            var faultWithoutPayload = fault.getUid().asAnyPayload();
+            var faultWithoutPayload = fault.uid().asAnyPayload();
 
             // find appeared faults that match the disappeared fault
             // up to the payload

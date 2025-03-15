@@ -153,11 +153,11 @@ public class TraceAnalysis {
         return isIncomplete;
     }
 
-    public List<Pair<FaultUid, FaultUid>> getRelations() {
+    public List<Pair<FaultUid, FaultUid>> getParentsAndChildren() {
         return parentChildRelation.getRelations();
     }
 
-    public List<Pair<FaultUid, FaultUid>> getTransativeRelations() {
+    public List<Pair<FaultUid, FaultUid>> getParentsAndTransativeChildren() {
         return parentChildRelation.getTransativeRelations();
     }
 

@@ -54,6 +54,12 @@ public class FeedbackContext {
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
+    public void pruneMixedSubset(Set<Fault> fs, Set<FaultUid> fids) {
+        assertGeneratorPresent();
+        long reduction = runner.generator.pruneMixedSubset(fs, fids);
+        runner.statistics.incrementEstimatePruner(contextName, reduction);
+    }
+
     public void pruneFaultload(Faultload fautload) {
         assertGeneratorPresent();
         long reduction = runner.generator.pruneFaultload(fautload);

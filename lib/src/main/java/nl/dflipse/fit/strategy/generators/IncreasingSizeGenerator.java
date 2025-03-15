@@ -121,6 +121,11 @@ public class IncreasingSizeGenerator implements Generator {
     @Override
     public long pruneFaultUidSubset(Set<FaultUid> subset) {
         boolean isNew = store.ignoreFaultUidSubset(subset);
+
+        // if (!isNew) {
+        // return 0;
+        // }
+
         if (isNew && spaceIterator != null) {
             spaceIterator.prune(subset);
         }
@@ -132,7 +137,13 @@ public class IncreasingSizeGenerator implements Generator {
     @Override
     public long pruneFaultSubset(Set<Fault> subset) {
         var prunableSet = store.ignoreFaultSubset(subset);
-        if (modeIterator != null && prunableSet != null) {
+        boolean isNew = prunableSet != null;
+
+        // if (!isNew) {
+        // return 0;
+        // }
+
+        if (isNew && modeIterator != null) {
             modeIterator.prune(prunableSet);
         }
 

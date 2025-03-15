@@ -14,7 +14,9 @@ import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TransativeRelation;
 
 public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
+
     private FaultloadResult initialResult;
+    // TODO: prune Fault -> FaultUid, not FaultUid -> FaultUid
     private final TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
 
     @Override
@@ -63,7 +65,6 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
             handleHappensBefore(cause, notInjectedFault, context);
         }
 
-        // TODO: prune all _transative_ relations in the context
         for (var pair : happensBefore.getTransativeRelations()) {
             var parent = pair.getFirst();
             var child = pair.getSecond();
@@ -72,6 +73,7 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
                 continue;
             }
 
+            // TODO: prune Fault -> FaultUid, not FaultUid -> FaultUid
             context.pruneFaultUidSubset(Set.of(parent, child));
         }
 

@@ -16,11 +16,16 @@ public class StrategyStatistics {
     private Map<String, Long> prunerEstimates = new HashMap<>();
     private List<Pair<String, Long>> timings = new ArrayList<>();
     private Set<String> tags = new HashSet<>();
+    private StrategyRunner runner;
 
     private long totalRun = 0;
     private long totalSize = 0;
     private long totalGenerated = 0;
     private long totalPruned = 0;
+
+    public StrategyStatistics(StrategyRunner runner) {
+        this.runner = runner;
+    }
 
     public void incrementGenerator(String generator, long count) {
         generatorCount.put(generator, generatorCount.getOrDefault(generator, 0L) + count);
@@ -97,9 +102,9 @@ public class StrategyStatistics {
         return totalPruned;
     }
 
-    public void report(Generator generator) {
-        var reporter = new StrategyStatisticsReporter(this);
-        reporter.report(generator);
+    public void report() {
+        var reporter = new StrategyStatisticsReporter(runner);
+        reporter.report();
     }
 
     public void reset() {

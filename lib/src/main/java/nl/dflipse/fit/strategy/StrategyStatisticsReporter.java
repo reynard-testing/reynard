@@ -102,7 +102,7 @@ public class StrategyStatisticsReporter {
         printKeyValue("Redundant fault subsets", store.getRedundantFaultSubsets().size(), maxKeyLength);
     }
 
-    public void reportGeneratorStats(Generator generator) {
+    public void reportGeneratorStats() {
         System.out.println();
         System.out.println(padBoth(" Generator ", maxChars, "-"));
         Map<String, Long> generatorCount = statistics.getGeneratorCount();

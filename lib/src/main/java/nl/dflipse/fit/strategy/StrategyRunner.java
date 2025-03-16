@@ -18,7 +18,7 @@ public class StrategyRunner {
     public List<FeedbackHandler<Void>> analyzers;
     public List<Pruner> pruners;
 
-    public StrategyStatistics statistics = new StrategyStatistics();
+    public StrategyStatistics statistics = new StrategyStatistics(this);
 
     private boolean withPayloadMasking = false;
     private long testCasesLeft = -1;

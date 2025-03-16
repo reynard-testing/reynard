@@ -146,7 +146,8 @@ public class StrategyRunner {
         }
 
         var generated = generator.generate();
-        statistics.incrementGenerator(generator.getClass().getSimpleName(), generated.size());
+        String tag = generator.getClass().getSimpleName() + ".generate";
+        statistics.incrementGenerator(tag, generated.size());
 
         return generated;
     }

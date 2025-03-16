@@ -49,14 +49,6 @@ public class StrategyStatistics {
         totalSize = size;
     }
 
-    private long getAverageTime(String tag) {
-        return (long) timings.stream()
-                .filter(entry -> entry.first().equals(tag))
-                .mapToLong(Pair::second)
-                .average()
-                .orElse(0.0);
-    }
-
     public void registerTime(TaggedTimer timer) {
         for (var entry : timer.getTimings()) {
             timings.add(entry);
@@ -69,92 +61,56 @@ public class StrategyStatistics {
     }
 
     // ---- Helper functions for reporting ----
-
-    private String padRight(String s, int n) {
-        return padRight(s, n, " ");
+    public Map<String, Long> getGeneratorCount() {
+        return generatorCount;
     }
 
-    private String padRight(String s, int n, String character) {
-        int toAdd = Math.max(0, n - s.length());
-        String padding = character.repeat(toAdd);
-        return s + padding;
+    public Map<String, Long> getPrunerCount() {
+        return prunerCount;
     }
 
-    private String padLeft(String s, int n) {
-        return padLeft(s, n, " ");
+    public Map<String, Long> getPrunerEstimates() {
+        return prunerEstimates;
     }
 
-    private String padLeft(String s, int n, String character) {
-        int toAdd = Math.max(0, n - s.length());
-        String padding = character.repeat(toAdd);
-        return padding + s;
+    public List<Pair<String, Long>> getTimings() {
+        return timings;
     }
 
-    private String padBoth(String s, int n) {
-        return padBoth(s, n, " ");
+    public Set<String> getTags() {
+        return tags;
     }
 
-    private String padBoth(String s, int n, String character) {
-        int toAdd = Math.max(0, n - s.length());
-        String padding = character.repeat(toAdd / 2);
-        return padding + s + padding;
+    public long getTotalRun() {
+        return totalRun;
     }
 
-    private int getMaxKeyLength(Map<String, Long> map) {
-        return map.keySet().stream().mapToInt(String::length).max().orElse(0);
+    public long getTotalSize() {
+        return totalSize;
     }
 
-    private int getMaxKeyLength(Set<String> set) {
-        return set.stream().mapToInt(String::length).max().orElse(0);
+    public long getTotalGenerated() {
+        return totalGenerated;
     }
 
-    private String asPercentage(long num, long div) {
-        double percentage = 100d * num / (double) div;
-        return String.format("%1.1f", percentage);
+    public long getTotalPruned() {
+        return totalPruned;
     }
 
-    public void report() {
-        int maxWidth = 32;
-        long fullSpace = totalSize + 1;
-        String prunePercentage = asPercentage(totalPruned, totalGenerated);
-        String generatePercentage = asPercentage(totalGenerated, totalSize);
-        String runPercentage = asPercentage(totalRun, fullSpace);
-        String reductionPercentage = asPercentage(fullSpace - totalRun, fullSpace);
+    public void report(Generator generator) {
+        var reporter = new StrategyStatisticsReporter(this);
+        reporter.report(generator);
+    }
 
-        System.out.println(padBoth(" Stats ", maxWidth, "-"));
-        System.out.println("Complete space size : " + fullSpace + " (" + reductionPercentage + "% reduction)");
-        System.out.println("Total generated     : " + totalGenerated + " (" + generatePercentage + "% of space)");
-        System.out.println("Total pruned        : " + totalPruned + " (" + prunePercentage + "% of generated)");
-        System.out.println("Total run           : " + totalRun + " (" + runPercentage + "% of full space)");
-
-        System.out.println();
-        System.out.println(padBoth(" Timings ", maxWidth, "-"));
-        int maxTimingKeyLength = getMaxKeyLength(tags);
-        for (String tag : tags) {
-            String readableKey = tag.equals(TaggedTimer.DEFAULT_TAG) ? "Total" : tag;
-            String key = padRight(readableKey, maxTimingKeyLength);
-            System.out.println(key + " : " + getAverageTime(tag) + " (ms)");
-        }
-
-        System.out.println();
-        System.out.println(padBoth(" Generators ", maxWidth, "-"));
-        int maxGeneratorKeyLength = getMaxKeyLength(generatorCount);
-        for (var entry : generatorCount.entrySet()) {
-            String key = padRight(entry.getKey(), maxGeneratorKeyLength);
-            System.out.println(key + " : " + entry.getValue());
-        }
-
-        int maxPrunerKeyLength = getMaxKeyLength(prunerCount);
-        System.out.println();
-        System.out.println(padBoth(" Pruners ", maxWidth, "-"));
-        for (var entry : prunerCount.entrySet()) {
-            String key = padRight(entry.getKey(), maxPrunerKeyLength);
-            long value = entry.getValue();
-            long estimateValue = prunerEstimates.get(entry.getKey());
-            System.out.println(
-                    key + " : " + value + " directly (" + asPercentage(value, totalGenerated) + "% of generated)");
-            System.out.println(padRight("", maxPrunerKeyLength) + " : " + estimateValue + " indirectly ("
-                    + asPercentage(estimateValue, totalSize) + "% estimate of space)");
-        }
+    public void reset() {
+        generatorCount.clear();
+        prunerCount.clear();
+        prunerEstimates.clear();
+        timings.clear();
+        tags.clear();
+        totalRun = 0;
+        totalSize = 0;
+        totalGenerated = 0;
+        totalPruned = 0;
     }
 }

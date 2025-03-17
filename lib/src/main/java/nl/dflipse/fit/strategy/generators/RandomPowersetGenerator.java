@@ -10,7 +10,7 @@ import nl.dflipse.fit.strategy.FeedbackHandler;
 
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
-public class RandomPowersetGenerator extends IncreasingSizeGenerator implements FeedbackHandler<Void> {
+public class RandomPowersetGenerator extends IncreasingSizeMixedGenerator implements FeedbackHandler<Void> {
 
     public RandomPowersetGenerator(List<FaultMode> modes) {
         super(modes);

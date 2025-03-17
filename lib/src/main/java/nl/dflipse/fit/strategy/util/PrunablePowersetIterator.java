@@ -49,6 +49,7 @@ public class PrunablePowersetIterator<T> implements Iterator<Set<T>> {
                     break;
                 }
             }
+
             if (shouldPrune) {
                 continue;
             }

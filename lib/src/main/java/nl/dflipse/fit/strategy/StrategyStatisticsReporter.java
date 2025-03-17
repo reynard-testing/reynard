@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import nl.dflipse.fit.strategy.generators.Generator;
-import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
+import nl.dflipse.fit.strategy.generators.IncreasingSizeMixedGenerator;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.util.TaggedTimer;
 
@@ -95,7 +95,7 @@ public class StrategyStatisticsReporter {
         System.out.println(padRight(key, maxChars) + " : " + value);
     }
 
-    public void reportGenerator(IncreasingSizeGenerator generator, int maxKeyLength) {
+    public void reportGenerator(IncreasingSizeMixedGenerator generator, int maxKeyLength) {
         var store = generator.getStore();
         printKeyValue("Redundant faultloads", store.getRedundantFaultloads().size(), maxKeyLength);
         printKeyValue("Redundant fault points", store.getRedundantUidSubsets().size(), maxKeyLength);
@@ -112,8 +112,8 @@ public class StrategyStatisticsReporter {
             printKeyValue(entry.getKey(), entry.getValue(), maxKeyLength);
         }
 
-        if (generator instanceof IncreasingSizeGenerator) {
-            reportGenerator((IncreasingSizeGenerator) generator, maxKeyLength);
+        if (generator instanceof IncreasingSizeMixedGenerator) {
+            reportGenerator((IncreasingSizeMixedGenerator) generator, maxKeyLength);
         }
     }
 

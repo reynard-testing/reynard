@@ -46,6 +46,13 @@ public class Sets {
         return difference;
     }
 
+    /** Return A + B */
+    public static <T> Set<T> plus(Set<T> A, T x) {
+        Set<T> union = new java.util.HashSet<>(A);
+        union.add(x);
+        return union;
+    }
+
     /**
      * Return all pairs of elements in A
      * 

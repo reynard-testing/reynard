@@ -54,9 +54,15 @@ public class DynamicAnalysisStore {
         return ignoreFaultUidSubset(Set.copyOf(subset));
     }
 
-    private Set<Pair<FaultUid, FaultMode>> convertFaultsToPairs(Set<Fault> faults) {
+    public static Set<Pair<FaultUid, FaultMode>> faultsToPairs(Set<Fault> faults) {
         return faults.stream()
                 .map(fault -> new Pair<FaultUid, FaultMode>(fault.uid(), fault.mode()))
+                .collect(Collectors.toSet());
+    }
+
+    public static Set<Fault> pairsToFaults(Set<Pair<FaultUid, FaultMode>> pair) {
+        return pair.stream()
+                .map(fault -> new Fault(fault.first(), fault.second()))
                 .collect(Collectors.toSet());
     }
 
@@ -71,11 +77,11 @@ public class DynamicAnalysisStore {
     }
 
     public boolean hasFaultSubset(Set<Fault> subset) {
-        return hasFaultSubsetFromPairs(convertFaultsToPairs(subset));
+        return hasFaultSubsetFromPairs(faultsToPairs(subset));
     }
 
     public Set<Pair<FaultUid, FaultMode>> ignoreFaultSubset(Set<Fault> subset) {
-        var pairs = convertFaultsToPairs(subset);
+        var pairs = faultsToPairs(subset);
 
         // If the subset is already in the list of redundant subsets
         // Or if the subset is a subset of an already redundant subset

@@ -11,7 +11,7 @@ import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
  * Generate all possible combinations of faults in a breadth-first manner.
  * 
  */
-public class BreadthFirstGenerator extends IncreasingSizeGenerator implements FeedbackHandler<Void> {
+public class BreadthFirstGenerator extends IncreasingSizeMixedGenerator implements FeedbackHandler<Void> {
 
     public BreadthFirstGenerator(List<FaultMode> modes) {
         super(modes);

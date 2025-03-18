@@ -178,6 +178,10 @@ public class IncreasingSizeGenerator implements Generator {
         return modes;
     }
 
+    public int getElements() {
+        return iterator.elementCount();
+    }
+
     public DynamicAnalysisStore getStore() {
         return store;
     }

@@ -121,7 +121,7 @@ public class PrunableGenericPowersetTreeIterator<N, E> implements Iterator<Set<N
     public long size(int m) {
         long sum = 0;
         for (var el : toExpand) {
-            // TODO: update
+            // TODO: update?
             long contribution = (long) Math.pow(1 + m, el.expansion.size());
             sum += contribution;
         }
@@ -131,5 +131,9 @@ public class PrunableGenericPowersetTreeIterator<N, E> implements Iterator<Set<N
 
     public long size() {
         return size(1);
+    }
+
+    public int elementCount() {
+        return elements.size();
     }
 }

@@ -1,6 +1,5 @@
 package nl.dflipse.fit.instrument;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 

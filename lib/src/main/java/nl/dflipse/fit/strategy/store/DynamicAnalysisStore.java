@@ -1,9 +1,8 @@
 package nl.dflipse.fit.strategy.store;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,25 +11,20 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.util.Pair;
+import nl.dflipse.fit.strategy.util.SubsetSearchTree;
 
 public class DynamicAnalysisStore {
     private final Set<FaultMode> modes;
-    private List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
-    private List<Set<Pair<FaultUid, FaultMode>>> redundantFaultSubsets = new ArrayList<>();
-    private List<Faultload> redundantFaultloads = new ArrayList<>();
+    private SubsetSearchTree<FaultUid> redundantUidSubsets = new SubsetSearchTree<>();
+    private SubsetSearchTree<Pair<FaultUid, FaultMode>> redundantFaultSubsets = new SubsetSearchTree<>();
+    private Set<Faultload> redundantFaultloads = new HashSet<>();
 
     public DynamicAnalysisStore(Set<FaultMode> modes) {
         this.modes = modes;
     }
 
     public boolean hasFaultUidSubset(Set<FaultUid> subset) {
-        for (var redundant : this.redundantUidSubsets) {
-            if (redundant.containsAll(subset)) {
-                return true;
-            }
-        }
-
-        return false;
+        return redundantUidSubsets.containsSubset(subset);
     }
 
     public boolean ignoreFaultUidSubset(Set<FaultUid> subset) {
@@ -42,7 +36,7 @@ public class DynamicAnalysisStore {
         }
 
         // This is a novel redundant subset, lets add it!
-        this.redundantUidSubsets.add(subset);
+        this.redundantUidSubsets.addSubset(subset);
         return true;
     }
 
@@ -67,13 +61,7 @@ public class DynamicAnalysisStore {
     }
 
     private boolean hasFaultSubsetFromPairs(Set<Pair<FaultUid, FaultMode>> subset) {
-        for (var redundant : this.redundantFaultSubsets) {
-            if (redundant.containsAll(subset)) {
-                return true;
-            }
-        }
-
-        return false;
+        return redundantFaultSubsets.containsSubset(subset);
     }
 
     public boolean hasFaultSubset(Set<Fault> subset) {
@@ -93,7 +81,7 @@ public class DynamicAnalysisStore {
         // TODO: if we have all fault modes for a faultuid in the subsets
         // we can ignore the faultuid
 
-        this.redundantFaultSubsets.add(pairs);
+        this.redundantFaultSubsets.addSubset(pairs);
         return pairs;
     }
 
@@ -105,16 +93,16 @@ public class DynamicAnalysisStore {
         return ignoreFaultSubset(Set.copyOf(subset));
     }
 
-    public List<Faultload> getRedundantFaultloads() {
-        return this.redundantFaultloads;
+    public int getRedundantFaultloads() {
+        return this.redundantFaultloads.size();
     }
 
-    public List<Set<FaultUid>> getRedundantUidSubsets() {
-        return this.redundantUidSubsets;
+    public int getRedundantUidSubsets() {
+        return this.redundantUidSubsets.size();
     }
 
-    public List<Set<Pair<FaultUid, FaultMode>>> getRedundantFaultSubsets() {
-        return this.redundantFaultSubsets;
+    public int getRedundantFaultSubsets() {
+        return this.redundantFaultSubsets.size();
     }
 
     public boolean ignoreFaultload(Faultload faultload) {

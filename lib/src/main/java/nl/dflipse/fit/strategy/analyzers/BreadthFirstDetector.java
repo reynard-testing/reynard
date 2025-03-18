@@ -1,7 +1,5 @@
-package nl.dflipse.fit.strategy.generators;
+package nl.dflipse.fit.strategy.analyzers;
 
-import java.util.List;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
@@ -11,11 +9,7 @@ import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
  * Generate all possible combinations of faults in a breadth-first manner.
  * 
  */
-public class BreadthFirstGenerator extends IncreasingSizeMixedGenerator implements FeedbackHandler<Void> {
-
-    public BreadthFirstGenerator(List<FaultMode> modes) {
-        super(modes);
-    }
+public class BreadthFirstDetector implements FeedbackHandler<Void> {
 
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
@@ -26,7 +20,7 @@ public class BreadthFirstGenerator extends IncreasingSizeMixedGenerator implemen
                 System.out.println("[BFS] Found fault: " + fault);
             }
 
-            reportFaultUids(potentialFaults);
+            context.reportFaultUids(potentialFaults);
 
         }
 

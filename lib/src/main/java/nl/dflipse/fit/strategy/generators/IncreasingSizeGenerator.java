@@ -173,6 +173,10 @@ public class IncreasingSizeGenerator implements Generator {
         return subsetSpaceSize(0, fidCounter);
     }
 
+    public long getElements() {
+        return fidCounter;
+    }
+
     @Override
     public Set<FaultMode> getFaultModes() {
         return modes;

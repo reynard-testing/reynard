@@ -18,7 +18,7 @@ public class StrategyRunner {
     public List<FeedbackHandler<Void>> analyzers;
     public List<Pruner> pruners;
 
-    public StrategyStatistics statistics = new StrategyStatistics();
+    public StrategyStatistics statistics = new StrategyStatistics(this);
 
     private boolean withPayloadMasking = false;
     private long testCasesLeft = -1;
@@ -146,7 +146,8 @@ public class StrategyRunner {
         }
 
         var generated = generator.generate();
-        statistics.incrementGenerator(generator.getClass().getSimpleName(), generated.size());
+        String tag = generator.getClass().getSimpleName() + ".generate";
+        statistics.incrementGenerator(tag, generated.size());
 
         return generated;
     }

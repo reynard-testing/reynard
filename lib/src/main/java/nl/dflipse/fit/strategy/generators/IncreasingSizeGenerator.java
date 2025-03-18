@@ -178,6 +178,10 @@ public class IncreasingSizeGenerator implements Generator {
         return modes;
     }
 
+    public DynamicAnalysisStore getStore() {
+        return store;
+    }
+
     @Override
     public long pruneMixedSubset(Set<Fault> faultSubset, Set<FaultUid> uidSubset) {
         var combinationsIterator = new PrunablePairedCombinationsIterator<>(List.copyOf(uidSubset), modes);

@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.generators;
+package nl.dflipse.fit.strategy.analyzers;
 
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;

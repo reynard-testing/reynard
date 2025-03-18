@@ -65,8 +65,8 @@ public class FiTestExtension
                 ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
         strategy = new StrategyRunner()
-                .withGenerator(new IncreasingSizeGenerator(modes))
-                // .withGenerator(new IncreasingSizeMixedGenerator(modes))
+                // .withGenerator(new IncreasingSizeGenerator(modes))
+                .withGenerator(new IncreasingSizeMixedGenerator(modes))
                 // .withAnalyzer(new RandomDetector())
                 // .withAnalyzer(new BreadthFirstDetector())
                 .withAnalyzer(new DepthFirstDetector())

@@ -20,8 +20,10 @@ import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
+import nl.dflipse.fit.strategy.analyzers.DepthFirstDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
-import nl.dflipse.fit.strategy.generators.DepthFirstGenerator;
+import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
+import nl.dflipse.fit.strategy.generators.IncreasingSizeMixedGenerator;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
@@ -58,9 +60,11 @@ public class FiTestExtension
                 ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
         strategy = new StrategyRunner()
-                // .withGenerator(new RandomPowersetGenerator(modes))
-                // .withGenerator(new BreadthFirstGenerator(modes))
-                .withGenerator(new DepthFirstGenerator(modes))
+                .withGenerator(new IncreasingSizeGenerator(modes))
+                // .withGenerator(new IncreasingSizeMixedGenerator(modes))
+                // .withAnalyzer(new RandomPowersetGenerator())
+                // .withAnalyzer(new BreadthFirstGenerator())
+                .withAnalyzer(new DepthFirstDetector())
                 .withAnalyzer(new RedundancyAnalyzer())
                 .withPruner(new ParentChildPruner())
                 .withPruner(new ErrorPropogationPruner())

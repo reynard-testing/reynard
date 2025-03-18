@@ -1,20 +1,13 @@
-package nl.dflipse.fit.strategy.generators;
+package nl.dflipse.fit.strategy.analyzers;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
-public class RandomPowersetGenerator extends IncreasingSizeMixedGenerator implements FeedbackHandler<Void> {
-
-    public RandomPowersetGenerator(List<FaultMode> modes) {
-        super(modes);
-    }
+public class RandomDetector implements FeedbackHandler<Void> {
 
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
@@ -28,7 +21,7 @@ public class RandomPowersetGenerator extends IncreasingSizeMixedGenerator implem
                 System.out.println("[RG] Found fault: " + fault);
             }
 
-            reportFaultUids(potentialFaults);
+            context.reportFaultUids(potentialFaults);
         }
 
         return null;

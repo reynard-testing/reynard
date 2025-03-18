@@ -20,7 +20,9 @@ import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
+import nl.dflipse.fit.strategy.analyzers.BreadthFirstDetector;
 import nl.dflipse.fit.strategy.analyzers.DepthFirstDetector;
+import nl.dflipse.fit.strategy.analyzers.RandomDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeMixedGenerator;
@@ -62,8 +64,8 @@ public class FiTestExtension
         strategy = new StrategyRunner()
                 .withGenerator(new IncreasingSizeGenerator(modes))
                 // .withGenerator(new IncreasingSizeMixedGenerator(modes))
-                // .withAnalyzer(new RandomPowersetGenerator())
-                // .withAnalyzer(new BreadthFirstGenerator())
+                // .withAnalyzer(new RandomDetector())
+                // .withAnalyzer(new BreadthFirstDetector())
                 .withAnalyzer(new DepthFirstDetector())
                 .withAnalyzer(new RedundancyAnalyzer())
                 .withPruner(new ParentChildPruner())

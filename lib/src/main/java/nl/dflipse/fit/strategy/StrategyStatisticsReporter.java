@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import nl.dflipse.fit.strategy.generators.Generator;
+import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeMixedGenerator;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.util.TaggedTimer;
@@ -97,6 +98,17 @@ public class StrategyStatisticsReporter {
 
     public void reportGenerator(IncreasingSizeMixedGenerator generator, int maxKeyLength) {
         var store = generator.getStore();
+        printKeyValue("Fault injection points", generator.getElements(), maxKeyLength);
+        printKeyValue("Modes", generator.getFaultModes().size(), maxKeyLength);
+        printKeyValue("Redundant faultloads", store.getRedundantFaultloads().size(), maxKeyLength);
+        printKeyValue("Redundant fault points", store.getRedundantUidSubsets().size(), maxKeyLength);
+        printKeyValue("Redundant fault subsets", store.getRedundantFaultSubsets().size(), maxKeyLength);
+    }
+
+    public void reportGenerator(IncreasingSizeGenerator generator, int maxKeyLength) {
+        var store = generator.getStore();
+        printKeyValue("Fault injection points", generator.getElements(), maxKeyLength);
+        printKeyValue("Modes", generator.getFaultModes().size(), maxKeyLength);
         printKeyValue("Redundant faultloads", store.getRedundantFaultloads().size(), maxKeyLength);
         printKeyValue("Redundant fault points", store.getRedundantUidSubsets().size(), maxKeyLength);
         printKeyValue("Redundant fault subsets", store.getRedundantFaultSubsets().size(), maxKeyLength);
@@ -114,6 +126,10 @@ public class StrategyStatisticsReporter {
 
         if (generator instanceof IncreasingSizeMixedGenerator) {
             reportGenerator((IncreasingSizeMixedGenerator) generator, maxKeyLength);
+        }
+
+        if (generator instanceof IncreasingSizeGenerator) {
+            reportGenerator((IncreasingSizeGenerator) generator, maxKeyLength);
         }
     }
 

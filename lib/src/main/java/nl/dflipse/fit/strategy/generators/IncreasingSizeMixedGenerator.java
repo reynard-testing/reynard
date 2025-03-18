@@ -182,6 +182,10 @@ public class IncreasingSizeMixedGenerator implements Generator {
         return store;
     }
 
+    public long getElements() {
+        return fidCounter;
+    }
+
     @Override
     public long pruneMixedSubset(Set<Fault> faultSubset, Set<FaultUid> uidSubset) {
         var combinationsIterator = new PrunablePairedCombinationsIterator<>(List.copyOf(uidSubset), modes);

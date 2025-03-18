@@ -89,6 +89,14 @@ public class Sets {
             return A.iterator().next();
         }
 
+        throw new IllegalArgumentException("Set does not contain exactly one element");
+    }
+
+    public static <T> T first(Set<T> A) {
+        if (A.size() > 0) {
+            return A.iterator().next();
+        }
+
         return null;
     }
 }

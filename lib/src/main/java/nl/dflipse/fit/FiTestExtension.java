@@ -199,6 +199,7 @@ public class FiTestExtension
             String displayName = context.getDisplayName();
             boolean testFailed = context.getExecutionException().isPresent();
 
+            System.out.println();
             System.out.println(
                     "Test " + displayName + " with result: "
                             + (testFailed ? "FAIL" : "PASS"));

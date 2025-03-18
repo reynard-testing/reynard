@@ -131,6 +131,20 @@ public class TraceAnalysis {
         return injectedFaults;
     }
 
+    public boolean hasFaultMode(String... orType) {
+        return hasFaultMode(Set.of(orType));
+    }
+
+    private boolean hasFaultMode(Set<String> orType) {
+        for (var fault : injectedFaults) {
+            if (orType.contains(fault.mode().type())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public List<TraceSpanReport> getReports() {
         return reports;
     }
@@ -139,11 +153,11 @@ public class TraceAnalysis {
         return isIncomplete;
     }
 
-    public List<Pair<FaultUid, FaultUid>> getRelations() {
+    public List<Pair<FaultUid, FaultUid>> getParentsAndChildren() {
         return parentChildRelation.getRelations();
     }
 
-    public List<Pair<FaultUid, FaultUid>> getTransativeRelations() {
+    public List<Pair<FaultUid, FaultUid>> getParentsAndTransativeChildren() {
         return parentChildRelation.getTransativeRelations();
     }
 

@@ -2,10 +2,12 @@ package nl.dflipse.fit.strategy;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 
 public class FeedbackContext {
 
@@ -23,26 +25,44 @@ public class FeedbackContext {
         }
     }
 
+    public Set<FaultMode> getFaultModes() {
+        assertGeneratorPresent();
+        return runner.generator.getFaultModes();
+    }
+
+    public Set<FaultMode> getFaultModes(String type) {
+        assertGeneratorPresent();
+        return runner.generator.getFaultModes().stream()
+                .filter(mode -> mode.getType().equals(type))
+                .collect(Collectors.toSet());
+    }
+
     public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
         assertGeneratorPresent();
         runner.generator.reportFaultUids(faultInjectionPoints);
     }
 
-    public void ignoreFaultUidSubset(Set<FaultUid> subset) {
+    public void pruneFaultUidSubset(Set<FaultUid> subset) {
         assertGeneratorPresent();
-        long reduction = runner.generator.ignoreFaultUidSubset(subset);
+        long reduction = runner.generator.pruneFaultUidSubset(subset);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
-    public void ignoreFaultSubset(Set<Fault> subset) {
+    public void pruneFaultSubset(Set<Fault> subset) {
         assertGeneratorPresent();
-        long reduction = runner.generator.ignoreFaultSubset(subset);
+        long reduction = runner.generator.pruneFaultSubset(subset);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
-    public void ignoreFaultload(Faultload fautload) {
+    public void pruneMixedSubset(Set<Fault> fs, Set<FaultUid> fids) {
         assertGeneratorPresent();
-        long reduction = runner.generator.ignoreFaultload(fautload);
+        long reduction = runner.generator.pruneMixedSubset(fs, fids);
+        runner.statistics.incrementEstimatePruner(contextName, reduction);
+    }
+
+    public void pruneFaultload(Faultload fautload) {
+        assertGeneratorPresent();
+        long reduction = runner.generator.pruneFaultload(fautload);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 }

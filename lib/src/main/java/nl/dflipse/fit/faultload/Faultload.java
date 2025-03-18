@@ -11,7 +11,7 @@ public record Faultload(Set<Fault> faultSet) {
     public Set<FaultUid> getFaultUids() {
         Set<FaultUid> faultUids = new HashSet<>();
         for (Fault fault : faultSet) {
-            faultUids.add(fault.getUid());
+            faultUids.add(fault.uid());
         }
         return faultUids;
     }
@@ -20,8 +20,8 @@ public record Faultload(Set<Fault> faultSet) {
         List<String> readableFaults = new ArrayList<>();
 
         for (Fault fault : faultSet) {
-            readableFaults.add(fault.getUid().toString() + "(" + fault.getMode().getType() + " "
-                    + fault.getMode().getArgs() + ")");
+            readableFaults.add(fault.uid().toString() + "(" + fault.mode().getType() + " "
+                    + fault.mode().getArgs() + ")");
         }
 
         return String.join(", ", readableFaults);
@@ -29,14 +29,14 @@ public record Faultload(Set<Fault> faultSet) {
 
     public Set<Fault> ofType(String faultType) {
         return faultSet.stream()
-                .filter(fault -> fault.getMode().getType().equals(faultType))
+                .filter(fault -> fault.mode().getType().equals(faultType))
                 .collect(Collectors.toSet());
     }
 
     public boolean hasFaultMode(String... faultType) {
         for (Fault fault : faultSet) {
             for (String type : faultType) {
-                if (fault.getMode().getType().equals(type)) {
+                if (fault.mode().getType().equals(type)) {
                     return true;
                 }
             }

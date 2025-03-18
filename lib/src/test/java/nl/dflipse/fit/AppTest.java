@@ -2,8 +2,6 @@ package nl.dflipse.fit;
 
 import java.io.IOException;
 
-import org.apache.hc.client5.http.fluent.Request;
-import org.apache.hc.client5.http.fluent.Response;
 import static org.junit.Assert.assertEquals;
 import org.junit.jupiter.api.AfterAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,6 +17,9 @@ import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
 import nl.dflipse.fit.strategy.TrackedFaultload;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * FI test the app
@@ -28,6 +29,7 @@ import nl.dflipse.fit.strategy.TrackedFaultload;
 public class AppTest {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final String BASE_IMAGE = "go-micro-service:latest";
+    private OkHttpClient client = new OkHttpClient();
 
     @Container
     private static final InstrumentedService geo = app.instrument("geo", 8080,
@@ -79,21 +81,24 @@ public class AppTest {
         int frontendPort = frontend.getMappedPort(8080);
         String queryUrl = "http://localhost:" + frontendPort + "/hotels?inDate=2015-04-09&outDate=2015-04-10";
 
-        Response res = Request.get(queryUrl)
+        Request request = new Request.Builder()
+                .url(queryUrl)
                 .addHeader("traceparent", faultload.getTraceParent().toString())
                 .addHeader("tracestate", faultload.getTraceState().toString())
-                .execute();
+                .build();
 
         String inspectUrl = app.orchestratorInspectUrl + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/"
                 + faultload.getTraceId();
 
-        boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
-        int expectedResponse = containsError ? 500 : 200;
-        int actualResponse = res.returnResponse().getCode();
-        assertEquals(expectedResponse, actualResponse);
+        try (Response response = client.newCall(request).execute()) {
+            boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
+            int expectedResponse = containsError ? 500 : 200;
+            int actualResponse = response.code();
+            assertEquals(expectedResponse, actualResponse);
 
-        boolean allRunning = app.allRunning();
-        assertTrue(allRunning);
+            boolean allRunning = app.allRunning();
+            assertTrue(allRunning);
+        }
     }
 }

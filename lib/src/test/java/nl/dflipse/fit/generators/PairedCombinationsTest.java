@@ -3,6 +3,7 @@ package nl.dflipse.fit.generators;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 import nl.dflipse.fit.strategy.util.Combinatorics;
@@ -171,4 +172,170 @@ public class PairedCombinationsTest {
 
         assertFalse(resIt.hasNext());
     }
+
+    private long countAll(PrunablePairedCombinationsIterator gen) {
+        long count = 0;
+        while (gen.hasNext()) {
+            gen.next();
+            count++;
+        }
+        return count;
+    }
+
+    @Test
+    public void testPruneNone() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        long size = countAll(it);
+
+        // Then
+        assertEquals(3 * 3 * 3, size);
+    }
+
+    @Test
+    public void testPruneOne() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        it.prune(Set.of(new Pair<>(1, "b")));
+        long size = countAll(it);
+
+        // Then
+        assertEquals(2 * 3 * 3, size);
+    }
+
+    @Test
+    public void testPruneAllButOneForOne() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        it.prune(Set.of(new Pair<>(1, "a")));
+        it.prune(Set.of(new Pair<>(1, "b")));
+        long size = countAll(it);
+
+        // Then
+        assertEquals(1 * 3 * 3, size);
+    }
+
+    @Test
+    public void testPrune2() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        it.prune(Set.of(new Pair<>(1, "a")));
+        it.prune(Set.of(new Pair<>(2, "b")));
+        long size = countAll(it);
+
+        // Then
+        assertEquals(2 * 2 * 3, size);
+    }
+
+    @Test
+    public void testPrune3() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3, 4, 5);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        it.prune(Set.of(new Pair<>(2, "b")));
+        it.prune(Set.of(new Pair<>(4, "a")));
+        long size = countAll(it);
+
+        // Then
+        assertEquals(3 * 2 * 3 * 2 * 3, size);
+    }
+
+    @Test
+    public void testPruneSubset2() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        it.prune(Set.of(new Pair<>(1, "a"), new Pair<>(2, "b")));
+        long size = countAll(it);
+
+        // Then
+        assertEquals(3 * 3 * 3 - 3, size);
+    }
+
+    @Test
+    public void testPruneSubset2v2() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3, 4, 5);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        it.prune(Set.of(new Pair<>(3, "b"), new Pair<>(2, "c")));
+        long size = countAll(it);
+
+        // Then
+        assertEquals(3 * 3 * 3 * 3 * 3 - 3 * 3 * 3, size);
+    }
+
+    @Test
+    public void testPruneSubset2v3() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3, 4, 5);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        it.prune(Set.of(new Pair<>(3, "b"), new Pair<>(2, "c")));
+        it.prune(Set.of(new Pair<>(2, "a"), new Pair<>(4, "c")));
+        long size = countAll(it);
+
+        // Then
+        assertEquals(3 * 3 * 3 * 3 * 3 - 2 * 3 * 3 * 3, size);
+    }
+
+    @Test
+    public void testPruneSubset2withOverlap() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        it.prune(Set.of(new Pair<>(1, "a"), new Pair<>(2, "b")));
+        it.prune(Set.of(new Pair<>(2, "b"), new Pair<>(3, "c")));
+        long size = countAll(it);
+
+        // Then
+        assertEquals(3 * 3 * 3 - 3 - 3 + 1, size);
+    }
+
+    @Test
+    public void testPruneSubset2withSubset() {
+        // Given
+        List<Integer> xs = List.of(1, 2, 3);
+        List<String> ys = List.of("a", "b", "c");
+
+        // When
+        var it = new PrunablePairedCombinationsIterator<>(xs, ys);
+        it.prune(Set.of(new Pair<>(1, "a"), new Pair<>(2, "b"), new Pair<>(3, "c")));
+        it.prune(Set.of(new Pair<>(2, "b"), new Pair<>(3, "c")));
+        it.prune(Set.of(new Pair<>(1, "a"), new Pair<>(2, "b"), new Pair<>(3, "c")));
+        long size = countAll(it);
+
+        // Then
+        assertEquals(3 * 3 * 3 - 3, size);
+    }
+
 }

@@ -75,6 +75,8 @@ public class StrategyRunner {
             tracked.withMaskPayload();
         }
 
+        System.out.println("[Strategy] Picked new faultload (" + tracked.getTraceId() + "): "
+                + tracked.getFaultload().readableString());
         return tracked;
     }
 
@@ -90,6 +92,7 @@ public class StrategyRunner {
     }
 
     public Pair<Integer, Integer> generateAndPruneTillNext() {
+        int orders = 2;
         int generated = 0;
         int pruned = 0;
 
@@ -103,6 +106,12 @@ public class StrategyRunner {
 
             generated += newFaultloads;
             pruned += res.getSecond();
+
+            long order = (long) Math.pow(10, orders);
+            if (generated > order) {
+                System.out.println("[Strategy] Progress: generated and pruned >" + order + " faultloads");
+                orders++;
+            }
 
             // Keep generating and pruning until we have new faultloads in the queue
             if (queue.size() > 0) {
@@ -118,6 +127,8 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
+        System.out.println(
+                "[Strategy] Analyzing result of running faultload with traceId=" + result.faultload.getTraceId());
         analyze(result);
 
         result.faultload.timer.start("StrategyRunner.generateAndPrune");

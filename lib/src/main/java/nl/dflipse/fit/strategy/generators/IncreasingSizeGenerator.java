@@ -9,6 +9,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.PrunablePairedCombinationsIterator;
 import nl.dflipse.fit.strategy.util.PrunablePowersetIterator;
 
@@ -18,14 +19,15 @@ public class IncreasingSizeGenerator implements Generator {
     private PrunablePairedCombinationsIterator<FaultUid, FaultMode> modeIterator;
 
     private long fidCounter = 0;
-    private DynamicAnalysisStore store = new DynamicAnalysisStore();
+    private final DynamicAnalysisStore store;
 
     public IncreasingSizeGenerator(List<FaultMode> modes) {
-        this.modes = Set.copyOf(modes);
+        this(Set.copyOf(modes));
     }
 
     public IncreasingSizeGenerator(Set<FaultMode> modes) {
         this.modes = modes;
+        this.store = new DynamicAnalysisStore(modes);
     }
 
     @Override
@@ -36,6 +38,11 @@ public class IncreasingSizeGenerator implements Generator {
 
         if (this.spaceIterator == null) {
             this.spaceIterator = new PrunablePowersetIterator<FaultUid>(potentialFaults, true);
+
+            for (var prunedFaults : store.getRedundantUidSubsets()) {
+                spaceIterator.prune(prunedFaults);
+            }
+
             fidCounter = potentialFaults.size();
             long expectedSize = spaceIterator.size(modes.size());
             System.out.println(
@@ -79,6 +86,12 @@ public class IncreasingSizeGenerator implements Generator {
         return modeIterator.hasNext();
     }
 
+    private Set<Fault> getFaultsFromPairing(List<Pair<FaultUid, FaultMode>> pairing) {
+        return pairing.stream()
+                .map(pair -> new Fault(pair.first(), pair.second()))
+                .collect(Collectors.toSet());
+    }
+
     @Override
     public List<Faultload> generate() {
         // If we have exhausted the mode-faultUid pairings
@@ -93,9 +106,7 @@ public class IncreasingSizeGenerator implements Generator {
 
         // create next faultload
         var nextPairing = modeIterator.next();
-        Set<Fault> faults = nextPairing.stream()
-                .map(pair -> new Fault(pair.first(), pair.second()))
-                .collect(Collectors.toSet());
+        Set<Fault> faults = getFaultsFromPairing(nextPairing);
         Faultload faultLoad = new Faultload(faults);
 
         // if we should skip this specific faultload
@@ -108,9 +119,14 @@ public class IncreasingSizeGenerator implements Generator {
     }
 
     @Override
-    public long ignoreFaultUidSubset(Set<FaultUid> subset) {
+    public long pruneFaultUidSubset(Set<FaultUid> subset) {
         boolean isNew = store.ignoreFaultUidSubset(subset);
-        if (isNew) {
+
+        // if (!isNew) {
+        // return 0;
+        // }
+
+        if (isNew && spaceIterator != null) {
             spaceIterator.prune(subset);
         }
 
@@ -119,35 +135,63 @@ public class IncreasingSizeGenerator implements Generator {
     }
 
     @Override
-    public long ignoreFaultSubset(Set<Fault> subset) {
+    public long pruneFaultSubset(Set<Fault> subset) {
         var prunableSet = store.ignoreFaultSubset(subset);
-        if (modeIterator != null && prunableSet != null) {
+        boolean isNew = prunableSet != null;
+
+        // if (!isNew) {
+        // return 0;
+        // }
+
+        if (isNew && modeIterator != null) {
             modeIterator.prune(prunableSet);
         }
 
         int subsetSize = subset.size();
-        // The specific subset can only be assigned in one way
-        // so we can ignore the subset size
+        // All subsets that contain this subset, the faults are fixed.
+        // E.g., only 1 way to assign the subset items
+        // so the others (the front) can be assigned in any way
         return subsetSpaceSize(0, fidCounter - subsetSize);
     }
 
     @Override
-    public long ignoreFaultload(Faultload faultload) {
+    public long pruneFaultload(Faultload faultload) {
         store.ignoreFaultload(faultload);
         return 1;
     }
 
-    private long subsetSpaceSize(long subsetSize, long faultsSize) {
-        return subsetSpaceSize(modes.size(), subsetSize, faultsSize);
+    private long subsetSpaceSize(long subsetSize, long frontSize) {
+        return subsetSpaceSize(modes.size(), subsetSize, frontSize);
     }
 
-    private long subsetSpaceSize(long m, long subsetSize, long faultsSize) {
-        return (long) (Math.pow(m, subsetSize) * Math.pow(1 + m, faultsSize));
+    private long subsetSpaceSize(long m, long subsetSize, long frontSize) {
+        return (long) (Math.pow(m, subsetSize) * Math.pow(1 + m, frontSize));
     }
 
     @Override
     public long spaceSize() {
         return subsetSpaceSize(0, fidCounter);
+    }
+
+    @Override
+    public Set<FaultMode> getFaultModes() {
+        return modes;
+    }
+
+    @Override
+    public long pruneMixedSubset(Set<Fault> faultSubset, Set<FaultUid> uidSubset) {
+        var combinationsIterator = new PrunablePairedCombinationsIterator<>(List.copyOf(uidSubset), modes);
+
+        long sum = 0;
+
+        while (combinationsIterator.hasNext()) {
+            var nextPairing = combinationsIterator.next();
+            Set<Fault> faults = getFaultsFromPairing(nextPairing);
+            faults.addAll(faultSubset);
+            sum += this.pruneFaultSubset(faults);
+        }
+
+        return sum;
     }
 
 }

@@ -99,7 +99,8 @@ def get_report_tree_children(children: list[TraceTreeNode]) -> list[TraceTreeNod
 
 
 def get_report_tree(node: TraceTreeNode) -> list[TraceTreeNode]:
-    is_report_node = len(node.reports) == 0 or node.span.span_id == CLIENT_ROOT_SPAN_ID
+    is_report_node = len(
+        node.reports) == 0 or node.span.span_id == CLIENT_ROOT_SPAN_ID
 
     if is_report_node:
         return [TraceTreeNode(
@@ -125,6 +126,7 @@ def collect():
         debug_raw_exports.append(data_dict)
 
     spans = otelTraceExportToSpans(data_dict)
+    trace_set = set([span.trace_id for span in spans])
     for span in spans:
         # store all spans for debugging
         if debug_flag_set:
@@ -146,6 +148,7 @@ def collect():
         # otherwise, add the span
         span_store.add(span)
 
+    print("Collected spans", len(spans), " for traces: ", trace_set, flush=True)
     return "Data collected", 200
 
 # --- DEBUG ENDPOINTS ---
@@ -246,7 +249,8 @@ async def report_span_id():
     )
 
     if report_store.has_fault_uid_for_trace(trace_id, fault_uid):
-        existing_report = report_store.get_by_trace_and_fault_uid(trace_id, fault_uid)
+        existing_report = report_store.get_by_trace_and_fault_uid(
+            trace_id, fault_uid)
         existing_report.response = responseData
         existing_report.injected_fault = injected_fault
         print("Updated reported span", span_report, flush=True)
@@ -295,10 +299,24 @@ async def unregister_faultload():
     payload = request.get_json()
     trace_id = payload.get('trace_id')
     trace_ids.remove(trace_id)
+    if not debug_flag_set:
+        span_store.remove_by_trace_id(trace_id)
+        report_store.remove_by_trace_id(trace_id)
 
     tasks = [unregister_faultload_at_proxy(
         proxy, payload) for proxy in proxy_list]
     await asyncio.gather(*tasks)
+
+    return "OK", 200
+
+
+@app.route("/v1/clear", methods=['GET'])
+async def clear_all():
+    trace_ids.clear()
+    span_store.clear()
+    report_store.clear()
+    debug_all_spans.clear()
+    debug_raw_exports.clear()
 
     return "OK", 200
 

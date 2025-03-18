@@ -91,14 +91,19 @@ public class PrunablePairedCombinationsIterator<X, Y> implements Iterator<List<P
     }
 
     private int getSkipIndex(Map<Integer, Integer> subsetMap) {
+        boolean matchAll = true;
         for (var entry : subsetMap.entrySet()) {
-            if (indices[entry.getKey()] == entry.getValue()) {
-                int maxIndex = subsetMap.entrySet().stream()
-                        .mapToInt(e -> e.getKey())
-                        .max()
-                        .getAsInt();
-                return maxIndex;
+            if (indices[entry.getKey()] != entry.getValue()) {
+                matchAll = false;
+                break;
             }
+        }
+
+        if (matchAll) {
+            return subsetMap.entrySet().stream()
+                    .mapToInt(e -> e.getKey())
+                    .max()
+                    .getAsInt();
         }
 
         return -1;
@@ -143,13 +148,28 @@ public class PrunablePairedCombinationsIterator<X, Y> implements Iterator<List<P
     @Override
     public List<Pair<X, Y>> next() {
         var res = currentCombination();
-        // System.out.println(readableIndex() + " -> " + res);
+        // String readableIndex = readableIndex();
         increment();
         return res;
     }
 
+    // a <= B?
+    public boolean isSubsetOf(Map<Integer, Integer> A, Map<Integer, Integer> B) {
+        for (var key : A.keySet()) {
+            if (!B.containsKey(key)) {
+                return false;
+            }
+
+            if (A.get(key) != B.get(key)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public void prune(Set<Pair<X, Y>> toProne) {
-        Map<Integer, Integer> prunedMap = new HashMap<>();
+        Map<Integer, Integer> newPruned = new HashMap<>();
 
         for (var pair : toProne) {
             int XIndex = xs.indexOf(pair.first());
@@ -159,12 +179,30 @@ public class PrunablePairedCombinationsIterator<X, Y> implements Iterator<List<P
                 // This pair is not in the list
                 return;
             }
-            prunedMap.put(XIndex, YIndex);
+
+            newPruned.put(XIndex, YIndex);
         }
 
-        pruned.add(prunedMap);
+        var iterator = pruned.iterator();
+        while (iterator.hasNext()) {
+            var alreadyPruned = iterator.next();
+            // Existing subset of newPruned?
+            if (isSubsetOf(alreadyPruned, newPruned)) {
+                // This subset is already pruned
+                return;
+            }
 
-        int skipIndex = getSkipIndex(prunedMap);
+            // New subset of alreadyPruned?
+            if (isSubsetOf(newPruned, alreadyPruned)) {
+                // This subset is a superset of an already pruned subset
+                // so we should remove the already pruned subset
+                iterator.remove();
+            }
+        }
+
+        pruned.add(newPruned);
+
+        int skipIndex = getSkipIndex(newPruned);
         if (skipIndex >= 0) {
             increment(skipIndex);
         }

@@ -3,10 +3,12 @@ package nl.dflipse.fit.strategy.pruners;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
@@ -16,55 +18,51 @@ import nl.dflipse.fit.strategy.util.TransativeRelation;
 public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
 
     private FaultloadResult initialResult;
-    // TODO: prune Fault -> FaultUid, not FaultUid -> FaultUid
-    private final TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
+    private final TransativeRelation<Fault> happensBefore = new TransativeRelation<>();
+    private final Logger logger = LoggerFactory.getLogger(HappensBeforePruner.class);
 
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             initialResult = result;
-
-            // add the parent-child relations
-            // for (var pair : result.trace.getRelations()) {
-            // var parent = pair.getFirst();
-            // var child = pair.getSecond();
-            // happensBefore.addRelation(parent, child);
-            // }
-
             return null;
         }
 
         // if a single fault causes others to disappear
         // their combination is redundant
-        Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults()
-                .stream()
-                .filter(fault -> fault.mode().getType().equals(ErrorFault.FAULT_TYPE))
-                .collect(Collectors.toSet());
+        Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
 
+        // if we have a singular cause
         if (injectedErrorFaults.size() != 1) {
             return null;
         }
 
-        // if we have a singular cause
         Fault cause = Sets.getOnlyElement(injectedErrorFaults);
 
         var faultsInTrace = result.trace.getFaultUids();
-        var dissappearedFaults = initialResult.trace.getFaultUids()
+
+        // TODO: relate to previous subset run?
+        // dissappeared faults
+        // are those that were in the initial trace,
+        // but not in the current trace
+        // and not the cause
+        var dissappearedFaultPoints = initialResult.trace.getFaultUids()
                 .stream()
                 .filter(f -> !faultsInTrace.contains(f))
                 .filter(f -> !f.equals(cause))
-                .filter(f -> !happensBefore.hasTransativeRelation(cause.uid(), f))
                 .collect(Collectors.toSet());
 
-        if (dissappearedFaults.isEmpty()) {
+        if (dissappearedFaultPoints.isEmpty()) {
             return null;
         }
 
-        // that makes others disappear
-        for (var notInjectedFault : dissappearedFaults) {
-            handleHappensBefore(cause, notInjectedFault, context);
+        // We have identified a cause, and its effects
+        // We can now relate the happens before
+        for (var disappearedFaultPoint : dissappearedFaultPoints) {
+            handleHappensBefore(cause, disappearedFaultPoint, context);
         }
 
+        // prune the fault subset
         for (var pair : happensBefore.getTransativeRelations()) {
             var parent = pair.getFirst();
             var child = pair.getSecond();
@@ -73,82 +71,74 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
                 continue;
             }
 
-            // TODO: prune Fault -> FaultUid, not FaultUid -> FaultUid
-            context.pruneFaultUidSubset(Set.of(parent, child));
+            // The parent makes the child disappear
+            // so we can prune the combination
+            context.pruneFaultSubset(Set.of(parent, child));
         }
 
         return null;
     }
 
+    private void relateHappensBefore(Fault cause, FaultUid effect, FeedbackContext context) {
+        for (var mode : context.getFaultModes()) {
+            var effectFault = new Fault(effect, mode);
+            happensBefore.addRelation(cause, effectFault);
+        }
+    }
+
+    private void relateHappensBefore(FaultUid cause, FaultUid effect, FeedbackContext context) {
+        for (var mode : context.getFaultModes()) {
+            var causeFault = new Fault(cause, mode);
+            relateHappensBefore(causeFault, effect, context);
+        }
+    }
+
     private void handleHappensBefore(Fault cause, FaultUid effect, FeedbackContext context) {
-        // Case 0: if the cause is a decendant of the effect
+        // If the cause is a decendant of the effect
         // Then it is trivial, and covered by the Parent-Child pruner
         FaultUid causeUid = cause.uid();
         if (initialResult.trace.isDecendantOf(causeUid, effect)) {
-            System.out.println("Parent-Child happens before: " + cause + " -> " + effect);
-            // happensBefore.addRelation(cause, effect);
-            context.pruneFaultUidSubset(Set.of(causeUid, effect));
+            logger.info("Parent-Child happens before: " + cause + " -> " + effect);
+            relateHappensBefore(cause, effect, context);
             return;
         }
 
+        logger.info("Direct happens before: " + cause + " -> " + effect);
+        relateHappensBefore(cause, effect, context);
+
+        // If a ancestor of the cause is the parent of the effect
+        // Then the parental causes happens before the effect
         var effectParent = initialResult.trace.getParent(effect);
-        var causeParent = initialResult.trace.getParent(causeUid);
-
-        boolean directHappensBefore = initialResult.trace.isEqual(causeParent, effectParent);
-
-        // Case 1: if they share the same parent
-        // Then the cause happens before the effect
-        if (directHappensBefore) {
-            System.out.println("Direct happens before: " + cause + " -> " + effect);
-            happensBefore.addRelation(causeUid, effect);
-            return;
-        }
-
-        // Case 2: if a ancestor of the cause is the parent of the effect
-        // Then the parent cause happens before the effect
         var causeAncestors = initialResult.trace.getParents(causeUid);
         if (causeAncestors.contains(effectParent)) {
-            System.out.println("Direct happens before: " + cause + " -> " + effect);
-            happensBefore.addRelation(causeUid, effect);
-            context.pruneFaultUidSubset(Set.of(causeUid, effect));
-
             for (var ancestralCause : causeAncestors) {
+                if (ancestralCause == null) {
+                    break;
+                }
+
                 if (ancestralCause.equals(effectParent) || ancestralCause.equals(effect)) {
                     break;
                 }
 
                 // add the relation
-                System.out.println("Ancestor happens before: " + ancestralCause + " -> " + effect);
-                happensBefore.addRelation(ancestralCause, effect);
-                return;
+                // TODO: combine with error propogation?
+                logger.info("Ancestor happens before: " + ancestralCause + " -> " + effect);
+                // relateHappensBefore(ancestralCause, effect, context);
             }
+
+            return;
         }
-
-        // Other cases are undefined.
-        // For example, the cause's parent is an ancestor of the effect's parent
-        // But that should not happen, because then the fault is not contained
-
-        System.out.println("Unknown happens before: " + cause + " -> " + effect);
-        happensBefore.addRelation(causeUid, effect);
     }
 
     @Override
     public boolean prune(Faultload faultload) {
-        // if an http error is injected, and its children are also injected, it is
+        // if an error is injected, and its children are also injected, it is
         // redundant.
 
-        Set<FaultUid> errorFaults = faultload
-                .faultSet()
-                .stream()
-                .filter(fault -> fault.mode().getType().equals(ErrorFault.FAULT_TYPE))
-                .map(fault -> fault.uid())
-                .collect(Collectors.toSet());
-
-        boolean isRedundant = Sets.anyPair(errorFaults, (pair) -> {
+        boolean isRedundant = Sets.anyPair(faultload.faultSet(), (pair) -> {
             var f1 = pair.getFirst();
             var f2 = pair.getSecond();
-            return happensBefore.hasTransativeRelation(f1, f2)
-                    || happensBefore.hasTransativeRelation(f2, f1);
+            return happensBefore.areRelated(f1, f2);
         });
 
         return isRedundant;

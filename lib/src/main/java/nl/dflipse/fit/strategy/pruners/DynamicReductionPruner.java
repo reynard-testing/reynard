@@ -9,6 +9,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
@@ -18,6 +21,7 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 
 public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
+    private final Logger logger = LoggerFactory.getLogger(DynamicReductionPruner.class);
 
     private Map<FaultUid, Set<FaultUid>> causalMap = new HashMap<>();
     private List<Map<FaultUid, Integer>> behavioursSeen = new ArrayList<>();
@@ -112,7 +116,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
             }
         }
 
-        System.out.println("[DR Pruner] Found redundant fautload " + faultload);
+        logger.info("Found redundant fautload " + faultload);
         return true;
     }
 

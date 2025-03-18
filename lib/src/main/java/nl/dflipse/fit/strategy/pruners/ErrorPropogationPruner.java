@@ -1,9 +1,11 @@
 package nl.dflipse.fit.strategy.pruners;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
@@ -12,11 +14,10 @@ import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.util.Sets;
 
 public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
-
-    // TODO: if all failure modes result in the same behaviour
-    // We can mark fids instead of faults
+    private final Logger logger = LoggerFactory.getLogger(ErrorPropogationPruner.class);
 
     private List<Set<Fault>> redundantFautloads = new ArrayList<>();
     private List<Set<Fault>> redundantSubsets = new ArrayList<>();
@@ -34,29 +35,38 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
             boolean isInjectedError = report.injectedFault != null
                     && report.injectedFault.mode().getType().equals(ErrorFault.FAULT_TYPE);
 
-            if (isErrenousResponse && !isInjectedError) {
-                FaultMode faultMode = new FaultMode(ErrorFault.FAULT_TYPE, List.of("" + report.response.status));
-                Fault responseFault = new Fault(report.faultUid, faultMode);
-
-                System.out.println(
-                        "[ErrorPropagation] Found that fault(s) " + injectedFaults + " causes error " + responseFault);
-
-                // We don't need to check for this exact fault, as it is already
-                // been tested
-                context.pruneFaultload(new Faultload(Set.of(responseFault)));
-                redundantFautloads.add(Set.of(responseFault));
-
-                // We also don't need to check for the subset of this fault
-                // and its causes
-                Set<Fault> newRedundantSubset = new HashSet<>(injectedFaults);
-                newRedundantSubset.add(responseFault);
-
-                context.pruneFaultSubset(newRedundantSubset);
-                redundantSubsets.add(newRedundantSubset);
+            boolean isErrorPropogated = isErrenousResponse && !isInjectedError;
+            if (!isErrorPropogated) {
+                continue;
             }
+
+            FaultMode faultMode = new FaultMode(ErrorFault.FAULT_TYPE, List.of("" + report.response.status));
+            Fault responseFault = new Fault(report.faultUid, faultMode);
+
+            handlePropogation(injectedFaults, responseFault, context);
         }
 
         return null;
+    }
+
+    private void handlePropogation(Set<Fault> causes, Fault effect, FeedbackContext context) {
+        logger.info("Found that fault(s) " + causes + " causes error " + effect);
+
+        // We don't need to check for this exact fault, as it is already
+        // been tested
+        Set<Fault> newRedundantFaultload = Set.of(effect);
+        redundantFautloads.add(newRedundantFaultload);
+        context.pruneFaultload(new Faultload(newRedundantFaultload));
+
+        // We also don't need to check for the subset of this fault
+        // and its causes
+        Set<Fault> newRedundantSubset = Sets.plus(causes, effect);
+
+        redundantSubsets.add(newRedundantSubset);
+        context.pruneFaultSubset(newRedundantSubset);
+
+        // TODO: if a cause is directly propogated -> cause & effect are redundant
+        // TODO: use unique fault ids to correlate fault & behaviour.
     }
 
     @Override

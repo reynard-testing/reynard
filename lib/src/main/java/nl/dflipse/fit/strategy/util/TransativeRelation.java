@@ -50,6 +50,10 @@ public class TransativeRelation<X> {
         return transitiveRelations.containsKey(parent) && transitiveRelations.get(parent).contains(child);
     }
 
+    public boolean areRelated(X item1, X item2) {
+        return hasTransativeRelation(item1, item2) || hasTransativeRelation(item2, item1);
+    }
+
     public Set<X> getDecendants(X parent) {
         Set<X> descendants = new HashSet<>();
 

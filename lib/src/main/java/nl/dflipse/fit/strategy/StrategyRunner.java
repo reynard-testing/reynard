@@ -5,6 +5,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.pruners.Pruner;
@@ -22,6 +25,8 @@ public class StrategyRunner {
 
     private boolean withPayloadMasking = false;
     private long testCasesLeft = -1;
+
+    private final Logger logger = LoggerFactory.getLogger(StrategyRunner.class);
 
     public StrategyRunner() {
         pruners = new ArrayList<>();
@@ -63,7 +68,7 @@ public class StrategyRunner {
         }
 
         if (testCasesLeft == 0) {
-            System.out.println("[Strategy] Reached test case limit, stopping!");
+            logger.warn("Reached test case limit, stopping!");
             return null;
         } else if (testCasesLeft > 0) {
             testCasesLeft--;
@@ -75,8 +80,6 @@ public class StrategyRunner {
             tracked.withMaskPayload();
         }
 
-        System.out.println("[Strategy] Picked new faultload (" + tracked.getTraceId() + "): "
-                + tracked.getFaultload().readableString());
         return tracked;
     }
 
@@ -109,7 +112,7 @@ public class StrategyRunner {
 
             long order = (long) Math.pow(10, orders);
             if (generated > order) {
-                System.out.println("[Strategy] Progress: generated and pruned >" + order + " faultloads");
+                logger.info("Progress: generated and pruned >" + order + " faultloads");
                 orders++;
             }
 
@@ -127,9 +130,9 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
-        System.out.println(
-                "[Strategy] Analyzing result of running faultload with traceId=" + result.faultload.getTraceId());
+        logger.info("Analyzing result of running faultload with traceId=" + result.faultload.getTraceId());
         analyze(result);
+        logger.info("Selecting next faultload");
 
         result.faultload.timer.start("StrategyRunner.generateAndPrune");
         var res = generateAndPruneTillNext();
@@ -137,7 +140,7 @@ public class StrategyRunner {
         int pruned = res.getSecond();
         result.faultload.timer.stop("StrategyRunner.generateAndPrune");
 
-        System.out.println("[Strategy] Generated " + generated + " new faultloads, pruned " + pruned + " faultloads");
+        logger.info("Generated " + generated + " new faultloads, pruned " + pruned + " faultloads");
     }
 
     public List<Faultload> generate() {

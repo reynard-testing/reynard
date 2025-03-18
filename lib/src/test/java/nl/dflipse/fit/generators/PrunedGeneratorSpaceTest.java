@@ -14,7 +14,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.generators.Generator;
-import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
+import nl.dflipse.fit.strategy.generators.IncreasingSizeMixedGenerator;
 
 public class PrunedGeneratorSpaceTest {
     private List<FaultMode> modes1 = List.of(
@@ -86,7 +86,7 @@ public class PrunedGeneratorSpaceTest {
 
     @Test(timeout = 100)
     public void testSkipAllPoints() {
-        var generator = new IncreasingSizeGenerator(modes3);
+        var generator = new IncreasingSizeMixedGenerator(modes3);
         generator.reportFaultUids(pointsTwelve);
 
         for (var fault : pointsTwelve) {
@@ -125,7 +125,7 @@ public class PrunedGeneratorSpaceTest {
 
     @Test(timeout = 1000)
     public void testSkipAllButOnePoint() {
-        var generator = new IncreasingSizeGenerator(modes3);
+        var generator = new IncreasingSizeMixedGenerator(modes3);
         generator.reportFaultUids(pointsTwelve);
 
         var ignored = pointsTwelve.get(4);
@@ -141,7 +141,7 @@ public class PrunedGeneratorSpaceTest {
 
     @Test(timeout = 1000)
     public void testSkipAllButTwoPoint() {
-        var generator = new IncreasingSizeGenerator(modes3);
+        var generator = new IncreasingSizeMixedGenerator(modes3);
         generator.reportFaultUids(pointsTwelve);
 
         var ignoredSet = Set.of(pointsTwelve.get(4), pointsTwelve.get(7));
@@ -157,7 +157,7 @@ public class PrunedGeneratorSpaceTest {
 
     @Test(timeout = 1000)
     public void testSkipAllButFourPoint() {
-        var generator = new IncreasingSizeGenerator(modes3);
+        var generator = new IncreasingSizeMixedGenerator(modes3);
         generator.reportFaultUids(pointsTwelve);
 
         var ignoredSet = Set.of(pointsTwelve.get(4), pointsTwelve.get(7), pointsTwelve.get(2), pointsTwelve.get(8));
@@ -174,7 +174,7 @@ public class PrunedGeneratorSpaceTest {
     // @Test(timeout = 1000)
     @Test
     public void testNoFaults() {
-        var generator = new IncreasingSizeGenerator(modes5);
+        var generator = new IncreasingSizeMixedGenerator(modes5);
         generator.reportFaultUids(pointsThree);
 
         for (var mode : modes5) {
@@ -189,7 +189,7 @@ public class PrunedGeneratorSpaceTest {
     // @Test(timeout = 1000)
     @Test
     public void testOneFault() {
-        var generator = new IncreasingSizeGenerator(modes5);
+        var generator = new IncreasingSizeMixedGenerator(modes5);
         generator.reportFaultUids(pointsThree);
 
         for (int i = 1; i < modes5.size(); i++) {
@@ -209,7 +209,7 @@ public class PrunedGeneratorSpaceTest {
             modes.add(new FaultMode("x", List.of("" + i)));
         }
 
-        var generator = new IncreasingSizeGenerator(modes);
+        var generator = new IncreasingSizeMixedGenerator(modes);
         generator.reportFaultUids(pointsThree);
 
         Set<Integer> ignored = Set.of(1, 500, 999);
@@ -232,7 +232,7 @@ public class PrunedGeneratorSpaceTest {
     @Test
     public void testManyFaults() {
 
-        var generator = new IncreasingSizeGenerator(modes12);
+        var generator = new IncreasingSizeMixedGenerator(modes12);
         generator.reportFaultUids(pointsSix);
 
         Set<Integer> ignored = Set.of(1, 4, 8);
@@ -257,12 +257,12 @@ public class PrunedGeneratorSpaceTest {
         var modes = modes3;
         var points = pointsSix;
 
-        var generator1 = new IncreasingSizeGenerator(modes);
+        var generator1 = new IncreasingSizeMixedGenerator(modes);
         generator1.reportFaultUids(points);
 
         Set<Faultload> allFaultloads = getAllGenerated(generator1);
 
-        var generator2 = new IncreasingSizeGenerator(modes);
+        var generator2 = new IncreasingSizeMixedGenerator(modes);
         generator2.reportFaultUids(points);
 
         var faultSubsets = Set.of(

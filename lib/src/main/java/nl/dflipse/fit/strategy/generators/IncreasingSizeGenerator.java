@@ -39,6 +39,10 @@ public class IncreasingSizeGenerator implements Generator {
                 .collect(Collectors.toSet());
     }
 
+    private FaultUid faultToFaultUid(Fault fid) {
+        return fid.uid();
+    }
+
     @Override
     public void reportFaultUids(List<FaultUid> potentialFaults) {
         if (potentialFaults == null || potentialFaults.isEmpty()) {
@@ -47,7 +51,7 @@ public class IncreasingSizeGenerator implements Generator {
 
         if (this.iterator == null) {
             this.iterator = new PrunableGenericPowersetTreeIterator<Fault, FaultUid>(potentialFaults,
-                    this::faultUidtoFaults, true);
+                    this::faultUidtoFaults, this::faultToFaultUid, true);
 
             for (var prunedFaults : store.getRedundantFaultSubsets()) {
                 var faultSet = DynamicAnalysisStore.pairsToFaults(prunedFaults);
@@ -72,6 +76,30 @@ public class IncreasingSizeGenerator implements Generator {
             fidCounter += potentialFaults.size();
             logger.info("Added " + newSize + " new test cases");
         }
+    }
+
+    @Override
+    public void reportConditionalFaultUid(Set<Fault> subset, List<FaultUid> faultInjectionPoints) {
+        if (faultInjectionPoints == null || faultInjectionPoints.isEmpty()) {
+            return;
+        }
+
+        if (this.iterator == null) {
+            throw new IllegalStateException(
+                    "Cannot add conditional fault injection point if no normal fault injection points are discovered");
+        }
+
+        int m = modes.size();
+        long oldSize = iterator.size(m);
+
+        for (var fid : faultInjectionPoints) {
+            logger.info("Found NEW conditional fault injection point: " + fid + ", given " + subset);
+            this.iterator.addConditional(subset, fid);
+        }
+
+        long newSize = iterator.size(m) - oldSize;
+        fidCounter += faultInjectionPoints.size();
+        logger.info("Added " + newSize + " new test cases");
     }
 
     @Override
@@ -145,16 +173,6 @@ public class IncreasingSizeGenerator implements Generator {
         // E.g., only 1 way to assign the subset items
         // so the others (the front) can be assigned in any way
         return subsetSpaceSize(0, fidCounter - subsetSize);
-    }
-
-    @Override
-    public long pruneMixedSubset(Set<Fault> faultSubset, Set<FaultUid> uidSubset) {
-        long sum = 0;
-        for (Set<Fault> prunedSet : allFaults(List.copyOf(uidSubset), faultSubset)) {
-            sum += this.pruneFaultSubset(prunedSet);
-        }
-
-        return sum;
     }
 
     @Override

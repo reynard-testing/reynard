@@ -97,7 +97,10 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
 
         // Report newly found points
         if (!appeared.isEmpty()) {
-            context.reportFaultUids(List.copyOf(appeared));
+            // TODO: is this complete?
+            // There might be multiple conditions to trigger new fid
+            Set<Fault> condition = result.trace.getInjectedFaults();
+            context.reportConditionalFaultUid(condition, List.copyOf(appeared));
             detectedUids.addAll(appeared);
         }
 

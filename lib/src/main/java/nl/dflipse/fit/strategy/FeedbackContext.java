@@ -42,6 +42,11 @@ public class FeedbackContext {
         runner.generator.reportFaultUids(faultInjectionPoints);
     }
 
+    public void reportConditionalFaultUid(Set<Fault> subset, List<FaultUid> faultInjectionPoints) {
+        assertGeneratorPresent();
+        runner.generator.reportConditionalFaultUid(subset, faultInjectionPoints);
+    }
+
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
         assertGeneratorPresent();
         long reduction = runner.generator.pruneFaultUidSubset(subset);
@@ -51,12 +56,6 @@ public class FeedbackContext {
     public void pruneFaultSubset(Set<Fault> subset) {
         assertGeneratorPresent();
         long reduction = runner.generator.pruneFaultSubset(subset);
-        runner.statistics.incrementEstimatePruner(contextName, reduction);
-    }
-
-    public void pruneMixedSubset(Set<Fault> fs, Set<FaultUid> fids) {
-        assertGeneratorPresent();
-        long reduction = runner.generator.pruneMixedSubset(fs, fids);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 

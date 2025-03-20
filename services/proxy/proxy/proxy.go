@@ -137,9 +137,10 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		// Start reporting the span for the request
 		shouldHashBody := state.GetWithDefault("hashbody", "0") == "1"
-		if shouldMaskPayload {
+		if shouldHashBody {
 			log.Printf("Body hashing enabled.\n")
 		}
+
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 
 		for _, fault := range faults {

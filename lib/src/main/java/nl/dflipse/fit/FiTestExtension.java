@@ -22,12 +22,9 @@ import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
-import nl.dflipse.fit.strategy.analyzers.BreadthFirstDetector;
 import nl.dflipse.fit.strategy.analyzers.DepthFirstDetector;
-import nl.dflipse.fit.strategy.analyzers.RandomDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
-import nl.dflipse.fit.strategy.generators.IncreasingSizeMixedGenerator;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
@@ -219,10 +216,7 @@ public class FiTestExtension
             strategy.statistics.registerRun();
 
             try {
-                faultload.timer.start("getTrace");
                 TraceAnalysis trace = controller.getTrace(faultload);
-                faultload.timer.stop("getTrace");
-
                 faultload.timer.start("handleResult");
                 FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
                 strategy.handleResult(result);

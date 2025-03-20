@@ -64,13 +64,13 @@ public class E2eStrategyTest {
         }
 
         @Override
-        public long pruneMixedSubset(Set<Fault> subset, Set<FaultUid> subset2) {
-            return 0;
+        public Set<FaultMode> getFaultModes() {
+            return modes;
         }
 
         @Override
-        public Set<FaultMode> getFaultModes() {
-            return modes;
+        public void reportConditionalFaultUid(Set<Fault> subset, List<FaultUid> faultInjectionPoints) {
+            return;
         }
     }
 

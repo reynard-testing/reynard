@@ -33,4 +33,4 @@ class SpanStore:
         return self.spans_by_span_id.get(span_id, None)
 
     def get_by_trace_id(self, trace_id: str) -> list[Span]:
-        return self.spans_by_trace_id.get(trace_id, [])
+        return list(self.spans_by_trace_id.get(trace_id, []))

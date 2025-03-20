@@ -12,9 +12,11 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.strategy.util.Combinatorics;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.PrunablePairedCombinationsIterator;
 import nl.dflipse.fit.strategy.util.PrunablePowersetIterator;
+import nl.dflipse.fit.strategy.util.Sets;
 
 public class IncreasingSizeMixedGenerator implements Generator {
     private Set<FaultMode> modes;
@@ -41,7 +43,7 @@ public class IncreasingSizeMixedGenerator implements Generator {
         }
 
         if (this.spaceIterator == null) {
-            this.spaceIterator = new PrunablePowersetIterator<FaultUid>(potentialFaults, true);
+            this.spaceIterator = new PrunablePowersetIterator<>(potentialFaults, true);
 
             for (var prunedFaults : store.getRedundantUidSubsets()) {
                 spaceIterator.prune(prunedFaults);
@@ -67,6 +69,49 @@ public class IncreasingSizeMixedGenerator implements Generator {
         }
     }
 
+    private void pruneForConditionalSubset(Set<Fault> condition, FaultUid fid) {
+        int counter = 0;
+        for (FaultMode mode : modes) {
+            Fault fidFault = new Fault(fid, mode);
+            for (List<Fault> conditionSubset : Combinatorics.generatePowerSet(List.copyOf(condition))) {
+                if (conditionSubset.size() == condition.size()) {
+                    continue;
+                }
+
+                Set<Fault> faults = Sets.plus(Set.copyOf(conditionSubset), fidFault);
+                pruneFaultload(new Faultload(faults));
+                counter++;
+            }
+        }
+
+        logger.info("Pruned " + counter + " fautloads not matching conditions for fault injection point " + fid);
+    }
+
+    @Override
+    public void reportConditionalFaultUid(Set<Fault> condition, List<FaultUid> faultInjectionPoints) {
+        if (faultInjectionPoints == null || faultInjectionPoints.isEmpty()) {
+            return;
+        }
+
+        if (this.spaceIterator == null) {
+            throw new IllegalStateException(
+                    "Cannot add conditional fault injection point if no normal fault injection points are discovered");
+        }
+
+        int m = modes.size();
+        long oldSize = spaceIterator.size(m);
+
+        for (var fid : faultInjectionPoints) {
+            logger.info("Found NEW conditional fault injection point: " + fid + ", given " + condition);
+            this.spaceIterator.add(fid);
+            pruneForConditionalSubset(condition, fid);
+        }
+
+        long newSize = spaceIterator.size(m) - oldSize;
+        fidCounter += faultInjectionPoints.size();
+        logger.info("Added " + newSize + " new test cases");
+    }
+
     private boolean nextSpace() {
         if (!spaceIterator.hasNext()) {
             return false;
@@ -79,7 +124,7 @@ public class IncreasingSizeMixedGenerator implements Generator {
             return false;
         }
 
-        modeIterator = new PrunablePairedCombinationsIterator<FaultUid, FaultMode>(nextCombination, modes);
+        modeIterator = new PrunablePairedCombinationsIterator<>(nextCombination, modes);
 
         // Prune the mode iterator based on the redundant fault subsets
         for (var prunedFaults : store.getRedundantFaultSubsets()) {
@@ -187,22 +232,6 @@ public class IncreasingSizeMixedGenerator implements Generator {
 
     public long getElements() {
         return fidCounter;
-    }
-
-    @Override
-    public long pruneMixedSubset(Set<Fault> faultSubset, Set<FaultUid> uidSubset) {
-        var combinationsIterator = new PrunablePairedCombinationsIterator<>(List.copyOf(uidSubset), modes);
-
-        long sum = 0;
-
-        while (combinationsIterator.hasNext()) {
-            var nextPairing = combinationsIterator.next();
-            Set<Fault> faults = getFaultsFromPairing(nextPairing);
-            faults.addAll(faultSubset);
-            sum += this.pruneFaultSubset(faults);
-        }
-
-        return sum;
     }
 
 }

@@ -11,11 +11,11 @@ import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 public interface Generator {
     public void reportFaultUids(List<FaultUid> faultInjectionPoints);
 
+    public void reportConditionalFaultUid(Set<Fault> condition, List<FaultUid> faultInjectionPoints);
+
     public long pruneFaultUidSubset(Set<FaultUid> subset);
 
     public long pruneFaultSubset(Set<Fault> subset);
-
-    public long pruneMixedSubset(Set<Fault> subset, Set<FaultUid> subset2);
 
     public long pruneFaultload(Faultload faultload);
 

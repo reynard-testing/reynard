@@ -84,6 +84,7 @@ public class RemoteController implements FaultController {
             return traceCache.get(faultload.getTraceId());
         }
 
+        faultload.timer.start("getTrace");
         int maxRetries = 7;
 
         for (int attempt = 0; attempt < maxRetries; attempt++) {
@@ -105,6 +106,7 @@ public class RemoteController implements FaultController {
             }
         }
 
+        faultload.timer.stop("getTrace");
         throw new IOException("Failed to get trace after " + maxRetries + " attempts");
     }
 

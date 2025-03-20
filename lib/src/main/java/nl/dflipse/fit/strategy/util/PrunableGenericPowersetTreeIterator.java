@@ -5,19 +5,23 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class PrunableGenericPowersetTreeIterator<N, E> implements Iterator<Set<N>> {
     private final List<E> elements;
     private final List<TreeNode<N, E>> toExpand = new ArrayList<>();
     private final List<Set<N>> prunedSubsets = new ArrayList<>();
     private final Function<E, Set<N>> expandMapper;
+    private final Function<N, E> inverseMapper;
 
     public record TreeNode<N, E>(Set<N> value, List<E> expansion) {
     }
 
     public PrunableGenericPowersetTreeIterator(List<E> elements, Function<E, Set<N>> extensionMapper,
+            Function<N, E> inverseMapper,
             boolean skipEmptySet) {
         this.expandMapper = extensionMapper;
+        this.inverseMapper = inverseMapper;
         this.elements = new ArrayList<>();
 
         if (elements != null && !elements.isEmpty()) {
@@ -100,6 +104,31 @@ public class PrunableGenericPowersetTreeIterator<N, E> implements Iterator<Set<N
         for (N additionalElement : expandsTo) {
             Set<N> newValue = Set.of(additionalElement);
             var newNode = new TreeNode<>(newValue, List.copyOf(elements));
+
+            if (shouldPrune(newNode)) {
+                continue;
+            }
+
+            toExpand.add(newNode);
+        }
+
+        elements.add(extension);
+    }
+
+    public void addConditional(Set<N> condition, E extension) {
+        Set<N> expandsTo = expandMapper.apply(extension);
+
+        // We cannot expand to extensions already in the condition
+        Set<E> alreadyExpanded = condition.stream()
+                .map(cnd -> inverseMapper.apply(cnd))
+                .collect(Collectors.toSet());
+        List<E> expansionsLeft = elements.stream()
+                .filter(e -> !alreadyExpanded.contains(e))
+                .toList();
+
+        for (N additionalElement : expandsTo) {
+            Set<N> newValue = Sets.plus(condition, additionalElement);
+            var newNode = new TreeNode<>(newValue, expansionsLeft);
 
             if (shouldPrune(newNode)) {
                 continue;

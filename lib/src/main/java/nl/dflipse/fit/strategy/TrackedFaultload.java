@@ -34,6 +34,11 @@ public class TrackedFaultload {
         return this;
     }
 
+    public TrackedFaultload withBodyHashing() {
+        traceState.set("hashbody", "1");
+        return this;
+    }
+
     public Faultload getFaultload() {
         return faultload;
     }

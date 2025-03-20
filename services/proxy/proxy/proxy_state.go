@@ -17,11 +17,11 @@ type ProxyState struct {
 	Complete           bool
 }
 
-func (s ProxyState) asReport(metadata tracing.RequestMetadata) tracing.RequestReport {
+func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) tracing.RequestReport {
 	var response *tracing.ResponseData = nil
 
 	if s.Complete {
-		responseData := s.ResponseWriter.GetResponseData()
+		responseData := s.ResponseWriter.GetResponseData(hashBody)
 		response = &responseData
 	}
 

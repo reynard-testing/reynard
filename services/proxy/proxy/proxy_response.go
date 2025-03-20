@@ -2,6 +2,8 @@ package proxy
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -36,7 +38,7 @@ func (n *NoOpResponseWriter) Write([]byte) (int, error) {
 
 func (n *NoOpResponseWriter) WriteHeader(statusCode int) {}
 
-func (rc *ResponseCapture) GetResponseData() tracing.ResponseData {
+func (rc *ResponseCapture) GetResponseData(hashBody bool) tracing.ResponseData {
 	body := rc.BodyBuffer.String()
 	status := rc.Status
 
@@ -47,6 +49,11 @@ func (rc *ResponseCapture) GetResponseData() tracing.ResponseData {
 			body = rc.Header().Get("grpc-message")
 			status = toHttpError(statusCode)
 		}
+	}
+
+	if hashBody {
+		bodyHash := sha256.Sum256([]byte(body))
+		body = fmt.Sprintf("%x", bodyHash)
 	}
 
 	return tracing.ResponseData{

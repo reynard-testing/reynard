@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public @interface FiTest {
     boolean maskPayload() default false;
 
+    boolean hashBody() default false;
+
     boolean failStop() default true;
 
     long maxTestCases() default 0;

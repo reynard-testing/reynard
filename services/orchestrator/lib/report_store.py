@@ -14,10 +14,11 @@ class ReportStore:
 
     def remove_by_trace_id(self, trace_id: str):
         trace_reports = self.reports_by_trace_id.get(trace_id, [])
-        for trace_repot in trace_reports:
-            self.reports.remove(trace_repot)
-            self.reports_by_span_id[trace_repot.span_id].remove(trace_repot)
-            self.reports_by_trace_by_fault_uid[trace_id].pop(trace_repot.uid)
+        for trace_report in trace_reports:
+            if trace_report in self.reports:
+                self.reports.remove(trace_report)
+                self.reports_by_span_id[trace_report.span_id].remove(trace_report)
+                self.reports_by_trace_by_fault_uid[trace_id].pop(trace_report.uid)
         self.reports_by_trace_id.pop(trace_id)
 
     def add(self, report: ReportedSpan):

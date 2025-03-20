@@ -41,6 +41,10 @@ public class TraceAnalysis {
             if (report.injectedFault != null) {
                 injectedFaults.add(report.injectedFault);
             }
+
+            if (report.response == null) {
+                isIncomplete = true;
+            }
         }
 
         analyseNode(rootNode, null);

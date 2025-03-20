@@ -88,6 +88,10 @@ public class FiTestExtension
             strategy.withPayloadMasking();
         }
 
+        if (annotation.hashBody()) {
+            strategy.withBodyHashing();
+        }
+
         Class<?> testClass = context.getRequiredTestClass();
         FaultController controller;
 

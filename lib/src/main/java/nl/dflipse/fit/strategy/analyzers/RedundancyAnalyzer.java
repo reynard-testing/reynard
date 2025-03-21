@@ -95,15 +95,6 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
         var disappeared = analyzeDisappearedFaults(result);
         detectRandomFaults(appeared, disappeared);
 
-        // Report newly found points
-        if (!appeared.isEmpty()) {
-            // TODO: is this complete?
-            // There might be multiple conditions to trigger new fid
-            Set<Fault> condition = result.trace.getInjectedFaults();
-            context.reportConditionalFaultUid(condition, List.copyOf(appeared));
-            detectedUids.addAll(appeared);
-        }
-
         return null;
     }
 }

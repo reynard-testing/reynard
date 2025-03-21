@@ -1,7 +1,10 @@
 package nl.dflipse.fit.strategy.store;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,12 +16,39 @@ import nl.dflipse.fit.strategy.util.Pair;
 
 public class DynamicAnalysisStore {
     private final Set<FaultMode> modes;
-    private List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
-    private List<Set<Pair<FaultUid, FaultMode>>> redundantFaultSubsets = new ArrayList<>();
-    private List<Faultload> redundantFaultloads = new ArrayList<>();
+    private final Set<FaultUid> points = new HashSet<>();
+    private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
+    private final List<Set<Pair<FaultUid, FaultMode>>> redundantFaultSubsets = new ArrayList<>();
+    private final List<Faultload> redundantFaultloads = new ArrayList<>();
+    private final Map<FaultUid, Set<Set<Fault>>> preconditions = new HashMap<>();
 
     public DynamicAnalysisStore(Set<FaultMode> modes) {
         this.modes = modes;
+    }
+
+    public Set<FaultUid> getFaultInjectionPoints() {
+        return points;
+    }
+
+    public boolean addFaultUid(FaultUid fid) {
+        if (!points.contains(fid)) {
+            points.add(fid);
+            return true;
+        }
+
+        return false;
+    }
+
+    public void addFaultUids(List<FaultUid> fids) {
+        for (var fid : fids) {
+            addFaultUid(fid);
+        }
+    }
+
+    public boolean addConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
+        addFaultUid(fid);
+
+        return true;
     }
 
     public boolean hasFaultUidSubset(Set<FaultUid> subset) {

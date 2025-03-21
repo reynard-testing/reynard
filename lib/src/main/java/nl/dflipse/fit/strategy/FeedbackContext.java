@@ -42,9 +42,9 @@ public class FeedbackContext {
         runner.generator.reportFaultUids(faultInjectionPoints);
     }
 
-    public void reportConditionalFaultUid(Set<Fault> subset, List<FaultUid> faultInjectionPoints) {
+    public void reportConditionalFaultUid(Set<Fault> subset, FaultUid fid) {
         assertGeneratorPresent();
-        runner.generator.reportConditionalFaultUid(subset, faultInjectionPoints);
+        runner.generator.reportConditionalFaultUid(subset, fid);
     }
 
     public void pruneFaultUidSubset(Set<FaultUid> subset) {

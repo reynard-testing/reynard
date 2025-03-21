@@ -68,8 +68,10 @@ public class ConditionalFaultDetector implements FeedbackHandler<Void> {
                     }
 
                     // parts of the condition that are not related to replace fault
+                    // TODO: fix issue with same fuids in faultload!
                     Set<Fault> relatedCondition = condition.stream()
                             .filter(f -> relatedFaults.contains(f.uid()))
+                            .filter(f -> f.uid().equals(anyRetryFault))
                             .collect(Collectors.toSet());
                     Set<Fault> modifiedCondition = Sets.difference(condition, relatedCondition);
                     context.reportConditionalFaultUid(modifiedCondition, anyRetryFault);

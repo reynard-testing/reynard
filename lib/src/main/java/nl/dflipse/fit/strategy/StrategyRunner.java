@@ -25,6 +25,7 @@ public class StrategyRunner {
 
     private boolean withPayloadMasking = false;
     private boolean withBodyHashing = false;
+    private boolean withLogHeader = false;
     private long testCasesLeft = -1;
 
     private final Logger logger = LoggerFactory.getLogger(StrategyRunner.class);
@@ -45,6 +46,11 @@ public class StrategyRunner {
 
     public StrategyRunner withBodyHashing() {
         withBodyHashing = true;
+        return this;
+    }
+
+    public StrategyRunner withLogHeader() {
+        withLogHeader = true;
         return this;
     }
 
@@ -88,6 +94,10 @@ public class StrategyRunner {
 
         if (withBodyHashing) {
             tracked.withBodyHashing();
+        }
+
+        if (withLogHeader) {
+            tracked.withHeaderLog();
         }
 
         return tracked;

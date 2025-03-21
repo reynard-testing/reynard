@@ -141,6 +141,12 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			log.Printf("Body hashing enabled.\n")
 		}
 
+		shouldLogHeader := state.GetWithDefault("headerlog", "0") == "1"
+		if shouldLogHeader {
+			log.Printf("Header logging enabled.\n")
+			log.Printf("Headers: %s\n", r.Header)
+		}
+
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 
 		for _, fault := range faults {

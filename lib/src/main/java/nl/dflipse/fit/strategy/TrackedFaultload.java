@@ -39,6 +39,11 @@ public class TrackedFaultload {
         return this;
     }
 
+    public TrackedFaultload withHeaderLog() {
+        traceState.set("headerlog", "1");
+        return this;
+    }
+
     public Faultload getFaultload() {
         return faultload;
     }

@@ -91,6 +91,7 @@ public class RemoteController implements FaultController {
             try {
                 var traceData = attemptToGetTrace(faultload);
                 traceCache.put(faultload.getTraceId(), traceData);
+                faultload.timer.stop("getTrace");
                 return traceData;
             } catch (IOException e) {
                 if (attempt == maxRetries - 1) {

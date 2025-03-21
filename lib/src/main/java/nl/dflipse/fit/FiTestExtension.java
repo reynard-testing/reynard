@@ -89,6 +89,10 @@ public class FiTestExtension
             strategy.withBodyHashing();
         }
 
+        if (annotation.logHeaders()) {
+            strategy.withLogHeader();
+        }
+
         Class<?> testClass = context.getRequiredTestClass();
         FaultController controller;
 

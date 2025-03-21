@@ -17,6 +17,8 @@ public @interface FiTest {
 
     boolean hashBody() default false;
 
+    boolean logHeaders() default false;
+
     boolean failStop() default true;
 
     long maxTestCases() default 0;

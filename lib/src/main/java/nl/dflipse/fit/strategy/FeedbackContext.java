@@ -8,11 +8,12 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.strategy.util.Sets;
 
 public class FeedbackContext {
 
-    private String contextName;
-    private StrategyRunner runner;
+    private final String contextName;
+    private final StrategyRunner runner;
 
     public FeedbackContext(StrategyRunner runner, String contextName) {
         this.contextName = contextName;
@@ -57,6 +58,15 @@ public class FeedbackContext {
         assertGeneratorPresent();
         long reduction = runner.generator.pruneFaultSubset(subset);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
+    }
+
+    public void pruneMixed(Set<Fault> subset, FaultUid fault) {
+        assertGeneratorPresent();
+        long sum = 0;
+        for (var mode : runner.generator.getFaultModes()) {
+            sum += runner.generator.pruneFaultSubset(Sets.plus(subset, new Fault(fault, mode)));
+        }
+        runner.statistics.incrementEstimatePruner(contextName, sum);
     }
 
     public void pruneFaultload(Faultload fautload) {

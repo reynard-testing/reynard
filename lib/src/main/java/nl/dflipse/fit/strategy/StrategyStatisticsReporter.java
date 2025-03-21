@@ -98,6 +98,12 @@ public class StrategyStatisticsReporter {
         printKeyValue("Redundant faultloads", store.getRedundantFaultloads().size(), maxKeyLength);
         printKeyValue("Redundant fault points", store.getRedundantUidSubsets().size(), maxKeyLength);
         printKeyValue("Redundant fault subsets", store.getRedundantFaultSubsets().size(), maxKeyLength);
+        printKeyValue("Max queue size", generator.getMaxQueueSize(), maxKeyLength);
+        int queueSize = generator.getQueuSize();
+        if (queueSize > 0) {
+            printKeyValue("Queue size (left)", generator.getQueuSize(), maxKeyLength);
+            printKeyValue("Space left", generator.getSpaceLeft(), maxKeyLength);
+        }
     }
 
     public void reportGeneratorStats() {

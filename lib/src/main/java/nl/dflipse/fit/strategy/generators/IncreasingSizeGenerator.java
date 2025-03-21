@@ -17,9 +17,9 @@ import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class IncreasingSizeGenerator implements Generator {
+    private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
     private Set<FaultMode> modes;
     private PrunableGenericPowersetTreeIterator<Fault, FaultUid> iterator;
-    private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
 
     private final DynamicAnalysisStore store;
 
@@ -48,16 +48,15 @@ public class IncreasingSizeGenerator implements Generator {
             return;
         }
 
-        store.addFaultUids(potentialFaults);
         int m = modes.size();
 
         if (this.iterator == null) {
+            store.addFaultUids(potentialFaults);
             this.iterator = new PrunableGenericPowersetTreeIterator<>(potentialFaults,
                     this::faultUidtoFaults, this::faultToFaultUid, true);
 
             for (var prunedFaults : store.getRedundantFaultSubsets()) {
-                var faultSet = DynamicAnalysisStore.pairsToFaults(prunedFaults);
-                iterator.prune(faultSet);
+                iterator.prune(prunedFaults);
             }
 
             long expectedSize = iterator.size(m);
@@ -68,6 +67,11 @@ public class IncreasingSizeGenerator implements Generator {
             long oldSize = iterator.size(m);
 
             for (var fid : potentialFaults) {
+                boolean isNew = store.addFaultUid(fid);
+                if (!isNew) {
+                    continue;
+                }
+
                 logger.info("Found NEW fault injection point: " + fid);
                 this.iterator.add(fid);
             }
@@ -78,8 +82,13 @@ public class IncreasingSizeGenerator implements Generator {
     }
 
     @Override
-    public void reportConditionalFaultUid(Set<Fault> subset, FaultUid fid) {
-        if (fid == null || subset.isEmpty()) {
+    public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
+        if (fid == null) {
+            return;
+        }
+
+        if (condition.isEmpty()) {
+            reportFaultUids(List.of(fid));
             return;
         }
 
@@ -90,12 +99,15 @@ public class IncreasingSizeGenerator implements Generator {
 
         int m = modes.size();
         long oldSize = iterator.size(m);
+        boolean isNew = store.addConditionalFaultUid(condition, fid);
 
-        logger.info("Found NEW conditional fault injection point: " + fid + ", given " + subset);
-        this.iterator.addConditional(subset, fid);
+        if (!isNew) {
+            return;
+        }
+
+        this.iterator.addConditional(condition, fid);
 
         long newSize = iterator.size(m) - oldSize;
-        store.addConditionalFaultUid(subset, fid);
         logger.info("Added " + newSize + " new test cases");
     }
 
@@ -158,8 +170,7 @@ public class IncreasingSizeGenerator implements Generator {
 
     @Override
     public long pruneFaultSubset(Set<Fault> subset) {
-        var prunableSet = store.ignoreFaultSubset(subset);
-        boolean isNew = prunableSet != null;
+        boolean isNew = store.ignoreFaultSubset(subset);
 
         // if (!isNew) {
         // return 0;
@@ -206,6 +217,18 @@ public class IncreasingSizeGenerator implements Generator {
 
     public DynamicAnalysisStore getStore() {
         return store;
+    }
+
+    public int getMaxQueueSize() {
+        return iterator.getMaxQueueSize();
+    }
+
+    public int getQueuSize() {
+        return iterator.getQueuSize();
+    }
+
+    public long getSpaceLeft() {
+        return iterator.size(this.modes.size());
     }
 
 }

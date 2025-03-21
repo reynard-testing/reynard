@@ -55,6 +55,10 @@ public class TraceAnalysis {
     private void analyseNode(TraceTreeSpan node, FaultUid parent) {
         FaultUid nextParent = parent;
 
+        if (node.span.endTime <= 0) {
+            isIncomplete = true;
+        }
+
         // Check if the node has a report from a fault injection proxy
         if (node.hasReport()) {
             // Save the faultUid

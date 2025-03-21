@@ -32,21 +32,41 @@ type RequestMetadata struct {
 
 var queryHost string = os.Getenv("ORCHESTRATOR_HOST")
 
-func ReportSpanUID(report RequestReport) {
+func attemptReport(report RequestReport) bool {
+
 	queryUrl := fmt.Sprintf("http://%s/v1/link", queryHost)
 
 	jsonBodyBytes, err := json.Marshal(report)
 	if err != nil {
 		log.Printf("Failed to marshal JSON: %v\n", err)
-		return
+		return false
 	}
 
 	resp, err := http.Post(queryUrl, "application/json", bytes.NewBuffer(jsonBodyBytes))
 
 	if err != nil {
 		log.Printf("Failed to report span ID: %v\n", err)
-		return
+		return false
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		log.Printf("Failed to report span ID: %v\n", resp)
+		return false
+	}
+
+	return true
+
+}
+
+func ReportSpanUID(report RequestReport) bool {
+	success := attemptReport(report)
+
+	if !success {
+		// retry once
+		success = attemptReport(report)
+	}
+
+	return success
 }

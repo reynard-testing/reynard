@@ -26,6 +26,7 @@ public class StrategyRunner {
     private boolean withPayloadMasking = false;
     private boolean withBodyHashing = false;
     private boolean withLogHeader = false;
+    private int withGetDelayMs = 0;
     private long testCasesLeft = -1;
 
     private final Logger logger = LoggerFactory.getLogger(StrategyRunner.class);
@@ -51,6 +52,11 @@ public class StrategyRunner {
 
     public StrategyRunner withLogHeader() {
         withLogHeader = true;
+        return this;
+    }
+
+    public StrategyRunner withGetDelay(int ms) {
+        withGetDelayMs = ms;
         return this;
     }
 
@@ -98,6 +104,10 @@ public class StrategyRunner {
 
         if (withLogHeader) {
             tracked.withHeaderLog();
+        }
+
+        if (withGetDelayMs > 0) {
+            tracked.withGetDelay(withGetDelayMs);
         }
 
         return tracked;

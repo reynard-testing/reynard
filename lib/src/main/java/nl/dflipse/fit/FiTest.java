@@ -22,5 +22,7 @@ public @interface FiTest {
     boolean failStop() default true;
 
     long maxTestCases() default 0;
+
+    int getTraceInitialDelay() default 100;
     // Class<? extends FIStrategy> strategy() default DepthFirstStrategy.class;
 }

@@ -3,6 +3,9 @@ package nl.dflipse.fit.instrument.controller;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -16,6 +19,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class RemoteController implements FaultController {
+    private final Logger logger = LoggerFactory.getLogger(RemoteController.class);
 
     public String apiHost;
     private final LRUCache<String, TraceAnalysis> traceCache = new LRUCache<>(3);
@@ -84,6 +88,14 @@ public class RemoteController implements FaultController {
             return traceCache.get(faultload.getTraceId());
         }
 
+        if (faultload.getDelayMs > 0) {
+            try {
+                Thread.sleep(faultload.getDelayMs);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         faultload.timer.start("getTrace");
         int maxRetries = 7;
 
@@ -97,6 +109,8 @@ public class RemoteController implements FaultController {
                 if (attempt == maxRetries - 1) {
                     throw e;
                 }
+
+                logger.debug("Retrying getting trace due to: {}", e.getMessage());
             }
 
             try {

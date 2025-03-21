@@ -6,12 +6,18 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class Sets {
-    public static <T> boolean isSubset(Set<T> parent, Set<T> child) {
-        return parent.containsAll(child);
+    /** Whether A ⊆ B */
+    public static <T> boolean isSubsetOf(Set<T> A, Set<T> B) {
+        return B.containsAll(A);
     }
+    /** Whether A ⊂ B */
+    // public static <T> boolean isProperSubset(Set<T> A, Set<T> B) {
+    // return B.containsAll(A);
+    // }
 
-    public static <T> boolean isSuperset(Set<T> set1, Set<T> set2) {
-        return set2.containsAll(set1);
+    /** Whether A ⊇ B */
+    public static <T> boolean isSupersetOf(Set<T> A, Set<T> B) {
+        return A.containsAll(B);
     }
 
     public static <T> boolean areEqual(Set<T> set1, Set<T> set2) {

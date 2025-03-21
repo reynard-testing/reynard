@@ -95,6 +95,10 @@ public class FiTestExtension
             strategy.withLogHeader();
         }
 
+        if (annotation.getTraceInitialDelay() > 0) {
+            strategy.withGetDelay(annotation.getTraceInitialDelay());
+        }
+
         Class<?> testClass = context.getRequiredTestClass();
         FaultController controller;
 

@@ -80,9 +80,9 @@ public class DynamicAnalysisStore {
         return true;
     }
 
-    public boolean hasFaultUidSubset(Set<FaultUid> subset) {
+    public boolean hasFaultUidSubset(Set<FaultUid> set) {
         for (var redundant : this.redundantUidSubsets) {
-            if (Sets.isSubsetOf(subset, redundant)) {
+            if (Sets.isSubsetOf(redundant, set)) {
                 return true;
             }
         }
@@ -111,9 +111,9 @@ public class DynamicAnalysisStore {
         return ignoreFaultUidSubset(Set.copyOf(subset));
     }
 
-    private boolean hasFaultSubsetFromPairs(Set<Fault> subset) {
+    public boolean hasFaultSubset(Set<Fault> subset) {
         for (var redundant : this.redundantFaultSubsets) {
-            if (Sets.isSubsetOf(subset, redundant)) {
+            if (Sets.isSubsetOf(redundant, subset)) {
                 return true;
             }
         }
@@ -121,15 +121,11 @@ public class DynamicAnalysisStore {
         return false;
     }
 
-    public boolean hasFaultSubset(Set<Fault> subset) {
-        return hasFaultSubsetFromPairs(subset);
-    }
-
     public boolean ignoreFaultSubset(Set<Fault> subset) {
         // If the subset is already in the list of redundant subsets
         // Or if the subset is a subset of an already redundant subset
         // Then we can ignore this subset
-        if (hasFaultSubsetFromPairs(subset)) {
+        if (hasFaultSubset(subset)) {
             return false;
         }
 

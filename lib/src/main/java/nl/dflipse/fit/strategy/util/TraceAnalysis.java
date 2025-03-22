@@ -6,12 +6,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.trace.tree.TraceSpanReport;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 
 public class TraceAnalysis {
+    private final Logger logger = LoggerFactory.getLogger(TraceAnalysis.class);
+
     private final Set<FaultUid> faultUids = new HashSet<>();
     private final Set<Fault> injectedFaults = new HashSet<>();
     private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
@@ -217,7 +222,7 @@ public class TraceAnalysis {
         }
 
         if (missing > 0) {
-            System.out.println("[WARN] Missing " + missing + " faultUids in trace tree!");
+            logger.warn("[WARN] Missing " + missing + " faultUids in trace tree!");
         }
 
         return foundFaults;

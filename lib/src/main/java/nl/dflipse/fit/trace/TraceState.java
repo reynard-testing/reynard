@@ -5,7 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TraceState {
+    private final Logger logger = LoggerFactory.getLogger(TraceState.class);
     private Map<String, String> state = new HashMap<String, String>();
 
     public TraceState(String header) {
@@ -49,7 +53,7 @@ public class TraceState {
         String result = String.join(",", values);
 
         if (result.length() > 256) {
-            System.out.println("[WARN] TraceState header too long: " + result.length());
+            logger.warn("TraceState header too long: " + result.length());
         }
 
         return result;

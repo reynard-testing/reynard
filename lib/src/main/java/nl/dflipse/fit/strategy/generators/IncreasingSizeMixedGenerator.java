@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
@@ -17,6 +20,7 @@ public class IncreasingSizeMixedGenerator implements Generator {
     private Set<FaultMode> modes;
     private PrunablePowersetIterator<FaultUid> spaceIterator;
     private PrunablePairedCombinationsIterator<FaultUid, FaultMode> modeIterator;
+    private final Logger logger = LoggerFactory.getLogger(IncreasingSizeMixedGenerator.class);
 
     private long fidCounter = 0;
     private final DynamicAnalysisStore store;
@@ -45,22 +49,21 @@ public class IncreasingSizeMixedGenerator implements Generator {
 
             fidCounter = potentialFaults.size();
             long expectedSize = spaceIterator.size(modes.size());
-            System.out.println(
-                    "[Generator] Found " + potentialFaults.size() + " fault points. Will generate at most "
-                            + expectedSize
-                            + " new test cases");
+            logger.info("Found " + potentialFaults.size() + " fault points. Will generate at most "
+                    + expectedSize
+                    + " new test cases");
         } else {
             int m = modes.size();
             long oldSize = spaceIterator.size(m);
 
             for (var fid : potentialFaults) {
-                System.out.println("[Generator] Found NEW fault injection point: " + fid);
+                logger.info("Found NEW fault injection point: " + fid);
                 this.spaceIterator.add(fid);
             }
 
             long newSize = spaceIterator.size(m) - oldSize;
             fidCounter += potentialFaults.size();
-            System.out.println("[Generator] Added " + newSize + " new test cases");
+            logger.info("Added " + newSize + " new test cases");
         }
     }
 

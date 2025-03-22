@@ -13,6 +13,8 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.HttpError;
@@ -36,6 +38,7 @@ import nl.dflipse.fit.strategy.util.TraceAnalysis;
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
     private StrategyRunner strategy;
+    private static final Logger logger = LoggerFactory.getLogger(FiTestExtension.class);
 
     @Override
     public boolean supportsTestTemplate(ExtensionContext context) {
@@ -171,6 +174,10 @@ public class FiTestExtension
                 return;
             }
 
+            String displayName = context.getDisplayName();
+            System.out.println();
+            logger.info("Test " + displayName);
+
             faultload.timer.start();
             faultload.timer.start("registerFaultload");
             try {
@@ -202,13 +209,8 @@ public class FiTestExtension
             // var testMethod = context.getTestMethod().orElseThrow();
             // var annotation = testMethod.getAnnotation(FiTest.class);
 
-            String displayName = context.getDisplayName();
             boolean testFailed = context.getExecutionException().isPresent();
-
-            System.out.println();
-            System.out.println(
-                    "Test " + displayName + " with result: "
-                            + (testFailed ? "FAIL" : "PASS"));
+            logger.info("Result: " + (testFailed ? "FAIL" : "PASS"));
 
             strategy.statistics.registerRun();
 

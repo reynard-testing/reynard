@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://logging.apache.org/xml/ns"
+    xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-config-2.xsd">
+
+    <Appenders>
+        <Console name="CONSOLE">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %t [%5p] [%c{1.}]: %m%n" />
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="nl.dflipse" level="DEBUG" />
+        <Logger name="org.testcontainers" level="INFO" />
+        <Root level="WARN">
+            <AppenderRef ref="CONSOLE" />
+        </Root>
+        <!-- The following logger can be used for containers logs since 1.18.0 -->
+        <Logger name="tc" level="INFO" />
+        <Logger name="com.github.dockerjava" level="WARN" />
+        <Logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.wire"
+            level="OFF" />
+    </Loggers>
+
+</Configuration>

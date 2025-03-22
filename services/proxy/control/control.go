@@ -29,6 +29,7 @@ func StartControlServer(config config.ControlConfig) {
 	// Set up OpenTelemetry.
 	otelShutdown, err := util.SetupOTelSDK(ctx, config.UseTelemetry)
 	if err != nil {
+		log.Printf("Failed to set up OpenTelemetry: %v\n", err)
 		return
 	}
 
@@ -50,6 +51,7 @@ func StartControlServer(config config.ControlConfig) {
 	}
 
 	srvErr := make(chan error, 1)
+
 	go func() {
 		srvErr <- srv.ListenAndServe()
 		log.Printf("Listening for control commands on port %s\n", controlPort)

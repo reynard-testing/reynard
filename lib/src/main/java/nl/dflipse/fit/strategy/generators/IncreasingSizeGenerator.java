@@ -220,7 +220,7 @@ public class IncreasingSizeGenerator implements Generator {
     }
 
     public int getMaxQueueSize() {
-        return iterator.getMaxQueueSize();
+        return iterator == null ? 0 : iterator.getMaxQueueSize();
     }
 
     public int getQueuSize() {

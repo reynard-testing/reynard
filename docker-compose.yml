@@ -17,7 +17,7 @@ services:
       - "5050:5000"
     environment:
       - PROXY_LIST=proxy1:8050,proxy2:8050,proxy3:8050
-      - OTEL_SERVICE_NAME=proxy1
+      - OTEL_SERVICE_NAME=orchestrator
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4137
 

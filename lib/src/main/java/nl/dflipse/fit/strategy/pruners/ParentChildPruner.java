@@ -1,11 +1,9 @@
 package nl.dflipse.fit.strategy.pruners;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
@@ -17,12 +15,17 @@ public class ParentChildPruner implements Pruner, FeedbackHandler<Void> {
 
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        for (var pair : result.trace.getParentsAndTransativeChildren()) {
+        for (var pair : result.trace.getParentsAndChildren()) {
             var parent = pair.getFirst();
             var child = pair.getSecond();
             happensBefore.addRelation(parent, child);
         }
 
+        reflectPrunedInGenerator(context);
+        return null;
+    }
+
+    private void reflectPrunedInGenerator(FeedbackContext context) {
         for (var pair : happensBefore.getTransativeRelations()) {
             var parent = pair.getFirst();
             var child = pair.getSecond();
@@ -36,7 +39,6 @@ public class ParentChildPruner implements Pruner, FeedbackHandler<Void> {
             context.pruneFaultUidSubset(Set.of(parent, child));
         }
 
-        return null;
     }
 
     @Override

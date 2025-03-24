@@ -8,8 +8,6 @@ public class OrchestratorService extends GenericContainer<OrchestratorService> {
     public OrchestratorService() {
         super(IMAGE);
 
-        this
-                .withCommand("flask --app orchestrator.py run --host=0.0.0.0");
         // .withNetwork(network)
         // .withNetworkAliases(name);
     }

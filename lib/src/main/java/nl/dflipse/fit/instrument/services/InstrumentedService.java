@@ -34,6 +34,7 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
                 .withEnv("PROXY_TARGET", "http://" + this.serviceHostname + ":" + port)
                 .withEnv("ORCHESTRATOR_HOST", app.orchestratorHost + ":" + app.orchestratorPort)
                 .withEnv("SERVICE_NAME", hostname)
+                .withEnv("CONTROLLER_PORT", "" + controlPort)
                 .withNetwork(app.network)
                 .withCreateContainerCmdModifier(cmd -> cmd.withName(hostname + "-proxy-" + randomId))
                 .withNetworkAliases(hostname);

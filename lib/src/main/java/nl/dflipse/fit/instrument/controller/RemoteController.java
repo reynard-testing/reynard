@@ -88,6 +88,7 @@ public class RemoteController implements FaultController {
             return traceCache.get(faultload.getTraceId());
         }
 
+        faultload.timer.start("getTraceWithDelay");
         if (faultload.getDelayMs > 0) {
             try {
                 Thread.sleep(faultload.getDelayMs);
@@ -122,6 +123,7 @@ public class RemoteController implements FaultController {
         }
 
         faultload.timer.stop("getTrace");
+        faultload.timer.stop("getTraceWithDelay");
         throw new IOException("Failed to get trace after " + maxRetries + " attempts");
     }
 

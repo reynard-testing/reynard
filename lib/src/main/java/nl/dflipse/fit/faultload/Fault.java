@@ -9,6 +9,14 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonSerialize
 @JsonDeserialize
 public record Fault(
-    @JsonProperty("uid") FaultUid uid,
-    @JsonProperty("mode") FaultMode mode) {
+        @JsonProperty("uid") FaultUid uid,
+        @JsonProperty("mode") FaultMode mode) {
+
+    public boolean isTransient() {
+        return uid.isTransient();
+    }
+
+    public boolean isPersistent() {
+        return uid.isPersistent();
+    }
 }

@@ -6,7 +6,7 @@ import requests
 # import trace
 from flask import Flask, request
 
-from lib.models import Span, ReportedSpan, ResponseData, FaultUid, FaultMode, Fault, Faultload, TraceTreeNode
+from lib.models import Span, ReportedSpan, ResponseData, FaultUid, TraceTreeNode
 from lib.otel import otelTraceExportToSpans, parse_otel_protobuf
 from lib.span_store import SpanStore
 from lib.report_store import ReportStore
@@ -15,6 +15,7 @@ app = Flask(__name__)
 
 proxy_list: list[str] = [proxy for proxy in os.getenv(
     'PROXY_LIST', '').split(',') if proxy]
+proxy_retry_count: int = int(os.getenv('PROXY_RETRY_COUNT', 3))
 debug_flag_set = os.getenv('DEBUG', "true").lower() == "true"
 
 # Local in-memory storage
@@ -225,7 +226,8 @@ async def report_span_id():
     response = data.get('response')
 
     if trace_id not in trace_ids:
-        print(f"Trace id ({trace_id}) not registered anymore for uid {uid}", flush=True)
+        print(
+            f"Trace id ({trace_id}) not registered anymore for uid {uid}", flush=True)
         return "Trace not registered", 404
 
     responseData = None
@@ -266,12 +268,25 @@ async def report_span_id():
 # --- FAULTLOAD (UN)REGISTER ENDPOINTS ---
 
 
+async def with_retry(func: callable, retries: int):
+    last_error = None
+    for i in range(retries):
+        try:
+            return await func()
+        except Exception as e:
+            last_error = e
+            print(
+                f"Failed to execute function with retry {i}: {e}", flush=True)
+    raise last_error
+
+
 async def register_faultload_at_proxy(proxy: str, payload):
     url = f"http://{proxy}/v1/faultload/register"
     response = requests.post(url, json=payload)
 
     if response.status_code != 200:
-        print(f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}", flush=True)
+        print(
+            f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}", flush=True)
         raise Exception(
             f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}")
 
@@ -282,8 +297,8 @@ async def register_faultload():
     trace_id = payload.get('trace_id')
     trace_ids.add(trace_id)
 
-    tasks = [register_faultload_at_proxy(
-        proxy, payload) for proxy in proxy_list]
+    tasks = [with_retry(lambda proxy=proxy: register_faultload_at_proxy(
+        proxy, payload), proxy_retry_count) for proxy in proxy_list]
     await asyncio.gather(*tasks)
 
     print(f"Registered trace {trace_id}", flush=True)
@@ -307,8 +322,8 @@ async def unregister_faultload():
     if not trace_id in trace_ids:
         return f"Trace id {trace_id} not known", 404
 
-    tasks = [unregister_faultload_at_proxy(
-        proxy, payload) for proxy in proxy_list]
+    tasks = [with_retry(lambda proxy=proxy: unregister_faultload_at_proxy(
+        proxy, payload), proxy_retry_count) for proxy in proxy_list]
     await asyncio.gather(*tasks)
 
     trace_ids.remove(trace_id)

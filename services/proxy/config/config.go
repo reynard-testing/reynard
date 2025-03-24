@@ -16,8 +16,9 @@ type ProxyConfig struct {
 }
 
 type ControlConfig struct {
-	Port        int
-	Destination string
+	Port         int
+	Destination  string
+	UseTelemetry bool
 }
 
 func GetProxyConfig() ProxyConfig {
@@ -40,11 +41,14 @@ func GetProxyConfig() ProxyConfig {
 }
 
 func GetControlConfig(proxyConfig ProxyConfig) ControlConfig {
+	UseTelemetry := os.Getenv("USE_OTEL") == "true"
+
 	if controllerPort := os.Getenv("CONTROLLER_PORT"); controllerPort != "" {
 		if controllerPortInt, err := strconv.Atoi(controllerPort); err == nil {
 			return ControlConfig{
-				Port:        controllerPortInt,
-				Destination: proxyConfig.Destination,
+				UseTelemetry: UseTelemetry,
+				Port:         controllerPortInt,
+				Destination:  proxyConfig.Destination,
 			}
 		}
 	}
@@ -53,7 +57,8 @@ func GetControlConfig(proxyConfig ProxyConfig) ControlConfig {
 	controlPort := proxyPort + 1
 
 	return ControlConfig{
-		Port:        controlPort,
-		Destination: proxyConfig.Destination,
+		UseTelemetry: UseTelemetry,
+		Port:         controlPort,
+		Destination:  proxyConfig.Destination,
 	}
 }

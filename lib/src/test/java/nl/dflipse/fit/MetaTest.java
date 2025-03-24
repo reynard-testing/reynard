@@ -64,9 +64,21 @@ public class MetaTest {
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
+    private static final InstrumentedService proxy3 = app.instrument("proxy3", 8050,
+            new GenericContainer<>(PROXY_IMAGE)
+                    .withEnv("PROXY_HOST", "0.0.0.0:8080")
+                    .withEnv("PROXY_TARGET", "http://0.0.0.0:8090")
+                    .withEnv("SERVICE_NAME", "proxy3")
+                    .withEnv("ORCHESTRATOR_HOST", "coordinator:5000")
+                    .withEnv("CONTROLLER_PORT", "8050")
+                    .withEnv("USE_OTEL", "true")
+                    .withEnv("OTEL_SERVICE_NAME", "proxy3")
+                    .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
+
+    @Container
     private static final InstrumentedService orchestrator = app.instrument("coordinator", 5000,
             new GenericContainer<>(COORDINATOR_IMAGE)
-                    .withEnv("PROXY_LIST", "proxy1:8050,proxy2:8050")
+                    .withEnv("PROXY_LIST", "proxy1:8050,proxy2:8050,proxy3:8050")
                     .withEnv("OTEL_SERVICE_NAME", "orchestrator")
                     .withEnv("OTEL_TRACES_EXPORTER", "otlp")
                     .withEnv("OTEL_BSP_SCHEDULE_DELAY", "1")

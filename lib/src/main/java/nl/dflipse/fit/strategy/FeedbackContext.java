@@ -8,11 +8,12 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.strategy.util.Sets;
 
 public class FeedbackContext {
 
-    private String contextName;
-    private StrategyRunner runner;
+    private final String contextName;
+    private final StrategyRunner runner;
 
     public FeedbackContext(StrategyRunner runner, String contextName) {
         this.contextName = contextName;
@@ -42,6 +43,11 @@ public class FeedbackContext {
         runner.generator.reportFaultUids(faultInjectionPoints);
     }
 
+    public void reportConditionalFaultUid(Set<Fault> subset, FaultUid fid) {
+        assertGeneratorPresent();
+        runner.generator.reportConditionalFaultUid(subset, fid);
+    }
+
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
         assertGeneratorPresent();
         long reduction = runner.generator.pruneFaultUidSubset(subset);
@@ -54,10 +60,13 @@ public class FeedbackContext {
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
-    public void pruneMixedSubset(Set<Fault> fs, Set<FaultUid> fids) {
+    public void pruneMixed(Set<Fault> subset, FaultUid fault) {
         assertGeneratorPresent();
-        long reduction = runner.generator.pruneMixedSubset(fs, fids);
-        runner.statistics.incrementEstimatePruner(contextName, reduction);
+        long sum = 0;
+        for (var mode : runner.generator.getFaultModes()) {
+            sum += runner.generator.pruneFaultSubset(Sets.plus(subset, new Fault(fault, mode)));
+        }
+        runner.statistics.incrementEstimatePruner(contextName, sum);
     }
 
     public void pruneFaultload(Faultload fautload) {

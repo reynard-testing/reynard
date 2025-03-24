@@ -30,8 +30,15 @@ public record FaultUid(String origin, String destination, String signature, Stri
         return new FaultUid(origin, destination, signature, "*", count);
     }
 
+    public FaultUid asAnyCount() {
+        return new FaultUid(origin, destination, signature, payload, -1);
+    }
+
+    @Override
     public String toString() {
-        return origin + ">" + destination + ":" + signature + "(" + payload + ")#" + count;
+        String payloadStr = payload.equals("*") ? "" : "(" + payload + ")";
+        String countStr = count < 0 ? "#∞" : ("#" + count);
+        return origin + ">" + destination + ":" + signature + payloadStr + countStr;
     }
 
     private boolean isMasked(String value) {
@@ -55,7 +62,7 @@ public record FaultUid(String origin, String destination, String signature, Stri
     }
 
     private boolean matches(String a, String b) {
-        return a == null || b == null || a == "*" || b == "*" || a.equals(b);
+        return a == null || b == null || a.equals("*") || b.equals("*") || a.equals(b);
     }
 
     private boolean matches(int a, int b) {
@@ -68,5 +75,12 @@ public record FaultUid(String origin, String destination, String signature, Stri
                 matches(signature, other.signature) &&
                 matches(payload, other.payload) &&
                 matches(count, other.count);
+    }
+
+    public boolean matchesUpToCount(FaultUid other) {
+        return matches(origin, other.origin) &&
+                matches(destination, other.destination) &&
+                matches(signature, other.signature) &&
+                matches(payload, other.payload);
     }
 }

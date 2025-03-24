@@ -11,7 +11,7 @@
 
   <artifactId>suite</artifactId>
   <name>Distributed Fault Injection Library</name>
-  <version>0.0.10</version>
+  <version>0.0.11</version>
   <packaging>jar</packaging>
 
   <!-- <url>http://maven.apache.org</url> -->

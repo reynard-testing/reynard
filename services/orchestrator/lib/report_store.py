@@ -13,12 +13,17 @@ class ReportStore:
         self.spans_by_trace_id = {}
 
     def remove_by_trace_id(self, trace_id: str):
+        if not trace_id in self.reports_by_trace_id:
+            pass
+
         trace_reports = self.reports_by_trace_id.get(trace_id, [])
-        for trace_repot in trace_reports:
-            self.reports.remove(trace_repot)
-            self.reports_by_span_id[trace_repot.span_id].remove(trace_repot)
-            self.reports_by_trace_by_fault_uid[trace_id].pop(trace_repot.uid)
-        self.reports_by_trace_id.pop(trace_id)
+        self.reports_by_trace_id.pop(trace_id, None)
+        
+        for trace_report in trace_reports:
+            if trace_report in self.reports:
+                self.reports.remove(trace_report)
+                self.reports_by_span_id[trace_report.span_id].remove(trace_report)
+                self.reports_by_trace_by_fault_uid.get(trace_id, {}).pop(trace_report.uid, None)
 
     def add(self, report: ReportedSpan):
         self.reports.append(report)
@@ -33,7 +38,7 @@ class ReportStore:
             fid in self.reports_by_trace_by_fault_uid.get(trace_id)
 
     def get_by_span_id(self, span_id: str) -> list[ReportedSpan]:
-        return self.reports_by_span_id.get(span_id, [])
+        return list(self.reports_by_span_id.get(span_id, []))
 
     def get_by_trace_and_fault_uid(self, trace_id: str, fid: FaultUid) -> ReportedSpan:
         reports_for_trace_by_fault_uid = self.reports_by_trace_by_fault_uid.get(
@@ -43,4 +48,4 @@ class ReportStore:
         return reports_for_trace_by_fault_uid.get(fid, None)
 
     def get_by_trace_id(self, trace_id: str) -> list[ReportedSpan]:
-        return self.reports_by_trace_id.get(trace_id, [])
+        return list(self.reports_by_trace_id.get(trace_id, []))

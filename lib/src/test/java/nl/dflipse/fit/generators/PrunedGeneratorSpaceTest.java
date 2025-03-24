@@ -1,95 +1,31 @@
 package nl.dflipse.fit.generators;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
-import nl.dflipse.fit.strategy.generators.Generator;
-import nl.dflipse.fit.strategy.generators.IncreasingSizeMixedGenerator;
+import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
+import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.util.Enumerate;
+import nl.dflipse.fit.util.FailureModes;
+import nl.dflipse.fit.util.FaultInjectionPoints;
+import nl.dflipse.fit.util.FaultsBuilder;
 
 public class PrunedGeneratorSpaceTest {
-    private List<FaultMode> modes1 = List.of(
-            new FaultMode("x", List.of("0")));
-
-    private List<FaultMode> modes3 = List.of(
-            new FaultMode("x", List.of("0")),
-            new FaultMode("x", List.of("1")),
-            new FaultMode("x", List.of("2")));
-
-    private List<FaultMode> modes5 = List.of(
-            new FaultMode("x", List.of("0")),
-            new FaultMode("x", List.of("1")),
-            new FaultMode("x", List.of("2")),
-            new FaultMode("x", List.of("3")),
-            new FaultMode("x", List.of("4")));
-
-    private List<FaultMode> modes12 = List.of(
-            new FaultMode("x", List.of("1")),
-            new FaultMode("x", List.of("2")),
-            new FaultMode("x", List.of("3")),
-            new FaultMode("x", List.of("4")),
-            new FaultMode("x", List.of("5")),
-            new FaultMode("x", List.of("6")),
-            new FaultMode("x", List.of("7")),
-            new FaultMode("x", List.of("8")),
-            new FaultMode("x", List.of("9")),
-            new FaultMode("x", List.of("10")),
-            new FaultMode("x", List.of("11")),
-            new FaultMode("x", List.of("12")));
-
-    private int fidCounter = 0;
-
-    private FaultUid newFault() {
-        return newFault(fidCounter++);
-    }
-
-    private FaultUid newFault(int count) {
-        String countStr = "" + count;
-        return new FaultUid(countStr, countStr, countStr, countStr, count);
-    }
-
-    private List<FaultUid> pointsTwelve = List.of(
-            newFault(0),
-            newFault(1),
-            newFault(2),
-            newFault(3),
-            newFault(4),
-            newFault(5),
-            newFault(6),
-            newFault(7),
-            newFault(8),
-            newFault(9),
-            newFault(10),
-            newFault(11));
-
-    private List<FaultUid> pointsSix = List.of(
-            newFault(0),
-            newFault(1),
-            newFault(2),
-            newFault(3),
-            newFault(4),
-            newFault(5));
-
-    private List<FaultUid> pointsThree = List.of(
-            newFault(0),
-            newFault(1),
-            newFault(2));
 
     @Test(timeout = 100)
     public void testSkipAllPoints() {
-        var generator = new IncreasingSizeMixedGenerator(modes3);
-        generator.reportFaultUids(pointsTwelve);
+        var modes = FailureModes.getModes(3);
+        var points = FaultInjectionPoints.getPoints(12);
+        var generator = new IncreasingSizeGenerator(modes);
+        generator.reportFaultUids(points);
 
-        for (var fault : pointsTwelve) {
+        for (var fault : points) {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
@@ -97,124 +33,115 @@ public class PrunedGeneratorSpaceTest {
         assert faults.size() == 0;
     }
 
-    private int expectedSize(int n, int m) {
-        return (int) Math.pow(1 + m, n) - 1;
-    }
-
-    private int getGenerated(Generator gen) {
-        int i = 0;
-        while (gen.generate().size() > 0) {
-            i++;
-        }
-        return i;
-    }
-
-    private Set<Faultload> getAllGenerated(Generator gen) {
-        Set<Faultload> faultloads = new HashSet<>();
-        while (true) {
-            var newFaultloads = gen.generate();
-
-            if (newFaultloads.size() == 0) {
-                break;
-            }
-
-            faultloads.addAll(newFaultloads);
-        }
-        return faultloads;
-    }
-
     @Test(timeout = 1000)
     public void testSkipAllButOnePoint() {
-        var generator = new IncreasingSizeMixedGenerator(modes3);
-        generator.reportFaultUids(pointsTwelve);
+        var modes = FailureModes.getModes(3);
+        var points = FaultInjectionPoints.getPoints(12);
+        var generator = new IncreasingSizeGenerator(modes);
+        generator.reportFaultUids(points);
 
-        var ignored = pointsTwelve.get(4);
-        for (var fault : pointsTwelve) {
+        var ignored = points.get(4);
+
+        for (var fault : points) {
             if (fault == ignored) {
                 continue;
             }
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        assertEquals(expectedSize(1, modes3.size()), getGenerated(generator));
+        long expected = Enumerate.expectedSize(1, modes.size());
+        long actual = Enumerate.getGeneratedCount(generator);
+        assertEquals(expected, actual);
     }
 
     @Test(timeout = 1000)
     public void testSkipAllButTwoPoint() {
-        var generator = new IncreasingSizeMixedGenerator(modes3);
-        generator.reportFaultUids(pointsTwelve);
+        var modes = FailureModes.getModes(3);
+        var points = FaultInjectionPoints.getPoints(12);
+        var generator = new IncreasingSizeGenerator(modes);
+        generator.reportFaultUids(points);
 
-        var ignoredSet = Set.of(pointsTwelve.get(4), pointsTwelve.get(7));
-        for (var fault : pointsTwelve) {
+        var ignoredSet = Set.of(points.get(4), points.get(7));
+        for (var fault : points) {
             if (ignoredSet.contains(fault)) {
                 continue;
             }
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        assertEquals(expectedSize(2, modes3.size()), getGenerated(generator));
+        long expected = Enumerate.expectedSize(2, modes.size());
+        long actual = Enumerate.getGeneratedCount(generator);
+        assertEquals(expected, actual);
     }
 
     @Test(timeout = 1000)
     public void testSkipAllButFourPoint() {
-        var generator = new IncreasingSizeMixedGenerator(modes3);
-        generator.reportFaultUids(pointsTwelve);
+        var modes = FailureModes.getModes(3);
+        var points = FaultInjectionPoints.getPoints(12);
+        var generator = new IncreasingSizeGenerator(modes);
+        generator.reportFaultUids(points);
 
-        var ignoredSet = Set.of(pointsTwelve.get(4), pointsTwelve.get(7), pointsTwelve.get(2), pointsTwelve.get(8));
-        for (var fault : pointsTwelve) {
+        var ignoredSet = Set.of(points.get(4), points.get(7), points.get(2), points.get(8));
+
+        for (var fault : points) {
             if (ignoredSet.contains(fault)) {
                 continue;
             }
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        assertEquals(expectedSize(4, modes3.size()), getGenerated(generator));
+        long expected = Enumerate.expectedSize(4, modes.size());
+        long actual = Enumerate.getGeneratedCount(generator);
+        assertEquals(expected, actual);
     }
 
     // @Test(timeout = 1000)
     @Test
-    public void testNoFaults() {
-        var generator = new IncreasingSizeMixedGenerator(modes5);
-        generator.reportFaultUids(pointsThree);
+    public void testRemoveOneFaultByModes() {
+        var modes = FailureModes.getModes(5);
+        var points = FaultInjectionPoints.getPoints(3);
+        var generator = new IncreasingSizeGenerator(modes);
+        generator.reportFaultUids(points);
 
-        for (var mode : modes5) {
+        for (var mode : modes) {
             generator.pruneFaultSubset(Set.of(
-                    new Fault(pointsThree.get(0), mode)));
+                    new Fault(points.get(0), mode)));
         }
 
-        int expectedSize = 0;
-        assertEquals(expectedSize, getGenerated(generator));
+        long expected = Enumerate.expectedSize(2, modes.size());
+        long actual = Enumerate.getGeneratedCount(generator);
+        assertEquals(expected, actual);
     }
 
     // @Test(timeout = 1000)
     @Test
     public void testOneFault() {
-        var generator = new IncreasingSizeMixedGenerator(modes5);
-        generator.reportFaultUids(pointsThree);
+        var modes = FailureModes.getModes(5);
+        var points = FaultInjectionPoints.getPoints(3);
+        var generator = new IncreasingSizeGenerator(modes);
+        generator.reportFaultUids(points);
 
-        for (int i = 1; i < modes5.size(); i++) {
-            var mode = modes5.get(i);
-            generator.pruneFaultSubset(Set.of(
-                    new Fault(pointsThree.get(1), mode)));
+        for (int i = 1; i < modes.size(); i++) {
+            var mode = modes.get(i);
+            generator.pruneFaultSubset(Set.of(new Fault(points.get(1), mode)));
         }
 
-        int expectedSize = 71;
-        assertEquals(expectedSize, getGenerated(generator));
+        int expected = 71;
+        long actual = Enumerate.getGeneratedCount(generator);
+        assertEquals(expected, actual);
     }
 
     @Test
     public void testManyModes() {
-        List<FaultMode> modes = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
-            modes.add(new FaultMode("x", List.of("" + i)));
-        }
+        var modes = FailureModes.getModes(1000);
+        var points = FaultInjectionPoints.getPoints(3);
 
-        var generator = new IncreasingSizeMixedGenerator(modes);
-        generator.reportFaultUids(pointsThree);
+        var generator = new IncreasingSizeGenerator(modes);
+        generator.reportFaultUids(points);
 
         Set<Integer> ignored = Set.of(1, 500, 999);
 
-        for (var fault : pointsThree) {
+        for (var fault : points) {
             for (int i = 0; i < modes.size(); i++) {
                 if (ignored.contains(i)) {
                     continue;
@@ -225,54 +152,59 @@ public class PrunedGeneratorSpaceTest {
             }
         }
 
-        int expectedSize = 63;
-        assertEquals(expectedSize, getGenerated(generator));
+        int expected = 63;
+        long actual = Enumerate.getGeneratedCount(generator);
+        assertEquals(expected, actual);
     }
 
     @Test
     public void testManyFaults() {
+        var modes = FailureModes.getModes(12);
+        var points = FaultInjectionPoints.getPoints(6);
 
-        var generator = new IncreasingSizeMixedGenerator(modes12);
-        generator.reportFaultUids(pointsSix);
+        var generator = new IncreasingSizeGenerator(modes);
+        generator.reportFaultUids(points);
 
         Set<Integer> ignored = Set.of(1, 4, 8);
 
-        for (var fault : pointsSix) {
-            for (int i = 0; i < modes12.size(); i++) {
+        for (var fault : points) {
+            for (int i = 0; i < modes.size(); i++) {
                 if (ignored.contains(i)) {
                     continue;
                 }
 
-                var mode = modes12.get(i);
+                var mode = modes.get(i);
                 generator.pruneFaultSubset(Set.of(new Fault(fault, mode)));
             }
         }
 
-        int expectedSize = 4095;
-        assertEquals(expectedSize, getGenerated(generator));
+        int expected = 4095;
+        long actual = Enumerate.getGeneratedCount(generator);
+        assertEquals(expected, actual);
     }
 
     @Test
     public void testDoesNotContain() {
-        var modes = modes3;
-        var points = pointsSix;
+        // Given - points and modes
+        var modes = FailureModes.getModes(3);
+        var points = FaultInjectionPoints.getPoints(6);
+        var faults = new FaultsBuilder(points, modes);
 
-        var generator1 = new IncreasingSizeMixedGenerator(modes);
+        // Given - a generator with no pruned faults
+        var generator1 = new IncreasingSizeGenerator(modes);
         generator1.reportFaultUids(points);
+        List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
-        Set<Faultload> allFaultloads = getAllGenerated(generator1);
-
-        var generator2 = new IncreasingSizeMixedGenerator(modes);
+        // Given a generator and prunable faults
+        var generator2 = new IncreasingSizeGenerator(modes);
         generator2.reportFaultUids(points);
 
         var faultSubsets = Set.of(
-                Set.of(
-                        new Fault(points.get(2), modes.get(0)),
-                        new Fault(points.get(3), modes.get(1))),
-                Set.of(
-                        new Fault(points.get(3), modes.get(0)),
-                        new Fault(points.get(2), modes.get(0)),
-                        new Fault(points.get(2), modes.get(1))));
+                Set.of(faults.get(2, 0),
+                        faults.get(3, 1)),
+                Set.of(faults.get(3, 0),
+                        faults.get(2, 0),
+                        faults.get(2, 1)));
 
         var uidSubsets = Set.of(
                 Set.of(
@@ -282,6 +214,7 @@ public class PrunedGeneratorSpaceTest {
                         points.get(1),
                         points.get(5)));
 
+        // When the faults are pruned
         for (var faultSubset : faultSubsets) {
             generator2.pruneFaultSubset(faultSubset);
         }
@@ -289,38 +222,77 @@ public class PrunedGeneratorSpaceTest {
             generator2.pruneFaultUidSubset(uidSubset);
         }
 
-        Set<Faultload> allFaultloads2 = getAllGenerated(generator2);
-        for (var faultload : allFaultloads) {
-            boolean shouldPrune = false;
-            Set<Fault> prunedSubset = null;
-            for (var fs : faultSubsets) {
-                if (faultload.faultSet().containsAll(fs)) {
-                    shouldPrune = true;
-                    prunedSubset = fs;
-                    break;
-                }
-            }
+        Set<Faultload> allFaultloads2 = Enumerate.getGeneratedSet(generator2);
 
-            Set<FaultUid> prunedUidSubset = null;
-            if (!shouldPrune) {
-                for (var uids : uidSubsets) {
-                    var faultUids = faultload.getFaultUids();
-                    if (faultUids.containsAll(uids)) {
-                        shouldPrune = true;
-                        prunedUidSubset = uids;
-                        break;
-                    }
-                }
-            }
+        // Then - for all faultloads in the full enumeration
+        for (int i = 0; i < allFaultloads.size(); i++) {
+            var faultload = allFaultloads.get(i);
+            boolean shouldPruneByFaultSubset = generator2.getStore().hasFaultSubset(faultload.faultSet());
+            boolean shouldPruneByUidSubset = generator2.getStore().hasFaultUidSubset(faultload.getFaultUids());
+            boolean shouldPrune = shouldPruneByFaultSubset || shouldPruneByUidSubset;
 
-            boolean contains = allFaultloads2.contains(faultload);
+            // Then, if it should be pruned, it should not be generated
+            // Or, it should be generated
+            boolean wasGenerated = allFaultloads2.contains(faultload);
 
             if (shouldPrune) {
-                if (contains) {
+                if (wasGenerated) {
                     assert false;
                 }
             } else {
-                if (!contains) {
+                if (!wasGenerated) {
+                    assert false;
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testWithPreconditions() {
+        // Given - points and modes
+        var modes = FailureModes.getModes(2);
+        var points = FaultInjectionPoints.getPoints(3);
+        var point3 = FaultInjectionPoints.getPoint(3);
+        var faults = new FaultsBuilder(points, modes);
+
+        // Given - a generator with no pruned faults
+        var generator1 = new IncreasingSizeGenerator(modes);
+        generator1.reportFaultUids(points);
+        generator1.reportConditionalFaultUid(Set.of(), point3);
+        List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
+
+        // Given a generator and prunable faults
+        var generator2 = new IncreasingSizeGenerator(modes);
+        generator2.reportFaultUids(points);
+
+        var preconditions = List.of(
+                Set.of(faults.get(0, 0)),
+                Set.of(faults.get(2, 0)));
+
+        for (var precondition : preconditions) {
+            generator2.reportConditionalFaultUid(precondition, point3);
+        }
+
+        List<Faultload> allFaultloads2 = Enumerate.getGenerated(generator2);
+
+        // Then - for all faultloads in the full enumeration
+        for (int i = 0; i < allFaultloads.size(); i++) {
+            var faultload = allFaultloads.get(i);
+            boolean hasUid = faultload.getFaultUids().contains(point3);
+            boolean hasPrecondition = preconditions.stream()
+                    .anyMatch(pre -> Sets.isSubsetOf(pre, faultload.faultSet()));
+            boolean shouldPrune = hasUid && !hasPrecondition;
+
+            // Then, if it should be pruned, it should not be generated
+            // Or, it should be generated
+            boolean wasGenerated = allFaultloads2.contains(faultload);
+
+            if (shouldPrune) {
+                if (wasGenerated) {
+                    assert false;
+                }
+            } else {
+                if (!wasGenerated) {
                     assert false;
                 }
             }

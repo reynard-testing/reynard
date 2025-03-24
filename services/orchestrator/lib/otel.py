@@ -57,8 +57,8 @@ def otelScopedSpanToSpan(span: dict, service_name: str) -> Span:
     trace_state = span.get('traceState', None)
 
     name = span.get('name', None)
-    start_time = to_int(span.get('startTimeUnixNano', None))
-    end_time = to_int(span.get('endTimeUnixNano', None))
+    start_time = to_int(span.get('startTimeUnixNano', 0))
+    end_time = to_int(span.get('endTimeUnixNano', 0))
 
     is_error, error_message = getErrorStatus(span)
 

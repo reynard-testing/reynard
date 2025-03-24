@@ -12,12 +12,17 @@ class SpanStore:
         self.spans_by_trace_id = {}
 
     def remove_by_trace_id(self, trace_id: str):
-        spans = self.spans_by_trace_id.get(trace_id, [])
-        for span in spans:
-            self.spans.remove(span)
-            del self.spans_by_span_id[span.span_id]
+        if not trace_id in self.spans_by_trace_id:
+            pass
 
+        spans = self.spans_by_trace_id.get(trace_id, [])
         del self.spans_by_trace_id[trace_id]
+        self.spans_by_trace_id.pop(trace_id, None)
+        
+        for span in spans:
+            if span in self.spans:
+                self.spans.remove(span)
+                self.spans_by_span_id.pop(span.span_id, None)
 
     def add(self, span: Span):
         self.spans.append(span)
@@ -32,4 +37,4 @@ class SpanStore:
         return self.spans_by_span_id.get(span_id, None)
 
     def get_by_trace_id(self, trace_id: str) -> list[Span]:
-        return self.spans_by_trace_id.get(trace_id, [])
+        return list(self.spans_by_trace_id.get(trace_id, []))

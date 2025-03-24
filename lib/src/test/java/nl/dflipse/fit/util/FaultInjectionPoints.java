@@ -7,13 +7,18 @@ import nl.dflipse.fit.faultload.FaultUid;
 
 public class FaultInjectionPoints {
 
+    public static FaultUid getPoint(int x) {
+        String countStr = "" + x;
+        return new FaultUid(countStr, countStr, countStr, countStr, x);
+    }
+
     public static List<FaultUid> getPoints(int n) {
         List<FaultUid> fids = new ArrayList<>();
+
         for (int i = 0; i < n; i++) {
-            String countStr = "" + i;
-            var fid = new FaultUid(countStr, countStr, countStr, countStr, i);
-            fids.add(fid);
+            fids.add(getPoint(i));
         }
+
         return fids;
     }
 }

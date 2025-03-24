@@ -16,18 +16,13 @@ import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class RedundancyAnalyzer implements FeedbackHandler<Void> {
-    private Set<FaultUid> detectedUids = new HashSet<>();
+    private final Set<FaultUid> detectedUids = new HashSet<>();
     private FaultloadResult initialResult;
     private final Logger logger = LoggerFactory.getLogger(RedundancyAnalyzer.class);
 
     private Set<FaultUid> analyzeAppearedFaultUids(FaultloadResult result) {
         var presentFaultUids = result.trace.getFaultUids();
         var appearedFaultUids = Sets.difference(presentFaultUids, detectedUids);
-
-        if (!appearedFaultUids.isEmpty()) {
-            logger.info("New fault points appeared: " + appearedFaultUids);
-        }
-
         return appearedFaultUids;
     }
 
@@ -94,12 +89,6 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
         var appeared = analyzeAppearedFaultUids(result);
         var disappeared = analyzeDisappearedFaults(result);
         detectRandomFaults(appeared, disappeared);
-
-        // Report newly found points
-        if (!appeared.isEmpty()) {
-            context.reportFaultUids(List.copyOf(appeared));
-            detectedUids.addAll(appeared);
-        }
 
         return null;
     }

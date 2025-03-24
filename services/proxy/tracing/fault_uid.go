@@ -113,7 +113,7 @@ func getCallSignature(r *http.Request) string {
 		withoutPrefix := strings.TrimPrefix(pathOnly, pathPrefix)
 		return withoutPrefix
 	} else {
-		return normalizeUrl(pathOnly)
+		return r.Method + " " + normalizeUrl(pathOnly)
 	}
 }
 

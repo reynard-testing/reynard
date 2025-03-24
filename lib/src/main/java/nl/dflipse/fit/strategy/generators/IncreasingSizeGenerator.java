@@ -17,11 +17,10 @@ import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class IncreasingSizeGenerator implements Generator {
+    private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
     private Set<FaultMode> modes;
     private PrunableGenericPowersetTreeIterator<Fault, FaultUid> iterator;
-    private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
 
-    private long fidCounter = 0;
     private final DynamicAnalysisStore store;
 
     public IncreasingSizeGenerator(List<FaultMode> modes) {
@@ -39,39 +38,77 @@ public class IncreasingSizeGenerator implements Generator {
                 .collect(Collectors.toSet());
     }
 
+    private FaultUid faultToFaultUid(Fault fid) {
+        return fid.uid();
+    }
+
     @Override
     public void reportFaultUids(List<FaultUid> potentialFaults) {
         if (potentialFaults == null || potentialFaults.isEmpty()) {
             return;
         }
 
+        int m = modes.size();
+
         if (this.iterator == null) {
-            this.iterator = new PrunableGenericPowersetTreeIterator<Fault, FaultUid>(potentialFaults,
-                    this::faultUidtoFaults, true);
+            store.addFaultUids(potentialFaults);
+            this.iterator = new PrunableGenericPowersetTreeIterator<>(potentialFaults,
+                    this::faultUidtoFaults, this::faultToFaultUid, true);
 
             for (var prunedFaults : store.getRedundantFaultSubsets()) {
-                var faultSet = DynamicAnalysisStore.pairsToFaults(prunedFaults);
-                iterator.prune(faultSet);
+                iterator.prune(prunedFaults);
             }
 
-            fidCounter = potentialFaults.size();
-            long expectedSize = iterator.size(modes.size());
+            long expectedSize = iterator.size(m);
             logger.info("Found " + potentialFaults.size() + " fault points. Will generate at most "
                     + expectedSize
                     + " new test cases");
         } else {
-            int m = modes.size();
             long oldSize = iterator.size(m);
 
             for (var fid : potentialFaults) {
+                boolean isNew = store.addFaultUid(fid);
+                if (!isNew) {
+                    continue;
+                }
+
                 logger.info("Found NEW fault injection point: " + fid);
                 this.iterator.add(fid);
             }
 
             long newSize = iterator.size(m) - oldSize;
-            fidCounter += potentialFaults.size();
             logger.info("Added " + newSize + " new test cases");
         }
+    }
+
+    @Override
+    public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
+        if (fid == null) {
+            return;
+        }
+
+        if (condition.isEmpty()) {
+            reportFaultUids(List.of(fid));
+            return;
+        }
+
+        if (this.iterator == null) {
+            throw new IllegalStateException(
+                    "Cannot add conditional fault injection point if no normal fault injection points are discovered");
+        }
+
+        int m = modes.size();
+        long oldSize = iterator.size(m);
+        boolean isNew = store.addConditionalFaultUid(condition, fid);
+
+        if (!isNew) {
+            return;
+        }
+
+        this.iterator.addConditional(condition, fid);
+
+        long newSize = iterator.size(m) - oldSize;
+        logger.info("Added " + newSize + " new test cases");
     }
 
     @Override
@@ -127,10 +164,13 @@ public class IncreasingSizeGenerator implements Generator {
         return sum;
     }
 
+    private int getN() {
+        return store.getFaultInjectionPoints().size();
+    }
+
     @Override
     public long pruneFaultSubset(Set<Fault> subset) {
-        var prunableSet = store.ignoreFaultSubset(subset);
-        boolean isNew = prunableSet != null;
+        boolean isNew = store.ignoreFaultSubset(subset);
 
         // if (!isNew) {
         // return 0;
@@ -144,17 +184,7 @@ public class IncreasingSizeGenerator implements Generator {
         // All subsets that contain this subset, the faults are fixed.
         // E.g., only 1 way to assign the subset items
         // so the others (the front) can be assigned in any way
-        return subsetSpaceSize(0, fidCounter - subsetSize);
-    }
-
-    @Override
-    public long pruneMixedSubset(Set<Fault> faultSubset, Set<FaultUid> uidSubset) {
-        long sum = 0;
-        for (Set<Fault> prunedSet : allFaults(List.copyOf(uidSubset), faultSubset)) {
-            sum += this.pruneFaultSubset(prunedSet);
-        }
-
-        return sum;
+        return subsetSpaceSize(0, getN() - subsetSize);
     }
 
     @Override
@@ -173,11 +203,11 @@ public class IncreasingSizeGenerator implements Generator {
 
     @Override
     public long spaceSize() {
-        return subsetSpaceSize(0, fidCounter);
+        return subsetSpaceSize(0, getN());
     }
 
     public long getElements() {
-        return fidCounter;
+        return getN();
     }
 
     @Override
@@ -187,6 +217,18 @@ public class IncreasingSizeGenerator implements Generator {
 
     public DynamicAnalysisStore getStore() {
         return store;
+    }
+
+    public int getMaxQueueSize() {
+        return iterator.getMaxQueueSize();
+    }
+
+    public int getQueuSize() {
+        return iterator.getQueuSize();
+    }
+
+    public long getSpaceLeft() {
+        return iterator.size(this.modes.size());
     }
 
 }

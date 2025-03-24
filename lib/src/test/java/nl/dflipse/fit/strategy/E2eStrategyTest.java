@@ -17,7 +17,7 @@ public class E2eStrategyTest {
 
     private class DummyGenerator implements Generator {
 
-        private List<Faultload> queue;
+        private final List<Faultload> queue;
         private Set<FaultMode> modes;
 
         public DummyGenerator(List<Faultload> queue) {
@@ -40,7 +40,7 @@ public class E2eStrategyTest {
 
         @Override
         public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
-            return;
+
         }
 
         @Override
@@ -64,13 +64,13 @@ public class E2eStrategyTest {
         }
 
         @Override
-        public long pruneMixedSubset(Set<Fault> subset, Set<FaultUid> subset2) {
-            return 0;
+        public Set<FaultMode> getFaultModes() {
+            return modes;
         }
 
         @Override
-        public Set<FaultMode> getFaultModes() {
-            return modes;
+        public void reportConditionalFaultUid(Set<Fault> subset, FaultUid faultInjectionPoints) {
+
         }
     }
 

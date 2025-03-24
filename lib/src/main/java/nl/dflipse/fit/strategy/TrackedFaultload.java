@@ -15,6 +15,7 @@ public class TrackedFaultload {
     private TraceState traceState;
 
     public TaggedTimer timer = new TaggedTimer();
+    public int getDelayMs = 100;
 
     public TrackedFaultload() {
         this(new Faultload(Set.of()));
@@ -31,6 +32,21 @@ public class TrackedFaultload {
 
     public TrackedFaultload withMaskPayload() {
         traceState.set("mask", "1");
+        return this;
+    }
+
+    public TrackedFaultload withBodyHashing() {
+        traceState.set("hashbody", "1");
+        return this;
+    }
+
+    public TrackedFaultload withHeaderLog() {
+        traceState.set("headerlog", "1");
+        return this;
+    }
+
+    public TrackedFaultload withGetDelay(int ms) {
+        this.getDelayMs = ms;
         return this;
     }
 

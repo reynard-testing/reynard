@@ -79,7 +79,7 @@ def get_trace_tree_for_trace(trace_id: str) -> tuple[list[Span], list[TraceTreeN
             parent_span_id=None,
             name="Client Root Span",
             start_time=0,
-            end_time=0,
+            end_time=1,
             service_name="Client",
             trace_state=None,
             is_error=False,
@@ -174,6 +174,8 @@ def debug_get_all_exports():
 
 @app.route('/v1/trace/<trace_id>', methods=['GET'])
 def get_all_by_trace_id(trace_id):
+    if not trace_id in trace_ids:
+        return f"Trace id {trace_id} not known", 404
     spans, trees = get_trace_tree_for_trace(trace_id)
 
     reports = report_store.get_by_trace_id(trace_id)
@@ -223,6 +225,7 @@ async def report_span_id():
     response = data.get('response')
 
     if trace_id not in trace_ids:
+        print(f"Trace id ({trace_id}) not registered anymore for uid {uid}", flush=True)
         return "Trace not registered", 404
 
     responseData = None
@@ -268,6 +271,7 @@ async def register_faultload_at_proxy(proxy: str, payload):
     response = requests.post(url, json=payload)
 
     if response.status_code != 200:
+        print(f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}", flush=True)
         raise Exception(
             f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}")
 
@@ -282,6 +286,7 @@ async def register_faultload():
         proxy, payload) for proxy in proxy_list]
     await asyncio.gather(*tasks)
 
+    print(f"Registered trace {trace_id}", flush=True)
     return "OK", 200
 
 
@@ -298,15 +303,22 @@ async def unregister_faultload_at_proxy(proxy: str, payload):
 async def unregister_faultload():
     payload = request.get_json()
     trace_id = payload.get('trace_id')
-    trace_ids.remove(trace_id)
-    if not debug_flag_set:
-        span_store.remove_by_trace_id(trace_id)
-        report_store.remove_by_trace_id(trace_id)
+
+    if not trace_id in trace_ids:
+        return f"Trace id {trace_id} not known", 404
 
     tasks = [unregister_faultload_at_proxy(
         proxy, payload) for proxy in proxy_list]
     await asyncio.gather(*tasks)
 
+    trace_ids.remove(trace_id)
+    if not debug_flag_set:
+        try:
+            span_store.remove_by_trace_id(trace_id)
+            report_store.remove_by_trace_id(trace_id)
+        except:
+            pass
+    print(f"Unregistered trace {trace_id}", flush=True)
     return "OK", 200
 
 

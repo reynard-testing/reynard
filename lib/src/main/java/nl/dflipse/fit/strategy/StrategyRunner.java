@@ -24,6 +24,9 @@ public class StrategyRunner {
     public StrategyStatistics statistics = new StrategyStatistics(this);
 
     private boolean withPayloadMasking = false;
+    private boolean withBodyHashing = false;
+    private boolean withLogHeader = false;
+    private int withGetDelayMs = 0;
     private long testCasesLeft = -1;
 
     private final Logger logger = LoggerFactory.getLogger(StrategyRunner.class);
@@ -39,6 +42,21 @@ public class StrategyRunner {
 
     public StrategyRunner withPayloadMasking() {
         withPayloadMasking = true;
+        return this;
+    }
+
+    public StrategyRunner withBodyHashing() {
+        withBodyHashing = true;
+        return this;
+    }
+
+    public StrategyRunner withLogHeader() {
+        withLogHeader = true;
+        return this;
+    }
+
+    public StrategyRunner withGetDelay(int ms) {
+        withGetDelayMs = ms;
         return this;
     }
 
@@ -80,6 +98,18 @@ public class StrategyRunner {
             tracked.withMaskPayload();
         }
 
+        if (withBodyHashing) {
+            tracked.withBodyHashing();
+        }
+
+        if (withLogHeader) {
+            tracked.withHeaderLog();
+        }
+
+        if (withGetDelayMs > 0) {
+            tracked.withGetDelay(withGetDelayMs);
+        }
+
         return tracked;
     }
 
@@ -117,7 +147,7 @@ public class StrategyRunner {
             }
 
             // Keep generating and pruning until we have new faultloads in the queue
-            if (queue.size() > 0) {
+            if (!queue.isEmpty()) {
                 break;
             }
         }
@@ -169,22 +199,22 @@ public class StrategyRunner {
         }
 
         for (Pruner pruner : pruners) {
-            if (pruner instanceof FeedbackHandler) {
+            if (pruner instanceof FeedbackHandler feedbackHandler) {
                 String name = pruner.getClass().getSimpleName();
                 String tag = name + ".handleFeedback<Pruner>";
                 FeedbackContext context = new FeedbackContext(this, name);
                 result.faultload.timer.start(tag);
-                ((FeedbackHandler) pruner).handleFeedback(result, context);
+                feedbackHandler.handleFeedback(result, context);
                 result.faultload.timer.stop(tag);
             }
         }
 
-        if (generator instanceof FeedbackHandler) {
+        if (generator instanceof FeedbackHandler feedbackHandler) {
             String name = generator.getClass().getSimpleName();
             String tag = name + ".handleFeedback<Generator>";
             FeedbackContext context = new FeedbackContext(this, name);
             result.faultload.timer.start(tag);
-            ((FeedbackHandler) generator).handleFeedback(result, context);
+            feedbackHandler.handleFeedback(result, context);
             result.faultload.timer.stop(tag);
         }
 

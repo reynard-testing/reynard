@@ -41,6 +41,10 @@ public class TraceAnalysis {
             if (report.injectedFault != null) {
                 injectedFaults.add(report.injectedFault);
             }
+
+            if (report.response == null) {
+                isIncomplete = true;
+            }
         }
 
         analyseNode(rootNode, null);
@@ -50,6 +54,10 @@ public class TraceAnalysis {
     /** Analyse the node, given the most direct FaultUid ancestor */
     private void analyseNode(TraceTreeSpan node, FaultUid parent) {
         FaultUid nextParent = parent;
+
+        if (node.span.endTime <= 0) {
+            isIncomplete = true;
+        }
 
         // Check if the node has a report from a fault injection proxy
         if (node.hasReport()) {

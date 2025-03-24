@@ -136,7 +136,18 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		// Start reporting the span for the request
-		tracing.ReportSpanUID(proxyState.asReport(metadata))
+		shouldHashBody := state.GetWithDefault("hashbody", "0") == "1"
+		if shouldHashBody {
+			log.Printf("Body hashing enabled.\n")
+		}
+
+		shouldLogHeader := state.GetWithDefault("headerlog", "0") == "1"
+		if shouldLogHeader {
+			log.Printf("Header logging enabled.\n")
+			log.Printf("Headers: %s\n", r.Header)
+		}
+
+		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 
 		for _, fault := range faults {
 			if fault.Uid.Matches(faultUid) {
@@ -158,6 +169,6 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		proxyState.Complete = true
-		tracing.ReportSpanUID(proxyState.asReport(metadata))
+		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 	})
 }

@@ -40,7 +40,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler<Void> {
             return null;
         }
 
-        logger.info("Found impactless faultload: " + result.faultload);
+        logger.info("Found impactless faultload: " + injected);
         impactlessFaults.add(injected);
         context.pruneFaultSubset(injected);
 

@@ -224,11 +224,11 @@ public class IncreasingSizeGenerator implements Generator {
     }
 
     public int getQueuSize() {
-        return iterator.getQueuSize();
+        return iterator == null ? 0 : iterator.getQueuSize();
     }
 
     public long getSpaceLeft() {
-        return iterator.size(this.modes.size());
+        return iterator == null ? 0 : iterator.size(this.modes.size());
     }
 
 }

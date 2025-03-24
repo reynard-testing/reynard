@@ -9,8 +9,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import static org.junit.Assert.assertEquals;
 
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
@@ -19,6 +17,7 @@ import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
 import nl.dflipse.fit.strategy.TrackedFaultload;
+import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -32,7 +31,6 @@ public class MetaTest {
     private static final String PROXY_IMAGE = "fit-proxy:latest";
     private static final String COORDINATOR_IMAGE = "fit-otel-orchestrator:latest";
     private static final String COLLECTOR_ENDPOINT = "http://" + app.collectorHost + ":4317";
-    private static final ObjectMapper mapper = new ObjectMapper();
     public static final MediaType JSON = MediaType.get("application/json");
 
     private OkHttpClient client = new OkHttpClient.Builder()
@@ -71,7 +69,8 @@ public class MetaTest {
                     .withEnv("PROXY_LIST", "proxy1:8050,proxy2:8050")
                     .withEnv("OTEL_SERVICE_NAME", "orchestrator")
                     .withEnv("OTEL_TRACES_EXPORTER", "otlp")
-                    .withEnv("OTEL_BSP_EXPORT_TIMEOUT", "0")
+                    .withEnv("OTEL_BSP_SCHEDULE_DELAY", "1")
+                    .withEnv("OTEL_BSP_EXPORT_TIMEOUT", "100")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT)
                     .withExposedPorts(5000));
 
@@ -89,8 +88,8 @@ public class MetaTest {
         app.stop();
     }
 
-    @FiTest
-    public void testApp(TrackedFaultload faultload) throws IOException {
+    @FiTest(getTraceInitialDelay = 200)
+    public void testRegister(TrackedFaultload faultload) throws IOException {
         int port = orchestrator.getService().getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
 
@@ -109,8 +108,12 @@ public class MetaTest {
                 + faultload.getTraceId();
 
         try (Response response = client.newCall(request).execute()) {
-            boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
-            int expectedResponse = containsError ? 500 : 200;
+            TraceAnalysis result = getController().getTrace(faultload);
+            boolean containsPersistent = result.getInjectedFaults()
+                    .stream()
+                    .anyMatch(f -> f.isPersistent());
+
+            int expectedResponse = containsPersistent ? 500 : 200;
             int actualResponse = response.code();
             assertEquals(expectedResponse, actualResponse);
         }

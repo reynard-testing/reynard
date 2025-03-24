@@ -49,6 +49,14 @@ public record FaultUid(String origin, String destination, String signature, Stri
         return value < 0;
     }
 
+    public boolean isTransient() {
+        return count >= 0;
+    }
+
+    public boolean isPersistent() {
+        return count < 0;
+    }
+
     public FaultUid applyMask(FaultUid mask) {
         if (mask == null) {
             return this;

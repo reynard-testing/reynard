@@ -11,15 +11,16 @@
 
     <Loggers>
         <Logger name="nl.dflipse" level="DEBUG" />
-        <Logger name="org.testcontainers" level="INFO" />
+        <!-- <Logger name="nl.dflipse" level="INFO" /> -->
         <Root level="WARN">
             <AppenderRef ref="CONSOLE" />
         </Root>
         <!-- The following logger can be used for containers logs since 1.18.0 -->
+        <!-- <Logger name="org.testcontainers" level="OFF" />
         <Logger name="tc" level="INFO" />
-        <Logger name="com.github.dockerjava" level="WARN" />
+        <Logger name="com.github.dockerjava" level="INFO" />
         <Logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.wire"
-            level="OFF" />
+            level="OFF" /> -->
     </Loggers>
 
 </Configuration>

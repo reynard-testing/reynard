@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy.pruners;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,17 +17,24 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 
-// TODO: rename
-public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
+/**
+ * Pruner that prunes faults that are redundant due to cause-effect
+ * relationships
+ * I.e. if a fault is injected, and another fault disappears,
+ * s set of fault causes the disappearance of the fault (the effect)
+ */
+public class CauseEffectPruner implements Pruner, FeedbackHandler<Void> {
 
-    private FaultloadResult initialResult;
+    private final Set<FaultUid> pointsInHappyPath = new HashSet<>();
     private final Map<FaultUid, Set<Set<Fault>>> effectCauseMapping = new HashMap<>();
-    private final Logger logger = LoggerFactory.getLogger(HappensBeforePruner.class);
+    private final Logger logger = LoggerFactory.getLogger(CauseEffectPruner.class);
 
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+        var faultsInTrace = result.trace.getFaultUids();
+
         if (result.isInitial()) {
-            initialResult = result;
+            pointsInHappyPath.addAll(faultsInTrace);
             return null;
         }
 
@@ -39,16 +47,13 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
             return null;
         }
 
-        var faultsInTrace = result.trace.getFaultUids();
-
         // dissappeared faults
         // are those that were in the initial trace,
         // but not in the current trace
         // and not the cause
         Set<FaultUid> injectedFaultPoints = injectedErrorFaults.stream().map(Fault::uid).collect(Collectors.toSet());
 
-        Set<FaultUid> dissappearedFaultPoints = initialResult.trace.getFaultUids()
-                .stream()
+        Set<FaultUid> dissappearedFaultPoints = pointsInHappyPath.stream()
                 .filter(f -> !faultsInTrace.contains(f))
                 .filter(f -> !injectedFaultPoints.contains(f))
                 .collect(Collectors.toSet());

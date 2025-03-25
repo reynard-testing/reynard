@@ -30,7 +30,7 @@ import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
-import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
+import nl.dflipse.fit.strategy.pruners.CauseEffectPruner;
 import nl.dflipse.fit.strategy.pruners.NoImpactPruner;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
@@ -74,7 +74,7 @@ public class FiTestExtension
                 .withAnalyzer(new RedundancyAnalyzer())
                 .withPruner(new ParentChildPruner())
                 .withPruner(new ErrorPropogationPruner())
-                .withPruner(new HappensBeforePruner())
+                .withPruner(new CauseEffectPruner())
                 .withPruner(new NoImpactPruner())
                 .withPruner(new DynamicReductionPruner());
 

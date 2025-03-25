@@ -28,10 +28,15 @@ func getEnvOrDefault(envVar, defaultValue string) string {
 	return value
 }
 
-func FaultUidFromRequest(r *http.Request, destination string, maskPayload bool) faultload.FaultUid {
+func FaultUidFromRequest(r *http.Request, destination string, maskPayload, isInitial bool) faultload.FaultUid {
 	traceId := getTraceId(r)
 	signature := getCallSignature(r)
-	origin := getOrigin(r)
+
+	origin := "<none>"
+	if !isInitial {
+		origin = getOrigin(r)
+	}
+
 	// destination := getDestination(r)
 	payload := "*"
 	if !maskPayload {

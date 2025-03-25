@@ -1,5 +1,7 @@
 package nl.dflipse.fit.strategy.pruners;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,12 +15,12 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.strategy.util.TransativeRelation;
 
+// TODO: rename
 public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
 
     private FaultloadResult initialResult;
-    private final TransativeRelation<Fault> happensBefore = new TransativeRelation<>();
+    private final Map<Fault, Set<Set<Fault>>> happensBeforeMapping = new HashMap<>();
     private final Logger logger = LoggerFactory.getLogger(HappensBeforePruner.class);
 
     @Override
@@ -28,16 +30,14 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
             return null;
         }
 
-        // if a single fault causes others to disappear
-        // their combination is redundant
+        // if (a set of) fault(s) causes another fault to disappear
+        // then the cause(s) happens before the effect
         Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
 
         // if we have a singular cause
-        if (injectedErrorFaults.size() != 1) {
+        if (injectedErrorFaults.isEmpty()) {
             return null;
         }
-
-        Fault cause = Sets.getOnlyElement(injectedErrorFaults);
 
         var faultsInTrace = result.trace.getFaultUids();
 
@@ -46,10 +46,12 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
         // are those that were in the initial trace,
         // but not in the current trace
         // and not the cause
-        var dissappearedFaultPoints = initialResult.trace.getFaultUids()
+        Set<FaultUid> injectedFaultPoints = injectedErrorFaults.stream().map(Fault::uid).collect(Collectors.toSet());
+
+        Set<FaultUid> dissappearedFaultPoints = initialResult.trace.getFaultUids()
                 .stream()
                 .filter(f -> !faultsInTrace.contains(f))
-                .filter(f -> !f.equals(cause))
+                .filter(f -> !injectedFaultPoints.contains(f))
                 .collect(Collectors.toSet());
 
         if (dissappearedFaultPoints.isEmpty()) {
@@ -59,75 +61,46 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
         // We have identified a cause, and its effects
         // We can now relate the happens before
         for (var disappearedFaultPoint : dissappearedFaultPoints) {
-            handleHappensBefore(cause, disappearedFaultPoint, context);
+            handleHappensBefore(injectedErrorFaults, disappearedFaultPoint, context);
         }
 
         // prune the fault subset
-        for (var pair : happensBefore.getTransativeRelations()) {
-            var parent = pair.getFirst();
-            var child = pair.getSecond();
+        for (var causeAndEffect : happensBeforeMapping.entrySet()) {
+            var effect = causeAndEffect.getKey();
+            var possibleCauses = causeAndEffect.getValue();
 
-            if (parent == null || child == null) {
-                continue;
+            for (var cause : possibleCauses) {
+                var redundant = Sets.plus(cause, effect);
+                context.pruneFaultSubset(redundant);
             }
-
-            // The parent makes the child disappear
-            // so we can prune the combination
-            context.pruneFaultSubset(Set.of(parent, child));
         }
 
         return null;
     }
 
-    private void relateHappensBefore(Fault cause, FaultUid effect, FeedbackContext context) {
+    private boolean hasAlready(Set<Fault> cause, Fault effect) {
+        if (!happensBeforeMapping.containsKey(effect)) {
+            return false;
+        }
+
+        Set<Set<Fault>> possibleCauses = happensBeforeMapping.get(effect);
+        return possibleCauses.stream()
+                .anyMatch(pc -> Sets.isSubsetOf(pc, cause));
+
+    }
+
+    private void handleHappensBefore(Set<Fault> cause, FaultUid effect, FeedbackContext context) {
+        logger.info("Found dependent effect: " + cause + " hides " + effect);
+
         for (var mode : context.getFaultModes()) {
             var effectFault = new Fault(effect, mode);
-            happensBefore.addRelation(cause, effectFault);
-        }
-    }
-
-    private void relateHappensBefore(FaultUid cause, FaultUid effect, FeedbackContext context) {
-        for (var mode : context.getFaultModes()) {
-            var causeFault = new Fault(cause, mode);
-            relateHappensBefore(causeFault, effect, context);
-        }
-    }
-
-    private void handleHappensBefore(Fault cause, FaultUid effect, FeedbackContext context) {
-        // If the cause is a decendant of the effect
-        // Then it is trivial, and covered by the Parent-Child pruner
-        FaultUid causeUid = cause.uid();
-        if (initialResult.trace.isDecendantOf(causeUid, effect)) {
-            logger.info("Parent-Child happens before: " + cause + " -> " + effect);
-            relateHappensBefore(cause, effect, context);
-            return;
-        }
-
-        logger.info("Direct happens before: " + cause + " -> " + effect);
-        relateHappensBefore(cause, effect, context);
-
-        // If a ancestor of the cause is the parent of the effect
-        // Then the parental causes happens before the effect
-        var effectParent = initialResult.trace.getParent(effect);
-        var causeAncestors = initialResult.trace.getParents(causeUid);
-        if (causeAncestors.contains(effectParent)) {
-            for (var ancestralCause : causeAncestors) {
-                if (ancestralCause == null) {
-                    break;
-                }
-
-                if (ancestralCause.equals(effectParent) || ancestralCause.equals(effect)) {
-                    break;
-                }
-
-                // add the relation
-                // TODO: combine with error propogation?
-                logger.info("Ancestor happens before: " + ancestralCause + " -> " + effect);
-                // relateHappensBefore(ancestralCause, effect, context);
+            if (hasAlready(cause, effectFault)) {
+                continue;
             }
 
-            return;
+            happensBeforeMapping.put(effectFault, Set.of(cause));
         }
+
     }
 
     @Override
@@ -135,12 +108,13 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
         // if an error is injected, and its children are also injected, it is
         // redundant.
 
-        boolean isRedundant = Sets.anyPair(faultload.faultSet(), (pair) -> {
-            var f1 = pair.getFirst();
-            var f2 = pair.getSecond();
-            return happensBefore.areRelated(f1, f2);
-        });
-
+        Set<Fault> faultset = faultload.faultSet();
+        // if the faultset contains a fault with its causes
+        // then the faultset is redundant
+        boolean isRedundant = faultset.stream()
+                .anyMatch(f -> happensBeforeMapping.containsKey(f) &&
+                        happensBeforeMapping.get(f).stream()
+                                .anyMatch(cause -> Sets.isSubsetOf(faultset, cause)));
         return isRedundant;
     }
 

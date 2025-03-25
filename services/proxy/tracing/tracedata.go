@@ -33,6 +33,10 @@ func (t TraceStateData) Set(key, value string) {
 	t[key] = value
 }
 
+func (t TraceStateData) Delete(key string) {
+	delete(t, key)
+}
+
 func (t TraceStateData) HasKeys() bool {
 	return len(t) > 0
 }

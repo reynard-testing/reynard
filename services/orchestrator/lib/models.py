@@ -55,6 +55,7 @@ class ReportedSpan:
     trace_id: str
     span_id: str
     uid: FaultUid
+    is_initial: bool
     injected_fault: Fault
     response: ResponseData
 

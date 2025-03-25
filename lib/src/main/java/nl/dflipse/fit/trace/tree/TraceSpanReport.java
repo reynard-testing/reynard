@@ -23,6 +23,9 @@ public class TraceSpanReport {
     @JsonProperty("injected_fault")
     public Fault injectedFault;
 
+    @JsonProperty("is_initial")
+    public boolean isInitial;
+
     @JsonProperty("response")
     public TraceSpanResponse response;
 }

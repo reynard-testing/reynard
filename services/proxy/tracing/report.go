@@ -20,14 +20,16 @@ type RequestReport struct {
 	TraceId       string             `json:"trace_id"`
 	SpanId        string             `json:"span_id"`
 	FaultUid      faultload.FaultUid `json:"uid"`
+	IsInitial     bool               `json:"is_initial"`
 	InjectedFault *faultload.Fault   `json:"injected_fault"`
 	Response      *ResponseData      `json:"response"`
 }
 
 type RequestMetadata struct {
-	TraceId  string
-	SpanId   string
-	FaultUid faultload.FaultUid
+	TraceId   string
+	SpanId    string
+	FaultUid  faultload.FaultUid
+	IsInitial bool
 }
 
 var queryHost string = os.Getenv("ORCHESTRATOR_HOST")

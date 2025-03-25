@@ -22,7 +22,8 @@ import okhttp3.Response;
 public class FilibusterTest {
     private static final RemoteController controller = new RemoteController("http://localhost:6050");
 
-    private static final int PORT = 5000;
+    private static final int AUDIBLE_PORT = 5000;
+    private static final int NETFLIX_PORT = 5000;
 
     private OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(5, TimeUnit.SECONDS)
@@ -41,7 +42,7 @@ public class FilibusterTest {
         var tracestate = faultload.getTraceState().toString();
 
         Request request = new Request.Builder()
-                .url("http://localhost:" + PORT + "/users/user1/books/book2")
+                .url("http://localhost:" + AUDIBLE_PORT + "/users/user1/books/book2")
                 .addHeader("traceparent", traceparent)
                 .addHeader("tracestate", tracestate)
                 .build();
@@ -69,7 +70,7 @@ public class FilibusterTest {
         var tracestate = faultload.getTraceState().toString();
 
         Request request = new Request.Builder()
-                .url("http://localhost:" + PORT + "/netflix/homepage/users/chris_rivers")
+                .url("http://localhost:" + NETFLIX_PORT + "/netflix/homepage/users/chris_rivers")
                 .addHeader("traceparent", traceparent)
                 .addHeader("tracestate", tracestate)
                 .build();

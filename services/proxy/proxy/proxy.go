@@ -112,13 +112,24 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		if shouldMaskPayload {
 			log.Printf("Payload masking enabled.\n")
 		}
-		faultUid := tracing.FaultUidFromRequest(r, destination, shouldMaskPayload)
+
+		// determine if this is the initial request
+		// and update the tracestate accordingly
+		isInitial := state.GetWithDefault("init", "0") == "1"
+		if isInitial {
+			log.Printf("Initial request.\n")
+			state.Delete("init")
+			r.Header.Set("tracestate", state.String())
+		}
+
+		faultUid := tracing.FaultUidFromRequest(r, destination, shouldMaskPayload, isInitial)
 		log.Printf("Determined Fault UID: %s\n", faultUid.String())
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
-			TraceId:  parent.TraceID,
-			SpanId:   parent.ParentID,
-			FaultUid: faultUid,
+			TraceId:   parent.TraceID,
+			SpanId:    parent.ParentID,
+			FaultUid:  faultUid,
+			IsInitial: isInitial,
 		}
 
 		capture := &ResponseCapture{

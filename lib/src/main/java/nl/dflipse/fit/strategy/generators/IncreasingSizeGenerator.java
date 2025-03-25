@@ -215,6 +215,11 @@ public class IncreasingSizeGenerator implements Generator {
         return modes;
     }
 
+    @Override
+    public Set<FaultUid> getFaultInjectionPoints() {
+        return store.getFaultInjectionPoints();
+    }
+
     public DynamicAnalysisStore getStore() {
         return store;
     }

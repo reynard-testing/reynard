@@ -21,6 +21,8 @@ public interface Generator {
 
     public Set<FaultMode> getFaultModes();
 
+    public Set<FaultUid> getFaultInjectionPoints();
+
     public List<Faultload> generate();
 
     public long spaceSize();

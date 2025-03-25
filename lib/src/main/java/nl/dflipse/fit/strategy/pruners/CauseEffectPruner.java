@@ -20,7 +20,7 @@ import nl.dflipse.fit.strategy.util.Sets;
 public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
 
     private FaultloadResult initialResult;
-    private final Map<Fault, Set<Set<Fault>>> happensBeforeMapping = new HashMap<>();
+    private final Map<FaultUid, Set<Set<Fault>>> effectCauseMapping = new HashMap<>();
     private final Logger logger = LoggerFactory.getLogger(HappensBeforePruner.class);
 
     @Override
@@ -41,7 +41,6 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
 
         var faultsInTrace = result.trace.getFaultUids();
 
-        // TODO: relate to previous subset run?
         // dissappeared faults
         // are those that were in the initial trace,
         // but not in the current trace
@@ -65,25 +64,40 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
         }
 
         // prune the fault subset
-        for (var causeAndEffect : happensBeforeMapping.entrySet()) {
+        for (var causeAndEffect : effectCauseMapping.entrySet()) {
             var effect = causeAndEffect.getKey();
             var possibleCauses = causeAndEffect.getValue();
 
-            for (var cause : possibleCauses) {
-                var redundant = Sets.plus(cause, effect);
-                context.pruneFaultSubset(redundant);
+            var effectedPoints = context.getFaultUids().stream()
+                    .filter(f -> f.matchesUpToCount(effect))
+                    .collect(Collectors.toSet());
+
+            // For every related fault injection point
+            for (var point : effectedPoints) {
+                // and every fault mode
+                for (var mode : context.getFaultModes()) {
+                    var fault = new Fault(point, mode);
+
+                    // and each possible cause for the dissapeareance
+                    // of the fault
+                    for (var cause : possibleCauses) {
+                        // the combination is redundant
+                        var redundant = Sets.plus(cause, fault);
+                        context.pruneFaultSubset(redundant);
+                    }
+                }
             }
         }
 
         return null;
     }
 
-    private boolean hasAlready(Set<Fault> cause, Fault effect) {
-        if (!happensBeforeMapping.containsKey(effect)) {
+    private boolean hasAlready(Set<Fault> cause, FaultUid effect) {
+        if (!effectCauseMapping.containsKey(effect)) {
             return false;
         }
 
-        Set<Set<Fault>> possibleCauses = happensBeforeMapping.get(effect);
+        Set<Set<Fault>> possibleCauses = effectCauseMapping.get(effect);
         return possibleCauses.stream()
                 .anyMatch(pc -> Sets.isSubsetOf(pc, cause));
 
@@ -92,14 +106,14 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
     private void handleHappensBefore(Set<Fault> cause, FaultUid effect, FeedbackContext context) {
         logger.info("Found dependent effect: " + cause + " hides " + effect);
 
-        for (var mode : context.getFaultModes()) {
-            var effectFault = new Fault(effect, mode);
-            if (hasAlready(cause, effectFault)) {
-                continue;
-            }
+        // Also discregard any counts of the effect
 
-            happensBeforeMapping.put(effectFault, Set.of(cause));
+        if (hasAlready(cause, effect)) {
+            return;
         }
+
+        // Store as the fid (disregarding count)
+        effectCauseMapping.put(effect.asAnyCount(), Set.of(cause));
 
     }
 
@@ -109,12 +123,24 @@ public class HappensBeforePruner implements Pruner, FeedbackHandler<Void> {
         // redundant.
 
         Set<Fault> faultset = faultload.faultSet();
-        // if the faultset contains a fault with its causes
-        // then the faultset is redundant
-        boolean isRedundant = faultset.stream()
-                .anyMatch(f -> happensBeforeMapping.containsKey(f) &&
-                        happensBeforeMapping.get(f).stream()
-                                .anyMatch(cause -> Sets.isSubsetOf(faultset, cause)));
+
+        // for each fault in the faultload
+        Set<FaultUid> relatedUidsInFaultload = faultset.stream()
+                // given their uid
+                .map(Fault::uid)
+                // diregard the count
+                .map(FaultUid::asAnyCount)
+                // that has a known redundancy
+                .filter(effectCauseMapping::containsKey)
+                .collect(Collectors.toSet());
+
+        boolean isRedundant = relatedUidsInFaultload.stream()
+                // for any related fid's causes
+                .anyMatch(f -> effectCauseMapping.get(f).stream()
+                        // if the cause is a subset of the faultset
+                        // it is redundant
+                        .anyMatch(cause -> Sets.isSubsetOf(faultset, cause)));
+
         return isRedundant;
     }
 

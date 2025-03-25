@@ -75,7 +75,7 @@ public class FiTestExtension
                 .withPruner(new ParentChildPruner())
                 .withPruner(new ErrorPropogationPruner())
                 .withPruner(new CauseEffectPruner())
-                .withPruner(new NoImpactPruner())
+                // .withPruner(new NoImpactPruner())
                 .withPruner(new DynamicReductionPruner());
 
         if (annotation.maxTestCases() > 0) {

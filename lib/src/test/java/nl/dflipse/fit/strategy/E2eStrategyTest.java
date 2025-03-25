@@ -72,6 +72,12 @@ public class E2eStrategyTest {
         public void reportConditionalFaultUid(Set<Fault> subset, FaultUid faultInjectionPoints) {
 
         }
+
+        @Override
+        public Set<FaultUid> getFaultInjectionPoints() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'getFaultInjectionPoints'");
+        }
     }
 
     @Test

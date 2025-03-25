@@ -53,29 +53,28 @@ public class ConditionalFaultDetector implements FeedbackHandler<Void> {
             for (var fid : appeared) {
                 if (isRetry(fid)) {
                     // only distinguish between transient (once) or always
-                    Set<FaultUid> relatedFaults = getUpToCount(fid);
-                    FaultUid anyRetryFault = fid.asAnyCount();
-                    logger.debug("Detected retry: Faults {} causes {}", condition, fid);
+                    FaultUid persistentFault = fid.asAnyCount();
+                    Set<FaultUid> transientFaults = getUpToCount(fid);
+                    logger.info("Detected retry: {}", fid);
 
                     // Multiple retries might be present
-                    if (processed.contains(anyRetryFault)) {
-                        break;
+                    if (processed.contains(persistentFault)) {
+                        continue;
                     }
 
-                    for (var other : relatedFaults) {
-                        logger.debug("Turning transient fault {} into {}", other, anyRetryFault);
-                        context.pruneFaultUidSubset(Set.of(other, anyRetryFault));
+                    for (var other : transientFaults) {
+                        logger.debug("Turning transient fault {}\ninto persistent {}", other, persistentFault);
+                        context.pruneFaultUidSubset(Set.of(other, persistentFault));
                     }
 
-                    // parts of the condition that are not related to replace fault
-                    // TODO: fix issue with same fuids in faultload!
+                    // parts of the condition that are not related to
+                    // TODO: handle case were retry is caused by effect of cause
+                    // We need to persistently block, STARTING at retry x?
                     Set<Fault> relatedCondition = condition.stream()
-                            .filter(f -> relatedFaults.contains(f.uid()))
-                            .filter(f -> f.uid().equals(anyRetryFault))
+                            .filter(f -> !f.uid().matchesUpToCount(persistentFault))
                             .collect(Collectors.toSet());
-                    Set<Fault> modifiedCondition = Sets.difference(condition, relatedCondition);
-                    context.reportConditionalFaultUid(modifiedCondition, anyRetryFault);
-                    processed.add(anyRetryFault);
+                    context.reportConditionalFaultUid(relatedCondition, persistentFault);
+                    processed.add(persistentFault);
                 } else {
                     context.reportConditionalFaultUid(condition, fid);
                 }

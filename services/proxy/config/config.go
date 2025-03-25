@@ -22,11 +22,9 @@ type ControlConfig struct {
 }
 
 func GetProxyConfig() ProxyConfig {
-	proxyHost := os.Getenv("PROXY_HOST") // Proxy server address
-
-	proxyTarget := os.Getenv("PROXY_TARGET") // Target server address
-
-	useHttp2 := os.Getenv("USE_HTTP2") == "true"
+	proxyHost := os.Getenv("PROXY_HOST")         // Proxy server address
+	proxyTarget := os.Getenv("PROXY_TARGET")     // Target server address
+	useHttp2 := os.Getenv("USE_HTTP2") == "true" // Use HTTP/2?
 
 	proxyTargetAddr := util.AsHostAndPortFromUrl(proxyTarget)
 	proxyTargetHost, _ := util.AsHostAndPort(proxyTargetAddr)

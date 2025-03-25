@@ -126,6 +126,7 @@ func GetHostIdentifier(addr string) string {
 	names, err := net.LookupAddr(addr)
 	if err != nil || len(names) == 0 {
 		// Handle the case where no hostname is found
+		log.Printf("No hostname for: %s\n", addr)
 		return addr // Return the IP as fallback
 	}
 	// Extract service name from the FQDN
@@ -136,9 +137,21 @@ func GetHostIdentifier(addr string) string {
 		return fqdn
 	}
 
+	// In docker, the name is [stack]-[service]-[index].[stack]_[network]
+	prefix := stackPrefix
+	if prefix == "" {
+		domain_name := parts[1]
+		domain_parts := strings.Split(domain_name, "_")
+		prefix = domain_parts[0]
+	}
+
 	serviceName := parts[0]
-	serviceWithoutPrefix := strings.TrimPrefix(serviceName, stackPrefix)
-	return serviceWithoutPrefix
+	// remove [stack]- from the service name
+	serviceWithoutPrefix := strings.TrimPrefix(serviceName+"-", prefix)
+	// remove -[index] from the service name
+	serviceWithoutIndex := regexp.MustCompile(`-\d+$`).ReplaceAllString(serviceWithoutPrefix, "")
+
+	return serviceWithoutIndex
 }
 
 // Returns the hostname of the service that made the request

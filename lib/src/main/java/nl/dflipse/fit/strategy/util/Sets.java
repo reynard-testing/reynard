@@ -10,14 +10,20 @@ public class Sets {
     public static <T> boolean isSubsetOf(Set<T> A, Set<T> B) {
         return B.containsAll(A);
     }
+
     /** Whether A ⊂ B */
-    // public static <T> boolean isProperSubset(Set<T> A, Set<T> B) {
-    // return B.containsAll(A);
-    // }
+    public static <T> boolean isProperSubset(Set<T> A, Set<T> B) {
+        return B.stream().anyMatch(x -> !A.contains(x)) && isSubsetOf(A, B);
+    }
 
     /** Whether A ⊇ B */
     public static <T> boolean isSupersetOf(Set<T> A, Set<T> B) {
         return A.containsAll(B);
+    }
+
+    /** Whether A ⊃ B */
+    public static <T> boolean isProperSupersetOf(Set<T> A, Set<T> B) {
+        return A.stream().anyMatch(x -> !B.contains(x)) && isSupersetOf(A, B);
     }
 
     public static <T> boolean areEqual(Set<T> set1, Set<T> set2) {

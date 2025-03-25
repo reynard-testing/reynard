@@ -27,7 +27,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
         Set<Fault> injectedFaults = result.trace.getInjectedFaults();
 
         for (var report : result.trace.getReports()) {
-            if (report.response == null) {
+            if (report.isInitial || report.response == null) {
                 continue;
             }
 

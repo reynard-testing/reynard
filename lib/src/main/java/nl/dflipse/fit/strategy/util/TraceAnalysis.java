@@ -22,7 +22,8 @@ public class TraceAnalysis {
     private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
     private final List<TraceSpanReport> reports = new ArrayList<>();
 
-    private boolean isIncomplete = false;
+    private boolean anyIncomplete = false;
+    private boolean hasInitial = false;
 
     // --- Parent-Child relations
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
@@ -36,14 +37,19 @@ public class TraceAnalysis {
         this.reports.addAll(reports);
         // Parent null indicates the root request
         for (var report : reports) {
-            faultUids.add(report.faultUid);
+            if (report.isInitial) {
+                hasInitial = true;
+            } else {
+                // Do not inject faults between client and first proxy
+                faultUids.add(report.faultUid);
+            }
 
             if (report.injectedFault != null) {
                 injectedFaults.add(report.injectedFault);
             }
 
             if (report.response == null) {
-                isIncomplete = true;
+                anyIncomplete = true;
             }
         }
 
@@ -56,7 +62,7 @@ public class TraceAnalysis {
         FaultUid nextParent = parent;
 
         if (node.span.endTime <= 0) {
-            isIncomplete = true;
+            anyIncomplete = true;
         }
 
         // Check if the node has a report from a fault injection proxy
@@ -64,8 +70,12 @@ public class TraceAnalysis {
             // Save the faultUid
             treeFaultPoints.add(node);
 
+            // TODO: correctly handle parent-child relation
+            // For multiple reports
             for (var report : node.reports) {
-                if (!faultUids.contains(report.faultUid)) {
+                if (report.isInitial) {
+                    hasInitial = true;
+                } else if (!faultUids.contains(report.faultUid)) {
                     reports.add(report);
                 }
 
@@ -75,15 +85,17 @@ public class TraceAnalysis {
 
                 // Save the parent-child relation
                 // Update the most direct parent
-                var child = report.faultUid;
-                parentChildRelation.addRelation(parent, child);
-                nextParent = child;
+                if (!report.isInitial) {
+                    var child = report.faultUid;
+                    parentChildRelation.addRelation(parent, child);
+                    nextParent = child;
+                }
 
                 // Check if the node is incomplete
                 // If the response is null, the fault point was reached, but the response was
                 // not yet received
                 if (report.response == null) {
-                    isIncomplete = true;
+                    anyIncomplete = true;
                 }
 
                 // If a remote call is detected (so our own proxy)
@@ -163,7 +175,18 @@ public class TraceAnalysis {
     }
 
     public boolean isIncomplete() {
-        return isIncomplete;
+        if (anyIncomplete) {
+            logger.debug("Trace is incomplete!");
+            return true;
+        }
+
+        if (!hasInitial) {
+            logger.warn(
+                    "Trace is not incomplete, but has no initial request! Ensure that the first request goes through the proxy!");
+            return true;
+        }
+
+        return false;
     }
 
     public List<Pair<FaultUid, FaultUid>> getParentsAndChildren() {
@@ -230,7 +253,7 @@ public class TraceAnalysis {
         }
 
         if (missing > 0) {
-            logger.warn("[WARN] Missing " + missing + " faultUids in trace tree!");
+            logger.warn("Missing " + missing + " faultUids in trace tree!");
         }
 
         return foundFaults;

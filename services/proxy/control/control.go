@@ -53,8 +53,8 @@ func StartControlServer(config config.ControlConfig) {
 	srvErr := make(chan error, 1)
 
 	go func() {
-		srvErr <- srv.ListenAndServe()
 		log.Printf("Listening for control commands on port %s\n", controlPort)
+		srvErr <- srv.ListenAndServe()
 	}()
 
 	// Wait for interruption.

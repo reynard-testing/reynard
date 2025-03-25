@@ -22,6 +22,7 @@ import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
+import nl.dflipse.fit.strategy.analyzers.BreadthFirstDetector;
 import nl.dflipse.fit.strategy.analyzers.ConditionalFaultDetector;
 import nl.dflipse.fit.strategy.analyzers.DepthFirstDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
@@ -30,6 +31,7 @@ import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.HappensBeforePruner;
+import nl.dflipse.fit.strategy.pruners.NoImpactPruner;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 
@@ -66,13 +68,14 @@ public class FiTestExtension
                 .withGenerator(new IncreasingSizeGenerator(modes))
                 // .withGenerator(new IncreasingSizeMixedGenerator(modes))
                 // .withAnalyzer(new RandomDetector())
-                // .withAnalyzer(new BreadthFirstDetector())
-                .withAnalyzer(new DepthFirstDetector())
+                .withAnalyzer(new BreadthFirstDetector())
+                // .withAnalyzer(new DepthFirstDetector())
                 .withAnalyzer(new ConditionalFaultDetector())
                 .withAnalyzer(new RedundancyAnalyzer())
                 .withPruner(new ParentChildPruner())
                 .withPruner(new ErrorPropogationPruner())
                 .withPruner(new HappensBeforePruner())
+                .withPruner(new NoImpactPruner())
                 .withPruner(new DynamicReductionPruner());
 
         if (annotation.maxTestCases() > 0) {

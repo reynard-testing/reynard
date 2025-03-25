@@ -28,6 +28,7 @@ public class TrackedFaultload {
 
         traceState = new TraceState();
         traceState.set("fit", "1");
+        traceState.set("init", "1");
     }
 
     public TrackedFaultload withMaskPayload() {

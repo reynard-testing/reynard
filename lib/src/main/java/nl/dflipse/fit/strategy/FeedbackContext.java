@@ -31,6 +31,11 @@ public class FeedbackContext {
         return runner.generator.getFaultModes();
     }
 
+    public Set<FaultUid> getFaultUids() {
+        assertGeneratorPresent();
+        return runner.generator.getFaultInjectionPoints();
+    }
+
     public Set<FaultMode> getFaultModes(String type) {
         assertGeneratorPresent();
         return runner.generator.getFaultModes().stream()

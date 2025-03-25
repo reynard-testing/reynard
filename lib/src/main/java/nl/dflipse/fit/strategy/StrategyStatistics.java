@@ -103,7 +103,7 @@ public class StrategyStatistics {
     }
 
     public void report() {
-        var reporter = new StrategyStatisticsReporter(runner);
+        var reporter = new StrategyReporter(runner);
         reporter.report();
     }
 

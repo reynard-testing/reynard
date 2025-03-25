@@ -8,16 +8,24 @@ import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.util.TaggedTimer;
 
-public class StrategyStatisticsReporter {
+public class StrategyReporter {
     private int maxChars = 32;
     private Generator generator;
     private StrategyRunner runner;
     private StrategyStatistics statistics;
 
-    public StrategyStatisticsReporter(StrategyRunner runner) {
+    public StrategyReporter(StrategyRunner runner) {
         this.runner = runner;
         this.statistics = runner.statistics;
-        this.generator = runner.generator;
+        this.generator = runner.getGenerator();
+    }
+
+    private void printNewline() {
+        System.out.println();
+    }
+
+    private void printLine(String line) {
+        System.out.println(line);
     }
 
     private String padRight(String s, int n) {
@@ -75,20 +83,20 @@ public class StrategyStatisticsReporter {
         String runPercentage = asPercentage(totalRun, fullSpace);
         String reductionPercentage = asPercentage(fullSpace - totalRun, fullSpace);
 
-        System.out.println();
-        System.out.println(padBoth(" Statistics ", maxChars, "-"));
-        System.out.println("Complete space size : " + fullSpace + " (" + reductionPercentage + "% reduction)");
-        System.out.println("Total generated     : " + totalGenerated + " (" + generatePercentage + "% of space)");
-        System.out.println("Total pruned        : " + totalPruned + " (" + prunePercentage + "% of generated)");
-        System.out.println("Total run           : " + totalRun + " (" + runPercentage + "% of full space)");
+        printNewline();
+        printLine(padBoth(" Statistics ", maxChars, "-"));
+        printLine("Complete space size : " + fullSpace + " (" + reductionPercentage + "% reduction)");
+        printLine("Total generated     : " + totalGenerated + " (" + generatePercentage + "% of space)");
+        printLine("Total pruned        : " + totalPruned + " (" + prunePercentage + "% of generated)");
+        printLine("Total run           : " + totalRun + " (" + runPercentage + "% of full space)");
     }
 
-    private void printKeyValue(String key, long value, int maxChars) {
+    private void printKeyValue(String key, long value, int keyPadding) {
         printKeyValue(key, String.valueOf(value), maxChars);
     }
 
-    private void printKeyValue(String key, String value, int maxChars) {
-        System.out.println(padRight(key, maxChars) + " : " + value);
+    private void printKeyValue(String key, String value, int keyPadding) {
+        printLine(padRight(key, keyPadding) + " : " + value);
     }
 
     public void reportGenerator(IncreasingSizeGenerator generator, int maxKeyLength) {
@@ -107,8 +115,8 @@ public class StrategyStatisticsReporter {
     }
 
     public void reportGeneratorStats() {
-        System.out.println();
-        System.out.println(padBoth(" Generator ", maxChars, "-"));
+        printNewline();
+        printLine(padBoth(" Generator ", maxChars, "-"));
         Map<String, Long> generatorCount = statistics.getGeneratorCount();
         int maxKeyLength = getMaxKeyLength(generatorCount);
         printKeyValue("Generator:", generator.getClass().getSimpleName(), maxKeyLength);
@@ -130,14 +138,14 @@ public class StrategyStatisticsReporter {
     }
 
     public void reportTimingStats() {
-        System.out.println();
-        System.out.println(padBoth(" Timings ", maxChars, "-"));
+        printNewline();
+        printLine(padBoth(" Timings ", maxChars, "-"));
         Set<String> tags = statistics.getTags();
         int maxTimingKeyLength = getMaxKeyLength(tags);
         for (String tag : tags) {
             String readableKey = tag.equals(TaggedTimer.DEFAULT_TAG) ? "Total" : tag;
             String key = padRight(readableKey, maxTimingKeyLength);
-            System.out.println(key + " : " + getAverageTime(tag) + " (ms)");
+            printLine(key + " : " + getAverageTime(tag) + " (ms)");
         }
     }
 
@@ -149,16 +157,29 @@ public class StrategyStatisticsReporter {
         long totalSize = statistics.getTotalSize();
 
         int maxPrunerKeyLength = getMaxKeyLength(prunerCount);
-        System.out.println();
-        System.out.println(padBoth(" Pruners ", maxChars, "-"));
+        printNewline();
+        printLine(padBoth(" Pruners ", maxChars, "-"));
         for (var entry : prunerCount.entrySet()) {
             String key = padRight(entry.getKey(), maxPrunerKeyLength);
             long value = entry.getValue();
             long estimateValue = prunerEstimates.get(entry.getKey());
-            System.out.println(
+            printLine(
                     key + " : " + value + " directly (" + asPercentage(value, totalGenerated) + "% of generated)");
-            System.out.println(padRight("", maxPrunerKeyLength) + " : " + estimateValue + " indirectly ("
+            printLine(padRight("", maxPrunerKeyLength) + " : " + estimateValue + " indirectly ("
                     + asPercentage(estimateValue, totalSize) + "% estimate of space)");
+        }
+    }
+
+    public void reportOnReporter(Reporter reporter) {
+        Map<String, String> report = reporter.report();
+        int maxKeyLength = getMaxKeyLength(report.keySet());
+        int maxValueLength = report.values().stream().mapToInt(String::length).max().orElse(0);
+        int maxCharSize = maxKeyLength + maxValueLength + 5;
+        String name = reporter.getClass().getSimpleName();
+        printNewline();
+        printLine(padBoth(" " + name + " ", maxCharSize, "-"));
+        for (var entry : report.entrySet()) {
+            printKeyValue(entry.getKey(), entry.getValue(), maxKeyLength);
         }
     }
 
@@ -167,5 +188,10 @@ public class StrategyStatisticsReporter {
         reportGeneratorStats();
         reportPrunerStats();
         reportTimingStats();
+
+        for (var reporter : runner.getReporters()) {
+            reportOnReporter(reporter);
+        }
+        printNewline();
     }
 }

@@ -14,12 +14,13 @@ import nl.dflipse.fit.strategy.pruners.Pruner;
 import nl.dflipse.fit.strategy.util.Pair;
 
 public class StrategyRunner {
-    public List<Faultload> queue;
+    public final List<Faultload> queue = new ArrayList<>();
 
-    public Generator generator = null;
+    private Generator generator = null;
 
-    public List<FeedbackHandler<Void>> analyzers;
-    public List<Pruner> pruners;
+    private final List<FeedbackHandler<Void>> analyzers = new ArrayList<>();
+    private final List<Pruner> pruners = new ArrayList<>();
+    private final List<Reporter> reporters = new ArrayList<>();
 
     public StrategyStatistics statistics = new StrategyStatistics(this);
 
@@ -32,11 +33,7 @@ public class StrategyRunner {
     private final Logger logger = LoggerFactory.getLogger(StrategyRunner.class);
 
     public StrategyRunner() {
-        pruners = new ArrayList<>();
-        analyzers = new ArrayList<>();
-
         // Initialize the queue with an empty faultload
-        queue = new ArrayList<>();
         queue.add(new Faultload(Set.of()));
     }
 
@@ -67,17 +64,45 @@ public class StrategyRunner {
 
     public StrategyRunner withGenerator(Generator generator) {
         this.generator = generator;
+
+        if (generator instanceof Reporter reporter) {
+            if (!reporters.contains(reporter)) {
+                reporters.add(reporter);
+            }
+        }
         return this;
     }
 
     public StrategyRunner withPruner(Pruner pruner) {
         pruners.add(pruner);
+        if (pruner instanceof Reporter reporter) {
+            if (!reporters.contains(reporter)) {
+                reporters.add(reporter);
+            }
+        }
         return this;
     }
 
     public StrategyRunner withAnalyzer(FeedbackHandler<Void> analyzer) {
         analyzers.add(analyzer);
+        if (analyzer instanceof Reporter reporter) {
+            if (!reporters.contains(reporter)) {
+                reporters.add(reporter);
+            }
+        }
         return this;
+    }
+
+    public boolean hasGenerators() {
+        return generator != null;
+    }
+
+    public Generator getGenerator() {
+        return generator;
+    }
+
+    public List<Reporter> getReporters() {
+        return reporters;
     }
 
     public TrackedFaultload nextFaultload() {

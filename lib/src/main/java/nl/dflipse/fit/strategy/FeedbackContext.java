@@ -21,62 +21,62 @@ public class FeedbackContext {
     }
 
     private void assertGeneratorPresent() {
-        if (runner.generator == null) {
+        if (!runner.hasGenerators()) {
             throw new IllegalStateException("No generator set for runner!");
         }
     }
 
     public Set<FaultMode> getFaultModes() {
         assertGeneratorPresent();
-        return runner.generator.getFaultModes();
+        return runner.getGenerator().getFaultModes();
     }
 
     public Set<FaultUid> getFaultUids() {
         assertGeneratorPresent();
-        return runner.generator.getFaultInjectionPoints();
+        return runner.getGenerator().getFaultInjectionPoints();
     }
 
     public Set<FaultMode> getFaultModes(String type) {
         assertGeneratorPresent();
-        return runner.generator.getFaultModes().stream()
+        return runner.getGenerator().getFaultModes().stream()
                 .filter(mode -> mode.getType().equals(type))
                 .collect(Collectors.toSet());
     }
 
     public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
         assertGeneratorPresent();
-        runner.generator.reportFaultUids(faultInjectionPoints);
+        runner.getGenerator().reportFaultUids(faultInjectionPoints);
     }
 
     public void reportConditionalFaultUid(Set<Fault> subset, FaultUid fid) {
         assertGeneratorPresent();
-        runner.generator.reportConditionalFaultUid(subset, fid);
+        runner.getGenerator().reportConditionalFaultUid(subset, fid);
     }
 
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
         assertGeneratorPresent();
-        long reduction = runner.generator.pruneFaultUidSubset(subset);
+        long reduction = runner.getGenerator().pruneFaultUidSubset(subset);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
     public void pruneFaultSubset(Set<Fault> subset) {
         assertGeneratorPresent();
-        long reduction = runner.generator.pruneFaultSubset(subset);
+        long reduction = runner.getGenerator().pruneFaultSubset(subset);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
     public void pruneMixed(Set<Fault> subset, FaultUid fault) {
         assertGeneratorPresent();
         long sum = 0;
-        for (var mode : runner.generator.getFaultModes()) {
-            sum += runner.generator.pruneFaultSubset(Sets.plus(subset, new Fault(fault, mode)));
+        for (var mode : runner.getGenerator().getFaultModes()) {
+            sum += runner.getGenerator().pruneFaultSubset(Sets.plus(subset, new Fault(fault, mode)));
         }
         runner.statistics.incrementEstimatePruner(contextName, sum);
     }
 
     public void pruneFaultload(Faultload fautload) {
         assertGeneratorPresent();
-        long reduction = runner.generator.pruneFaultload(fautload);
+        long reduction = runner.getGenerator().pruneFaultload(fautload);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 }

@@ -1,7 +1,9 @@
 package nl.dflipse.fit.strategy.generators;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,11 +14,12 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.strategy.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
 import nl.dflipse.fit.strategy.util.Sets;
 
-public class IncreasingSizeGenerator implements Generator {
+public class IncreasingSizeGenerator implements Generator, Reporter {
     private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
     private Set<FaultMode> modes;
     private PrunableGenericPowersetTreeIterator<Fault, FaultUid> iterator;
@@ -234,6 +237,24 @@ public class IncreasingSizeGenerator implements Generator {
 
     public long getSpaceLeft() {
         return iterator == null ? 0 : iterator.size(this.modes.size());
+    }
+
+    @Override
+    public Map<String, String> report() {
+        Map<String, String> report = new HashMap<>();
+        report.put("Fault injection points", String.valueOf(getElements()));
+        report.put("Modes", String.valueOf(getFaultModes().size()));
+        report.put("Redundant faultloads", String.valueOf(store.getRedundantFaultloads().size()));
+        report.put("Redundant fault points", String.valueOf(store.getRedundantUidSubsets().size()));
+        report.put("Redundant fault subsets", String.valueOf(store.getRedundantFaultSubsets().size()));
+        report.put("Max queue size", String.valueOf(getMaxQueueSize()));
+        int queueSize = getQueuSize();
+        if (queueSize > 0) {
+            report.put("Queue size (left)", String.valueOf(getQueuSize()));
+            report.put("Space left", String.valueOf(getSpaceLeft()));
+        }
+
+        return report;
     }
 
 }

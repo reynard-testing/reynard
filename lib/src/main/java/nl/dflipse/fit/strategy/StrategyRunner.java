@@ -70,6 +70,7 @@ public class StrategyRunner {
                 reporters.add(reporter);
             }
         }
+
         return this;
     }
 

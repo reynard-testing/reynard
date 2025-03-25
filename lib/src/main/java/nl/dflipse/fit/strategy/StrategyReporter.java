@@ -99,21 +99,6 @@ public class StrategyReporter {
         printLine(padRight(key, keyPadding) + " : " + value);
     }
 
-    public void reportGenerator(IncreasingSizeGenerator generator, int maxKeyLength) {
-        var store = generator.getStore();
-        printKeyValue("Fault injection points", generator.getElements(), maxKeyLength);
-        printKeyValue("Modes", generator.getFaultModes().size(), maxKeyLength);
-        printKeyValue("Redundant faultloads", store.getRedundantFaultloads().size(), maxKeyLength);
-        printKeyValue("Redundant fault points", store.getRedundantUidSubsets().size(), maxKeyLength);
-        printKeyValue("Redundant fault subsets", store.getRedundantFaultSubsets().size(), maxKeyLength);
-        printKeyValue("Max queue size", generator.getMaxQueueSize(), maxKeyLength);
-        int queueSize = generator.getQueuSize();
-        if (queueSize > 0) {
-            printKeyValue("Queue size (left)", generator.getQueuSize(), maxKeyLength);
-            printKeyValue("Space left", generator.getSpaceLeft(), maxKeyLength);
-        }
-    }
-
     public void reportGeneratorStats() {
         printNewline();
         printLine(padBoth(" Generator ", maxChars, "-"));
@@ -122,10 +107,6 @@ public class StrategyReporter {
         printKeyValue("Generator:", generator.getClass().getSimpleName(), maxKeyLength);
         for (var entry : generatorCount.entrySet()) {
             printKeyValue(entry.getKey(), entry.getValue(), maxKeyLength);
-        }
-
-        if (generator instanceof IncreasingSizeGenerator increasingSizeGenerator) {
-            reportGenerator(increasingSizeGenerator, maxKeyLength);
         }
     }
 

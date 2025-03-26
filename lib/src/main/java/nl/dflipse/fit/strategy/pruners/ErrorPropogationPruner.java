@@ -22,6 +22,8 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
     private List<Set<Fault>> redundantFautloads = new ArrayList<>();
     private List<Set<Fault>> redundantSubsets = new ArrayList<>();
 
+    // TODO: if the body is the same as the error, and the status code,
+    // Do we need to check for the other modes?
     @Override
     public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
         Set<Fault> injectedFaults = result.trace.getInjectedFaults();

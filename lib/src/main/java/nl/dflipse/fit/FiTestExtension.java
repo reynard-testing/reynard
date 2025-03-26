@@ -26,6 +26,7 @@ import nl.dflipse.fit.strategy.analyzers.BreadthFirstDetector;
 import nl.dflipse.fit.strategy.analyzers.ConditionalFaultDetector;
 import nl.dflipse.fit.strategy.analyzers.DepthFirstDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
+import nl.dflipse.fit.strategy.analyzers.StatusAnalyzer;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
@@ -72,6 +73,7 @@ public class FiTestExtension
                 // .withAnalyzer(new DepthFirstDetector())
                 .withAnalyzer(new ConditionalFaultDetector())
                 .withAnalyzer(new RedundancyAnalyzer())
+                .withAnalyzer(new StatusAnalyzer())
                 .withPruner(new ParentChildPruner())
                 .withPruner(new ErrorPropogationPruner())
                 .withPruner(new CauseEffectPruner())
@@ -149,7 +151,7 @@ public class FiTestExtension
     }
 
     public void afterAll() {
-        strategy.statistics.setSize(strategy.generator.spaceSize());
+        strategy.statistics.setSize(strategy.getGenerator().spaceSize());
         strategy.statistics.report();
     }
 

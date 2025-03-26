@@ -7,6 +7,8 @@ import java.util.Set;
 
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.util.Pair;
+import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.StringFormat;
 import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyReporter {
@@ -29,43 +31,8 @@ public class StrategyReporter {
         System.out.println(line);
     }
 
-    private String padRight(String s, int n) {
-        return padRight(s, n, " ");
-    }
-
-    private String padRight(String s, int n, String character) {
-        int toAdd = Math.max(0, n - s.length());
-        String padding = character.repeat(toAdd);
-        return s + padding;
-    }
-
-    private String padLeft(String s, int n) {
-        return padLeft(s, n, " ");
-    }
-
-    private String padLeft(String s, int n, String character) {
-        int toAdd = Math.max(0, n - s.length());
-        String padding = character.repeat(toAdd);
-        return padding + s;
-    }
-
-    private String padBoth(String s, int n) {
-        return padBoth(s, n, " ");
-    }
-
-    private String padBoth(String s, int n, String character) {
-        int toAdd = Math.max(0, n - s.length());
-        String padding = character.repeat(toAdd / 2);
-        return padding + s + padding;
-    }
-
     private int getMaxKeyLength(Set<String> set) {
         return set.stream().mapToInt(String::length).max().orElse(0);
-    }
-
-    private String asPercentage(long num, long div) {
-        double percentage = 100d * num / (double) div;
-        return String.format("%1.1f", percentage);
     }
 
     public void reportOverall() {
@@ -75,10 +42,10 @@ public class StrategyReporter {
         long totalSize = statistics.getTotalSize();
 
         long fullSpace = totalSize + 1;
-        String prunePercentage = asPercentage(totalPruned, totalGenerated);
-        String generatePercentage = asPercentage(totalGenerated, totalSize);
-        String runPercentage = asPercentage(totalRun, fullSpace);
-        String reductionPercentage = asPercentage(fullSpace - totalRun, fullSpace);
+        String prunePercentage = StringFormat.asPercentage(totalPruned, totalGenerated);
+        String generatePercentage = StringFormat.asPercentage(totalGenerated, totalSize);
+        String runPercentage = StringFormat.asPercentage(totalRun, fullSpace);
+        String reductionPercentage = StringFormat.asPercentage(fullSpace - totalRun, fullSpace);
 
         Map<String, String> report = new LinkedHashMap<>();
         report.put("Complete space size", fullSpace + " (" + reductionPercentage + "% reduction)");
@@ -89,7 +56,7 @@ public class StrategyReporter {
     }
 
     private void printKeyValue(String key, String value, int keyPadding) {
-        printLine(padRight(key, keyPadding) + " : " + value);
+        printLine(StringFormat.padRight(key, keyPadding) + " : " + value);
     }
 
     public void reportGeneratorStats() {
@@ -124,22 +91,28 @@ public class StrategyReporter {
         Map<String, Long> prunerCount = statistics.getPrunerCount();
 
         long totalGenerated = statistics.getTotalGenerated();
-        long totalSize = statistics.getTotalSize();
 
         printNewline();
-        printLine(padBoth(" Pruners ", maxChars, "="));
+        printLine(StringFormat.padBoth(" Pruners ", maxChars, "="));
 
-        for (var entry : prunerCount.entrySet()) {
+        Set<String> names = Sets.union(prunerCount.keySet(), FeedbackContext.getContextNames());
+
+        for (var contextName : names) {
             Map<String, String> prunerReport = new LinkedHashMap<>();
-            String contextName = entry.getKey();
-            long value = entry.getValue();
-            prunerReport.put("Directly pruned", value + " (" + asPercentage(value, totalGenerated) + "% of generated)");
-            // prunerReport.put("Indirectly pruned", estimateValue + " ("
-            // + asPercentage(estimateValue, totalSize) + "% estimate of space)");
-            if (FeedbackContext.hasContext(contextName)) {
-                prunerReport.putAll(FeedbackContext.getReport(contextName));
+
+            if (prunerCount.containsKey(contextName)) {
+                long value = prunerCount.get(contextName);
+                prunerReport.put("Directly pruned",
+                        value + " (" + StringFormat.asPercentage(value, totalGenerated) + "% of generated)");
             }
-            printReport(contextName, prunerReport);
+
+            if (FeedbackContext.hasContext(contextName)) {
+                prunerReport.putAll(FeedbackContext.getReport(contextName, runner.getGenerator()));
+            }
+
+            if (prunerReport.size() > 0) {
+                printReport(contextName, prunerReport);
+            }
         }
         printNewline();
     }
@@ -150,7 +123,7 @@ public class StrategyReporter {
         int maxCharSize = maxKeyLength + maxValueLength + 4;
         printNewline();
         if (name.length() > 0) {
-            printLine(padBoth(" " + name + " ", maxCharSize, "-"));
+            printLine(StringFormat.padBoth(" " + name + " ", maxCharSize, "-"));
         }
         for (var entry : keyValues.entrySet()) {
             printKeyValue(entry.getKey(), entry.getValue(), maxKeyLength);

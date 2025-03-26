@@ -10,8 +10,10 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.StringFormat;
 
 public class FeedbackContext {
 
@@ -88,36 +90,67 @@ public class FeedbackContext {
         return stores.containsKey(contextName);
     }
 
-    public static Map<String, String> getReport(String contextName) {
+    private static <X> Map<Integer, Integer> getDistribution(List<Set<X>> subsets) {
+        Map<Integer, Integer> sizeCount = new HashMap<>();
+        for (var subset : subsets) {
+            int size = subset.size();
+            sizeCount.put(size, sizeCount.getOrDefault(size, 0) + 1);
+        }
+        return sizeCount;
+    }
+
+    public static Map<String, String> getReport(String contextName, Generator generator) {
         if (!hasContext(contextName)) {
             return null;
         }
 
         Map<String, String> report = new LinkedHashMap<>();
         DynamicAnalysisStore store = stores.get(contextName);
+        boolean hasImpact = false;
+
         var redundantFaultloads = store.getRedundantFaultloads();
         if (redundantFaultloads.size() > 0) {
+            hasImpact = true;
             report.put("Faultloads pruned", redundantFaultloads.size() + "");
         }
 
         var redundantFaultSubsets = store.getRedundantFaultSubsets();
         if (redundantFaultSubsets.size() > 0) {
+            hasImpact = true;
             report.put("Fault subsets pruned", redundantFaultSubsets.size() + "");
+            var sizeCount = getDistribution(redundantFaultSubsets);
+            for (var entry : sizeCount.entrySet()) {
+                report.put("Fault subsets of size " + entry.getKey(), entry.getValue() + "");
+            }
         }
 
         var redundantUidSubsets = store.getRedundantUidSubsets();
         if (redundantUidSubsets.size() > 0) {
+            hasImpact = true;
             report.put("Fault points subsets pruned", redundantUidSubsets.size() + "");
+            var sizeCount = getDistribution(redundantUidSubsets);
+            for (var entry : sizeCount.entrySet()) {
+                report.put("Fault points subsets of size " + entry.getKey(), entry.getValue() + "");
+            }
         }
 
         var preconditions = store.getPreconditions();
         if (preconditions.size() > 0) {
+            hasImpact = true;
             report.put("Preconditions", preconditions.size() + "");
             int count = 0;
             for (var entry : preconditions.entrySet()) {
                 count += entry.getValue().size();
             }
             report.put("Precondition subsets", count + "");
+        }
+
+        if (hasImpact) {
+            Set<FaultUid> points = generator.getFaultInjectionPoints();
+            long totalSize = generator.spaceSize();
+            long estimateValue = store.estimatePruned(points);
+            report.put("Indirectly pruned", estimateValue + " ("
+                    + StringFormat.asPercentage(estimateValue, totalSize) + "% estimate of space)");
         }
 
         return report;

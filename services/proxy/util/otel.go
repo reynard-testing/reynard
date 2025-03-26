@@ -82,7 +82,6 @@ func newTracerProvider() (*trace.TracerProvider, error) {
 		log.Fatalln(err) // The error may be fatal.
 	}
 
-	// TODO: conditionally use OTEL
 	tracerProvider := trace.NewTracerProvider(
 		trace.WithResource(res),
 		trace.WithSyncer(traceExporter),

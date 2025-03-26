@@ -97,15 +97,6 @@ public class DynamicAnalysisStore {
         return false;
     }
 
-    public long estimateReductionForConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
-        if (hasConditionForFaultUid(condition, fid)) {
-            return 0;
-        }
-
-        int existingPreconditions = preconditions.getOrDefault(fid, Set.of()).size();
-        return SpaceEstimate.spaceSize(modes.size(), condition.size()) - (existingPreconditions + 1);
-    }
-
     public boolean addConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
         boolean isNew = addFaultUid(fid);
 
@@ -133,19 +124,6 @@ public class DynamicAnalysisStore {
         return false;
     }
 
-    public long estimateReductionForFaultUidSubset(Set<FaultUid> subset, Set<FaultUid> existing) {
-        if (hasFaultUidSubset(subset)) {
-            return 0;
-        }
-
-        // TODO: account for overlapping subsets?
-        return SpaceEstimate.nonEmptySpaceSize(modes.size(), existing.size(), subset.size());
-    }
-
-    public long estimateReductionForFaultUidSubset(Set<FaultUid> subset) {
-        return estimateReductionForFaultUidSubset(subset, getFaultInjectionPoints());
-    }
-
     public boolean pruneFaultUidSubset(Set<FaultUid> subset) {
         // If the subset is already in the list of redundant subsets
         // Or if the subset is a subset of an already redundant subset
@@ -169,19 +147,6 @@ public class DynamicAnalysisStore {
         return false;
     }
 
-    public long estimateReductionForFaultSubset(Set<Fault> subset, Set<FaultUid> existing) {
-        if (hasFaultSubset(subset)) {
-            return 0;
-        }
-
-        // TODO: account for overlapping subsets?
-        return SpaceEstimate.nonEmptySpaceSize(modes.size(), existing.size() - subset.size());
-    }
-
-    public long estimateReductionForFaultSubset(Set<Fault> subset) {
-        return estimateReductionForFaultSubset(subset, getFaultInjectionPoints());
-    }
-
     public boolean pruneFaultSubset(Set<Fault> subset) {
         // If the subset is already in the list of redundant subsets
         // Or if the subset is a subset of an already redundant subset
@@ -197,14 +162,6 @@ public class DynamicAnalysisStore {
         return true;
     }
 
-    public long estimateReductionForFaultload(Faultload faultload) {
-        if (hasFaultload(faultload)) {
-            return 0;
-        }
-
-        return 1;
-    }
-
     public boolean pruneFaultload(Faultload faultload) {
         // If the faultload is already in the list of redundant faultloads
         // Then we can ignore this faultload
@@ -218,6 +175,67 @@ public class DynamicAnalysisStore {
 
     public boolean hasFaultload(Faultload faultload) {
         return this.redundantFaultloads.contains(faultload);
+    }
+
+    public long estimatePruned(Set<FaultUid> allUids) {
+        int points = allUids.size();
+        int modes = this.modes.size();
+        long sum = 0;
+
+        for (int i = 0; i < redundantUidSubsets.size(); i++) {
+            var subset = redundantUidSubsets.get(i);
+            long contribution = SpaceEstimate.nonEmptySpaceSize(modes, points, subset.size());
+            sum += contribution;
+
+            Set<Set<FaultUid>> coveredOverlap = new HashSet<>();
+
+            for (int j = i + 1; j < redundantUidSubsets.size(); j++) {
+                var other = redundantUidSubsets.get(j);
+                var overlap = Sets.intersection(subset, other);
+                if (coveredOverlap.contains(overlap)) {
+                    continue;
+                }
+
+                if (!overlap.isEmpty()) {
+                    long overlapContribution = SpaceEstimate.nonEmptySpaceSize(modes, points,
+                            overlap.size() + subset.size());
+                    sum -= overlapContribution;
+                    coveredOverlap.add(overlap);
+                }
+            }
+        }
+
+        // TODO: this estimate is too high, figure out why?
+        for (int i = 0; i < redundantFaultSubsets.size(); i++) {
+            var subset = redundantFaultSubsets.get(i);
+            long contribution = SpaceEstimate.nonEmptySpaceSize(modes, points - subset.size());
+            sum += contribution;
+
+            Set<Set<Fault>> coveredOverlap = new HashSet<>();
+
+            for (int j = i + 1; j < redundantFaultSubsets.size(); j++) {
+                var other = redundantFaultSubsets.get(j);
+                var overlap = Sets.intersection(subset, other);
+                if (coveredOverlap.contains(overlap)) {
+                    continue;
+                }
+
+                if (!overlap.isEmpty()) {
+                    long overlapContribution = SpaceEstimate.nonEmptySpaceSize(modes,
+                            points - (overlap.size() + subset.size()));
+                    sum -= overlapContribution;
+                    coveredOverlap.add(overlap);
+                }
+            }
+        }
+
+        sum += redundantFaultloads.size();
+
+        return sum;
+    }
+
+    public long estimatePruned() {
+        return estimatePruned(getFaultInjectionPoints());
     }
 
 }

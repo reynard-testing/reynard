@@ -159,48 +159,32 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     }
 
     @Override
-    public long pruneFaultUidSubset(Set<FaultUid> subset) {
-        long sum = 0;
+    public void pruneFaultUidSubset(Set<FaultUid> subset) {
         for (Set<Fault> prunedSet : allFaults(List.copyOf(subset))) {
-            sum += this.pruneFaultSubset(prunedSet);
+            this.pruneFaultSubset(prunedSet);
         }
-
-        return sum;
     }
 
-    private int getN() {
+    private int getNumerOfPoints() {
         return store.getFaultInjectionPoints().size();
     }
 
     @Override
-    public long pruneFaultSubset(Set<Fault> subset) {
+    public void pruneFaultSubset(Set<Fault> subset) {
         boolean isNew = store.pruneFaultSubset(subset);
-
-        // if (!isNew) {
-        // return 0;
-        // }
-
         if (isNew && iterator != null) {
             iterator.prune(subset);
         }
-
-        int subsetSize = subset.size();
-        // All subsets that contain this subset, the faults are fixed.
-        // E.g., only 1 way to assign the subset items
-        // so the others (the front) can be assigned in any way
-        return SpaceEstimate.spaceSize(modes.size(), getN() - subsetSize);
     }
 
     @Override
-    public long pruneFaultload(Faultload faultload) {
+    public void pruneFaultload(Faultload faultload) {
         store.pruneFaultload(faultload);
-        return 1;
     }
 
     @Override
     public long spaceSize() {
-        int m = modes.size();
-        return SpaceEstimate.spaceSize(m, getN());
+        return SpaceEstimate.spaceSize(modes.size(), getNumerOfPoints());
     }
 
     @Override
@@ -232,7 +216,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     @Override
     public Map<String, String> report() {
         Map<String, String> report = new HashMap<>();
-        report.put("Fault injection points", String.valueOf(getN()));
+        report.put("Fault injection points", String.valueOf(getNumerOfPoints()));
         report.put("Modes", String.valueOf(getFaultModes().size()));
         report.put("Redundant faultloads", String.valueOf(store.getRedundantFaultloads().size()));
         report.put("Redundant fault points", String.valueOf(store.getRedundantUidSubsets().size()));

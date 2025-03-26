@@ -15,6 +15,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
 public class DynamicAnalysisStore {
     private final Logger logger = LoggerFactory.getLogger(DynamicAnalysisStore.class);
@@ -88,6 +89,15 @@ public class DynamicAnalysisStore {
         return false;
     }
 
+    public long estimateReductionForConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
+        if (hasConditionForFaultUid(condition, fid)) {
+            return 0;
+        }
+
+        int existingPreconditions = preconditions.getOrDefault(fid, Set.of()).size();
+        return SpaceEstimate.spaceSize(modes.size(), condition.size()) - (existingPreconditions + 1);
+    }
+
     public boolean addConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
         boolean isNew = addFaultUid(fid);
 
@@ -115,6 +125,15 @@ public class DynamicAnalysisStore {
         return false;
     }
 
+    public long estimateReductionForFaultUidSubset(Set<FaultUid> subset) {
+        if (hasFaultUidSubset(subset)) {
+            return 0;
+        }
+
+        // TODO: account for overlapping subsets?
+        return SpaceEstimate.nonEmptySpaceSize(modes.size(), getFaultInjectionPoints().size() - subset.size());
+    }
+
     public boolean pruneFaultUidSubset(Set<FaultUid> subset) {
         // If the subset is already in the list of redundant subsets
         // Or if the subset is a subset of an already redundant subset
@@ -138,6 +157,15 @@ public class DynamicAnalysisStore {
         return false;
     }
 
+    public long estimateReductionForFaultSubset(Set<Fault> subset) {
+        if (hasFaultSubset(subset)) {
+            return 0;
+        }
+
+        // TODO: account for overlapping subsets?
+        return SpaceEstimate.nonEmptySpaceSize(modes.size(), getFaultInjectionPoints().size() - subset.size());
+    }
+
     public boolean pruneFaultSubset(Set<Fault> subset) {
         // If the subset is already in the list of redundant subsets
         // Or if the subset is a subset of an already redundant subset
@@ -151,6 +179,14 @@ public class DynamicAnalysisStore {
 
         this.redundantFaultSubsets.add(subset);
         return true;
+    }
+
+    public long estimateReductionForFaultload(Faultload faultload) {
+        if (hasFaultload(faultload)) {
+            return 0;
+        }
+
+        return 1;
     }
 
     public boolean pruneFaultload(Faultload faultload) {

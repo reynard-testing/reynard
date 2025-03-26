@@ -48,30 +48,41 @@ public class FeedbackContext {
         runner.getGenerator().reportFaultUids(faultInjectionPoints);
     }
 
-    public void reportConditionalFaultUid(Set<Fault> subset, FaultUid fid) {
-        runner.getGenerator().reportConditionalFaultUid(subset, fid);
+    public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
+        long reduction = store.estimateReductionForConditionalFaultUid(condition, fid);
+        store.addConditionalFaultUid(condition, fid);
+        runner.getGenerator().reportConditionalFaultUid(condition, fid);
+        runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
-        long reduction = runner.getGenerator().pruneFaultUidSubset(subset);
+        long reduction = store.estimateReductionForFaultUidSubset(subset);
+        store.pruneFaultUidSubset(subset);
+        runner.getGenerator().pruneFaultUidSubset(subset);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
-    public void pruneFaultSubset(Set<Fault> subset) {
-        long reduction = runner.getGenerator().pruneFaultSubset(subset);
+    public long pruneFaultSubset(Set<Fault> subset) {
+        long reduction = store.estimateReductionForFaultSubset(subset);
+        store.pruneFaultSubset(subset);
+        runner.getGenerator().pruneFaultSubset(subset);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
+        return reduction;
     }
 
     public void pruneMixed(Set<Fault> subset, FaultUid fault) {
         long sum = 0;
         for (var mode : runner.getGenerator().getFaultModes()) {
-            sum += runner.getGenerator().pruneFaultSubset(Sets.plus(subset, new Fault(fault, mode)));
+            Set<Fault> mixed = Sets.plus(subset, new Fault(fault, mode));
+            sum += pruneFaultSubset(mixed);
         }
         runner.statistics.incrementEstimatePruner(contextName, sum);
     }
 
     public void pruneFaultload(Faultload fautload) {
-        long reduction = runner.getGenerator().pruneFaultload(fautload);
+        long reduction = store.estimateReductionForFaultload(fautload);
+        store.pruneFaultload(fautload);
+        runner.getGenerator().pruneFaultload(fautload);
         runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 }

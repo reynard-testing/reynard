@@ -44,18 +44,15 @@ public class E2eStrategyTest {
         }
 
         @Override
-        public long pruneFaultUidSubset(Set<FaultUid> subset) {
-            return 0;
+        public void pruneFaultUidSubset(Set<FaultUid> subset) {
         }
 
         @Override
-        public long pruneFaultSubset(Set<Fault> subset) {
-            return 0;
+        public void pruneFaultSubset(Set<Fault> subset) {
         }
 
         @Override
-        public long pruneFaultload(Faultload faultload) {
-            return 0;
+        public void pruneFaultload(Faultload faultload) {
         }
 
         @Override

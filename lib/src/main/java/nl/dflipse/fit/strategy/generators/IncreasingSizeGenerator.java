@@ -18,6 +18,7 @@ import nl.dflipse.fit.strategy.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
 public class IncreasingSizeGenerator implements Generator, Reporter {
     private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
@@ -187,7 +188,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
         // All subsets that contain this subset, the faults are fixed.
         // E.g., only 1 way to assign the subset items
         // so the others (the front) can be assigned in any way
-        return subsetSpaceSize(0, getN() - subsetSize);
+        return SpaceEstimate.spaceSize(modes.size(), getN() - subsetSize);
     }
 
     @Override
@@ -196,21 +197,10 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
         return 1;
     }
 
-    private long subsetSpaceSize(long subsetSize, long frontSize) {
-        return subsetSpaceSize(modes.size(), subsetSize, frontSize);
-    }
-
-    private long subsetSpaceSize(long m, long subsetSize, long frontSize) {
-        return (long) (Math.pow(m, subsetSize) * Math.pow(1 + m, frontSize));
-    }
-
     @Override
     public long spaceSize() {
-        return subsetSpaceSize(0, getN());
-    }
-
-    public long getElements() {
-        return getN();
+        int m = modes.size();
+        return SpaceEstimate.spaceSize(m, getN());
     }
 
     @Override
@@ -242,7 +232,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     @Override
     public Map<String, String> report() {
         Map<String, String> report = new HashMap<>();
-        report.put("Fault injection points", String.valueOf(getElements()));
+        report.put("Fault injection points", String.valueOf(getN()));
         report.put("Modes", String.valueOf(getFaultModes().size()));
         report.put("Redundant faultloads", String.valueOf(store.getRedundantFaultloads().size()));
         report.put("Redundant fault points", String.valueOf(store.getRedundantUidSubsets().size()));

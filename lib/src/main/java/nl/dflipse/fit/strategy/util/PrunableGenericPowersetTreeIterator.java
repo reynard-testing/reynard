@@ -192,8 +192,7 @@ public class PrunableGenericPowersetTreeIterator<N, E> implements Iterator<Set<N
     public long size(int m) {
         long sum = 0;
         for (var el : toExpand) {
-            // TODO: update
-            long contribution = (long) Math.pow(1 + m, el.expansion.size());
+            long contribution = SpaceEstimate.spaceSize(m, el.expansion.size());
             sum += contribution;
         }
 

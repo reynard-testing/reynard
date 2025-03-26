@@ -7,10 +7,10 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.SpaceEstimate;
 import nl.dflipse.fit.util.Enumerate;
 import nl.dflipse.fit.util.FailureModes;
 import nl.dflipse.fit.util.FaultInjectionPoints;
@@ -49,7 +49,7 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        long expected = Enumerate.expectedSize(1, modes.size());
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 1);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }
@@ -69,7 +69,7 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        long expected = Enumerate.expectedSize(2, modes.size());
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 2);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }
@@ -90,7 +90,7 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        long expected = Enumerate.expectedSize(4, modes.size());
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 4);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }
@@ -108,7 +108,7 @@ public class PrunedGeneratorSpaceTest {
                     new Fault(points.get(0), mode)));
         }
 
-        long expected = Enumerate.expectedSize(2, modes.size());
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 2);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }

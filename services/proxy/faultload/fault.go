@@ -27,7 +27,19 @@ func (f1 FaultUid) Matches(f2 FaultUid) bool {
 }
 
 func (f FaultUid) String() string {
-	return fmt.Sprintf("%s>%s:%s(%s)#%d", f.Origin, f.Destination, f.Signature, f.Payload, f.Count)
+	payloadStr := ""
+	if f.Payload != "*" && f.Payload != "" {
+		payloadStr = fmt.Sprintf("(%s)", f.Payload)
+	}
+
+	countStr := ""
+	if f.Count < 0 {
+		countStr = "#∞"
+	} else {
+		countStr = fmt.Sprintf("#%d", f.Count)
+	}
+
+	return fmt.Sprintf("%s>%s:%s%s%s", f.Origin, f.Destination, f.Signature, payloadStr, countStr)
 }
 
 type Fault struct {

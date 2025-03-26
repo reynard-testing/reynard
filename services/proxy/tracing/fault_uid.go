@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	ServiceName string = os.Getenv("SERVICE_NAME")
 	stackPrefix string = os.Getenv("STACK_PREFIX")
 	pathPrefix  string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
 )
@@ -122,6 +121,8 @@ func getCallSignature(r *http.Request) string {
 	}
 }
 
+var postfixRegex = regexp.MustCompile(`-\d+$`)
+
 func GetHostIdentifier(addr string) string {
 	names, err := net.LookupAddr(addr)
 	if err != nil || len(names) == 0 {
@@ -140,16 +141,16 @@ func GetHostIdentifier(addr string) string {
 	// In docker, the name is [stack]-[service]-[index].[stack]_[network]
 	prefix := stackPrefix
 	if prefix == "" {
-		domain_name := parts[1]
-		domain_parts := strings.Split(domain_name, "_")
-		prefix = domain_parts[0]
+		domainName := parts[1]
+		domainParts := strings.Split(domainName, "_")
+		prefix = domainParts[0]
 	}
 
-	serviceName := parts[0]
+	fullServiceName := parts[0]
 	// remove [stack]- from the service name
-	serviceWithoutPrefix := strings.TrimPrefix(serviceName+"-", prefix)
+	serviceWithoutPrefix := strings.TrimPrefix(fullServiceName, prefix+"-")
 	// remove -[index] from the service name
-	serviceWithoutIndex := regexp.MustCompile(`-\d+$`).ReplaceAllString(serviceWithoutPrefix, "")
+	serviceWithoutIndex := postfixRegex.ReplaceAllString(serviceWithoutPrefix, "")
 
 	return serviceWithoutIndex
 }

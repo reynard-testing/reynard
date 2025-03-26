@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +111,9 @@ public class DynamicAnalysisStore {
             logger.info("Found new precondition {} for existing fault {}", condition, fid);
         }
 
-        preconditions.computeIfAbsent(fid, x -> new HashSet<>()).add(condition);
+        preconditions.computeIfAbsent(fid, x -> new HashSet<>())
+                .removeIf(s -> Sets.isSubsetOf(condition, s));
+        preconditions.get(fid).add(condition);
         return true;
     }
 
@@ -132,6 +135,8 @@ public class DynamicAnalysisStore {
             return false;
         }
 
+        // filter out all supersets of this subset
+        this.redundantUidSubsets.removeIf(s -> Sets.isSubsetOf(subset, s));
         // This is a novel redundant subset, lets add it!
         this.redundantUidSubsets.add(subset);
         return true;
@@ -147,10 +152,26 @@ public class DynamicAnalysisStore {
         return false;
     }
 
+    private boolean isValidSubset(Set<Fault> subset) {
+        // Must have at most one fault per faultuid
+        Set<FaultUid> uids = new HashSet<>();
+        for (var fault : subset) {
+            if (!uids.add(fault.uid())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean pruneFaultSubset(Set<Fault> subset) {
         // If the subset is already in the list of redundant subsets
         // Or if the subset is a subset of an already redundant subset
         // Then we can ignore this subset
+
+        if (!isValidSubset(subset)) {
+            throw new IllegalArgumentException("Fault subset must have at most one fault per faultuid");
+        }
+
         if (hasFaultSubset(subset)) {
             return false;
         }
@@ -158,6 +179,9 @@ public class DynamicAnalysisStore {
         // TODO: if we have all fault modes for a faultuid in the subsets
         // we can ignore the faultuid
 
+        // filter out all supersets of this subset
+        this.redundantFaultSubsets.removeIf(s -> Sets.isSubsetOf(subset, s));
+        // and add this subset
         this.redundantFaultSubsets.add(subset);
         return true;
     }
@@ -182,6 +206,7 @@ public class DynamicAnalysisStore {
         int modes = this.modes.size();
         long sum = 0;
 
+        // Note: this does not account for overlap between uid and fault subsets
         for (int i = 0; i < redundantUidSubsets.size(); i++) {
             var subset = redundantUidSubsets.get(i);
             long contribution = SpaceEstimate.nonEmptySpaceSize(modes, points, subset.size());
@@ -198,34 +223,52 @@ public class DynamicAnalysisStore {
 
                 if (!overlap.isEmpty()) {
                     long overlapContribution = SpaceEstimate.nonEmptySpaceSize(modes, points,
-                            overlap.size() + subset.size());
+                            other.size() + subset.size() - overlap.size());
                     sum -= overlapContribution;
                     coveredOverlap.add(overlap);
                 }
             }
         }
 
-        // TODO: this estimate is too high, figure out why?
         for (int i = 0; i < redundantFaultSubsets.size(); i++) {
             var subset = redundantFaultSubsets.get(i);
-            long contribution = SpaceEstimate.nonEmptySpaceSize(modes, points - subset.size());
+            long contribution = SpaceEstimate.spaceSize(modes, points - subset.size());
             sum += contribution;
 
-            Set<Set<Fault>> coveredOverlap = new HashSet<>();
+            // TODO: this overlap estimate is not accurate, can sometimes go below zero?
+            Set<FaultUid> uids = subset.stream()
+                    .map(Fault::uid)
+                    .collect(Collectors.toSet());
+
+            Set<Set<Fault>> coveredExtensions = new HashSet<>();
 
             for (int j = i + 1; j < redundantFaultSubsets.size(); j++) {
                 var other = redundantFaultSubsets.get(j);
                 var overlap = Sets.intersection(subset, other);
-                if (coveredOverlap.contains(overlap)) {
+                var leftInOther = Sets.difference(other, overlap);
+
+                if (overlap.isEmpty()) {
                     continue;
                 }
 
-                if (!overlap.isEmpty()) {
-                    long overlapContribution = SpaceEstimate.nonEmptySpaceSize(modes,
-                            points - (overlap.size() + subset.size()));
-                    sum -= overlapContribution;
-                    coveredOverlap.add(overlap);
+                // If the subset and the other contain faults for the same point
+                // but a different mode, then they are incompatible
+                var isIncompatible = leftInOther.stream()
+                        .anyMatch(f -> uids.contains(f.uid()));
+
+                if (isIncompatible || coveredExtensions.contains(leftInOther)) {
+                    continue;
                 }
+
+                int unionSize = other.size() + subset.size() - overlap.size();
+                int pointsLeft = points - unionSize;
+                if (pointsLeft < 0) {
+                    // Famous last words: this should never happen
+                    continue;
+                }
+                long overlapContribution = SpaceEstimate.spaceSize(modes, pointsLeft);
+                // sum -= overlapContribution;
+                coveredExtensions.add(leftInOther);
             }
         }
 

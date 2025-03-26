@@ -173,7 +173,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
 
     @Override
     public long pruneFaultSubset(Set<Fault> subset) {
-        boolean isNew = store.ignoreFaultSubset(subset);
+        boolean isNew = store.pruneFaultSubset(subset);
 
         // if (!isNew) {
         // return 0;
@@ -192,7 +192,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
 
     @Override
     public long pruneFaultload(Faultload faultload) {
-        store.ignoreFaultload(faultload);
+        store.pruneFaultload(faultload);
         return 1;
     }
 

@@ -21,10 +21,12 @@ public class DynamicAnalysisStore {
 
     private final Set<FaultMode> modes;
     private final Set<FaultUid> points = new HashSet<>();
+
+    private final Map<FaultUid, Set<Set<Fault>>> preconditions = new HashMap<>();
+
+    private final List<Faultload> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
-    private final List<Faultload> redundantFaultloads = new ArrayList<>();
-    private final Map<FaultUid, Set<Set<Fault>>> preconditions = new HashMap<>();
 
     public DynamicAnalysisStore(Set<FaultMode> modes) {
         this.modes = modes;
@@ -34,19 +36,42 @@ public class DynamicAnalysisStore {
         return points;
     }
 
-    public boolean addFaultUid(FaultUid fid) {
-        if (!points.contains(fid)) {
-            points.add(fid);
-            return true;
-        }
-
-        return false;
+    public List<Faultload> getRedundantFaultloads() {
+        return this.redundantFaultloads;
     }
 
-    public void addFaultUids(List<FaultUid> fids) {
-        for (var fid : fids) {
-            addFaultUid(fid);
+    public List<Set<FaultUid>> getRedundantUidSubsets() {
+        return this.redundantUidSubsets;
+    }
+
+    public List<Set<Fault>> getRedundantFaultSubsets() {
+        return this.redundantFaultSubsets;
+    }
+
+    public boolean hasFaultUid(FaultUid fid) {
+        return points.contains(fid);
+    }
+
+    public boolean addFaultUid(FaultUid fid) {
+        if (hasFaultUid(fid)) {
+            return false;
         }
+
+        points.add(fid);
+        return true;
+    }
+
+    public int addFaultUids(List<FaultUid> fids) {
+        int added = 0;
+
+        for (var fid : fids) {
+            boolean isNew = addFaultUid(fid);
+            if (isNew) {
+                added++;
+            }
+        }
+
+        return added;
     }
 
     public boolean hasConditionForFaultUid(Set<Fault> condition, FaultUid fid) {
@@ -90,7 +115,7 @@ public class DynamicAnalysisStore {
         return false;
     }
 
-    public boolean ignoreFaultUidSubset(Set<FaultUid> subset) {
+    public boolean pruneFaultUidSubset(Set<FaultUid> subset) {
         // If the subset is already in the list of redundant subsets
         // Or if the subset is a subset of an already redundant subset
         // Then we can ignore this subset
@@ -103,14 +128,6 @@ public class DynamicAnalysisStore {
         return true;
     }
 
-    public boolean ignoreFaultUidSubset(FaultUid... subset) {
-        return ignoreFaultUidSubset(Set.of(subset));
-    }
-
-    public boolean ignoreFaultUidSubset(List<FaultUid> subset) {
-        return ignoreFaultUidSubset(Set.copyOf(subset));
-    }
-
     public boolean hasFaultSubset(Set<Fault> subset) {
         for (var redundant : this.redundantFaultSubsets) {
             if (Sets.isSubsetOf(redundant, subset)) {
@@ -121,7 +138,7 @@ public class DynamicAnalysisStore {
         return false;
     }
 
-    public boolean ignoreFaultSubset(Set<Fault> subset) {
+    public boolean pruneFaultSubset(Set<Fault> subset) {
         // If the subset is already in the list of redundant subsets
         // Or if the subset is a subset of an already redundant subset
         // Then we can ignore this subset
@@ -136,27 +153,7 @@ public class DynamicAnalysisStore {
         return true;
     }
 
-    public boolean ignoreFaultSubset(Fault... subset) {
-        return ignoreFaultSubset(Set.of(subset));
-    }
-
-    public boolean ignoreFaultSubset(List<Fault> subset) {
-        return ignoreFaultSubset(Set.copyOf(subset));
-    }
-
-    public List<Faultload> getRedundantFaultloads() {
-        return this.redundantFaultloads;
-    }
-
-    public List<Set<FaultUid>> getRedundantUidSubsets() {
-        return this.redundantUidSubsets;
-    }
-
-    public List<Set<Fault>> getRedundantFaultSubsets() {
-        return this.redundantFaultSubsets;
-    }
-
-    public boolean ignoreFaultload(Faultload faultload) {
+    public boolean pruneFaultload(Faultload faultload) {
         // If the faultload is already in the list of redundant faultloads
         // Then we can ignore this faultload
         if (hasFaultload(faultload)) {

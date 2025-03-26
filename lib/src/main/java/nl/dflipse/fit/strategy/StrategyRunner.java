@@ -200,8 +200,7 @@ public class StrategyRunner {
         }
 
         var generated = generator.generate();
-        String tag = generator.getClass().getSimpleName() + ".generate";
-        statistics.incrementGenerator(tag, generated.size());
+        statistics.incrementGenerator("Generated", generated.size());
 
         return generated;
     }

@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,13 +22,12 @@ public class FeedbackContext {
     private final static Map<String, DynamicAnalysisStore> stores = new HashMap<>();
 
     public FeedbackContext(StrategyRunner runner, String contextName) {
-        assertGeneratorPresent();
         this.contextName = contextName;
         this.runner = runner;
-
-        // restore store if it exists
+        assertGeneratorPresent();
         this.store = stores.computeIfAbsent(contextName,
                 k -> new DynamicAnalysisStore(runner.getGenerator().getFaultModes()));
+
     }
 
     private void assertGeneratorPresent() {
@@ -45,44 +45,81 @@ public class FeedbackContext {
     }
 
     public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
+        store.addFaultUids(faultInjectionPoints);
         runner.getGenerator().reportFaultUids(faultInjectionPoints);
     }
 
     public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
-        long reduction = store.estimateReductionForConditionalFaultUid(condition, fid);
         store.addConditionalFaultUid(condition, fid);
         runner.getGenerator().reportConditionalFaultUid(condition, fid);
-        runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
-        long reduction = store.estimateReductionForFaultUidSubset(subset);
         store.pruneFaultUidSubset(subset);
         runner.getGenerator().pruneFaultUidSubset(subset);
-        runner.statistics.incrementEstimatePruner(contextName, reduction);
     }
 
-    public long pruneFaultSubset(Set<Fault> subset) {
-        long reduction = store.estimateReductionForFaultSubset(subset);
+    public void pruneFaultSubset(Set<Fault> subset) {
         store.pruneFaultSubset(subset);
         runner.getGenerator().pruneFaultSubset(subset);
-        runner.statistics.incrementEstimatePruner(contextName, reduction);
-        return reduction;
     }
 
     public void pruneMixed(Set<Fault> subset, FaultUid fault) {
-        long sum = 0;
         for (var mode : runner.getGenerator().getFaultModes()) {
             Set<Fault> mixed = Sets.plus(subset, new Fault(fault, mode));
-            sum += pruneFaultSubset(mixed);
+            pruneFaultSubset(mixed);
         }
-        runner.statistics.incrementEstimatePruner(contextName, sum);
     }
 
     public void pruneFaultload(Faultload fautload) {
-        long reduction = store.estimateReductionForFaultload(fautload);
         store.pruneFaultload(fautload);
         runner.getGenerator().pruneFaultload(fautload);
-        runner.statistics.incrementEstimatePruner(contextName, reduction);
+    }
+
+    public static Set<String> getContextNames() {
+        return stores.keySet();
+    }
+
+    public static Map<String, DynamicAnalysisStore> getStores() {
+        return stores;
+    }
+
+    public static boolean hasContext(String contextName) {
+        return stores.containsKey(contextName);
+    }
+
+    public static Map<String, String> getReport(String contextName) {
+        if (!hasContext(contextName)) {
+            return null;
+        }
+
+        Map<String, String> report = new LinkedHashMap<>();
+        DynamicAnalysisStore store = stores.get(contextName);
+        var redundantFaultloads = store.getRedundantFaultloads();
+        if (redundantFaultloads.size() > 0) {
+            report.put("Faultloads pruned", redundantFaultloads.size() + "");
+        }
+
+        var redundantFaultSubsets = store.getRedundantFaultSubsets();
+        if (redundantFaultSubsets.size() > 0) {
+            report.put("Fault subsets pruned", redundantFaultSubsets.size() + "");
+        }
+
+        var redundantUidSubsets = store.getRedundantUidSubsets();
+        if (redundantUidSubsets.size() > 0) {
+            report.put("Fault points subsets pruned", redundantUidSubsets.size() + "");
+        }
+
+        var preconditions = store.getPreconditions();
+        if (preconditions.size() > 0) {
+            report.put("Preconditions", preconditions.size() + "");
+            int count = 0;
+            for (var entry : preconditions.entrySet()) {
+                count += entry.getValue().size();
+            }
+            report.put("Precondition subsets", count + "");
+        }
+
+        return report;
     }
 }

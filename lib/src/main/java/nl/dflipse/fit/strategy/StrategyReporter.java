@@ -1,15 +1,16 @@
 package nl.dflipse.fit.strategy;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 import nl.dflipse.fit.strategy.generators.Generator;
-import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyReporter {
-    private int maxChars = 32;
+    private int maxChars = 48;
     private Generator generator;
     private StrategyRunner runner;
     private StrategyStatistics statistics;
@@ -58,10 +59,6 @@ public class StrategyReporter {
         return padding + s + padding;
     }
 
-    private int getMaxKeyLength(Map<String, Long> map) {
-        return map.keySet().stream().mapToInt(String::length).max().orElse(0);
-    }
-
     private int getMaxKeyLength(Set<String> set) {
         return set.stream().mapToInt(String::length).max().orElse(0);
     }
@@ -83,16 +80,12 @@ public class StrategyReporter {
         String runPercentage = asPercentage(totalRun, fullSpace);
         String reductionPercentage = asPercentage(fullSpace - totalRun, fullSpace);
 
-        printNewline();
-        printLine(padBoth(" Statistics ", maxChars, "-"));
-        printLine("Complete space size : " + fullSpace + " (" + reductionPercentage + "% reduction)");
-        printLine("Total generated     : " + totalGenerated + " (" + generatePercentage + "% of space)");
-        printLine("Total pruned        : " + totalPruned + " (" + prunePercentage + "% of generated)");
-        printLine("Total run           : " + totalRun + " (" + runPercentage + "% of full space)");
-    }
-
-    private void printKeyValue(String key, long value, int keyPadding) {
-        printKeyValue(key, String.valueOf(value), maxChars);
+        Map<String, String> report = new LinkedHashMap<>();
+        report.put("Complete space size", fullSpace + " (" + reductionPercentage + "% reduction)");
+        report.put("Total generated", totalGenerated + " (" + generatePercentage + "% of space)");
+        report.put("Total directly pruned", totalPruned + " (" + prunePercentage + "% of generated)");
+        report.put("Total run", totalRun + " (" + runPercentage + "% of full space)");
+        printReport("Statistics", report);
     }
 
     private void printKeyValue(String key, String value, int keyPadding) {
@@ -100,14 +93,12 @@ public class StrategyReporter {
     }
 
     public void reportGeneratorStats() {
-        printNewline();
-        printLine(padBoth(" Generator ", maxChars, "-"));
-        Map<String, Long> generatorCount = statistics.getGeneratorCount();
-        int maxKeyLength = getMaxKeyLength(generatorCount);
-        printKeyValue("Generator:", generator.getClass().getSimpleName(), maxKeyLength);
-        for (var entry : generatorCount.entrySet()) {
-            printKeyValue(entry.getKey(), entry.getValue(), maxKeyLength);
+        Map<String, String> report = new LinkedHashMap<>();
+        report.put("Generator", generator.getClass().getSimpleName());
+        for (var entry : statistics.getGeneratorCount().entrySet()) {
+            report.put(entry.getKey(), String.valueOf(entry.getValue()));
         }
+        printReport("Generator", report);
     }
 
     private long getAverageTime(String tag) {
@@ -119,49 +110,57 @@ public class StrategyReporter {
     }
 
     public void reportTimingStats() {
-        printNewline();
-        printLine(padBoth(" Timings ", maxChars, "-"));
-        Set<String> tags = statistics.getTags();
-        int maxTimingKeyLength = getMaxKeyLength(tags);
-        for (String tag : tags) {
+        Map<String, String> report = new LinkedHashMap<>();
+
+        for (String tag : statistics.getTags()) {
             String readableKey = tag.equals(TaggedTimer.DEFAULT_TAG) ? "Total" : tag;
-            String key = padRight(readableKey, maxTimingKeyLength);
-            printLine(key + " : " + getAverageTime(tag) + " (ms)");
+            report.put(readableKey, getAverageTime(tag) + " (ms)");
         }
+
+        printReport("Timings", report);
     }
 
     public void reportPrunerStats() {
         Map<String, Long> prunerCount = statistics.getPrunerCount();
-        Map<String, Long> prunerEstimates = statistics.getPrunerEstimates();
 
         long totalGenerated = statistics.getTotalGenerated();
         long totalSize = statistics.getTotalSize();
 
-        int maxPrunerKeyLength = getMaxKeyLength(prunerCount);
         printNewline();
-        printLine(padBoth(" Pruners ", maxChars, "-"));
+        printLine(padBoth(" Pruners ", maxChars, "="));
+
         for (var entry : prunerCount.entrySet()) {
-            String key = padRight(entry.getKey(), maxPrunerKeyLength);
+            Map<String, String> prunerReport = new LinkedHashMap<>();
+            String contextName = entry.getKey();
             long value = entry.getValue();
-            long estimateValue = prunerEstimates.get(entry.getKey());
-            printLine(
-                    key + " : " + value + " directly (" + asPercentage(value, totalGenerated) + "% of generated)");
-            printLine(padRight("", maxPrunerKeyLength) + " : " + estimateValue + " indirectly ("
-                    + asPercentage(estimateValue, totalSize) + "% estimate of space)");
+            prunerReport.put("Directly pruned", value + " (" + asPercentage(value, totalGenerated) + "% of generated)");
+            // prunerReport.put("Indirectly pruned", estimateValue + " ("
+            // + asPercentage(estimateValue, totalSize) + "% estimate of space)");
+            if (FeedbackContext.hasContext(contextName)) {
+                prunerReport.putAll(FeedbackContext.getReport(contextName));
+            }
+            printReport(contextName, prunerReport);
+        }
+        printNewline();
+    }
+
+    public void printReport(String name, Map<String, String> keyValues) {
+        int maxKeyLength = getMaxKeyLength(keyValues.keySet());
+        int maxValueLength = keyValues.values().stream().mapToInt(String::length).max().orElse(0);
+        int maxCharSize = maxKeyLength + maxValueLength + 4;
+        printNewline();
+        if (name.length() > 0) {
+            printLine(padBoth(" " + name + " ", maxCharSize, "-"));
+        }
+        for (var entry : keyValues.entrySet()) {
+            printKeyValue(entry.getKey(), entry.getValue(), maxKeyLength);
         }
     }
 
     public void reportOnReporter(Reporter reporter) {
         Map<String, String> report = reporter.report();
-        int maxKeyLength = getMaxKeyLength(report.keySet());
-        int maxValueLength = report.values().stream().mapToInt(String::length).max().orElse(0);
-        int maxCharSize = maxKeyLength + maxValueLength + 5;
         String name = reporter.getClass().getSimpleName();
-        printNewline();
-        printLine(padBoth(" " + name + " ", maxCharSize, "-"));
-        for (var entry : report.entrySet()) {
-            printKeyValue(entry.getKey(), entry.getValue(), maxKeyLength);
-        }
+        printReport(name, report);
     }
 
     public void report() {

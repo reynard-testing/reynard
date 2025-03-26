@@ -2,6 +2,7 @@ package nl.dflipse.fit.strategy.analyzers;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +35,7 @@ public class StatusAnalyzer implements FeedbackHandler, Reporter {
 
     @Override
     public Map<String, String> report() {
-        Map<String, String> report = new HashMap<>();
+        Map<String, String> report = new LinkedHashMap<>();
         for (var entry : faultStatus.entrySet()) {
             String downstream = entry.getKey();
             Set<Integer> statuses = entry.getValue();

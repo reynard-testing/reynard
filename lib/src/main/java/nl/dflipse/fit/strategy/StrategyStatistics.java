@@ -13,7 +13,6 @@ import nl.dflipse.fit.util.TaggedTimer;
 public class StrategyStatistics {
     private Map<String, Long> generatorCount = new HashMap<>();
     private Map<String, Long> prunerCount = new HashMap<>();
-    private Map<String, Long> prunerEstimates = new HashMap<>();
     private List<Pair<String, Long>> timings = new ArrayList<>();
     private Set<String> tags = new HashSet<>();
     private StrategyRunner runner;
@@ -34,16 +33,6 @@ public class StrategyStatistics {
 
     public void incrementPruner(String pruner, long count) {
         prunerCount.put(pruner, prunerCount.getOrDefault(pruner, 0L) + count);
-        if (!prunerEstimates.containsKey(pruner)) {
-            prunerEstimates.put(pruner, 0L);
-        }
-    }
-
-    public void incrementEstimatePruner(String pruner, long count) {
-        prunerEstimates.put(pruner, prunerEstimates.getOrDefault(pruner, 0L) + count);
-        if (!prunerCount.containsKey(pruner)) {
-            prunerCount.put(pruner, 0L);
-        }
     }
 
     public void incrementPruned(long count) {
@@ -72,10 +61,6 @@ public class StrategyStatistics {
 
     public Map<String, Long> getPrunerCount() {
         return prunerCount;
-    }
-
-    public Map<String, Long> getPrunerEstimates() {
-        return prunerEstimates;
     }
 
     public List<Pair<String, Long>> getTimings() {
@@ -110,7 +95,6 @@ public class StrategyStatistics {
     public void reset() {
         generatorCount.clear();
         prunerCount.clear();
-        prunerEstimates.clear();
         timings.clear();
         tags.clear();
         totalRun = 0;

@@ -55,9 +55,9 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
 
         // We don't need to check for this exact fault, as it is already
         // been tested
-        Set<Fault> newRedundantFaultload = Set.of(effect);
-        redundantFautloads.add(newRedundantFaultload);
-        context.pruneFaultload(new Faultload(newRedundantFaultload));
+        // Set<Fault> newRedundantFaultload = Set.of(effect);
+        // redundantFautloads.add(newRedundantFaultload);
+        // context.pruneFaultload(new Faultload(newRedundantFaultload));
 
         // We also don't need to check for the subset of this fault
         // and its causes

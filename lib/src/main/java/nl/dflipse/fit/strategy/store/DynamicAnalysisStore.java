@@ -49,6 +49,14 @@ public class DynamicAnalysisStore {
         return this.redundantFaultSubsets;
     }
 
+    public Set<FaultUid> getFaultUids() {
+        return points;
+    }
+
+    public Map<FaultUid, Set<Set<Fault>>> getPreconditions() {
+        return preconditions;
+    }
+
     public boolean hasFaultUid(FaultUid fid) {
         return points.contains(fid);
     }
@@ -125,13 +133,17 @@ public class DynamicAnalysisStore {
         return false;
     }
 
-    public long estimateReductionForFaultUidSubset(Set<FaultUid> subset) {
+    public long estimateReductionForFaultUidSubset(Set<FaultUid> subset, Set<FaultUid> existing) {
         if (hasFaultUidSubset(subset)) {
             return 0;
         }
 
         // TODO: account for overlapping subsets?
-        return SpaceEstimate.nonEmptySpaceSize(modes.size(), getFaultInjectionPoints().size() - subset.size());
+        return SpaceEstimate.nonEmptySpaceSize(modes.size(), existing.size(), subset.size());
+    }
+
+    public long estimateReductionForFaultUidSubset(Set<FaultUid> subset) {
+        return estimateReductionForFaultUidSubset(subset, getFaultInjectionPoints());
     }
 
     public boolean pruneFaultUidSubset(Set<FaultUid> subset) {
@@ -157,13 +169,17 @@ public class DynamicAnalysisStore {
         return false;
     }
 
-    public long estimateReductionForFaultSubset(Set<Fault> subset) {
+    public long estimateReductionForFaultSubset(Set<Fault> subset, Set<FaultUid> existing) {
         if (hasFaultSubset(subset)) {
             return 0;
         }
 
         // TODO: account for overlapping subsets?
-        return SpaceEstimate.nonEmptySpaceSize(modes.size(), getFaultInjectionPoints().size() - subset.size());
+        return SpaceEstimate.nonEmptySpaceSize(modes.size(), existing.size() - subset.size());
+    }
+
+    public long estimateReductionForFaultSubset(Set<Fault> subset) {
+        return estimateReductionForFaultSubset(subset, getFaultInjectionPoints());
     }
 
     public boolean pruneFaultSubset(Set<Fault> subset) {

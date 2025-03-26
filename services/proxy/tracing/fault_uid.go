@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	ServiceName string = os.Getenv("SERVICE_NAME")
 	stackPrefix string = os.Getenv("STACK_PREFIX")
 	pathPrefix  string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
 )

@@ -26,7 +26,6 @@ services:
     environment:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://localhost:8090
-      - SERVICE_NAME=proxy1
       - ORCHESTRATOR_HOST=orchestrator:5000
       - CONTROLLER_PORT=8050
       - USE_OTEL=true
@@ -38,7 +37,6 @@ services:
     environment:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://localhost:8090
-      - SERVICE_NAME=proxy2
       - ORCHESTRATOR_HOST=orchestrator:5000
       - CONTROLLER_PORT=8050
       - USE_OTEL=true
@@ -49,7 +47,6 @@ services:
     environment:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://localhost:8090
-      - SERVICE_NAME=proxy3
       - ORCHESTRATOR_HOST=orchestrator:5000
       - CONTROLLER_PORT=8050
       - USE_OTEL=true

@@ -83,7 +83,7 @@ public class E2eStrategyTest {
     @Test
     public void testEmptyGenerator() {
         StrategyRunner strategyRunner = new StrategyRunner()
-                .withGenerator(new DummyGenerator(List.of()));
+                .withComponent(new DummyGenerator(List.of()));
 
         var firstEmpty = strategyRunner.nextFaultload();
         assert firstEmpty.size() == 0;
@@ -99,7 +99,7 @@ public class E2eStrategyTest {
         queue.add(new Faultload(faults));
 
         StrategyRunner strategyRunner = new StrategyRunner()
-                .withGenerator(new DummyGenerator(queue));
+                .withComponent(new DummyGenerator(queue));
 
         var firstEmpty = strategyRunner.nextFaultload();
         assert firstEmpty.size() == 0;

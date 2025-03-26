@@ -66,26 +66,26 @@ public class FiTestExtension
                 ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
         strategy = new StrategyRunner()
-                .withGenerator(new IncreasingSizeGenerator(modes))
+                .withComponent(new IncreasingSizeGenerator(modes))
                 // .withGenerator(new IncreasingSizeMixedGenerator(modes))
                 // .withAnalyzer(new RandomDetector())
-                .withAnalyzer(new BreadthFirstDetector())
+                .withComponent(new BreadthFirstDetector())
                 // .withAnalyzer(new DepthFirstDetector())
-                .withAnalyzer(new ConditionalFaultDetector())
-                .withAnalyzer(new RedundancyAnalyzer())
-                .withAnalyzer(new StatusAnalyzer())
-                .withPruner(new ParentChildPruner())
-                .withPruner(new ErrorPropogationPruner())
-                .withPruner(new CauseEffectPruner())
+                .withComponent(new ConditionalFaultDetector())
+                .withComponent(new RedundancyAnalyzer())
+                .withComponent(new StatusAnalyzer())
+                .withComponent(new ParentChildPruner())
+                .withComponent(new ErrorPropogationPruner())
+                .withComponent(new CauseEffectPruner())
                 // .withPruner(new NoImpactPruner())
-                .withPruner(new DynamicReductionPruner());
+                .withComponent(new DynamicReductionPruner());
 
         if (annotation.maxTestCases() > 0) {
             strategy.withMaxTestCases(annotation.maxTestCases());
         }
 
         if (annotation.failStop()) {
-            strategy.withPruner(new FailStopPruner());
+            strategy.withComponent(new FailStopPruner());
         }
 
         if (annotation.maskPayload()) {

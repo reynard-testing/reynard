@@ -14,21 +14,21 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 
-public class NoImpactPruner implements Pruner, FeedbackHandler<Void> {
+public class NoImpactPruner implements Pruner, FeedbackHandler {
     private Set<FaultUid> happyPath = new HashSet<>();
     private final Logger logger = LoggerFactory.getLogger(NoImpactPruner.class);
     private Set<Set<Fault>> impactlessFaults = new HashSet<>();
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             happyPath = result.trace.getFaultUids();
-            return null;
+            return;
         }
 
         Set<Fault> injected = result.trace.getInjectedFaults();
         if (injected.isEmpty()) {
-            return null;
+            return;
         }
         // TODO: handle no impact in alternative paths
 
@@ -37,7 +37,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler<Void> {
         Set<FaultUid> fids = result.trace.getFaultUids();
         boolean alternativePath = Sets.isProperSupersetOf(fids, happyPath);
         if (alternativePath) {
-            return null;
+            return;
         }
 
         // TODO: verify, is this assumption correct?
@@ -48,14 +48,14 @@ public class NoImpactPruner implements Pruner, FeedbackHandler<Void> {
                 .anyMatch(r -> r.response.isErrenous());
 
         if (hasImpact) {
-            return null;
+            return;
         }
 
         logger.info("Found impactless faultload: " + injected);
         impactlessFaults.add(injected);
         context.pruneFaultSubset(injected);
 
-        return null;
+        return;
     }
 
     @Override

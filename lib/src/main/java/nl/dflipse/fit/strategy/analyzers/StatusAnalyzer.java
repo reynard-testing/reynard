@@ -12,11 +12,11 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.Reporter;
 
-public class StatusAnalyzer implements FeedbackHandler<Void>, Reporter {
+public class StatusAnalyzer implements FeedbackHandler, Reporter {
     private final Map<String, Set<Integer>> faultStatus = new HashMap<>();
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         for (var report : result.trace.getReports()) {
             if (report.response == null) {
                 continue;
@@ -30,7 +30,6 @@ public class StatusAnalyzer implements FeedbackHandler<Void>, Reporter {
             int status = report.response.status;
             faultStatus.computeIfAbsent(downstream, k -> new HashSet<>()).add(status);
         }
-        return null;
     }
 
     @Override

@@ -18,7 +18,7 @@ public class StrategyRunner {
 
     private Generator generator = null;
 
-    private final List<FeedbackHandler<Void>> analyzers = new ArrayList<>();
+    private final List<FeedbackHandler> analyzers = new ArrayList<>();
     private final List<Pruner> pruners = new ArrayList<>();
     private final List<Reporter> reporters = new ArrayList<>();
 
@@ -62,35 +62,23 @@ public class StrategyRunner {
         return this;
     }
 
-    public StrategyRunner withGenerator(Generator generator) {
-        this.generator = generator;
-
-        if (generator instanceof Reporter reporter) {
-            if (!reporters.contains(reporter)) {
-                reporters.add(reporter);
-            }
+    public StrategyRunner withComponent(Object component) {
+        if (component instanceof Generator generator) {
+            this.generator = generator;
         }
 
-        return this;
-    }
-
-    public StrategyRunner withPruner(Pruner pruner) {
-        pruners.add(pruner);
-        if (pruner instanceof Reporter reporter) {
-            if (!reporters.contains(reporter)) {
-                reporters.add(reporter);
-            }
+        if (component instanceof Pruner pruner) {
+            pruners.add(pruner);
         }
-        return this;
-    }
 
-    public StrategyRunner withAnalyzer(FeedbackHandler<Void> analyzer) {
-        analyzers.add(analyzer);
-        if (analyzer instanceof Reporter reporter) {
-            if (!reporters.contains(reporter)) {
-                reporters.add(reporter);
-            }
+        if (component instanceof Reporter reporter) {
+            reporters.add(reporter);
         }
+
+        if (component instanceof FeedbackHandler analyzer) {
+            analyzers.add(analyzer);
+        }
+
         return this;
     }
 
@@ -107,10 +95,12 @@ public class StrategyRunner {
     }
 
     public TrackedFaultload nextFaultload() {
+        // Queue is empty, no more faultloads to run
         if (queue.isEmpty()) {
             return null;
         }
 
+        // Test case limit reached
         if (testCasesLeft == 0) {
             logger.warn("Reached test case limit, stopping!");
             return null;
@@ -118,8 +108,13 @@ public class StrategyRunner {
             testCasesLeft--;
         }
 
+        // Get the next faultload from the queue
         var queued = queue.remove(0);
+
+        // Wrap the faultload in a tracked faultload
+        // And prepare its properties
         var tracked = new TrackedFaultload(queued);
+
         if (withPayloadMasking) {
             tracked.withMaskPayload();
         }
@@ -211,41 +206,21 @@ public class StrategyRunner {
         return generated;
     }
 
-    @SuppressWarnings("rawtypes")
     public void analyze(FaultloadResult result) {
         result.faultload.timer.start("StrategyRunner.analyze");
 
         for (var analyzer : analyzers) {
             String name = analyzer.getClass().getSimpleName();
             String tag = name + ".handleFeedback<Analyzer>";
-            FeedbackContext context = new FeedbackContext(this, name);
             result.faultload.timer.start(tag);
+
+            FeedbackContext context = new FeedbackContext(this, name);
             analyzer.handleFeedback(result, context);
-            result.faultload.timer.stop(tag);
-        }
 
-        for (Pruner pruner : pruners) {
-            if (pruner instanceof FeedbackHandler feedbackHandler) {
-                String name = pruner.getClass().getSimpleName();
-                String tag = name + ".handleFeedback<Pruner>";
-                FeedbackContext context = new FeedbackContext(this, name);
-                result.faultload.timer.start(tag);
-                feedbackHandler.handleFeedback(result, context);
-                result.faultload.timer.stop(tag);
-            }
-        }
-
-        if (generator instanceof FeedbackHandler feedbackHandler) {
-            String name = generator.getClass().getSimpleName();
-            String tag = name + ".handleFeedback<Generator>";
-            FeedbackContext context = new FeedbackContext(this, name);
-            result.faultload.timer.start(tag);
-            feedbackHandler.handleFeedback(result, context);
             result.faultload.timer.stop(tag);
         }
 
         result.faultload.timer.stop("StrategyRunner.analyze");
-
     }
 
     public int prune() {

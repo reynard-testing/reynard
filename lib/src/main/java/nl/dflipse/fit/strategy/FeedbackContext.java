@@ -36,13 +36,6 @@ public class FeedbackContext {
         return runner.getGenerator().getFaultInjectionPoints();
     }
 
-    public Set<FaultMode> getFaultModes(String type) {
-        assertGeneratorPresent();
-        return runner.getGenerator().getFaultModes().stream()
-                .filter(mode -> mode.getType().equals(type))
-                .collect(Collectors.toSet());
-    }
-
     public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
         assertGeneratorPresent();
         runner.getGenerator().reportFaultUids(faultInjectionPoints);

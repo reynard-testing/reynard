@@ -5,16 +5,14 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 
-public class FailStopPruner implements Pruner, FeedbackHandler<Void> {
+public class FailStopPruner implements Pruner, FeedbackHandler {
     private boolean failed = false;
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (!result.passed) {
             failed = true;
         }
-
-        return null;
     }
 
     @Override

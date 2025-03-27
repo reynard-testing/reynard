@@ -21,7 +21,7 @@ ADDITIONAL_ENV = [
 
 IMAGES = {
     'otel_collector': 'otel/opentelemetry-collector-contrib:latest',
-    'jaeger': 'jaegertracing/all-in-one:latest',
+    'jaeger': 'jaegertracing/jaeger:latest',
     'orchestrator': 'fit-otel-orchestrator:latest',
     'proxy': 'fit-proxy:latest',
 }

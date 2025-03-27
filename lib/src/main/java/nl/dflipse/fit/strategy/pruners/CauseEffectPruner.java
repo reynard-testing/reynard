@@ -65,6 +65,8 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         // We have identified a cause, and its effects
         // We can now relate the happens before
         for (var disappearedFaultPoint : dissappearedFaultPoints) {
+            // TODO: handle case where the happy path contains two counts
+            // And the first causes the second to dissappear
             handleHappensBefore(injectedErrorFaults, disappearedFaultPoint, context);
         }
 
@@ -73,23 +75,17 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
             var effect = causeAndEffect.getKey();
             var possibleCauses = causeAndEffect.getValue();
 
-            var effectedPoints = context.getFaultUids().stream()
-                    .filter(f -> f.matchesUpToCount(effect))
-                    .collect(Collectors.toSet());
-
             // For every related fault injection point
-            for (var point : effectedPoints) {
-                // and every fault mode
-                for (var mode : context.getFaultModes()) {
-                    var fault = new Fault(point, mode);
+            // and every fault mode
+            for (var mode : context.getFaultModes()) {
+                var fault = new Fault(effect, mode);
 
-                    // and each possible cause for the dissapeareance
-                    // of the fault
-                    for (var cause : possibleCauses) {
-                        // the combination is redundant
-                        var redundant = Sets.plus(cause, fault);
-                        context.pruneFaultSubset(redundant);
-                    }
+                // and each possible cause for the dissapeareance
+                // of the fault
+                for (var cause : possibleCauses) {
+                    // the combination is redundant
+                    var redundant = Sets.plus(cause, fault);
+                    context.pruneFaultSubset(redundant);
                 }
             }
         }
@@ -103,7 +99,6 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         Set<Set<Fault>> possibleCauses = effectCauseMapping.get(effect);
         return possibleCauses.stream()
                 .anyMatch(pc -> Sets.isSubsetOf(pc, cause));
-
     }
 
     private void handleHappensBefore(Set<Fault> cause, FaultUid effect, FeedbackContext context) {
@@ -116,7 +111,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         }
 
         // Store as the fid (disregarding count)
-        effectCauseMapping.put(effect.asAnyCount(), Set.of(cause));
+        effectCauseMapping.put(effect, Set.of(cause));
 
     }
 

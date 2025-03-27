@@ -1,7 +1,7 @@
 package nl.dflipse.fit.strategy.generators;
 
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -215,7 +215,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
 
     @Override
     public Map<String, String> report() {
-        Map<String, String> report = new HashMap<>();
+        Map<String, String> report = new LinkedHashMap<>();
         report.put("Fault injection points", String.valueOf(getNumerOfPoints()));
         report.put("Modes", String.valueOf(getFaultModes().size()));
         report.put("Redundant faultloads", String.valueOf(store.getRedundantFaultloads().size()));
@@ -226,6 +226,12 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
         if (queueSize > 0) {
             report.put("Queue size (left)", String.valueOf(getQueuSize()));
             report.put("Space left", String.valueOf(getSpaceLeft()));
+        }
+
+        int i = 0;
+        for (var point : getFaultInjectionPoints()) {
+            report.put("FID(" + i + ")", point.toString());
+            i++;
         }
 
         return report;

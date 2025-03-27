@@ -224,7 +224,7 @@ public class DynamicAnalysisStore {
                 if (!overlap.isEmpty()) {
                     long overlapContribution = SpaceEstimate.nonEmptySpaceSize(modes, points,
                             other.size() + subset.size() - overlap.size());
-                    sum -= overlapContribution;
+                    // sum -= overlapContribution;
                     coveredOverlap.add(overlap);
                 }
             }

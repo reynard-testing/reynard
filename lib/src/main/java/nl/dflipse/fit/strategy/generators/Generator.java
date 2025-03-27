@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy.generators;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import nl.dflipse.fit.faultload.Fault;
@@ -22,6 +23,8 @@ public interface Generator {
     public Set<FaultMode> getFaultModes();
 
     public Set<FaultUid> getFaultInjectionPoints();
+
+    public Map<FaultUid, Set<Set<Fault>>> getConditionalFaultInjectionPoints();
 
     public List<Faultload> generate();
 

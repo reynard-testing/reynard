@@ -216,7 +216,7 @@ public class StrategyRunner {
             String tag = name + ".handleFeedback<Analyzer>";
             result.faultload.timer.start(tag);
 
-            FeedbackContext context = new FeedbackContext(this, name);
+            FeedbackContext context = new FeedbackContext(this, name, result);
             analyzer.handleFeedback(result, context);
 
             result.faultload.timer.stop(tag);

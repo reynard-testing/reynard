@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,12 +21,14 @@ public class FeedbackContext {
     private final String contextName;
     private final StrategyRunner runner;
     private final DynamicAnalysisStore store;
+    private final FaultloadResult result;
 
     private final static Map<String, DynamicAnalysisStore> stores = new HashMap<>();
 
-    public FeedbackContext(StrategyRunner runner, String contextName) {
+    public FeedbackContext(StrategyRunner runner, String contextName, FaultloadResult result) {
         this.contextName = contextName;
         this.runner = runner;
+        this.result = result;
         assertGeneratorPresent();
         this.store = stores.computeIfAbsent(contextName,
                 k -> new DynamicAnalysisStore(runner.getGenerator().getFaultModes()));
@@ -44,6 +47,39 @@ public class FeedbackContext {
 
     public Set<FaultUid> getFaultUids() {
         return runner.getGenerator().getFaultInjectionPoints();
+    }
+
+    public Map<FaultUid, Set<Set<Fault>>> getConditionalFaults() {
+        return runner.getGenerator().getConditionalFaultInjectionPoints();
+    }
+
+    public Set<Set<Fault>> getConditions(FaultUid fault) {
+        if (fault == null) {
+            return Set.of();
+        }
+
+        var mapping = getConditionalFaults();
+        if (!mapping.containsKey(fault)) {
+            return Set.of();
+        }
+
+        return mapping.get(fault);
+    }
+
+    public Set<FaultUid> getConditionalForFaultload() {
+        Set<Fault> injectedFaults = result.trace.getInjectedFaults();
+        Set<FaultUid> res = new HashSet<>();
+        for (var entry : getConditionalFaults().entrySet()) {
+            FaultUid conditional = entry.getKey();
+            for (var condition : entry.getValue()) {
+                if (Sets.isSubsetOf(injectedFaults, condition)) {
+                    res.add(conditional);
+                    break;
+                }
+            }
+        }
+
+        return res;
     }
 
     public void reportFaultUids(List<FaultUid> faultInjectionPoints) {

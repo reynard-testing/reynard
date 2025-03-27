@@ -197,6 +197,11 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
         return store.getFaultInjectionPoints();
     }
 
+    @Override
+    public Map<FaultUid, Set<Set<Fault>>> getConditionalFaultInjectionPoints() {
+        return store.getPreconditions();
+    }
+
     public DynamicAnalysisStore getStore() {
         return store;
     }

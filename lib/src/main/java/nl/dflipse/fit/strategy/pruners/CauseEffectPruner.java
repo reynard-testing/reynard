@@ -41,6 +41,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         // if (a set of) fault(s) causes another fault to disappear
         // then the cause(s) happens before the effect
         Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
+        Set<FaultUid> injectedFaultPoints = injectedErrorFaults.stream().map(Fault::uid).collect(Collectors.toSet());
 
         // if we have a singular cause
         if (injectedErrorFaults.isEmpty()) {
@@ -48,12 +49,16 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         }
 
         // dissappeared faults
-        // are those that were in the initial trace,
+        // are those that were in the initial trace
+        // or that we expect given the preconditions and the expected faults
         // but not in the current trace
         // and not the cause
-        Set<FaultUid> injectedFaultPoints = injectedErrorFaults.stream().map(Fault::uid).collect(Collectors.toSet());
+        Set<FaultUid> expectedPoints = new HashSet<>(pointsInHappyPath);
+        for (var expected : context.getConditionalForFaultload()) {
+            expectedPoints.add(expected);
+        }
 
-        Set<FaultUid> dissappearedFaultPoints = pointsInHappyPath.stream()
+        Set<FaultUid> dissappearedFaultPoints = expectedPoints.stream()
                 .filter(f -> !faultsInTrace.contains(f))
                 .filter(f -> !injectedFaultPoints.contains(f))
                 .collect(Collectors.toSet());

@@ -5,7 +5,7 @@ services:
     volumes:
       - ./lib/src/main/resources/otel-collector/collector-config-jaeger.yaml:/otel-collector-config.yaml
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/jaeger:latest
     ports:
       - 8686:16686
     environment:

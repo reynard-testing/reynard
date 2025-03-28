@@ -2,6 +2,7 @@ package nl.dflipse.fit.strategy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -74,6 +75,12 @@ public class E2eStrategyTest {
         public Set<FaultUid> getFaultInjectionPoints() {
             // TODO Auto-generated method stub
             throw new UnsupportedOperationException("Unimplemented method 'getFaultInjectionPoints'");
+        }
+
+        @Override
+        public Map<FaultUid, Set<Set<Fault>>> getConditionalFaultInjectionPoints() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'getConditionalFaultInjectionPoints'");
         }
     }
 

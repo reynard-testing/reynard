@@ -114,6 +114,7 @@ public class StrategyRunner {
         // Wrap the faultload in a tracked faultload
         // And prepare its properties
         var tracked = new TrackedFaultload(queued);
+        boolean isInitial = tracked.getFaultload().faultSet().isEmpty();
 
         if (withPayloadMasking) {
             tracked.withMaskPayload();
@@ -128,7 +129,9 @@ public class StrategyRunner {
         }
 
         if (withGetDelayMs > 0) {
-            tracked.withGetDelay(withGetDelayMs);
+            // Wait longer on the initial run, to ensure we got everyting
+            int multiplier = isInitial ? 4 : 1;
+            tracked.withGetDelay(multiplier * withGetDelayMs);
         }
 
         return tracked;
@@ -213,7 +216,7 @@ public class StrategyRunner {
             String tag = name + ".handleFeedback<Analyzer>";
             result.faultload.timer.start(tag);
 
-            FeedbackContext context = new FeedbackContext(this, name);
+            FeedbackContext context = new FeedbackContext(this, name, result);
             analyzer.handleFeedback(result, context);
 
             result.faultload.timer.stop(tag);

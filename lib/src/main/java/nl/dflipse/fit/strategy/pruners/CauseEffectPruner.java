@@ -41,6 +41,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         // if (a set of) fault(s) causes another fault to disappear
         // then the cause(s) happens before the effect
         Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
+        Set<FaultUid> injectedFaultPoints = injectedErrorFaults.stream().map(Fault::uid).collect(Collectors.toSet());
 
         // if we have a singular cause
         if (injectedErrorFaults.isEmpty()) {
@@ -48,12 +49,16 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         }
 
         // dissappeared faults
-        // are those that were in the initial trace,
+        // are those that were in the initial trace
+        // or that we expect given the preconditions and the expected faults
         // but not in the current trace
         // and not the cause
-        Set<FaultUid> injectedFaultPoints = injectedErrorFaults.stream().map(Fault::uid).collect(Collectors.toSet());
+        Set<FaultUid> expectedPoints = new HashSet<>(pointsInHappyPath);
+        for (var expected : context.getConditionalForFaultload()) {
+            expectedPoints.add(expected);
+        }
 
-        Set<FaultUid> dissappearedFaultPoints = pointsInHappyPath.stream()
+        Set<FaultUid> dissappearedFaultPoints = expectedPoints.stream()
                 .filter(f -> !faultsInTrace.contains(f))
                 .filter(f -> !injectedFaultPoints.contains(f))
                 .collect(Collectors.toSet());
@@ -65,6 +70,8 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         // We have identified a cause, and its effects
         // We can now relate the happens before
         for (var disappearedFaultPoint : dissappearedFaultPoints) {
+            // TODO: handle case where the happy path contains two counts
+            // And the first causes the second to dissappear
             handleHappensBefore(injectedErrorFaults, disappearedFaultPoint, context);
         }
 
@@ -73,23 +80,17 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
             var effect = causeAndEffect.getKey();
             var possibleCauses = causeAndEffect.getValue();
 
-            var effectedPoints = context.getFaultUids().stream()
-                    .filter(f -> f.matchesUpToCount(effect))
-                    .collect(Collectors.toSet());
-
             // For every related fault injection point
-            for (var point : effectedPoints) {
-                // and every fault mode
-                for (var mode : context.getFaultModes()) {
-                    var fault = new Fault(point, mode);
+            // and every fault mode
+            for (var mode : context.getFaultModes()) {
+                var fault = new Fault(effect, mode);
 
-                    // and each possible cause for the dissapeareance
-                    // of the fault
-                    for (var cause : possibleCauses) {
-                        // the combination is redundant
-                        var redundant = Sets.plus(cause, fault);
-                        context.pruneFaultSubset(redundant);
-                    }
+                // and each possible cause for the dissapeareance
+                // of the fault
+                for (var cause : possibleCauses) {
+                    // the combination is redundant
+                    var redundant = Sets.plus(cause, fault);
+                    context.pruneFaultSubset(redundant);
                 }
             }
         }
@@ -103,7 +104,6 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         Set<Set<Fault>> possibleCauses = effectCauseMapping.get(effect);
         return possibleCauses.stream()
                 .anyMatch(pc -> Sets.isSubsetOf(pc, cause));
-
     }
 
     private void handleHappensBefore(Set<Fault> cause, FaultUid effect, FeedbackContext context) {
@@ -116,7 +116,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         }
 
         // Store as the fid (disregarding count)
-        effectCauseMapping.put(effect.asAnyCount(), Set.of(cause));
+        effectCauseMapping.put(effect, Set.of(cause));
 
     }
 

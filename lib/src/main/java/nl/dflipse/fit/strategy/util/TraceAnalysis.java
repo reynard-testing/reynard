@@ -21,6 +21,7 @@ public class TraceAnalysis {
     private final Set<Fault> injectedFaults = new HashSet<>();
     private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
     private final List<TraceSpanReport> reports = new ArrayList<>();
+    private TraceSpanReport rootReport;
 
     private boolean anyIncomplete = false;
     private boolean hasInitial = false;
@@ -38,6 +39,7 @@ public class TraceAnalysis {
         // Parent null indicates the root request
         for (var report : reports) {
             if (report.isInitial) {
+                rootReport = report;
                 hasInitial = true;
             } else {
                 // Do not inject faults between client and first proxy
@@ -74,6 +76,7 @@ public class TraceAnalysis {
             // For multiple reports
             for (var report : node.reports) {
                 if (report.isInitial) {
+                    rootReport = report;
                     hasInitial = true;
                 } else if (!faultUids.contains(report.faultUid)) {
                     reports.add(report);
@@ -172,6 +175,10 @@ public class TraceAnalysis {
 
     public List<TraceSpanReport> getReports() {
         return reports;
+    }
+
+    public TraceSpanReport getRootReport() {
+        return rootReport;
     }
 
     public boolean isIncomplete() {

@@ -20,14 +20,14 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 
-public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
+public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(DynamicReductionPruner.class);
 
     private Map<FaultUid, Set<FaultUid>> causalMap = new HashMap<>();
     private List<Map<FaultUid, Integer>> behavioursSeen = new ArrayList<>();
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         // update behaviours seen
         Map<FaultUid, Integer> behaviourMap = new HashMap<>();
         for (var report : result.trace.getReports()) {
@@ -49,8 +49,6 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler<Void> {
 
             causalMap.get(parent).add(child);
         }
-
-        return null;
     }
 
     private boolean hasExpectedOutcome(Fault fault, int observedStatus) {

@@ -8,11 +8,11 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
-public class DepthFirstDetector implements FeedbackHandler<Void> {
+public class DepthFirstDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(DepthFirstDetector.class);
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             var potentialFaults = result.trace.getFaultUids(TraversalStrategy.DEPTH_FIRST);
 
@@ -22,8 +22,6 @@ public class DepthFirstDetector implements FeedbackHandler<Void> {
 
             context.reportFaultUids(potentialFaults);
         }
-
-        return null;
     }
 
 }

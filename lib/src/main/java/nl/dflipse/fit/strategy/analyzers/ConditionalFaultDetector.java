@@ -14,7 +14,7 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 
-public class ConditionalFaultDetector implements FeedbackHandler<Void> {
+public class ConditionalFaultDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ConditionalFaultDetector.class);
     private final Set<FaultUid> pointsInHappyPath = new HashSet<>();
 
@@ -33,12 +33,12 @@ public class ConditionalFaultDetector implements FeedbackHandler<Void> {
     }
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         var traceFaultUids = result.trace.getFaultUids();
         // --- Happy path ---
         if (result.isInitial()) {
             pointsInHappyPath.addAll(traceFaultUids);
-            return null;
+            return;
         }
 
         // Analyse new paths that were not in the happy path
@@ -80,7 +80,5 @@ public class ConditionalFaultDetector implements FeedbackHandler<Void> {
                 }
             }
         }
-
-        return null;
     }
 }

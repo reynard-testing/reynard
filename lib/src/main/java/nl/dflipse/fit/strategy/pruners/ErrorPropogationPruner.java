@@ -16,7 +16,7 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 
-public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
+public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ErrorPropogationPruner.class);
 
     private List<Set<Fault>> redundantFautloads = new ArrayList<>();
@@ -25,7 +25,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
     // TODO: if the body is the same as the error, and the status code,
     // Do we need to check for the other modes?
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         Set<Fault> injectedFaults = result.trace.getInjectedFaults();
 
         for (var report : result.trace.getReports()) {
@@ -48,7 +48,6 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
             handlePropogation(injectedFaults, responseFault, context);
         }
 
-        return null;
     }
 
     private void handlePropogation(Set<Fault> causes, Fault effect, FeedbackContext context) {
@@ -56,9 +55,9 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler<Void> {
 
         // We don't need to check for this exact fault, as it is already
         // been tested
-        Set<Fault> newRedundantFaultload = Set.of(effect);
-        redundantFautloads.add(newRedundantFaultload);
-        context.pruneFaultload(new Faultload(newRedundantFaultload));
+        // Set<Fault> newRedundantFaultload = Set.of(effect);
+        // redundantFautloads.add(newRedundantFaultload);
+        // context.pruneFaultload(new Faultload(newRedundantFaultload));
 
         // We also don't need to check for the subset of this fault
         // and its causes

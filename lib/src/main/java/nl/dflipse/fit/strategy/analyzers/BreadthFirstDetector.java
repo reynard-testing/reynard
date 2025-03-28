@@ -12,11 +12,11 @@ import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
  * Generate all possible combinations of faults in a breadth-first manner.
  * 
  */
-public class BreadthFirstDetector implements FeedbackHandler<Void> {
+public class BreadthFirstDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(BreadthFirstDetector.class);
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             var potentialFaults = result.trace.getFaultUids(TraversalStrategy.BREADTH_FIRST);
 
@@ -27,8 +27,6 @@ public class BreadthFirstDetector implements FeedbackHandler<Void> {
             context.reportFaultUids(potentialFaults);
 
         }
-
-        return null;
     }
 
 }

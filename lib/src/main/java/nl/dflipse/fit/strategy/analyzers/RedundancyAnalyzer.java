@@ -15,7 +15,7 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 
-public class RedundancyAnalyzer implements FeedbackHandler<Void> {
+public class RedundancyAnalyzer implements FeedbackHandler {
     private final Set<FaultUid> detectedUids = new HashSet<>();
     private FaultloadResult initialResult;
     private final Logger logger = LoggerFactory.getLogger(RedundancyAnalyzer.class);
@@ -77,11 +77,11 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
     }
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             initialResult = result;
             detectedUids.addAll(initialResult.trace.getFaultUids());
-            return null;
+            return;
         }
 
         // ----------------- Analyse the fault injection -----------------
@@ -90,6 +90,6 @@ public class RedundancyAnalyzer implements FeedbackHandler<Void> {
         var disappeared = analyzeDisappearedFaults(result);
         detectRandomFaults(appeared, disappeared);
 
-        return null;
+        return;
     }
 }

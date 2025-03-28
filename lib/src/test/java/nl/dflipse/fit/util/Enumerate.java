@@ -10,10 +10,6 @@ import nl.dflipse.fit.strategy.generators.Generator;
 
 public class Enumerate {
 
-    public static long expectedSize(int n, int m) {
-        return (long) Math.pow(1 + m, n) - 1;
-    }
-
     public static long getGeneratedCount(Generator gen) {
         long i = 0;
         while (gen.generate().size() > 0) {

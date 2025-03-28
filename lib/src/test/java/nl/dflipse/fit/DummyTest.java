@@ -9,11 +9,10 @@ import org.junit.jupiter.api.BeforeAll;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 
-public class DummyTest implements InstrumentedTest {
+public class DummyTest {
     public static InstrumentedApp app;
 
-    @Override
-    public FaultController getController() {
+    public static FaultController getController() {
         return app;
     }
 

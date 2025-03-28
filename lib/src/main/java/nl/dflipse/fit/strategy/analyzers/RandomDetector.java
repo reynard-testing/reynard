@@ -11,11 +11,11 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
-public class RandomDetector implements FeedbackHandler<Void> {
+public class RandomDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(RandomDetector.class);
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
             var potentialFaults = result.trace.getFaultUids(TraversalStrategy.DEPTH_FIRST);
 
@@ -28,8 +28,6 @@ public class RandomDetector implements FeedbackHandler<Void> {
 
             context.reportFaultUids(potentialFaults);
         }
-
-        return null;
     }
 
 }

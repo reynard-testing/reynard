@@ -44,18 +44,15 @@ public class E2eStrategyTest {
         }
 
         @Override
-        public long pruneFaultUidSubset(Set<FaultUid> subset) {
-            return 0;
+        public void pruneFaultUidSubset(Set<FaultUid> subset) {
         }
 
         @Override
-        public long pruneFaultSubset(Set<Fault> subset) {
-            return 0;
+        public void pruneFaultSubset(Set<Fault> subset) {
         }
 
         @Override
-        public long pruneFaultload(Faultload faultload) {
-            return 0;
+        public void pruneFaultload(Faultload faultload) {
         }
 
         @Override
@@ -83,7 +80,7 @@ public class E2eStrategyTest {
     @Test
     public void testEmptyGenerator() {
         StrategyRunner strategyRunner = new StrategyRunner()
-                .withGenerator(new DummyGenerator(List.of()));
+                .withComponent(new DummyGenerator(List.of()));
 
         var firstEmpty = strategyRunner.nextFaultload();
         assert firstEmpty.size() == 0;
@@ -99,7 +96,7 @@ public class E2eStrategyTest {
         queue.add(new Faultload(faults));
 
         StrategyRunner strategyRunner = new StrategyRunner()
-                .withGenerator(new DummyGenerator(queue));
+                .withComponent(new DummyGenerator(queue));
 
         var firstEmpty = strategyRunner.nextFaultload();
         assert firstEmpty.size() == 0;

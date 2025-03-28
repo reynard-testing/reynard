@@ -23,19 +23,19 @@ import nl.dflipse.fit.strategy.util.Sets;
  * I.e. if a fault is injected, and another fault disappears,
  * s set of fault causes the disappearance of the fault (the effect)
  */
-public class CauseEffectPruner implements Pruner, FeedbackHandler<Void> {
+public class CauseEffectPruner implements Pruner, FeedbackHandler {
 
     private final Set<FaultUid> pointsInHappyPath = new HashSet<>();
     private final Map<FaultUid, Set<Set<Fault>>> effectCauseMapping = new HashMap<>();
     private final Logger logger = LoggerFactory.getLogger(CauseEffectPruner.class);
 
     @Override
-    public Void handleFeedback(FaultloadResult result, FeedbackContext context) {
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         var faultsInTrace = result.trace.getFaultUids();
 
         if (result.isInitial()) {
             pointsInHappyPath.addAll(faultsInTrace);
-            return null;
+            return;
         }
 
         // if (a set of) fault(s) causes another fault to disappear
@@ -44,7 +44,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler<Void> {
 
         // if we have a singular cause
         if (injectedErrorFaults.isEmpty()) {
-            return null;
+            return;
         }
 
         // dissappeared faults
@@ -59,7 +59,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler<Void> {
                 .collect(Collectors.toSet());
 
         if (dissappearedFaultPoints.isEmpty()) {
-            return null;
+            return;
         }
 
         // We have identified a cause, and its effects
@@ -93,8 +93,6 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler<Void> {
                 }
             }
         }
-
-        return null;
     }
 
     private boolean hasAlready(Set<Fault> cause, FaultUid effect) {

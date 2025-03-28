@@ -13,11 +13,11 @@ public interface Generator {
 
     public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid);
 
-    public long pruneFaultUidSubset(Set<FaultUid> subset);
+    public void pruneFaultUidSubset(Set<FaultUid> subset);
 
-    public long pruneFaultSubset(Set<Fault> subset);
+    public void pruneFaultSubset(Set<Fault> subset);
 
-    public long pruneFaultload(Faultload faultload);
+    public void pruneFaultload(Faultload faultload);
 
     public Set<FaultMode> getFaultModes();
 

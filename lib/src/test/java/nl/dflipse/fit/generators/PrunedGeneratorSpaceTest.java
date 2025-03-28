@@ -7,10 +7,10 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.SpaceEstimate;
 import nl.dflipse.fit.util.Enumerate;
 import nl.dflipse.fit.util.FailureModes;
 import nl.dflipse.fit.util.FaultInjectionPoints;
@@ -49,7 +49,7 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        long expected = Enumerate.expectedSize(1, modes.size());
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 1);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }
@@ -69,7 +69,7 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        long expected = Enumerate.expectedSize(2, modes.size());
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 2);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }
@@ -90,7 +90,7 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        long expected = Enumerate.expectedSize(4, modes.size());
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 4);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }
@@ -108,7 +108,7 @@ public class PrunedGeneratorSpaceTest {
                     new Fault(points.get(0), mode)));
         }
 
-        long expected = Enumerate.expectedSize(2, modes.size());
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 2);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }
@@ -204,7 +204,7 @@ public class PrunedGeneratorSpaceTest {
                         faults.get(3, 1)),
                 Set.of(faults.get(3, 0),
                         faults.get(2, 0),
-                        faults.get(2, 1)));
+                        faults.get(1, 1)));
 
         var uidSubsets = Set.of(
                 Set.of(
@@ -245,6 +245,63 @@ public class PrunedGeneratorSpaceTest {
                 }
             }
         }
+    }
+
+    // TODO: this currently fails when combining both types of subsets
+    // but not when only using one type of subset
+    @Test
+    public void testSizeEstimate() {
+        // Given - points and modes
+        var modes = FailureModes.getModes(3);
+        var points = FaultInjectionPoints.getPoints(6);
+        var faults = new FaultsBuilder(points, modes);
+
+        // Given - a generator with no pruned faults
+        var generator1 = new IncreasingSizeGenerator(modes);
+        generator1.reportFaultUids(points);
+        List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
+
+        // Given a generator and prunable faults
+        var generator2 = new IncreasingSizeGenerator(modes);
+        generator2.reportFaultUids(points);
+
+        var faultSubsets = Set.of(
+                Set.of(faults.get(2, 0),
+                        faults.get(3, 1)),
+                Set.of(faults.get(3, 1),
+                        faults.get(4, 1),
+                        faults.get(5, 2)),
+                Set.of(faults.get(2, 1),
+                        faults.get(1, 1),
+                        faults.get(5, 2)),
+                Set.of(faults.get(3, 0),
+                        faults.get(2, 0),
+                        faults.get(1, 1)));
+
+        var uidSubsets = Set.of(
+                Set.of(
+                        points.get(1),
+                        points.get(4),
+                        points.get(5)),
+                Set.of(
+                        points.get(4),
+                        points.get(5)),
+                Set.of(
+                        points.get(1),
+                        points.get(5)));
+
+        // When the faults are pruned
+        for (var uidSubset : uidSubsets) {
+            generator2.pruneFaultUidSubset(uidSubset);
+        }
+        for (var faultSubset : faultSubsets) {
+            generator2.pruneFaultSubset(faultSubset);
+        }
+
+        Set<Faultload> allFaultloads2 = Enumerate.getGeneratedSet(generator2);
+        long difference = allFaultloads.size() - allFaultloads2.size();
+        long estimate = generator2.getStore().estimatePruned();
+        assertEquals(difference, estimate);
     }
 
     @Test

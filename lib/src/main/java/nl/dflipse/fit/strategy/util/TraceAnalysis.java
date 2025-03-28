@@ -3,6 +3,7 @@ package nl.dflipse.fit.strategy.util;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -123,7 +124,7 @@ public class TraceAnalysis {
         return injectedFaults;
     }
 
-    public Set<Set<FaultUid>> getAllConcurrent() {
+    public Map<FaultUid, Set<FaultUid>> getAllConcurrent() {
         return concurrentRelation.getRelations();
     }
 

@@ -185,6 +185,10 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		proxyState.Complete = true
 
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
+		if len(proxyState.ConcurrentFaults) > 0 {
+			log.Printf("Concurrent faults: %s\n", proxyState.ConcurrentFaults)
+		}
+
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 	})
 }

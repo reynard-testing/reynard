@@ -1,5 +1,6 @@
 package nl.dflipse.fit.strategy;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,8 +32,17 @@ public class StrategyReporter {
         System.out.println(line);
     }
 
-    private int getMaxKeyLength(Set<String> set) {
-        return set.stream().mapToInt(String::length).max().orElse(0);
+    private int stringLength(String string) {
+        return Arrays.stream(string.split("\n"))
+                .mapToInt(String::length)
+                .max()
+                .orElse(0);
+    }
+
+    private int getMaxLength(Set<String> set) {
+        return set.stream()
+                .mapToInt(s -> stringLength(s))
+                .max().orElse(0);
     }
 
     public void reportOverall() {
@@ -118,8 +128,10 @@ public class StrategyReporter {
     }
 
     public void printReport(String name, Map<String, String> keyValues) {
-        int maxKeyLength = getMaxKeyLength(keyValues.keySet());
-        int maxValueLength = keyValues.values().stream().mapToInt(String::length).max().orElse(0);
+        int maxKeyLength = getMaxLength(keyValues.keySet());
+        int maxValueLength = keyValues.values().stream()
+                .mapToInt(s -> stringLength(s))
+                .max().orElse(0);
         int maxCharSize = maxKeyLength + maxValueLength + 4;
         printNewline();
         if (name.length() > 0) {

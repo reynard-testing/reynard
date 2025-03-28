@@ -262,6 +262,7 @@ async def report_span_id():
             trace_id, fault_uid)
         existing_report.response = responseData
         existing_report.injected_fault = injected_fault
+        existing_report.concurrent_to = concurrent_to
         print("Updated reported span", span_report, flush=True)
     else:
         report_store.add(span_report)

@@ -15,6 +15,7 @@ import (
 
 	"dflipse.nl/fit-proxy/config"
 	"dflipse.nl/fit-proxy/faultload"
+	"dflipse.nl/fit-proxy/tracing"
 	"dflipse.nl/fit-proxy/util"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -137,10 +138,13 @@ func unregisterFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Failed to parse request body: %v", err)
 		return
 	}
+	traceId := requestData.TraceId
 
-	log.Printf("Removed faults for trace ID %s\n", requestData.TraceId)
+	log.Printf("Removed faults for trace ID %s\n", traceId)
 	// Store the faultload for the given trace ID
-	RegisteredFaults.Remove(requestData.TraceId)
+	RegisteredFaults.Remove(traceId)
+	tracing.ClearTraceCount(traceId)
+	tracing.ClearTracked(traceId)
 
 	// Respond with a 200 OK
 	w.WriteHeader(http.StatusOK)

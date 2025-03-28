@@ -22,7 +22,7 @@ func StartProxy(config config.ProxyConfig) {
 
 	log.Printf("Reverse proxy for: %s\n", config.Target)
 	log.Printf("Destination: %s\n", config.Destination)
-	log.Printf("Reachable at: %s\n", config.Host)
+	log.Printf("Listening at: %s\n", config.Host)
 
 	// Start an HTTP/2 server with a custom reverse proxy handler
 	var httpServer *http.Server
@@ -123,10 +123,12 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		faultUid := tracing.FaultUidFromRequest(r, destination, shouldMaskPayload, isInitial)
+		traceId := parent.TraceID
 		log.Printf("Determined Fault UID: %s\n", faultUid.String())
+		tracing.TrackFault(traceId, &faultUid)
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
-			TraceId:   parent.TraceID,
+			TraceId:   traceId,
 			SpanId:    parent.ParentID,
 			FaultUid:  faultUid,
 			IsInitial: isInitial,
@@ -144,6 +146,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			Request:            r,
 			ReponseOverwritten: false,
 			Complete:           false,
+			ConcurrentFaults:   nil,
 		}
 
 		// Start reporting the span for the request
@@ -180,6 +183,8 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		proxyState.Complete = true
+
+		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 	})
 }

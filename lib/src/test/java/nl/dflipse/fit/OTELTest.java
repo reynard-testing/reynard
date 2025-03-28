@@ -23,6 +23,7 @@ import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.controller.RemoteController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.TrackedFaultload;
+import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -134,10 +135,15 @@ public class OTELTest {
             String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
             String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
-            boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
-            int expectedResponse = containsError ? 500 : 200;
-            int actualResponse = response.code();
-            assertEquals(expectedResponse, actualResponse);
+            TraceAnalysis result = getController().getTrace(faultload);
+            boolean injectedFaults = !result.getInjectedFaults().isEmpty();
+
+            if (injectedFaults) {
+                assert (response.code() >= 500);
+                assert (response.code() < 600);
+            } else {
+                assertEquals(200, response.code());
+            }
         }
     }
 

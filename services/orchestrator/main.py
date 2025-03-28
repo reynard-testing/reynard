@@ -225,6 +225,7 @@ async def report_span_id():
     injected_fault = data.get('injected_fault')
     is_initial = data.get('is_initial')
     response = data.get('response')
+    concurrent_to = data.get('concurrent_to')
 
     if trace_id not in trace_ids:
         print(
@@ -252,6 +253,7 @@ async def report_span_id():
         uid=fault_uid,
         injected_fault=injected_fault,
         is_initial=is_initial,
+        concurrent_to=concurrent_to,
         response=responseData,
     )
 

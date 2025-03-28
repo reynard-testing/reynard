@@ -10,6 +10,7 @@ import (
 
 type ProxyState struct {
 	InjectedFault      *faultload.Fault
+	ConcurrentFaults   []*faultload.FaultUid
 	Proxy              *httputil.ReverseProxy
 	ResponseWriter     *ResponseCapture
 	Request            *http.Request
@@ -32,5 +33,6 @@ func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) tr
 		IsInitial:     metadata.IsInitial,
 		InjectedFault: s.InjectedFault,
 		Response:      response,
+		ConcurrentTo:  s.ConcurrentFaults,
 	}
 }

@@ -53,8 +53,8 @@ func FaultUidFromRequest(r *http.Request, destination string, maskPayload, isIni
 }
 
 func getInvocationCount(origin, signature, payload, traceId string) int {
-	key := fmt.Sprintf("%s-%s-%s-%s", origin, signature, payload, traceId)
-	currentIndex := traceInvocationCounter.GetCount(key)
+	key := fmt.Sprintf("%s-%s-%s", origin, signature, payload)
+	currentIndex := GetCountForTrace(traceId, key)
 	return currentIndex
 }
 

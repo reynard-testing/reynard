@@ -54,9 +54,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         // but not in the current trace
         // and not the cause
         Set<FaultUid> expectedPoints = new HashSet<>(pointsInHappyPath);
-        for (var expected : context.getConditionalForFaultload()) {
-            expectedPoints.add(expected);
-        }
+        expectedPoints.addAll(context.getConditionalForFaultload());
 
         Set<FaultUid> dissappearedFaultPoints = expectedPoints.stream()
                 .filter(f -> !faultsInTrace.contains(f))

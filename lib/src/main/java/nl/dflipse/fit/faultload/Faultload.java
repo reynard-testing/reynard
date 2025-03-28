@@ -3,7 +3,9 @@ package nl.dflipse.fit.faultload;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public record Faultload(Set<Fault> faultSet) {
@@ -14,6 +16,11 @@ public record Faultload(Set<Fault> faultSet) {
             faultUids.add(fault.uid());
         }
         return faultUids;
+    }
+
+    public Map<FaultUid, Fault> getFaultByFaultUid() {
+        return faultSet.stream()
+                .collect(Collectors.toMap(Fault::uid, Function.identity()));
     }
 
     public String readableString() {

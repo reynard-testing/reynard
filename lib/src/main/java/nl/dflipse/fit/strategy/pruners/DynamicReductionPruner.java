@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,9 +71,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
 
     @Override
     public boolean prune(Faultload faultload) {
-        Map<FaultUid, Fault> faultsByFaultUid = faultload.faultSet()
-                .stream()
-                .collect(Collectors.toMap(Fault::uid, Function.identity()));
+        Map<FaultUid, Fault> faultsByFaultUid = faultload.getFaultByFaultUid();
 
         // for all causes
         for (var cause : causalMap.keySet()) {

@@ -150,7 +150,7 @@ public class TraceAnalysis {
         return rootReport;
     }
 
-    public boolean isValid() {
+    public boolean isInvalid() {
         if (hasMultipleRoots) {
             logger.debug(
                     "Trace has multiple roots! This is likely because the first request does not go through a proxy. Ensure that the first request goes through a proxy!");

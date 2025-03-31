@@ -1,5 +1,7 @@
 package nl.dflipse.fit.trace.tree;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -19,6 +21,9 @@ public class TraceSpanReport {
 
     @JsonProperty("uid")
     public FaultUid faultUid;
+
+    @JsonProperty("concurrent_to")
+    public List<FaultUid> concurrentTo;
 
     @JsonProperty("injected_fault")
     public Fault injectedFault;

@@ -17,12 +17,13 @@ type ResponseData struct {
 }
 
 type RequestReport struct {
-	TraceId       string             `json:"trace_id"`
-	SpanId        string             `json:"span_id"`
-	FaultUid      faultload.FaultUid `json:"uid"`
-	IsInitial     bool               `json:"is_initial"`
-	InjectedFault *faultload.Fault   `json:"injected_fault"`
-	Response      *ResponseData      `json:"response"`
+	TraceId       string                `json:"trace_id"`
+	SpanId        string                `json:"span_id"`
+	FaultUid      faultload.FaultUid    `json:"uid"`
+	IsInitial     bool                  `json:"is_initial"`
+	InjectedFault *faultload.Fault      `json:"injected_fault"`
+	Response      *ResponseData         `json:"response"`
+	ConcurrentTo  []*faultload.FaultUid `json:"concurrent_to"`
 }
 
 type RequestMetadata struct {

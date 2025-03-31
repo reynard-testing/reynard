@@ -3,6 +3,7 @@ package nl.dflipse.fit.strategy.util;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -25,6 +26,7 @@ public class TraceAnalysis {
 
     private boolean anyIncomplete = false;
     private boolean hasInitial = false;
+    private boolean hasMultipleRoots = false;
 
     // --- Parent-Child relations
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
@@ -38,25 +40,38 @@ public class TraceAnalysis {
         this.reports.addAll(reports);
         // Parent null indicates the root request
         for (var report : reports) {
-            if (report.isInitial) {
-                rootReport = report;
-                hasInitial = true;
-            } else {
-                // Do not inject faults between client and first proxy
-                faultUids.add(report.faultUid);
-            }
-
-            if (report.injectedFault != null) {
-                injectedFaults.add(report.injectedFault);
-            }
-
-            if (report.response == null) {
-                anyIncomplete = true;
-            }
+            analyseReport(report);
         }
 
         analyseNode(rootNode, null);
-        findConcurrent();
+    }
+
+    private void analyseReport(TraceSpanReport report) {
+        if (report.isInitial) {
+            rootReport = report;
+            hasInitial = true;
+
+            if (rootReport.response != null && !rootReport.faultUid.equals(report.faultUid)) {
+                hasMultipleRoots = true;
+            }
+        } else {
+            // Do not inject faults between client and first proxy
+            faultUids.add(report.faultUid);
+        }
+
+        if (report.injectedFault != null) {
+            injectedFaults.add(report.injectedFault);
+        }
+
+        if (report.response == null) {
+            anyIncomplete = true;
+        }
+
+        if (report.concurrentTo != null) {
+            for (var concurrent : report.concurrentTo) {
+                concurrentRelation.addRelation(report.faultUid, concurrent);
+            }
+        }
     }
 
     /** Analyse the node, given the most direct FaultUid ancestor */
@@ -75,16 +90,7 @@ public class TraceAnalysis {
             // TODO: correctly handle parent-child relation
             // For multiple reports
             for (var report : node.reports) {
-                if (report.isInitial) {
-                    rootReport = report;
-                    hasInitial = true;
-                } else if (!faultUids.contains(report.faultUid)) {
-                    reports.add(report);
-                }
-
-                if (report.injectedFault != null) {
-                    injectedFaults.add(report.injectedFault);
-                }
+                analyseReport(report);
 
                 // Save the parent-child relation
                 // Update the most direct parent
@@ -92,13 +98,6 @@ public class TraceAnalysis {
                     var child = report.faultUid;
                     parentChildRelation.addRelation(parent, child);
                     nextParent = child;
-                }
-
-                // Check if the node is incomplete
-                // If the response is null, the fault point was reached, but the response was
-                // not yet received
-                if (report.response == null) {
-                    anyIncomplete = true;
                 }
 
                 // If a remote call is detected (so our own proxy)
@@ -117,46 +116,16 @@ public class TraceAnalysis {
         }
     }
 
-    private boolean timeOverlap(long start1, long end1, long start2, long end2) {
-        return start1 < end2 && end1 > start2;
-    }
-
-    private boolean timeOverlap(TraceTreeSpan n1, TraceTreeSpan n2) {
-        return timeOverlap(n1.span.startTime, n1.span.endTime, n2.span.startTime, n2.span.endTime);
-    }
-
-    private void areConcurrent(TraceTreeSpan n1, TraceTreeSpan n2) {
-        // Must have the same parent
-
-        if (n1.span.parentSpanId == null || !n1.span.parentSpanId.equals(n2.span.parentSpanId)) {
-            return;
-        }
-
-        if (timeOverlap(n1, n2)) {
-            // TODO: complete
-            // concurrentRelation.addRelation(n1.report.faultUid, n2.report.faultUid);
-        }
-    }
-
-    private void findConcurrent() {
-        var fiArray = treeFaultPoints.toArray(new TraceTreeSpan[0]);
-
-        for (int i = 0; i < fiArray.length; i++) {
-            for (int j = i + 1; j < fiArray.length; j++) {
-                var s1 = fiArray[i];
-                var s2 = fiArray[j];
-
-                areConcurrent(s1, s2);
-            }
-        }
-    }
-
     public Set<FaultUid> getFaultUids() {
         return faultUids;
     }
 
     public Set<Fault> getInjectedFaults() {
         return injectedFaults;
+    }
+
+    public Map<FaultUid, Set<FaultUid>> getAllConcurrent() {
+        return concurrentRelation.getRelations();
     }
 
     public boolean hasFaultMode(String... orType) {
@@ -181,7 +150,13 @@ public class TraceAnalysis {
         return rootReport;
     }
 
-    public boolean isIncomplete() {
+    public boolean isInvalid() {
+        if (hasMultipleRoots) {
+            logger.debug(
+                    "Trace has multiple roots! This is likely because the first request does not go through a proxy. Ensure that the first request goes through a proxy!");
+            return true;
+        }
+
         if (anyIncomplete) {
             logger.debug("Trace is incomplete!");
             return true;
@@ -189,7 +164,7 @@ public class TraceAnalysis {
 
         if (!hasInitial) {
             logger.warn(
-                    "Trace is not incomplete, but has no initial request! Ensure that the first request goes through the proxy!");
+                    "Trace is not incomplete, but has no initial request! Ensure that the first request goes through a proxy!");
             return true;
         }
 
@@ -240,6 +215,10 @@ public class TraceAnalysis {
 
     public boolean sameParent(FaultUid fault1, FaultUid fault2) {
         return isEqual(getParent(fault1), getParent(fault2));
+    }
+
+    public boolean areConcurrent(FaultUid fault1, FaultUid fault2) {
+        return concurrentRelation.areRelated(fault1, fault2);
     }
 
     public enum TraversalStrategy {

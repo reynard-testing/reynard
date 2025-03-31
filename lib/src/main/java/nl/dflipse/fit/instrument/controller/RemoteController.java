@@ -70,8 +70,8 @@ public class RemoteController implements FaultController {
                 throw new IOException("Root span mismatch: " + rootSpanId + " != " + expectedRoot);
             }
 
-            if (trace.isIncomplete()) {
-                throw new IOException("Trace is incomplete");
+            if (trace.isInvalid()) {
+                throw new IOException("Trace is invalid!");
             }
 
             return trace;

@@ -23,6 +23,7 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.analyzers.BreadthFirstDetector;
+import nl.dflipse.fit.strategy.analyzers.ConcurrencyDetector;
 import nl.dflipse.fit.strategy.analyzers.ConditionalFaultDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.analyzers.StatusAnalyzer;
@@ -72,6 +73,7 @@ public class FiTestExtension
                 .withComponent(new ConditionalFaultDetector())
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
+                .withComponent(new ConcurrencyDetector())
                 .withComponent(new ParentChildPruner())
                 .withComponent(new ErrorPropogationPruner())
                 .withComponent(new CauseEffectPruner())

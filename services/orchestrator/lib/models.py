@@ -57,6 +57,7 @@ class ReportedSpan:
     uid: FaultUid
     is_initial: bool
     injected_fault: Fault
+    concurrent_to: list[FaultUid]
     response: ResponseData
 
 

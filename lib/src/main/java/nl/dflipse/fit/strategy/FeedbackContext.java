@@ -210,7 +210,7 @@ public class FeedbackContext {
         if (exclusions.size() > 0) {
             hasImpact = true;
             report.put("Points with exclusion condition", exclusions.size() + "");
-            for (var entry : inclusions.entrySet()) {
+            for (var entry : exclusions.entrySet()) {
                 report.put(entry.getKey().toString(), entry.getValue().size() + "");
             }
         }

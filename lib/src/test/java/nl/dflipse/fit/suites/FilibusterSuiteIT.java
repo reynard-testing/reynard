@@ -1,10 +1,11 @@
-package nl.dflipse.fit;
+package nl.dflipse.fit.suites;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
+import nl.dflipse.fit.FiTest;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
@@ -19,7 +20,7 @@ import okhttp3.Response;
 /**
  * FI test the app
  */
-public class FilibusterTest {
+public class FilibusterSuiteIT {
     private static final RemoteController controller = new RemoteController("http://localhost:6050");
 
     private static final int AUDIBLE_PORT = 5000;

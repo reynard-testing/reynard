@@ -1,4 +1,4 @@
-package nl.dflipse.fit;
+package nl.dflipse.fit.suites;
 
 import java.io.IOException;
 
@@ -10,6 +10,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import nl.dflipse.fit.FiTest;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
@@ -25,7 +26,7 @@ import okhttp3.Response;
  */
 @SuppressWarnings("resource")
 @Testcontainers(parallel = true)
-public class AppTest {
+public class AppSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final String BASE_IMAGE = "go-micro-service:latest";
     private OkHttpClient client = new OkHttpClient();

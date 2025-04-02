@@ -1,4 +1,4 @@
-package nl.dflipse.fit;
+package nl.dflipse.fit.suites;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -11,6 +11,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.junit.Assert.assertEquals;
 
+import nl.dflipse.fit.FiTest;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
@@ -26,7 +27,7 @@ import okhttp3.Response;
 
 @SuppressWarnings("resource")
 @Testcontainers(parallel = true)
-public class MetaTest {
+public class MetaSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final String PROXY_IMAGE = "fit-proxy:latest";
     private static final String COORDINATOR_IMAGE = "fit-otel-orchestrator:latest";

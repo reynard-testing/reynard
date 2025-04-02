@@ -9,10 +9,10 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.strategy.util.Sets;
 
-public class PreconditionStore {
+public class ConditionalStore {
     private final Map<FaultUid, Set<Set<Fault>>> store = new HashMap<>();
 
-    public boolean hasPrecondition(Set<Fault> condition, FaultUid fid) {
+    public boolean hasCondition(Set<Fault> condition, FaultUid fid) {
         if (!store.containsKey(fid)) {
             return false;
         }
@@ -26,12 +26,12 @@ public class PreconditionStore {
         return false;
     }
 
-    public boolean hasPreconditions(FaultUid fid) {
+    public boolean hasConditions(FaultUid fid) {
         return store.containsKey(fid);
     }
 
-    public boolean addPrecondition(Set<Fault> condition, FaultUid fid) {
-        if (hasPrecondition(condition, fid)) {
+    public boolean addCondition(Set<Fault> condition, FaultUid fid) {
+        if (hasCondition(condition, fid)) {
             return false;
         }
 
@@ -42,11 +42,11 @@ public class PreconditionStore {
         return true;
     }
 
-    public Set<FaultUid> getForPrecondition(Set<Fault> condition) {
+    public Set<FaultUid> getForCondition(Set<Fault> condition) {
         Set<FaultUid> result = new HashSet<>();
         for (var entry : store.entrySet()) {
             var fid = entry.getKey();
-            if (hasPrecondition(condition, fid)) {
+            if (hasCondition(condition, fid)) {
                 result.add(fid);
             }
         }

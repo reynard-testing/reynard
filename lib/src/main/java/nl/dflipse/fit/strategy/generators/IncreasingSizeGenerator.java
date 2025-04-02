@@ -237,8 +237,8 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     public Set<FaultUid> getExpectedPoints(Faultload faultload) {
         Set<Fault> faults = faultload.faultSet();
         Set<FaultUid> basePoints = store.getNonConditionalFaultUids();
-        basePoints.addAll(store.getAppearPreconditions().getForPrecondition(faults));
-        basePoints.removeAll(store.getDisappearPreconditions().getForPrecondition(faults));
+        basePoints.addAll(store.getAppearPreconditions().getForCondition(faults));
+        basePoints.removeAll(store.getDisappearPreconditions().getForCondition(faults));
 
         return basePoints;
     }

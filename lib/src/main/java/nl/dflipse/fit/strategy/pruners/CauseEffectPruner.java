@@ -13,7 +13,7 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.store.PreconditionStore;
+import nl.dflipse.fit.strategy.store.ConditionalStore;
 import nl.dflipse.fit.strategy.util.Sets;
 
 /**
@@ -25,7 +25,7 @@ import nl.dflipse.fit.strategy.util.Sets;
 public class CauseEffectPruner implements Pruner, FeedbackHandler {
 
     private final Set<FaultUid> pointsInHappyPath = new HashSet<>();
-    private final PreconditionStore redundancyStore = new PreconditionStore();
+    private final ConditionalStore redundancyStore = new ConditionalStore();
     private final Logger logger = LoggerFactory.getLogger(CauseEffectPruner.class);
 
     @Override
@@ -95,7 +95,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
 
     private void handleHappensBefore(Set<Fault> cause, FaultUid effect, FeedbackContext context) {
         logger.info("Found exclusion: " + cause + " hides " + effect);
-        redundancyStore.addPrecondition(cause, effect);
+        redundancyStore.addCondition(cause, effect);
         context.reportExclusionOfFaultUid(cause, effect);
     }
 
@@ -113,12 +113,12 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
                 // diregard the count
                 .map(FaultUid::asAnyCount)
                 // that has a known redundancy
-                .filter(redundancyStore::hasPreconditions)
+                .filter(redundancyStore::hasConditions)
                 .collect(Collectors.toSet());
 
         boolean isRedundant = relatedUidsInFaultload.stream()
                 // for any related fid's causes
-                .anyMatch(f -> redundancyStore.hasPrecondition(faultset, f));
+                .anyMatch(f -> redundancyStore.hasCondition(faultset, f));
 
         return isRedundant;
     }

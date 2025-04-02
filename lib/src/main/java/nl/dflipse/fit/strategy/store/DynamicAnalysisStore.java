@@ -22,8 +22,8 @@ public class DynamicAnalysisStore {
     private final Set<FaultMode> modes;
     private final Set<FaultUid> points = new HashSet<>();
 
-    private final PreconditionStore appearPreconditions = new PreconditionStore();
-    private final PreconditionStore disappearPreconditions = new PreconditionStore();
+    private final ConditionalStore appearPreconditions = new ConditionalStore();
+    private final ConditionalStore disappearPreconditions = new ConditionalStore();
 
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
@@ -59,15 +59,15 @@ public class DynamicAnalysisStore {
 
     public Set<FaultUid> getNonConditionalFaultUids() {
         return points.stream()
-                .filter(fid -> !appearPreconditions.hasPreconditions(fid))
+                .filter(fid -> !appearPreconditions.hasConditions(fid))
                 .collect(Collectors.toSet());
     }
 
-    public PreconditionStore getAppearPreconditions() {
+    public ConditionalStore getAppearPreconditions() {
         return appearPreconditions;
     }
 
-    public PreconditionStore getDisappearPreconditions() {
+    public ConditionalStore getDisappearPreconditions() {
         return disappearPreconditions;
     }
 
@@ -99,7 +99,7 @@ public class DynamicAnalysisStore {
 
     public boolean addConditionForFaultUid(Set<Fault> condition, FaultUid fid) {
         boolean isNew = addFaultUid(fid);
-        boolean isNewPrecondition = appearPreconditions.addPrecondition(condition, fid);
+        boolean isNewPrecondition = appearPreconditions.addCondition(condition, fid);
 
         if (!isNewPrecondition) {
             return false;
@@ -115,7 +115,7 @@ public class DynamicAnalysisStore {
     }
 
     public boolean addExclusionForFaultUid(Set<Fault> condition, FaultUid fid) {
-        boolean isNewPrecondition = disappearPreconditions.addPrecondition(condition, fid);
+        boolean isNewPrecondition = disappearPreconditions.addCondition(condition, fid);
 
         if (!isNewPrecondition) {
             return false;

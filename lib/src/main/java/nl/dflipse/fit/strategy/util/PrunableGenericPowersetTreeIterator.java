@@ -46,8 +46,8 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
             FaultUid point = fault.uid();
 
             // Prune on preconditions
-            if (store.getAppearPreconditions().hasPreconditions(point)) {
-                boolean hasPrecondition = store.getAppearPreconditions().hasPrecondition(node.value, point);
+            if (store.getAppearPreconditions().hasConditions(point)) {
+                boolean hasPrecondition = store.getAppearPreconditions().hasCondition(node.value, point);
 
                 if (!hasPrecondition) {
                     logger.debug("Pruning node due to not matching preconditions for {}", fault);
@@ -56,8 +56,8 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
             }
 
             // Prune on exclusions
-            if (store.getDisappearPreconditions().hasPreconditions(point)) {
-                boolean hasExclusion = store.getDisappearPreconditions().hasPrecondition(node.value, point);
+            if (store.getDisappearPreconditions().hasConditions(point)) {
+                boolean hasExclusion = store.getDisappearPreconditions().hasCondition(node.value, point);
 
                 if (hasExclusion) {
                     logger.debug("Pruning node due to matching exclusion for {}", fault);

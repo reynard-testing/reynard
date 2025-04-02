@@ -21,6 +21,7 @@ public class ConditionalFaultDetector implements FeedbackHandler {
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         var traceFaultUids = result.trace.getFaultUids();
+
         // --- Happy path ---
         if (result.isInitial()) {
             pointsInHappyPath.addAll(traceFaultUids);

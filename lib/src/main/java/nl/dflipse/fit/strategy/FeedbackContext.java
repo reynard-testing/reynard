@@ -129,13 +129,6 @@ public class FeedbackContext {
         runner.getGenerator().pruneFaultSubset(subset);
     }
 
-    public void pruneMixed(Set<Fault> subset, FaultUid fault) {
-        for (var mode : runner.getGenerator().getFaultModes()) {
-            Set<Fault> mixed = Sets.plus(subset, new Fault(fault, mode));
-            pruneFaultSubset(mixed);
-        }
-    }
-
     public void pruneFaultload(Faultload fautload) {
         store.pruneFaultload(fautload);
         runner.getGenerator().pruneFaultload(fautload);

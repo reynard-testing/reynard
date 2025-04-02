@@ -14,7 +14,6 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.store.ConditionalStore;
-import nl.dflipse.fit.strategy.util.Sets;
 
 /**
  * Pruner that prunes faults that are redundant due to cause-effect
@@ -70,26 +69,6 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
             // TODO: handle case where the happy path contains two counts
             // And the first causes the second to dissappear
             handleHappensBefore(injectedErrorFaults, disappearedFaultPoint, context);
-        }
-
-        // prune the fault subset
-        for (var causeAndEffect : redundancyStore.getStore().entrySet()) {
-            var effect = causeAndEffect.getKey();
-            var possibleCauses = causeAndEffect.getValue();
-
-            // For every related fault injection point
-            // and every fault mode
-            for (var mode : context.getFaultModes()) {
-                var fault = new Fault(effect, mode);
-
-                // and each possible cause for the dissapeareance
-                // of the fault
-                for (var cause : possibleCauses) {
-                    // the combination is redundant
-                    var redundant = Sets.plus(cause, fault);
-                    context.pruneFaultSubset(redundant);
-                }
-            }
         }
     }
 

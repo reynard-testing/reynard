@@ -58,11 +58,14 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
                 continue;
             }
 
-            boolean isCauseForAlternativePath = ConditionalStore.hasForCondition(conditionals, Set.of(fault));
+            boolean isCauseForAlternativePath = ConditionalStore.isPartOfAnyCondition(conditionals, Set.of(fault));
 
             if (isCauseForAlternativePath) {
                 continue;
             }
+
+            // TODO: check if output of parent is the same regardless of the fault
+            // To avoid capturing local fallbacks
 
             if (pruneImpactlessFaults) {
                 logger.info("Detected impactless fault: " + fault);

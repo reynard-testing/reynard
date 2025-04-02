@@ -67,6 +67,17 @@ public class ConditionalStore {
         return false;
     }
 
+    public static boolean isPartOfAnyCondition(Map<FaultUid, Set<Set<Fault>>> store, Set<Fault> condition) {
+        for (var entry : store.entrySet()) {
+            for (var subset : entry.getValue()) {
+                if (Sets.isSubsetOf(condition, subset)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean hasForCondition(Set<Fault> condition) {
         return hasForCondition(store, condition);
     }

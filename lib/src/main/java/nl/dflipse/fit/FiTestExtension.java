@@ -65,13 +65,16 @@ public class FiTestExtension
                 ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR),
                 ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
+        boolean onlyPersistantOrTransientRetries = annotation
+                .optimizeForRetries();
+
         strategy = new StrategyRunner()
                 .withComponent(new IncreasingSizeGenerator(modes))
                 // .withGenerator(new IncreasingSizeMixedGenerator(modes))
                 // .withAnalyzer(new RandomDetector())
                 .withComponent(new BreadthFirstDetector())
                 // .withAnalyzer(new DepthFirstDetector())
-                .withComponent(new ConditionalFaultDetector())
+                .withComponent(new ConditionalFaultDetector(onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
                 .withComponent(new ConcurrencyDetector())

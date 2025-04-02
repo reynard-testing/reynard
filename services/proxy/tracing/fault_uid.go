@@ -31,7 +31,7 @@ func FaultUidFromRequest(r *http.Request, destination string, maskPayload, isIni
 	traceId := getTraceId(r)
 	signature := getCallSignature(r)
 
-	origin := "<none>"
+	origin := "<origin>"
 	if !isInitial {
 		origin = getOrigin(r)
 	}
@@ -166,14 +166,3 @@ func getOrigin(r *http.Request) string {
 	log.Printf("Remote address: %s\n", r.RemoteAddr)
 	return GetHostIdentifier(host)
 }
-
-// Deprecated, use the config's destination instead
-// func getDestination(r *http.Request) string {
-// 	host, _, err := net.SplitHostPort(r.Host)
-// 	if err != nil {
-// 		log.Printf("Failed to get destination: %v\n", err)
-// 		return "<none>"
-// 	}
-
-// 	return GetHostIdentifier(host)
-// }

@@ -276,14 +276,14 @@ public class TraceAnalysis {
             traverseDepthFirst(child, consumer);
         }
 
-        if (node != null && !node.origin().equals("<none>")) {
+        if (node != null && !node.isFromInitial()) {
             consumer.accept(node);
         }
 
     }
 
     public void traverseBreadthFirst(FaultUid node, Consumer<FaultUid> consumer) {
-        if (node != null && !node.origin().equals("<none>")) {
+        if (node != null && !node.isFromInitial()) {
             consumer.accept(node);
         }
 

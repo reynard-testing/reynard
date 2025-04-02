@@ -131,7 +131,7 @@ public class StrategyReporter {
         int maxValueLength = keyValues.values().stream()
                 .mapToInt(s -> stringLength(s))
                 .max().orElse(0);
-        int maxCharSize = maxKeyLength + maxValueLength + 4;
+        int maxCharSize = Math.min(maxChars, maxKeyLength + maxValueLength + 4);
         printNewline();
         if (name.length() > 0) {
             printLine(StringFormat.padBoth(" " + name + " ", maxCharSize, "-"));

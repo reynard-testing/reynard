@@ -65,20 +65,26 @@ public class FiTestExtension
                 ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR),
                 ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
+        boolean onlyPersistantOrTransientRetries = annotation
+                .optimizeForRetries();
+
+        boolean pruneImpactless = annotation
+                .optimizeForImpactless();
+
         strategy = new StrategyRunner()
                 .withComponent(new IncreasingSizeGenerator(modes))
                 // .withGenerator(new IncreasingSizeMixedGenerator(modes))
                 // .withAnalyzer(new RandomDetector())
                 .withComponent(new BreadthFirstDetector())
                 // .withAnalyzer(new DepthFirstDetector())
-                .withComponent(new ConditionalFaultDetector())
+                .withComponent(new ConditionalFaultDetector(onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
                 .withComponent(new ConcurrencyDetector())
                 .withComponent(new ParentChildPruner())
                 .withComponent(new ErrorPropogationPruner())
                 .withComponent(new CauseEffectPruner())
-                .withComponent(new NoImpactPruner())
+                .withComponent(new NoImpactPruner(pruneImpactless))
                 .withComponent(new DynamicReductionPruner());
 
         if (annotation.maxTestCases() > 0) {

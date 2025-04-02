@@ -81,8 +81,8 @@ public class MetaSuiteIT {
                     .withEnv("OTEL_TRACES_EXPORTER", "otlp")
                     .withEnv("OTEL_BSP_SCHEDULE_DELAY", "1")
                     .withEnv("OTEL_BSP_EXPORT_TIMEOUT", "100")
-                    .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT)
-                    .withExposedPorts(5000));
+                    .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT))
+            .withExposedPorts(5000);
 
     public static FaultController getController() {
         return app;
@@ -98,9 +98,9 @@ public class MetaSuiteIT {
         app.stop();
     }
 
-    @FiTest(getTraceInitialDelay = 200)
+    @FiTest(getTraceInitialDelay = 200, optimizeForRetries = true, optimizeForImpactless = true)
     public void testRegister(TrackedFaultload faultload) throws IOException {
-        int port = orchestrator.getService().getMappedPort(5000);
+        int port = orchestrator.getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
 
         String jsonBody = meta.serializeJson();

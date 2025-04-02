@@ -22,8 +22,10 @@ public class DynamicAnalysisStore {
     private final Set<FaultMode> modes;
     private final Set<FaultUid> points = new HashSet<>();
 
-    private final ConditionalStore appearPreconditions = new ConditionalStore();
-    private final ConditionalStore disappearPreconditions = new ConditionalStore();
+    // Stores which faults must be present for a faultuid to be injected
+    private final ConditionalStore inclusionConditions = new ConditionalStore();
+    // Stores which faults must not be present for a faultuid to be injected
+    private final ConditionalStore exclusionConditions = new ConditionalStore();
 
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
@@ -59,16 +61,16 @@ public class DynamicAnalysisStore {
 
     public Set<FaultUid> getNonConditionalFaultUids() {
         return points.stream()
-                .filter(fid -> !appearPreconditions.hasConditions(fid))
+                .filter(fid -> !inclusionConditions.hasConditions(fid))
                 .collect(Collectors.toSet());
     }
 
-    public ConditionalStore getAppearPreconditions() {
-        return appearPreconditions;
+    public ConditionalStore getInclusionConditions() {
+        return inclusionConditions;
     }
 
-    public ConditionalStore getDisappearPreconditions() {
-        return disappearPreconditions;
+    public ConditionalStore getExclusionConditions() {
+        return exclusionConditions;
     }
 
     public boolean hasFaultUid(FaultUid fid) {
@@ -99,7 +101,7 @@ public class DynamicAnalysisStore {
 
     public boolean addConditionForFaultUid(Set<Fault> condition, FaultUid fid) {
         boolean isNew = addFaultUid(fid);
-        boolean isNewPrecondition = appearPreconditions.addCondition(condition, fid);
+        boolean isNewPrecondition = inclusionConditions.addCondition(condition, fid);
 
         if (!isNewPrecondition) {
             return false;
@@ -115,7 +117,7 @@ public class DynamicAnalysisStore {
     }
 
     public boolean addExclusionForFaultUid(Set<Fault> condition, FaultUid fid) {
-        boolean isNewPrecondition = disappearPreconditions.addCondition(condition, fid);
+        boolean isNewPrecondition = exclusionConditions.addCondition(condition, fid);
 
         if (!isNewPrecondition) {
             return false;

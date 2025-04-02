@@ -197,15 +197,22 @@ public class FeedbackContext {
             }
         }
 
-        var preconditions = store.getAppearPreconditions().getStore();
-        if (preconditions.size() > 0) {
+        var inclusions = store.getInclusionConditions().getStore();
+        if (inclusions.size() > 0) {
             hasImpact = true;
-            report.put("Preconditions", preconditions.size() + "");
-            int count = 0;
-            for (var entry : preconditions.entrySet()) {
-                count += entry.getValue().size();
+            report.put("Points with inclusion condition", inclusions.size() + "");
+            for (var entry : inclusions.entrySet()) {
+                report.put(entry.getKey().toString(), entry.getValue().size() + "");
             }
-            report.put("Precondition subsets", count + "");
+        }
+
+        var exclusions = store.getExclusionConditions().getStore();
+        if (exclusions.size() > 0) {
+            hasImpact = true;
+            report.put("Points with exclusion condition", exclusions.size() + "");
+            for (var entry : inclusions.entrySet()) {
+                report.put(entry.getKey().toString(), entry.getValue().size() + "");
+            }
         }
 
         if (hasImpact) {

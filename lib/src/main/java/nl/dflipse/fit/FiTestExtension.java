@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.instrument.FaultController;
@@ -32,6 +33,7 @@ import nl.dflipse.fit.strategy.pruners.CauseEffectPruner;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
+import nl.dflipse.fit.strategy.pruners.FaultloadSizePruner;
 import nl.dflipse.fit.strategy.pruners.NoImpactPruner;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
@@ -87,6 +89,10 @@ public class FiTestExtension
 
         if (annotation.maxTestCases() > 0) {
             strategy.withMaxTestCases(annotation.maxTestCases());
+        }
+
+        if (maxFaultloadSize > 0) {
+            strategy.withComponent(new FaultloadSizePruner(maxFaultloadSize));
         }
 
         if (annotation.failStop()) {

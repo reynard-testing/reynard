@@ -1,8 +1,6 @@
 package nl.dflipse.fit.strategy.pruners;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,6 +13,7 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.store.PreconditionStore;
 import nl.dflipse.fit.strategy.util.Sets;
 
 /**
@@ -26,7 +25,7 @@ import nl.dflipse.fit.strategy.util.Sets;
 public class CauseEffectPruner implements Pruner, FeedbackHandler {
 
     private final Set<FaultUid> pointsInHappyPath = new HashSet<>();
-    private final Map<FaultUid, Set<Set<Fault>>> effectCauseMapping = new HashMap<>();
+    private final PreconditionStore redundancyStore = new PreconditionStore();
     private final Logger logger = LoggerFactory.getLogger(CauseEffectPruner.class);
 
     @Override
@@ -74,7 +73,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         }
 
         // prune the fault subset
-        for (var causeAndEffect : effectCauseMapping.entrySet()) {
+        for (var causeAndEffect : redundancyStore.getStore().entrySet()) {
             var effect = causeAndEffect.getKey();
             var possibleCauses = causeAndEffect.getValue();
 
@@ -94,28 +93,10 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         }
     }
 
-    private boolean hasAlready(Set<Fault> cause, FaultUid effect) {
-        if (!effectCauseMapping.containsKey(effect)) {
-            return false;
-        }
-
-        Set<Set<Fault>> possibleCauses = effectCauseMapping.get(effect);
-        return possibleCauses.stream()
-                .anyMatch(pc -> Sets.isSubsetOf(pc, cause));
-    }
-
     private void handleHappensBefore(Set<Fault> cause, FaultUid effect, FeedbackContext context) {
-        logger.info("Found dependent effect: " + cause + " hides " + effect);
-
-        // Also discregard any counts of the effect
-
-        if (hasAlready(cause, effect)) {
-            return;
-        }
-
-        // Store as the fid (disregarding count)
-        effectCauseMapping.put(effect, Set.of(cause));
-
+        logger.info("Found exclusion: " + cause + " hides " + effect);
+        redundancyStore.addPrecondition(cause, effect);
+        context.reportExclusionOfFaultUid(cause, effect);
     }
 
     @Override
@@ -132,15 +113,12 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
                 // diregard the count
                 .map(FaultUid::asAnyCount)
                 // that has a known redundancy
-                .filter(effectCauseMapping::containsKey)
+                .filter(redundancyStore::hasPreconditions)
                 .collect(Collectors.toSet());
 
         boolean isRedundant = relatedUidsInFaultload.stream()
                 // for any related fid's causes
-                .anyMatch(f -> effectCauseMapping.get(f).stream()
-                        // if the cause is a subset of the faultset
-                        // it is redundant
-                        .anyMatch(cause -> Sets.isSubsetOf(faultset, cause)));
+                .anyMatch(f -> redundancyStore.hasPrecondition(faultset, f));
 
         return isRedundant;
     }

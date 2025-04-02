@@ -15,14 +15,12 @@ import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class NoImpactPruner implements Pruner, FeedbackHandler {
-    private Set<FaultUid> happyPath = new HashSet<>();
     private final Logger logger = LoggerFactory.getLogger(NoImpactPruner.class);
     private Set<Set<Fault>> impactlessFaults = new HashSet<>();
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         if (result.isInitial()) {
-            happyPath = result.trace.getFaultUids();
             return;
         }
 
@@ -30,30 +28,29 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
         if (injected.isEmpty()) {
             return;
         }
-        // TODO: handle no impact in alternative paths
 
-        // If the faultload creates alternative paths
-        // TODO: refine, alternative path in parent!
-        Set<FaultUid> fids = result.trace.getFaultUids();
-        boolean alternativePath = Sets.isProperSupersetOf(fids, happyPath);
-        if (alternativePath) {
-            return;
+        for (Fault fault : injected) {
+            FaultUid parent = result.trace.getParent(fault.uid());
+
+            if (parent == null) {
+                continue;
+            }
+
+            var report = result.trace.getReport(parent);
+            if (report == null) {
+                continue;
+            }
+
+            if (report.response.isErrenous()) {
+                continue;
+            }
+
+            // TODO: check in combination with neighbours?
+
+            logger.info("Detected impactless fault?: " + fault);
+            // impactlessFaults.add(Set.of(fault));
+            // context.pruneFaultSubset(Set.of(fault));
         }
-
-        // TODO: verify, is this assumption correct?
-        // Or only in the context of the parent event?
-        // What if only as single fault this is okay?
-        boolean hasImpact = result.trace.getReports().stream()
-                .filter(r -> r.injectedFault == null || !injected.contains(r.injectedFault))
-                .anyMatch(r -> r.response.isErrenous());
-
-        if (hasImpact) {
-            return;
-        }
-
-        logger.info("Found impactless faultload: " + injected);
-        impactlessFaults.add(injected);
-        context.pruneFaultSubset(injected);
 
         return;
     }

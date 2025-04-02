@@ -1,10 +1,8 @@
 package nl.dflipse.fit.strategy.store;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,9 +22,10 @@ public class DynamicAnalysisStore {
     private final Set<FaultMode> modes;
     private final Set<FaultUid> points = new HashSet<>();
 
-    private final Map<FaultUid, Set<Set<Fault>>> preconditions = new HashMap<>();
+    private final PreconditionStore appearPreconditions = new PreconditionStore();
+    private final PreconditionStore disappearPreconditions = new PreconditionStore();
 
-    private final List<Faultload> redundantFaultloads = new ArrayList<>();
+    private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
 
@@ -38,7 +37,11 @@ public class DynamicAnalysisStore {
         return points;
     }
 
-    public List<Faultload> getRedundantFaultloads() {
+    public Set<FaultMode> getModes() {
+        return modes;
+    }
+
+    public List<Set<Fault>> getRedundantFaultloads() {
         return this.redundantFaultloads;
     }
 
@@ -54,8 +57,18 @@ public class DynamicAnalysisStore {
         return points;
     }
 
-    public Map<FaultUid, Set<Set<Fault>>> getPreconditions() {
-        return preconditions;
+    public Set<FaultUid> getNonConditionalFaultUids() {
+        return points.stream()
+                .filter(fid -> !appearPreconditions.hasPreconditions(fid))
+                .collect(Collectors.toSet());
+    }
+
+    public PreconditionStore getAppearPreconditions() {
+        return appearPreconditions;
+    }
+
+    public PreconditionStore getDisappearPreconditions() {
+        return disappearPreconditions;
     }
 
     public boolean hasFaultUid(FaultUid fid) {
@@ -84,24 +97,11 @@ public class DynamicAnalysisStore {
         return added;
     }
 
-    public boolean hasConditionForFaultUid(Set<Fault> condition, FaultUid fid) {
-        if (!preconditions.containsKey(fid)) {
-            return false;
-        }
-
-        for (var subset : preconditions.get(fid)) {
-            if (Sets.isSubsetOf(subset, condition)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public boolean addConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
+    public boolean addConditionForFaultUid(Set<Fault> condition, FaultUid fid) {
         boolean isNew = addFaultUid(fid);
+        boolean isNewPrecondition = appearPreconditions.addPrecondition(condition, fid);
 
-        if (hasConditionForFaultUid(condition, fid)) {
+        if (!isNewPrecondition) {
             return false;
         }
 
@@ -111,9 +111,16 @@ public class DynamicAnalysisStore {
             logger.info("Found new precondition {} for existing fault {}", condition, fid);
         }
 
-        preconditions.computeIfAbsent(fid, x -> new HashSet<>())
-                .removeIf(s -> Sets.isSubsetOf(condition, s));
-        preconditions.get(fid).add(condition);
+        return true;
+    }
+
+    public boolean addExclusionForFaultUid(Set<Fault> condition, FaultUid fid) {
+        boolean isNewPrecondition = disappearPreconditions.addPrecondition(condition, fid);
+
+        if (!isNewPrecondition) {
+            return false;
+        }
+
         return true;
     }
 
@@ -193,11 +200,15 @@ public class DynamicAnalysisStore {
             return false;
         }
 
-        this.redundantFaultloads.add(faultload);
+        this.redundantFaultloads.add(faultload.faultSet());
         return true;
     }
 
     public boolean hasFaultload(Faultload faultload) {
+        return this.redundantFaultloads.contains(faultload.faultSet());
+    }
+
+    public boolean hasFaultload(Set<Fault> faultload) {
         return this.redundantFaultloads.contains(faultload);
     }
 

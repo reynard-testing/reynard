@@ -10,9 +10,13 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FaultMode;
 
 public interface Generator {
+    public List<Faultload> generate();
+
     public void reportFaultUids(List<FaultUid> faultInjectionPoints);
 
-    public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid);
+    public void reportPreconditionOfFaultUid(Set<Fault> condition, FaultUid fid);
+
+    public void reportExclusionOfFaultUid(Set<Fault> condition, FaultUid fid);
 
     public void pruneFaultUidSubset(Set<FaultUid> subset);
 
@@ -24,9 +28,11 @@ public interface Generator {
 
     public Set<FaultUid> getFaultInjectionPoints();
 
+    public Set<FaultUid> getExpectedPoints(Faultload faultload);
+
     public Map<FaultUid, Set<Set<Fault>>> getConditionalFaultInjectionPoints();
 
-    public List<Faultload> generate();
+    public Map<FaultUid, Set<Set<Fault>>> getExclusionsForFaultInjectionPoints();
 
     public long spaceSize();
 }

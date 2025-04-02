@@ -32,7 +32,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
         for (Fault fault : injected) {
             FaultUid parent = result.trace.getParent(fault.uid());
 
-            if (parent == null) {
+            if (parent == null || parent.isFromInitial()) {
                 continue;
             }
 

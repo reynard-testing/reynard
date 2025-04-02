@@ -57,6 +57,10 @@ public record FaultUid(String origin, String destination, String signature, Stri
         return count < 0;
     }
 
+    public boolean isFromInitial() {
+        return origin.equals("<origin>");
+    }
+
     public FaultUid applyMask(FaultUid mask) {
         if (mask == null) {
             return this;

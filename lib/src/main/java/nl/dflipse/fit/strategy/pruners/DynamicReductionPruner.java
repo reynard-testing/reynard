@@ -75,7 +75,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     }
 
     @Override
-    public boolean prune(Faultload faultload) {
+    public PruneDecision prune(Faultload faultload) {
         Map<FaultUid, Fault> faultsByFaultUid = faultload.getFaultByFaultUid();
         Set<FaultUid> expectedPoints = generator.getExpectedPoints(faultload);
 
@@ -116,12 +116,12 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
             }
 
             if (!found) {
-                return false;
+                return PruneDecision.KEEP;
             }
         }
 
         logger.info("Found redundant fautload " + faultload);
-        return true;
+        return PruneDecision.PRUNE;
     }
 
 }

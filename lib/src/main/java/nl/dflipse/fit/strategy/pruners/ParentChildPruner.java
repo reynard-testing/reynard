@@ -38,7 +38,7 @@ public class ParentChildPruner implements Pruner, FeedbackHandler {
     }
 
     @Override
-    public boolean prune(Faultload faultload) {
+    public PruneDecision prune(Faultload faultload) {
         // if an http error is injected, and its children are also injected, it is
         // redundant.
 
@@ -50,7 +50,11 @@ public class ParentChildPruner implements Pruner, FeedbackHandler {
             return happensBefore.areRelated(f1, f2);
         });
 
-        return isRedundant;
+        if (isRedundant) {
+            return PruneDecision.PRUNE_SUBTREE;
+        } else {
+            return PruneDecision.KEEP;
+        }
     }
 
 }

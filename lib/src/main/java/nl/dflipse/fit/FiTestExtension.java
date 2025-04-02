@@ -65,11 +65,9 @@ public class FiTestExtension
                 ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR),
                 ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
-        boolean onlyPersistantOrTransientRetries = annotation
-                .optimizeForRetries();
-
-        boolean pruneImpactless = annotation
-                .optimizeForImpactless();
+        boolean onlyPersistantOrTransientRetries = annotation.optimizeForRetries();
+        boolean pruneImpactless = annotation.optimizeForImpactless();
+        int maxFaultloadSize = annotation.maxFaultloadSize();
 
         strategy = new StrategyRunner()
                 .withComponent(new IncreasingSizeGenerator(modes))

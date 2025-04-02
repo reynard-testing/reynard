@@ -2,6 +2,7 @@ package nl.dflipse.fit.pruners;
 
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
+import nl.dflipse.fit.strategy.pruners.PruneDecision;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 import nl.dflipse.fit.util.NodeBuilder;
@@ -49,7 +51,8 @@ public class DynamicReductionTest {
         pruner.handleFeedback(result, null);
 
         // The empty faultload is pruned
-        assertTrue(pruner.prune(initialFaultload.getFaultload()));
+        PruneDecision decision = pruner.prune(initialFaultload.getFaultload());
+        assertEquals(PruneDecision.PRUNE, decision);
     }
 
     @Test
@@ -123,6 +126,9 @@ public class DynamicReductionTest {
 
         Faultload faultloadToPrune = new Faultload(
                 Set.of(new Fault(spanB2.reports.get(0).faultUid, resultedFault)));
-        assertTrue(pruner.prune(faultloadToPrune));
+
+        // The empty faultload is pruned
+        PruneDecision decision = pruner.prune(faultloadToPrune);
+        assertEquals(PruneDecision.PRUNE, decision);
     }
 }

@@ -24,11 +24,11 @@ public class FeedbackContext {
 
     private final static Map<String, DynamicAnalysisStore> stores = new HashMap<>();
 
-    public FeedbackContext(StrategyRunner runner, String contextName, FaultloadResult result) {
+    public FeedbackContext(StrategyRunner runner, Class<?> clazz, FaultloadResult result) {
         this.runner = runner;
         this.result = result;
         assertGeneratorPresent();
-        this.store = stores.computeIfAbsent(contextName,
+        this.store = stores.computeIfAbsent(clazz.getSimpleName(),
                 k -> new DynamicAnalysisStore(runner.getGenerator().getFaultModes()));
     }
 

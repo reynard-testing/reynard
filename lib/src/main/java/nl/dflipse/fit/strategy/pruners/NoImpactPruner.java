@@ -68,14 +68,14 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
     }
 
     @Override
-    public boolean prune(Faultload faultload) {
+    public PruneDecision prune(Faultload faultload) {
         for (var impactless : impactlessFaults) {
             if (Sets.isSubsetOf(impactless, faultload.faultSet())) {
-                return true;
+                return PruneDecision.PRUNE_SUBTREE;
             }
         }
 
-        return false;
+        return PruneDecision.KEEP;
     }
 
 }

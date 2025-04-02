@@ -17,6 +17,15 @@ import nl.dflipse.fit.strategy.util.Sets;
 public class NoImpactPruner implements Pruner, FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(NoImpactPruner.class);
     private Set<Set<Fault>> impactlessFaults = new HashSet<>();
+    private final boolean pruneImpactlessFaults;
+
+    public NoImpactPruner(boolean pruneImpactlessFaults) {
+        this.pruneImpactlessFaults = pruneImpactlessFaults;
+    }
+
+    public NoImpactPruner() {
+        this(false);
+    }
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
@@ -32,7 +41,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
         for (Fault fault : injected) {
             FaultUid parent = result.trace.getParent(fault.uid());
 
-            if (parent == null || parent.isFromInitial()) {
+            if (parent == null) {
                 continue;
             }
 
@@ -45,11 +54,14 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
                 continue;
             }
 
-            // TODO: check in combination with neighbours?
-
-            logger.info("Detected impactless fault?: " + fault);
-            // impactlessFaults.add(Set.of(fault));
-            // context.pruneFaultSubset(Set.of(fault));
+            if (pruneImpactlessFaults) {
+                logger.info("Detected impactless fault: " + fault);
+                impactlessFaults.add(Set.of(fault));
+                context.pruneFaultSubset(Set.of(fault));
+            } else {
+                // TODO: check for all combinations of neighbours?
+                logger.info("Detected impactless fault?: " + fault);
+            }
         }
 
         return;

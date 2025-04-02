@@ -98,7 +98,7 @@ public class MetaSuiteIT {
         app.stop();
     }
 
-    @FiTest(getTraceInitialDelay = 200, optimizeForRetries = true)
+    @FiTest(getTraceInitialDelay = 200, optimizeForRetries = true, optimizeForImpactless = true)
     public void testRegister(TrackedFaultload faultload) throws IOException {
         int port = orchestrator.getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";

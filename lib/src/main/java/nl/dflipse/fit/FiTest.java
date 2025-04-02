@@ -23,6 +23,8 @@ public @interface FiTest {
 
     boolean optimizeForRetries() default false;
 
+    boolean optimizeForImpactless() default false;
+
     long maxTestCases() default 0;
 
     int getTraceInitialDelay() default 100;

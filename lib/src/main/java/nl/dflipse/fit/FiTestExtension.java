@@ -68,6 +68,9 @@ public class FiTestExtension
         boolean onlyPersistantOrTransientRetries = annotation
                 .optimizeForRetries();
 
+        boolean pruneImpactless = annotation
+                .optimizeForImpactless();
+
         strategy = new StrategyRunner()
                 .withComponent(new IncreasingSizeGenerator(modes))
                 // .withGenerator(new IncreasingSizeMixedGenerator(modes))
@@ -81,7 +84,7 @@ public class FiTestExtension
                 .withComponent(new ParentChildPruner())
                 .withComponent(new ErrorPropogationPruner())
                 .withComponent(new CauseEffectPruner())
-                .withComponent(new NoImpactPruner())
+                .withComponent(new NoImpactPruner(pruneImpactless))
                 .withComponent(new DynamicReductionPruner());
 
         if (annotation.maxTestCases() > 0) {

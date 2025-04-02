@@ -17,15 +17,19 @@ import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.generators.Generator;
 
 public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(DynamicReductionPruner.class);
 
+    private Generator generator;
     private Map<FaultUid, Set<FaultUid>> causalMap = new HashMap<>();
     private List<Map<FaultUid, Integer>> behavioursSeen = new ArrayList<>();
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
+        generator = context.getGenerator();
+
         // update behaviours seen
         Map<FaultUid, Integer> behaviourMap = new HashMap<>();
         for (var report : result.trace.getReports()) {
@@ -39,13 +43,14 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
         // update causal map
         for (var parentChild : result.trace.getParentsAndChildren()) {
             FaultUid parent = parentChild.first();
+            if (parent == null) {
+                continue;
+            }
             FaultUid child = parentChild.second();
 
-            if (!causalMap.containsKey(parent)) {
-                causalMap.put(parent, new HashSet<>());
-            }
-
-            causalMap.get(parent).add(child);
+            causalMap
+                    .computeIfAbsent(parent, k -> new HashSet<>())
+                    .add(child);
         }
     }
 
@@ -72,6 +77,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     @Override
     public boolean prune(Faultload faultload) {
         Map<FaultUid, Fault> faultsByFaultUid = faultload.getFaultByFaultUid();
+        Set<FaultUid> expectedPoints = generator.getExpectedPoints(faultload);
 
         // for all causes
         for (var cause : causalMap.keySet()) {
@@ -83,6 +89,10 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
 
                 // that has all dependents with the same expected behaviour
                 for (var effect : causalMap.get(cause)) {
+                    if (!expectedPoints.contains(effect)) {
+                        continue;
+                    }
+
                     boolean hasObservedEffect = behaviour.containsKey(effect);
                     if (!hasObservedEffect) {
                         allEffectsSeen = false;

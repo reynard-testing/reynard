@@ -1,4 +1,4 @@
-package nl.dflipse.fit;
+package nl.dflipse.fit.suites;
 
 import static org.junit.Assert.assertTrue;
 
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeAll;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 
-public class DummyTest {
+public class DummySuiteIT {
     public static InstrumentedApp app;
 
     public static FaultController getController() {

@@ -94,11 +94,9 @@ public class TraceAnalysis {
 
                 // Save the parent-child relation
                 // Update the most direct parent
-                if (!report.isInitial) {
-                    var child = report.faultUid;
-                    parentChildRelation.addRelation(parent, child);
-                    nextParent = child;
-                }
+                var child = report.faultUid;
+                parentChildRelation.addRelation(parent, child);
+                nextParent = child;
 
                 // If a remote call is detected (so our own proxy)
                 // But no children exist.
@@ -146,6 +144,16 @@ public class TraceAnalysis {
         return reports;
     }
 
+    public TraceSpanReport getReport(FaultUid faultUid) {
+        for (var report : reports) {
+            if (report.faultUid.equals(faultUid)) {
+                return report;
+            }
+        }
+
+        return null;
+    }
+
     public TraceSpanReport getRootReport() {
         return rootReport;
     }
@@ -189,6 +197,13 @@ public class TraceAnalysis {
 
     public Set<FaultUid> getChildren(FaultUid parent) {
         return parentChildRelation.getChildren(parent);
+    }
+
+    public Set<FaultUid> getNeighbours(FaultUid child) {
+        FaultUid parent = getParent(child);
+        Set<FaultUid> neighbours = getChildren(parent);
+        neighbours.remove(child);
+        return neighbours;
     }
 
     public List<FaultUid> getParents(FaultUid parent) {
@@ -261,14 +276,14 @@ public class TraceAnalysis {
             traverseDepthFirst(child, consumer);
         }
 
-        if (node != null) {
+        if (node != null && !node.origin().equals("<none>")) {
             consumer.accept(node);
         }
 
     }
 
     public void traverseBreadthFirst(FaultUid node, Consumer<FaultUid> consumer) {
-        if (node != null) {
+        if (node != null && !node.origin().equals("<none>")) {
             consumer.accept(node);
         }
 

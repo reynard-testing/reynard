@@ -7,25 +7,25 @@ import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 
 public class FaultloadResult {
-    public TrackedFaultload faultload;
+    public TrackedFaultload trackedFaultload;
     public TraceAnalysis trace;
     public boolean passed;
 
     public FaultloadResult(TrackedFaultload faultload, TraceAnalysis trace, boolean passed) {
-        this.faultload = faultload;
+        this.trackedFaultload = faultload;
         this.trace = trace;
         this.passed = passed;
     }
 
     public Set<Fault> getNotInjectedFaults() {
-        var intendedFaults = faultload.getFaultload().faultSet();
+        var intendedFaults = trackedFaultload.getFaultload().faultSet();
         var injectedFaults = trace.getInjectedFaults();
         var notInjectedFaults = Sets.difference(intendedFaults, injectedFaults);
         return notInjectedFaults;
     }
 
     public boolean isInitial() {
-        return faultload.getFaultload().faultSet().isEmpty();
+        return trackedFaultload.getFaultload().faultSet().isEmpty();
     }
 
 }

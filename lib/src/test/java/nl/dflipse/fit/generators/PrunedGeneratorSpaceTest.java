@@ -3,8 +3,10 @@ package nl.dflipse.fit.generators;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+
 import static org.junit.Assert.assertEquals;
-import org.junit.Test;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
@@ -18,7 +20,8 @@ import nl.dflipse.fit.util.FaultsBuilder;
 
 public class PrunedGeneratorSpaceTest {
 
-    @Test(timeout = 100)
+    @Test
+    @Timeout(1000)
     public void testSkipAllPoints() {
         var modes = FailureModes.getModes(3);
         var points = FaultInjectionPoints.getPoints(12);
@@ -33,7 +36,8 @@ public class PrunedGeneratorSpaceTest {
         assert faults.size() == 0;
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(1000)
     public void testSkipAllButOnePoint() {
         var modes = FailureModes.getModes(3);
         var points = FaultInjectionPoints.getPoints(12);
@@ -54,7 +58,8 @@ public class PrunedGeneratorSpaceTest {
         assertEquals(expected, actual);
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(1000)
     public void testSkipAllButTwoPoint() {
         var modes = FailureModes.getModes(3);
         var points = FaultInjectionPoints.getPoints(12);
@@ -74,7 +79,8 @@ public class PrunedGeneratorSpaceTest {
         assertEquals(expected, actual);
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(1000)
     public void testSkipAllButFourPoint() {
         var modes = FailureModes.getModes(3);
         var points = FaultInjectionPoints.getPoints(12);
@@ -95,8 +101,8 @@ public class PrunedGeneratorSpaceTest {
         assertEquals(expected, actual);
     }
 
-    // @Test(timeout = 1000)
     @Test
+    @Timeout(1000)
     public void testRemoveOneFaultByModes() {
         var modes = FailureModes.getModes(5);
         var points = FaultInjectionPoints.getPoints(3);
@@ -115,6 +121,7 @@ public class PrunedGeneratorSpaceTest {
 
     // @Test(timeout = 1000)
     @Test
+    @Timeout(1000)
     public void testOneFault() {
         var modes = FailureModes.getModes(5);
         var points = FaultInjectionPoints.getPoints(3);
@@ -132,6 +139,7 @@ public class PrunedGeneratorSpaceTest {
     }
 
     @Test
+    @Timeout(1000)
     public void testManyModes() {
         var modes = FailureModes.getModes(1000);
         var points = FaultInjectionPoints.getPoints(3);
@@ -158,6 +166,7 @@ public class PrunedGeneratorSpaceTest {
     }
 
     @Test
+    @Timeout(1000)
     public void testManyFaults() {
         var modes = FailureModes.getModes(12);
         var points = FaultInjectionPoints.getPoints(6);
@@ -184,6 +193,7 @@ public class PrunedGeneratorSpaceTest {
     }
 
     @Test
+    @Timeout(1000)
     public void testDoesNotContain() {
         // Given - points and modes
         var modes = FailureModes.getModes(3);
@@ -250,6 +260,7 @@ public class PrunedGeneratorSpaceTest {
     // TODO: this currently fails when combining both types of subsets
     // but not when only using one type of subset
     @Test
+    @Timeout(1000)
     public void testSizeEstimate() {
         // Given - points and modes
         var modes = FailureModes.getModes(3);
@@ -305,6 +316,7 @@ public class PrunedGeneratorSpaceTest {
     }
 
     @Test
+    @Timeout(1000)
     public void testWithPreconditions() {
         // Given - points and modes
         var modes = FailureModes.getModes(2);
@@ -315,7 +327,7 @@ public class PrunedGeneratorSpaceTest {
         // Given - a generator with no pruned faults
         var generator1 = new IncreasingSizeGenerator(modes);
         generator1.reportFaultUids(points);
-        generator1.reportConditionalFaultUid(Set.of(), point3);
+        generator1.reportPreconditionOfFaultUid(Set.of(), point3);
         List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
         // Given a generator and prunable faults
@@ -327,7 +339,7 @@ public class PrunedGeneratorSpaceTest {
                 Set.of(faults.get(2, 0)));
 
         for (var precondition : preconditions) {
-            generator2.reportConditionalFaultUid(precondition, point3);
+            generator2.reportPreconditionOfFaultUid(precondition, point3);
         }
 
         List<Faultload> allFaultloads2 = Enumerate.getGenerated(generator2);

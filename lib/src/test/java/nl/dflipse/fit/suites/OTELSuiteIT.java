@@ -1,4 +1,4 @@
-package nl.dflipse.fit;
+package nl.dflipse.fit.suites;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
+import nl.dflipse.fit.FiTest;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
@@ -34,7 +35,7 @@ import okhttp3.Response;
 /**
  * FI test the app
  */
-public class OTELTest {
+public class OTELSuiteIT {
     private static final RemoteController controller = new RemoteController("http://localhost:5000");
 
     private static final int PORT = 8080;

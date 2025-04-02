@@ -1,9 +1,10 @@
-package nl.dflipse.fit;
+package nl.dflipse.fit.suites;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
+import nl.dflipse.fit.FiTest;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
@@ -16,7 +17,7 @@ import okhttp3.Response;
 /**
  * FI test the app
  */
-public class RemoteAppTest {
+public class RemoteAppSuiteIT {
     public static final RemoteController controller = new RemoteController("http://localhost:5000");
     private OkHttpClient client = new OkHttpClient();
 

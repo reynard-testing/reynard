@@ -32,6 +32,7 @@ import nl.dflipse.fit.strategy.pruners.CauseEffectPruner;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
+import nl.dflipse.fit.strategy.pruners.NoImpactPruner;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 
@@ -77,7 +78,7 @@ public class FiTestExtension
                 .withComponent(new ParentChildPruner())
                 .withComponent(new ErrorPropogationPruner())
                 .withComponent(new CauseEffectPruner())
-                // .withPruner(new NoImpactPruner())
+                .withComponent(new NoImpactPruner())
                 .withComponent(new DynamicReductionPruner());
 
         if (annotation.maxTestCases() > 0) {

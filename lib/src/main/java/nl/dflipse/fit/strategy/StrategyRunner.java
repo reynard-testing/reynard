@@ -184,15 +184,15 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
-        logger.info("Analyzing result of running faultload with traceId=" + result.faultload.getTraceId());
+        logger.info("Analyzing result of running faultload with traceId=" + result.trackedFaultload.getTraceId());
         analyze(result);
         logger.info("Selecting next faultload");
 
-        result.faultload.timer.start("StrategyRunner.generateAndPrune");
+        result.trackedFaultload.timer.start("StrategyRunner.generateAndPrune");
         var res = generateAndPruneTillNext();
         int generated = res.getFirst();
         int pruned = res.getSecond();
-        result.faultload.timer.stop("StrategyRunner.generateAndPrune");
+        result.trackedFaultload.timer.stop("StrategyRunner.generateAndPrune");
 
         logger.info("Generated " + generated + " new faultloads, pruned " + pruned + " faultloads");
     }
@@ -209,20 +209,20 @@ public class StrategyRunner {
     }
 
     public void analyze(FaultloadResult result) {
-        result.faultload.timer.start("StrategyRunner.analyze");
+        result.trackedFaultload.timer.start("StrategyRunner.analyze");
 
         for (var analyzer : analyzers) {
             String name = analyzer.getClass().getSimpleName();
             String tag = name + ".handleFeedback<Analyzer>";
-            result.faultload.timer.start(tag);
+            result.trackedFaultload.timer.start(tag);
 
             FeedbackContext context = new FeedbackContext(this, name, result);
             analyzer.handleFeedback(result, context);
 
-            result.faultload.timer.stop(tag);
+            result.trackedFaultload.timer.stop(tag);
         }
 
-        result.faultload.timer.stop("StrategyRunner.analyze");
+        result.trackedFaultload.timer.stop("StrategyRunner.analyze");
     }
 
     public int prune() {

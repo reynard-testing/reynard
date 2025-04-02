@@ -18,7 +18,6 @@ import nl.dflipse.fit.strategy.util.StringFormat;
 
 public class FeedbackContext {
 
-    private final String contextName;
     private final StrategyRunner runner;
     private final DynamicAnalysisStore store;
     private final FaultloadResult result;
@@ -26,19 +25,21 @@ public class FeedbackContext {
     private final static Map<String, DynamicAnalysisStore> stores = new HashMap<>();
 
     public FeedbackContext(StrategyRunner runner, String contextName, FaultloadResult result) {
-        this.contextName = contextName;
         this.runner = runner;
         this.result = result;
         assertGeneratorPresent();
         this.store = stores.computeIfAbsent(contextName,
                 k -> new DynamicAnalysisStore(runner.getGenerator().getFaultModes()));
-
     }
 
     private void assertGeneratorPresent() {
         if (!runner.hasGenerators()) {
             throw new IllegalStateException("No generator set for runner!");
         }
+    }
+
+    public Generator getGenerator() {
+        return runner.getGenerator();
     }
 
     public Set<FaultMode> getFaultModes() {
@@ -49,8 +50,12 @@ public class FeedbackContext {
         return runner.getGenerator().getFaultInjectionPoints();
     }
 
-    public Map<FaultUid, Set<Set<Fault>>> getConditionalFaults() {
+    public Map<FaultUid, Set<Set<Fault>>> getConditionals() {
         return runner.getGenerator().getConditionalFaultInjectionPoints();
+    }
+
+    public Map<FaultUid, Set<Set<Fault>>> getExclusions() {
+        return runner.getGenerator().getExclusionsForFaultInjectionPoints();
     }
 
     public Set<Set<Fault>> getConditions(FaultUid fault) {
@@ -58,7 +63,7 @@ public class FeedbackContext {
             return Set.of();
         }
 
-        var mapping = getConditionalFaults();
+        var mapping = getConditionals();
         if (!mapping.containsKey(fault)) {
             return Set.of();
         }
@@ -69,10 +74,27 @@ public class FeedbackContext {
     public Set<FaultUid> getConditionalForFaultload() {
         Set<Fault> injectedFaults = result.trace.getInjectedFaults();
         Set<FaultUid> res = new HashSet<>();
-        for (var entry : getConditionalFaults().entrySet()) {
+        for (var entry : getConditionals().entrySet()) {
             FaultUid conditional = entry.getKey();
             for (var condition : entry.getValue()) {
                 if (Sets.isSubsetOf(injectedFaults, condition)) {
+                    res.add(conditional);
+                    break;
+                }
+            }
+        }
+
+        return res;
+    }
+
+    public Set<FaultUid> getExclusionsForFaultload() {
+        Set<Fault> intentedFaults = result.trackedFaultload.getFaultload().faultSet();
+
+        Set<FaultUid> res = new HashSet<>();
+        for (var entry : getExclusions().entrySet()) {
+            FaultUid conditional = entry.getKey();
+            for (var condition : entry.getValue()) {
+                if (Sets.isSubsetOf(intentedFaults, condition)) {
                     res.add(conditional);
                     break;
                 }
@@ -88,8 +110,13 @@ public class FeedbackContext {
     }
 
     public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
-        store.addConditionalFaultUid(condition, fid);
-        runner.getGenerator().reportConditionalFaultUid(condition, fid);
+        store.addConditionForFaultUid(condition, fid);
+        runner.getGenerator().reportPreconditionOfFaultUid(condition, fid);
+    }
+
+    public void reportExclusionOfFaultUid(Set<Fault> condition, FaultUid fid) {
+        store.addExclusionForFaultUid(condition, fid);
+        runner.getGenerator().reportExclusionOfFaultUid(condition, fid);
     }
 
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
@@ -170,15 +197,22 @@ public class FeedbackContext {
             }
         }
 
-        var preconditions = store.getPreconditions();
-        if (preconditions.size() > 0) {
+        var inclusions = store.getInclusionConditions().getStore();
+        if (inclusions.size() > 0) {
             hasImpact = true;
-            report.put("Preconditions", preconditions.size() + "");
-            int count = 0;
-            for (var entry : preconditions.entrySet()) {
-                count += entry.getValue().size();
+            report.put("Points with inclusion condition", inclusions.size() + "");
+            for (var entry : inclusions.entrySet()) {
+                report.put(entry.getKey().toString(), entry.getValue().size() + "");
             }
-            report.put("Precondition subsets", count + "");
+        }
+
+        var exclusions = store.getExclusionConditions().getStore();
+        if (exclusions.size() > 0) {
+            hasImpact = true;
+            report.put("Points with exclusion condition", exclusions.size() + "");
+            for (var entry : exclusions.entrySet()) {
+                report.put(entry.getKey().toString(), entry.getValue().size() + "");
+            }
         }
 
         if (hasImpact) {

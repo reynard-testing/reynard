@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy.pruners;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.store.ConditionalStore;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class NoImpactPruner implements Pruner, FeedbackHandler {
@@ -38,6 +40,8 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
             return;
         }
 
+        var conditionals = context.getConditionals();
+
         for (Fault fault : injected) {
             FaultUid parent = result.trace.getParent(fault.uid());
 
@@ -51,6 +55,12 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
             }
 
             if (report.response.isErrenous()) {
+                continue;
+            }
+
+            boolean isCauseForAlternativePath = ConditionalStore.hasForCondition(conditionals, Set.of(fault));
+
+            if (isCauseForAlternativePath) {
                 continue;
             }
 

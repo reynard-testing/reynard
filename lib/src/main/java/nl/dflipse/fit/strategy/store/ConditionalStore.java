@@ -13,6 +13,10 @@ public class ConditionalStore {
     private final Map<FaultUid, Set<Set<Fault>>> store = new HashMap<>();
 
     public boolean hasCondition(Set<Fault> condition, FaultUid fid) {
+        return hasCondition(store, condition, fid);
+    }
+
+    public static boolean hasCondition(Map<FaultUid, Set<Set<Fault>>> store, Set<Fault> condition, FaultUid fid) {
         if (!store.containsKey(fid)) {
             return false;
         }
@@ -51,6 +55,20 @@ public class ConditionalStore {
             }
         }
         return result;
+    }
+
+    public static boolean hasForCondition(Map<FaultUid, Set<Set<Fault>>> store, Set<Fault> condition) {
+        for (var entry : store.entrySet()) {
+            var fid = entry.getKey();
+            if (hasCondition(store, condition, fid)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasForCondition(Set<Fault> condition) {
+        return hasForCondition(store, condition);
     }
 
     public Map<FaultUid, Set<Set<Fault>>> getStore() {

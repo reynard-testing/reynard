@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.generators.Generator;
+import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.Pruner;
 import nl.dflipse.fit.strategy.util.Pair;
 
@@ -191,6 +192,10 @@ public class StrategyRunner {
             if (!queue.isEmpty()) {
                 break;
             }
+        }
+
+        if (generator instanceof IncreasingSizeGenerator gen) {
+            logger.info("Generator queue size: {}", gen.getQueuSize());
         }
 
         return new Pair<>(generated, pruned);

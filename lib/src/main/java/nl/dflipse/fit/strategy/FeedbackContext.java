@@ -167,13 +167,13 @@ public class FeedbackContext {
         boolean hasImpact = false;
 
         var redundantFaultloads = store.getRedundantFaultloads();
-        if (redundantFaultloads.size() > 0) {
+        if (!redundantFaultloads.isEmpty()) {
             hasImpact = true;
             report.put("Faultloads pruned", redundantFaultloads.size() + "");
         }
 
         var redundantFaultSubsets = store.getRedundantFaultSubsets();
-        if (redundantFaultSubsets.size() > 0) {
+        if (!redundantFaultSubsets.isEmpty()) {
             hasImpact = true;
             report.put("Fault subsets pruned", redundantFaultSubsets.size() + "");
             var sizeCount = getDistribution(redundantFaultSubsets);
@@ -183,7 +183,7 @@ public class FeedbackContext {
         }
 
         var redundantUidSubsets = store.getRedundantUidSubsets();
-        if (redundantUidSubsets.size() > 0) {
+        if (!redundantUidSubsets.isEmpty()) {
             hasImpact = true;
             report.put("Fault points subsets pruned", redundantUidSubsets.size() + "");
             var sizeCount = getDistribution(redundantUidSubsets);
@@ -193,7 +193,7 @@ public class FeedbackContext {
         }
 
         var inclusions = store.getInclusionConditions().getStore();
-        if (inclusions.size() > 0) {
+        if (!inclusions.isEmpty()) {
             hasImpact = true;
             report.put("Points with inclusion condition", inclusions.size() + "");
             for (var entry : inclusions.entrySet()) {
@@ -202,7 +202,7 @@ public class FeedbackContext {
         }
 
         var exclusions = store.getExclusionConditions().getStore();
-        if (exclusions.size() > 0) {
+        if (!exclusions.isEmpty()) {
             hasImpact = true;
             report.put("Points with exclusion condition", exclusions.size() + "");
             for (var entry : exclusions.entrySet()) {

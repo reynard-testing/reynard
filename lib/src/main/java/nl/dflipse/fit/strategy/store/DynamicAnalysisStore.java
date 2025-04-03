@@ -151,9 +151,9 @@ public class DynamicAnalysisStore {
         return true;
     }
 
-    public boolean hasFaultSubset(Set<Fault> subset) {
+    public boolean hasFaultSubset(Set<Fault> given) {
         for (var redundant : this.redundantFaultSubsets) {
-            if (Sets.isSubsetOf(redundant, subset)) {
+            if (Sets.isSubsetOf(redundant, given)) {
                 return true;
             }
         }
@@ -215,77 +215,26 @@ public class DynamicAnalysisStore {
     }
 
     public long estimatePruned(Set<FaultUid> allUids) {
-        int points = allUids.size();
-        int modes = this.modes.size();
+        int modeCount = this.modes.size();
         long sum = 0;
 
         // Note: this does not account for overlap between uid and fault subsets
-        for (int i = 0; i < redundantUidSubsets.size(); i++) {
-            var subset = redundantUidSubsets.get(i);
-            long contribution = SpaceEstimate.nonEmptySpaceSize(modes, points, subset.size());
-            sum += contribution;
+        long pointSubsetContribution = SpaceEstimate.estimatePointSubsetsImpact(allUids, redundantUidSubsets,
+                modeCount);
+        sum += pointSubsetContribution;
 
-            Set<Set<FaultUid>> coveredOverlap = new HashSet<>();
+        long faultSubsetContribution = SpaceEstimate.estimateFaultSubsetsImpact(allUids, redundantFaultSubsets,
+                modeCount);
+        sum += faultSubsetContribution;
 
-            for (int j = i + 1; j < redundantUidSubsets.size(); j++) {
-                var other = redundantUidSubsets.get(j);
-                var overlap = Sets.intersection(subset, other);
-                if (coveredOverlap.contains(overlap)) {
-                    continue;
-                }
+        long faultloadContribution = redundantFaultloads.size();
+        sum += faultloadContribution;
 
-                if (!overlap.isEmpty()) {
-                    long overlapContribution = SpaceEstimate.nonEmptySpaceSize(modes, points,
-                            other.size() + subset.size() - overlap.size());
-                    // sum -= overlapContribution;
-                    coveredOverlap.add(overlap);
-                }
-            }
-        }
+        long inclusionContribution = 0;
+        sum += inclusionContribution;
 
-        for (int i = 0; i < redundantFaultSubsets.size(); i++) {
-            var subset = redundantFaultSubsets.get(i);
-            long contribution = SpaceEstimate.spaceSize(modes, points - subset.size());
-            sum += contribution;
-
-            // TODO: this overlap estimate is not accurate, can sometimes go below zero?
-            Set<FaultUid> uids = subset.stream()
-                    .map(Fault::uid)
-                    .collect(Collectors.toSet());
-
-            Set<Set<Fault>> coveredExtensions = new HashSet<>();
-
-            for (int j = i + 1; j < redundantFaultSubsets.size(); j++) {
-                var other = redundantFaultSubsets.get(j);
-                var overlap = Sets.intersection(subset, other);
-                var leftInOther = Sets.difference(other, overlap);
-
-                if (overlap.isEmpty()) {
-                    continue;
-                }
-
-                // If the subset and the other contain faults for the same point
-                // but a different mode, then they are incompatible
-                var isIncompatible = leftInOther.stream()
-                        .anyMatch(f -> uids.contains(f.uid()));
-
-                if (isIncompatible || coveredExtensions.contains(leftInOther)) {
-                    continue;
-                }
-
-                int unionSize = other.size() + subset.size() - overlap.size();
-                int pointsLeft = points - unionSize;
-                if (pointsLeft < 0) {
-                    // Famous last words: this should never happen
-                    continue;
-                }
-                long overlapContribution = SpaceEstimate.spaceSize(modes, pointsLeft);
-                // sum -= overlapContribution;
-                coveredExtensions.add(leftInOther);
-            }
-        }
-
-        sum += redundantFaultloads.size();
+        long exclusionContribution = 0;
+        sum += exclusionContribution;
 
         return sum;
     }

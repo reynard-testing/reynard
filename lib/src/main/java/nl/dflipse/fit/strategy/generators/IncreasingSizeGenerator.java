@@ -178,8 +178,10 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     @Override
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
         boolean isNew = false;
-        for (Set<Fault> prunedSet : allFaults(List.copyOf(subset))) {
-            isNew = isNew || store.pruneFaultSubset(prunedSet);
+        var allFaults = allFaults(List.copyOf(subset));
+        for (Set<Fault> prunedSet : allFaults) {
+            boolean wasNew = store.pruneFaultSubset(prunedSet);
+            isNew = isNew || wasNew;
         }
 
         if (isNew && iterator != null) {

@@ -170,8 +170,8 @@ public class StrategyReporter {
     }
 
     public void report() {
-        reportComponents();
         reportOverall();
+        reportComponents();
         reportGeneratorStats();
         reportPrunerStats();
         reportTimingStats();

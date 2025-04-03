@@ -216,7 +216,7 @@ public class StrategyRunner {
             String tag = name + ".handleFeedback<Analyzer>";
             result.trackedFaultload.timer.start(tag);
 
-            FeedbackContext context = new FeedbackContext(this, name, result);
+            FeedbackContext context = new FeedbackContext(this, analyzer.getClass(), result);
             analyzer.handleFeedback(result, context);
 
             result.trackedFaultload.timer.stop(tag);
@@ -232,9 +232,22 @@ public class StrategyRunner {
             boolean shouldPrune = false;
 
             for (Pruner pruner : pruners) {
-                if (pruner.prune(faultload)) {
-                    shouldPrune = true;
-                    statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
+                var decision = pruner.prune(faultload);
+                switch (decision) {
+                    case KEEP:
+                        break;
+                    case PRUNE:
+                        statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
+                        shouldPrune = true;
+                        break;
+                    case PRUNE_SUBTREE:
+                        statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
+                        new FeedbackContext(this, pruner.getClass(), null).pruneFaultSubset(faultload.faultSet());
+                        shouldPrune = true;
+                        break;
+                    default:
+                        break;
+
                 }
             }
 

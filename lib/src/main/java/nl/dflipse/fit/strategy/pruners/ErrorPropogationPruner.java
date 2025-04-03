@@ -71,20 +71,20 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
     }
 
     @Override
-    public boolean prune(Faultload faultload) {
+    public PruneDecision prune(Faultload faultload) {
         for (var redundantFaultload : redundantFautloads) {
             if (faultload.faultSet().equals(redundantFaultload)) {
-                return true;
+                return PruneDecision.PRUNE;
             }
         }
 
         for (var redundantSubset : redundantSubsets) {
             if (faultload.faultSet().containsAll(redundantSubset)) {
-                return true;
+                return PruneDecision.PRUNE_SUBTREE;
             }
         }
 
-        return false;
+        return PruneDecision.KEEP;
     }
 
 }

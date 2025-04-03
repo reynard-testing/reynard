@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy.pruners;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.store.ConditionalStore;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class NoImpactPruner implements Pruner, FeedbackHandler {
@@ -38,6 +40,8 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
             return;
         }
 
+        var conditionals = context.getConditionals();
+
         for (Fault fault : injected) {
             FaultUid parent = result.trace.getParent(fault.uid());
 
@@ -54,6 +58,15 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
                 continue;
             }
 
+            boolean isCauseForAlternativePath = ConditionalStore.isPartOfAnyCondition(conditionals, Set.of(fault));
+
+            if (isCauseForAlternativePath) {
+                continue;
+            }
+
+            // TODO: check if output of parent is the same regardless of the fault
+            // To avoid capturing local fallbacks
+
             if (pruneImpactlessFaults) {
                 logger.info("Detected impactless fault: " + fault);
                 impactlessFaults.add(Set.of(fault));
@@ -68,14 +81,14 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
     }
 
     @Override
-    public boolean prune(Faultload faultload) {
+    public PruneDecision prune(Faultload faultload) {
         for (var impactless : impactlessFaults) {
             if (Sets.isSubsetOf(impactless, faultload.faultSet())) {
-                return true;
+                return PruneDecision.PRUNE_SUBTREE;
             }
         }
 
-        return false;
+        return PruneDecision.KEEP;
     }
 
 }

@@ -16,12 +16,12 @@ public class FailStopPruner implements Pruner, FeedbackHandler {
     }
 
     @Override
-    public boolean prune(Faultload faultload) {
+    public PruneDecision prune(Faultload faultload) {
         if (failed) {
-            return true;
+            return PruneDecision.PRUNE_SUBTREE;
         }
 
-        return false;
+        return PruneDecision.KEEP;
     }
 
 }

@@ -76,6 +76,8 @@ public class FeedbackContext {
         Set<FaultUid> res = new HashSet<>();
         for (var entry : getConditionals().entrySet()) {
             FaultUid conditional = entry.getKey();
+
+            // check if any condition is matched by the injected faults
             for (var condition : entry.getValue()) {
                 if (Sets.isSubsetOf(injectedFaults, condition)) {
                     res.add(conditional);

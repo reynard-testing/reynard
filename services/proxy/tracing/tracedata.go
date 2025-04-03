@@ -1,6 +1,8 @@
 package tracing
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"strconv"
@@ -99,6 +101,29 @@ func ParseTraceState(tracestate string) *TraceStateData {
 func (t *TraceParentData) String() string {
 	return fmt.Sprintf("%s-%s-%s-%s", t.Version, t.TraceID, t.ParentID, t.TraceFlags)
 }
+func isValid(s []byte) bool {
+	// check if not all zeros
+	for _, v := range s {
+		if v != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func NewSpanID() string {
+	sid := make([]byte, 8)
+	for {
+		if _, err := rand.Read(sid); err != nil {
+			// Handle err
+		}
+		if isValid(sid) {
+			break
+		}
+	}
+
+	return hex.EncodeToString(sid[:])
+}
 
 func ParseTraceParent(traceparent string) *TraceParentData {
 	if traceparent == "" {
@@ -116,5 +141,17 @@ func ParseTraceParent(traceparent string) *TraceParentData {
 		TraceID:    parts[1],
 		ParentID:   parts[2],
 		TraceFlags: parts[3],
+	}
+}
+
+func (parent *TraceParentData) GenerateNew() *TraceParentData {
+
+	newSpan := NewSpanID()
+
+	return &TraceParentData{
+		Version:    parent.Version,
+		TraceID:    parent.TraceID,
+		ParentID:   newSpan,
+		TraceFlags: parent.TraceFlags,
 	}
 }

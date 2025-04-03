@@ -21,6 +21,7 @@ public class StrategyRunner {
     private final List<FeedbackHandler> analyzers = new ArrayList<>();
     private final List<Pruner> pruners = new ArrayList<>();
     private final List<Reporter> reporters = new ArrayList<>();
+    private final List<String> componentNames = new ArrayList<>();
 
     public StrategyStatistics statistics = new StrategyStatistics(this);
 
@@ -63,22 +64,34 @@ public class StrategyRunner {
     }
 
     public StrategyRunner withComponent(Object component) {
-        if (component instanceof Generator generator) {
-            this.generator = generator;
-        }
+        List<String> attributes = new ArrayList<>();
+        String className = component.getClass().getSimpleName();
 
-        if (component instanceof Pruner pruner) {
-            pruners.add(pruner);
-        }
-
-        if (component instanceof Reporter reporter) {
-            reporters.add(reporter);
+        if (component instanceof Generator gen) {
+            this.generator = gen;
+            attributes.add("Generator");
         }
 
         if (component instanceof FeedbackHandler analyzer) {
             analyzers.add(analyzer);
+            attributes.add("Analyzer");
         }
 
+        if (component instanceof Pruner pruner) {
+            pruners.add(pruner);
+            attributes.add("Pruner");
+        }
+
+        if (component instanceof Reporter reporter) {
+            reporters.add(reporter);
+            attributes.add("Reporter");
+        }
+
+        String name = attributes.isEmpty()
+                ? className
+                : className + "(" + String.join(", ", attributes) + ")";
+
+        componentNames.add(name);
         return this;
     }
 
@@ -92,6 +105,10 @@ public class StrategyRunner {
 
     public List<Reporter> getReporters() {
         return reporters;
+    }
+
+    public List<String> getComponentNames() {
+        return componentNames;
     }
 
     public TrackedFaultload nextFaultload() {

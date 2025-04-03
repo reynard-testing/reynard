@@ -87,11 +87,8 @@ public class TraceAnalysis {
 
         // Check if the node has a report from a fault injection proxy
         if (node.hasReport()) {
-            // Save the faultUid
             treeFaultPoints.add(node);
 
-            // TODO: correctly handle parent-child relation
-            // For multiple reports
             var report = node.report;
             analyseReport(report);
 

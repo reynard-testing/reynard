@@ -124,7 +124,7 @@ public class StrategyReporter {
         printNewline();
         printLine(StringFormat.padBoth(" Pruners ", maxChars, "="));
 
-        Set<String> names = Sets.union(prunerCount.keySet(), FeedbackContext.getContextNames());
+        Set<String> names = Sets.union(prunerCount.keySet(), FeedbackContextProvider.getContextNames());
 
         for (var contextName : names) {
             Map<String, String> prunerReport = new LinkedHashMap<>();
@@ -135,8 +135,8 @@ public class StrategyReporter {
                         value + " (" + StringFormat.asPercentage(value, totalGenerated) + "% of generated)");
             }
 
-            if (FeedbackContext.hasContext(contextName)) {
-                prunerReport.putAll(FeedbackContext.getReport(contextName, runner.getGenerator()));
+            if (FeedbackContextProvider.hasContext(contextName)) {
+                prunerReport.putAll(FeedbackContextProvider.getReport(contextName, runner.getGenerator()));
             }
 
             if (prunerReport.size() > 0) {

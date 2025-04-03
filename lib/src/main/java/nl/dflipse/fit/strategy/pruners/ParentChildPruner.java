@@ -33,8 +33,6 @@ public class ParentChildPruner implements Pruner, FeedbackHandler {
             // so we can prune the combination
             context.pruneFaultUidSubset(Set.of(parent, child));
         }
-
-        return;
     }
 
     @Override

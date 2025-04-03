@@ -41,7 +41,7 @@ public class DynamicReductionTest {
         TraceTreeSpan spanA = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceB)
                 .withChildren(spanB)
-                .withReport(null, apiA1)
+                .withReport(apiA1)
                 .withResponse(200, "OK")
                 .build();
 

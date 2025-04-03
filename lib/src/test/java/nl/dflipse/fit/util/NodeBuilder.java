@@ -15,9 +15,19 @@ import nl.dflipse.fit.trace.tree.TraceTreeSpan;
 public class NodeBuilder {
   private static int spanCounter = 0;
 
+  NodeBuilder parent = null;
   TraceSpan span = new TraceSpan();
   TraceSpanReport report = null;
   List<TraceTreeSpan> children = new ArrayList<>();
+
+  public NodeBuilder() {
+    this("");
+  }
+
+  public NodeBuilder(NodeBuilder parent) {
+    this(parent.span.traceId);
+    withParent(parent);
+  }
 
   public NodeBuilder(String traceId) {
     String spanId = "" + spanCounter++;
@@ -41,8 +51,22 @@ public class NodeBuilder {
     return this;
   }
 
+  public NodeBuilder withParent(NodeBuilder parent) {
+    span.parentSpanId = parent.span.spanId;
+    this.parent = parent;
+    return this;
+  }
+
   public ReportBuilder withReport(String origin, String signature) {
     return new ReportBuilder(this, origin, signature);
+  }
+
+  public ReportBuilder withReport(String signature) {
+    if (this.parent != null && this.parent.report != null) {
+      return new ReportBuilder(this, this.parent.report.faultUid.destination(), signature);
+    }
+
+    return new ReportBuilder(this, signature);
   }
 
   public NodeBuilder withError() {
@@ -52,9 +76,27 @@ public class NodeBuilder {
 
   public NodeBuilder withChildren(TraceTreeSpan... children) {
     for (var child : children) {
-      this.children.add(child);
+      this.withChild(child);
     }
 
+    return this;
+  }
+
+  public NodeBuilder withChildren(NodeBuilder... children) {
+    for (var child : children) {
+      this.withChild(child);
+    }
+
+    return this;
+  }
+
+  public NodeBuilder withChild(TraceTreeSpan child) {
+    this.children.add(child);
+    return this;
+  }
+
+  public NodeBuilder withChild(NodeBuilder child) {
+    this.children.add(child.withParent(this).build());
     return this;
   }
 
@@ -77,9 +119,17 @@ public class NodeBuilder {
       report.faultUid = new FaultUid(origin, builder.span.serviceName, signature, "*", 0);
     }
 
+    public ReportBuilder(NodeBuilder builder, String signature) {
+      this.builder = builder;
+      report.spanId = builder.span.spanId;
+      report.traceId = builder.span.traceId;
+      // report.isInitial = true;
+      report.faultUid = new FaultUid("<none>", builder.span.serviceName, signature, "*", 0);
+    }
+
     public NodeBuilder buildReport() {
       if (report.response == null) {
-        throw new IllegalStateException("No response set!");
+        withResponse(200, "OK");
       }
 
       builder.report = report;

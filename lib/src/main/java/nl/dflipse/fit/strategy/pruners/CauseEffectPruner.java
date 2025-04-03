@@ -27,9 +27,30 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
     private final ConditionalStore redundancyStore = new ConditionalStore();
     private final Logger logger = LoggerFactory.getLogger(CauseEffectPruner.class);
 
+    private Set<FaultUid> missingPoints(Set<FaultUid> expected, Set<FaultUid> seen) {
+        Set<FaultUid> missing = new HashSet<>();
+
+        for (FaultUid point : expected) {
+            boolean found = false;
+
+            for (FaultUid pointSeen : seen) {
+                if (pointSeen.matches(point)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                missing.add(point);
+            }
+        }
+
+        return missing;
+    }
+
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        var faultsInTrace = result.trace.getFaultUids();
+        Set<FaultUid> faultsInTrace = result.trace.getFaultUids();
 
         if (result.isInitial()) {
             pointsInHappyPath.addAll(faultsInTrace);
@@ -39,7 +60,6 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         // if (a set of) fault(s) causes another fault to disappear
         // then the cause(s) happens before the effect
         Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
-        Set<FaultUid> injectedFaultPoints = injectedErrorFaults.stream().map(Fault::uid).collect(Collectors.toSet());
 
         // if we have a singular cause
         if (injectedErrorFaults.isEmpty()) {
@@ -50,14 +70,19 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         // are those that were in the initial trace
         // or that we expect given the preconditions and the expected faults
         // but not in the current trace
-        // and not the cause
         Set<FaultUid> expectedPoints = new HashSet<>(pointsInHappyPath);
         expectedPoints.addAll(context.getConditionalForFaultload());
 
-        Set<FaultUid> dissappearedFaultPoints = expectedPoints.stream()
-                .filter(f -> !faultsInTrace.contains(f))
-                .filter(f -> !injectedFaultPoints.contains(f))
+        Set<FaultUid> seenPoints = new HashSet<>(faultsInTrace);
+        // injected fault injection points can be those with an negative count (=all)
+        // we include these too
+        // e.g. expected = X#0, X#1, injected = X#-1, then we have seen them
+        Set<FaultUid> injectedPoints = injectedErrorFaults.stream()
+                .map(f -> f.uid())
                 .collect(Collectors.toSet());
+        seenPoints.addAll(injectedPoints);
+
+        Set<FaultUid> dissappearedFaultPoints = missingPoints(expectedPoints, seenPoints);
 
         if (dissappearedFaultPoints.isEmpty()) {
             return;

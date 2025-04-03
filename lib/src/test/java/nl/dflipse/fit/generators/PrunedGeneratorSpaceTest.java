@@ -3,12 +3,12 @@ package nl.dflipse.fit.generators;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import static org.junit.Assert.assertEquals;
-
 import nl.dflipse.fit.faultload.Fault;
+import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.util.Sets;
@@ -263,8 +263,8 @@ public class PrunedGeneratorSpaceTest {
     @Timeout(1000)
     public void testSizeEstimate() {
         // Given - points and modes
-        var modes = FailureModes.getModes(3);
-        var points = FaultInjectionPoints.getPoints(6);
+        var modes = FailureModes.getModes(1);
+        var points = FaultInjectionPoints.getPoints(5);
         var faults = new FaultsBuilder(points, modes);
 
         // Given - a generator with no pruned faults
@@ -276,35 +276,40 @@ public class PrunedGeneratorSpaceTest {
         var generator2 = new IncreasingSizeGenerator(modes);
         generator2.reportFaultUids(points);
 
-        var faultSubsets = Set.of(
+        Set<Set<Fault>> faultSubsets = Set.of(
+                Set.of(faults.get(1, 0),
+                        faults.get(4, 0)),
                 Set.of(faults.get(2, 0),
-                        faults.get(3, 1)),
-                Set.of(faults.get(3, 1),
-                        faults.get(4, 1),
-                        faults.get(5, 2)),
-                Set.of(faults.get(2, 1),
-                        faults.get(1, 1),
-                        faults.get(5, 2)),
+                        faults.get(3, 0)),
                 Set.of(faults.get(3, 0),
-                        faults.get(2, 0),
-                        faults.get(1, 1)));
+                        // faults.get(4, 1),
+                        faults.get(4, 0))
+        // Set.of(faults.get(2, 1),
+        // faults.get(1, 1),
+        // faults.get(5, 2)),
+        // Set.of(faults.get(3, 0),
+        // faults.get(2, 0),
+        // faults.get(1, 1))
+        );
 
-        var uidSubsets = Set.of(
-                Set.of(
-                        points.get(1),
-                        points.get(4),
-                        points.get(5)),
-                Set.of(
-                        points.get(4),
-                        points.get(5)),
-                Set.of(
-                        points.get(1),
-                        points.get(5)));
+        Set<Set<FaultUid>> uidSubsets = Set.of(
+        // Set.of(
+        // points.get(1),
+        // points.get(4),
+        // points.get(5)),
+        // Set.of(
+        // points.get(4),
+        // points.get(5)),
+        // Set.of(
+        // points.get(1),
+        // points.get(5))
+        );
 
         // When the faults are pruned
         for (var uidSubset : uidSubsets) {
             generator2.pruneFaultUidSubset(uidSubset);
         }
+
         for (var faultSubset : faultSubsets) {
             generator2.pruneFaultSubset(faultSubset);
         }

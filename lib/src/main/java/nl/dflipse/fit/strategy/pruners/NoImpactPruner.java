@@ -1,7 +1,6 @@
 package nl.dflipse.fit.strategy.pruners;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -76,8 +75,6 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
                 logger.info("Detected impactless fault?: " + fault);
             }
         }
-
-        return;
     }
 
     @Override

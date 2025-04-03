@@ -37,7 +37,6 @@ public class TraceAnalysis {
     }
 
     public TraceAnalysis(TraceTreeSpan rootNode, List<TraceSpanReport> reports) {
-        this.reports.addAll(reports);
         // Parent null indicates the root request
         for (var report : reports) {
             analyseReport(report);
@@ -47,6 +46,10 @@ public class TraceAnalysis {
     }
 
     private void analyseReport(TraceSpanReport report) {
+        if (!reports.contains(report)) {
+            reports.add(report);
+        }
+
         if (report.isInitial) {
             rootReport = report;
             hasInitial = true;

@@ -23,8 +23,8 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(DynamicReductionPruner.class);
 
     private Generator generator;
-    private Map<FaultUid, Set<FaultUid>> causalMap = new HashMap<>();
-    private List<Map<FaultUid, Integer>> behavioursSeen = new ArrayList<>();
+    private final Map<FaultUid, Set<FaultUid>> causalMap = new HashMap<>();
+    private final List<Map<FaultUid, Integer>> behavioursSeen = new ArrayList<>();
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
@@ -55,11 +55,11 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     }
 
     private boolean hasExpectedOutcome(Fault fault, int observedStatus) {
-        boolean hasFault = fault != null;
-        boolean faultDisturbs = hasFault && fault.mode().getType().equals(ErrorFault.FAULT_TYPE);
+        boolean faultDisturbs = fault != null
+                && fault.mode().getType().equals(ErrorFault.FAULT_TYPE);
 
         // If we are supposed to inject a fault
-        if (hasFault && faultDisturbs) {
+        if (fault != null && faultDisturbs) {
             int expectedStatusCode = Integer.parseInt(fault.mode().getArgs().get(0));
             if (expectedStatusCode != observedStatus) {
                 return false;

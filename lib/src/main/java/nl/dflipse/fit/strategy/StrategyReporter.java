@@ -31,6 +31,18 @@ public class StrategyReporter {
         System.out.println(line);
     }
 
+    private void printHeader(String header, int width, String padChar) {
+        printLine(StringFormat.padBoth(" " + header + " ", width, padChar));
+    }
+
+    private void printHeader(String header, int width) {
+        printHeader(header, width, "-");
+    }
+
+    private void printHeader(String header) {
+        printHeader(header, maxChars);
+    }
+
     private int stringLength(String string) {
         return Arrays.stream(string.split("\n"))
                 .mapToInt(String::length)
@@ -62,6 +74,14 @@ public class StrategyReporter {
         report.put("Total directly pruned", totalPruned + " (" + prunePercentage + "% of generated)");
         report.put("Total run", totalRun + " (" + runPercentage + "% of full space)");
         printReport("Statistics", report);
+    }
+
+    public void reportComponents() {
+        printNewline();
+        printHeader("Components");
+        for (String componentName : runner.getComponentNames()) {
+            printLine(componentName);
+        }
     }
 
     private void printKeyValue(String key, String value, int keyPadding) {
@@ -133,9 +153,11 @@ public class StrategyReporter {
                 .max().orElse(0);
         int maxCharSize = Math.min(maxChars, maxKeyLength + maxValueLength + 4);
         printNewline();
+
         if (name.length() > 0) {
-            printLine(StringFormat.padBoth(" " + name + " ", maxCharSize, "-"));
+            printHeader(name, maxCharSize);
         }
+
         for (var entry : keyValues.entrySet()) {
             printKeyValue(entry.getKey(), entry.getValue(), maxKeyLength);
         }
@@ -149,6 +171,7 @@ public class StrategyReporter {
 
     public void report() {
         reportOverall();
+        reportComponents();
         reportGeneratorStats();
         reportPrunerStats();
         reportTimingStats();

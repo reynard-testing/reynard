@@ -30,7 +30,13 @@ debug_raw_exports: list = []
 
 
 def to_trace_tree_nodes(spans: list[Span], reports: list[ReportedSpan]) -> list[TraceTreeNode]:
-    return [TraceTreeNode(span, [report for report in reports if report.span_id == span.span_id]) for span in spans]
+    report_lookup: dict[str, ReportedSpan] = {}
+    for report in reports:
+        report_lookup[report.span_id] = report
+
+    return [TraceTreeNode(
+        span=span, 
+        report = report_lookup.get(span.span_id, None)) for span in spans]
 
 
 def get_trace_tree(spans: list[Span], reports: list[ReportedSpan]) -> list[TraceTreeNode]:
@@ -100,13 +106,12 @@ def get_report_tree_children(children: list[TraceTreeNode]) -> list[TraceTreeNod
 
 
 def get_report_tree(node: TraceTreeNode) -> list[TraceTreeNode]:
-    is_report_node = len(
-        node.reports) == 0 or node.span.span_id == CLIENT_ROOT_SPAN_ID
+    is_report_node = node.report != None or node.span.span_id == CLIENT_ROOT_SPAN_ID
 
     if is_report_node:
         return [TraceTreeNode(
             span=node.span,
-            reports=node.reports,
+            report=node.report,
             children=get_report_tree_children(node.children)
         )]
 
@@ -233,18 +238,20 @@ async def report_span_id():
         print(
             f"Trace id ({trace_id}) not registered anymore for uid {uid}", flush=True)
         return "Trace not registered", 404
-
+    
     span = Span(
-        parent_span_id=parent_span_id,
-        span_id=span_id,
-        service_name="FIT Proxy",
         trace_id=trace_id,
+        span_id=span_id,
+        parent_span_id=parent_span_id,
+        name="Proxied request",
+        service_name="FIT Proxy",
         start_time=0,
         end_time=1,
         trace_state="",
         is_error=False,
         error_message="",
     )
+
     upsert_span(span)
 
     responseData = None

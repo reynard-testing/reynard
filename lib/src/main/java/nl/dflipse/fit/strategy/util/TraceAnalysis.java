@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class TraceAnalysis {
     private final Set<Fault> injectedFaults = new HashSet<>();
     private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
     private final List<TraceSpanReport> reports = new ArrayList<>();
+    private final Map<FaultUid, TraceSpanReport> reportByPoint = new HashMap<>();
     private TraceSpanReport rootReport;
 
     private boolean anyIncomplete = false;
@@ -48,6 +50,7 @@ public class TraceAnalysis {
     private void analyseReport(TraceSpanReport report) {
         if (!reports.contains(report)) {
             reports.add(report);
+            reportByPoint.put(report.faultUid, report);
         }
 
         if (report.isInitial) {
@@ -143,14 +146,8 @@ public class TraceAnalysis {
         return reports;
     }
 
-    public TraceSpanReport getReport(FaultUid faultUid) {
-        for (var report : reports) {
-            if (report.faultUid.equals(faultUid)) {
-                return report;
-            }
-        }
-
-        return null;
+    public TraceSpanReport getReportByFaultUid(FaultUid faultUid) {
+        return reportByPoint.get(faultUid);
     }
 
     public TraceSpanReport getRootReport() {
@@ -268,6 +265,10 @@ public class TraceAnalysis {
                 traverseBreadthFirst(null, consumer);
                 break;
         }
+    }
+
+    public void traverseFaults(Consumer<FaultUid> consumer) {
+        traverseFaults(consumer, TraversalStrategy.DEPTH_FIRST);
     }
 
     public void traverseDepthFirst(FaultUid node, Consumer<FaultUid> consumer) {

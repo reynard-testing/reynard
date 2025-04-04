@@ -1,7 +1,9 @@
 package nl.dflipse.fit.strategy.analyzers;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,16 +15,29 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.Reporter;
+import nl.dflipse.fit.strategy.StrategyReporter;
 import nl.dflipse.fit.strategy.util.Sets;
 
-public class BehaviorAnalyzer implements FeedbackHandler {
+public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(BehaviorAnalyzer.class);
 
-    private final Map<Fault, Set<Set<Fault>>> knownFailures = new HashMap<>();
-    private final Map<FaultUid, Set<Set<Fault>>> knownResolutions = new HashMap<>();
+    private final Map<Fault, List<Set<Fault>>> knownFailures = new HashMap<>();
+    private final Map<FaultUid, List<Set<Fault>>> knownResolutions = new HashMap<>();
+
+    private Set<Fault> hasKnownCause(List<Set<Fault>> known, Set<Fault> faults) {
+        for (var knownSet : known) {
+            if (Sets.isSubsetOf(faults, knownSet)) {
+                return knownSet;
+            }
+        }
+        return null;
+    }
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
+        boolean wasFailureOutcome = result.trace.getRootReport().response.isErrenous();
+
         result.trace.traverseFaults(injectionPoint -> {
             var report = result.trace.getReportByFaultUid(injectionPoint);
             if (report == null) {
@@ -76,15 +91,15 @@ public class BehaviorAnalyzer implements FeedbackHandler {
             if (hasFailure) {
                 Fault pointFault = report.getFault();
                 if (knownFailures.containsKey(pointFault)) {
-                    Set<Set<Fault>> knownCauses = knownFailures.get(pointFault);
-                    boolean hasKnownCause = knownCauses.contains(causes);
-                    if (!hasKnownCause) {
+                    List<Set<Fault>> knownCauses = knownFailures.get(pointFault);
+                    var hasKnownCause = hasKnownCause(knownCauses, causes);
+                    if (hasKnownCause == null) {
                         logger.warn("For failure {} discovered new cause: {}", pointFault, causes);
                         knownCauses.add(causes);
                     }
                 } else {
                     logger.warn("Detected failure {} for cause: {}", pointFault, causes);
-                    Set<Set<Fault>> causesSet = new HashSet<>();
+                    List<Set<Fault>> causesSet = new ArrayList<>();
                     causesSet.add(causes);
                     knownFailures.put(pointFault, causesSet);
                 }
@@ -93,20 +108,51 @@ public class BehaviorAnalyzer implements FeedbackHandler {
             if (!hasFailure) {
                 var point = report.faultUid;
                 if (knownResolutions.containsKey(point)) {
-                    Set<Set<Fault>> knownCauses = knownResolutions.get(point);
-                    boolean hasKnownCause = knownCauses.contains(causes);
-                    if (!hasKnownCause) {
+                    List<Set<Fault>> knownCauses = knownResolutions.get(point);
+                    var hasKnownCause = hasKnownCause(knownCauses, causes);
+                    if (hasKnownCause == null) {
                         logger.warn("Point {} can also recover from cause: {}", point, causes);
                         knownCauses.add(causes);
                     }
                 } else {
                     logger.warn("Detected resilient point {} for cause: {}", point, causes);
-                    Set<Set<Fault>> causesSet = new HashSet<>();
+                    List<Set<Fault>> causesSet = new ArrayList<>();
                     causesSet.add(causes);
                     knownResolutions.put(point, causesSet);
                 }
             }
         });
+    }
+
+    @Override
+    public Map<String, String> report() {
+        StrategyReporter.printHeader("Behavioral Anlaysis", 48, "=");
+        StrategyReporter.printHeader("(Internal) Failures", 48, "-");
+        for (var entry : knownFailures.entrySet()) {
+            var fault = entry.getKey();
+            var causes = entry.getValue();
+            StrategyReporter.printKeyValue("Failure", fault.toString());
+            var i = 0;
+            for (var cause : causes) {
+                StrategyReporter.printKeyValue("Cause (" + i + ")", cause.toString());
+                i++;
+            }
+        }
+
+        StrategyReporter.printHeader("(Internal) Resiliency", 48, "-");
+        for (var entry : knownFailures.entrySet()) {
+            var fault = entry.getKey();
+            var causes = entry.getValue();
+            StrategyReporter.printKeyValue("Failure", fault.toString());
+            var i = 0;
+            for (var cause : causes) {
+                StrategyReporter.printKeyValue("Cause (" + i + ")", cause.toString());
+                i++;
+            }
+        }
+
+        // Don't report in the normal sense
+        return null;
     }
 
 }

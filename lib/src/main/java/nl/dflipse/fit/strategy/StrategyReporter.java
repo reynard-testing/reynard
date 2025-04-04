@@ -23,19 +23,19 @@ public class StrategyReporter {
         this.generator = runner.getGenerator();
     }
 
-    private void printNewline() {
+    public static void printNewline() {
         System.out.println();
     }
 
-    private void printLine(String line) {
+    public static void printLine(String line) {
         System.out.println(line);
     }
 
-    private void printHeader(String header, int width, String padChar) {
+    public static void printHeader(String header, int width, String padChar) {
         printLine(StringFormat.padBoth(" " + header + " ", width, padChar));
     }
 
-    private void printHeader(String header, int width) {
+    public static void printHeader(String header, int width) {
         printHeader(header, width, "-");
     }
 
@@ -84,8 +84,12 @@ public class StrategyReporter {
         }
     }
 
-    private void printKeyValue(String key, String value, int keyPadding) {
+    public static void printKeyValue(String key, String value, int keyPadding) {
         printLine(StringFormat.padRight(key, keyPadding) + " : " + value);
+    }
+
+    public static void printKeyValue(String key, String value) {
+        printLine(key + " : " + value);
     }
 
     public void reportGeneratorStats() {
@@ -165,6 +169,9 @@ public class StrategyReporter {
 
     public void reportOnReporter(Reporter reporter) {
         Map<String, String> report = reporter.report();
+        if (report == null || report.isEmpty()) {
+            return;
+        }
         String name = reporter.getClass().getSimpleName();
         printReport(name, report);
     }

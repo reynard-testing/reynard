@@ -9,14 +9,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.Pruner;
+import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.Pair;
 
 public class StrategyRunner {
     public final List<Faultload> queue = new ArrayList<>();
 
+    private DynamicAnalysisStore store;
     private Generator generator = null;
 
     private final List<FeedbackHandler> analyzers = new ArrayList<>();
@@ -34,7 +37,8 @@ public class StrategyRunner {
 
     private final Logger logger = LoggerFactory.getLogger(StrategyRunner.class);
 
-    public StrategyRunner() {
+    public StrategyRunner(List<FailureMode> modes) {
+        this.store = new DynamicAnalysisStore(modes);
         // Initialize the queue with an empty faultload
         queue.add(new Faultload(Set.of()));
     }
@@ -102,6 +106,10 @@ public class StrategyRunner {
 
     public Generator getGenerator() {
         return generator;
+    }
+
+    public DynamicAnalysisStore getStore() {
+        return store;
     }
 
     public List<Reporter> getReporters() {

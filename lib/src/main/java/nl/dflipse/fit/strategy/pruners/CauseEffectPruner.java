@@ -70,8 +70,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         // are those that were in the initial trace
         // or that we expect given the preconditions and the expected faults
         // but not in the current trace
-        Set<FaultUid> expectedPoints = new HashSet<>(pointsInHappyPath);
-        expectedPoints.addAll(context.getConditionalForFaultload());
+        Set<FaultUid> expectedPoints = context.getStore().getExpectedPoints(injectedErrorFaults);
 
         Set<FaultUid> seenPoints = new HashSet<>(faultsInTrace);
         // injected fault injection points can be those with an negative count (=all)
@@ -122,7 +121,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
 
         boolean isRedundant = relatedUidsInFaultload.stream()
                 // for any related fid's causes
-                .anyMatch(f -> redundancyStore.hasCondition(faultset, f));
+                .anyMatch(f -> redundancyStore.hasCondition(f, faultset));
 
         if (isRedundant) {
             return PruneDecision.PRUNE_SUBTREE;

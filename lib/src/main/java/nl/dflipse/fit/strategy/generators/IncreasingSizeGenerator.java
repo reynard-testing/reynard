@@ -22,22 +22,20 @@ import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
 public class IncreasingSizeGenerator implements Generator, Reporter {
     private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
-    private Set<FailureMode> modes;
     private PrunableGenericPowersetTreeIterator iterator;
 
     private final DynamicAnalysisStore store;
 
-    public IncreasingSizeGenerator(List<FailureMode> modes) {
-        this(Set.copyOf(modes));
+    public IncreasingSizeGenerator(DynamicAnalysisStore store) {
+        this.store = store;
     }
 
-    public IncreasingSizeGenerator(Set<FailureMode> modes) {
-        this.modes = modes;
+    public IncreasingSizeGenerator(List<FailureMode> modes) {
         this.store = new DynamicAnalysisStore(modes);
     }
 
     private Set<Fault> faultUidtoFaults(FaultUid uid) {
-        return modes.stream()
+        return getFaultModes().stream()
                 .map(mode -> new Fault(uid, mode))
                 .collect(Collectors.toSet());
     }
@@ -48,12 +46,11 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
             return;
         }
 
-        int m = modes.size();
+        int m = getFaultModes().size();
 
         if (iterator == null) {
             store.addFaultUids(potentialFaults);
-            iterator = new PrunableGenericPowersetTreeIterator(potentialFaults,
-                    this.store, true);
+            iterator = new PrunableGenericPowersetTreeIterator(store, true);
 
             long expectedSize = iterator.size(m);
             logger.info("Found " + potentialFaults.size() + " fault points. Will generate at most "
@@ -93,7 +90,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
                     "Cannot add conditional fault injection point if no normal fault injection points are discovered");
         }
 
-        int m = modes.size();
+        int m = getFaultModes().size();
         long oldSize = iterator.size(m);
         boolean isNew = store.addConditionForFaultUid(condition, fid);
 
@@ -212,27 +209,17 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
 
     @Override
     public long spaceSize() {
-        return SpaceEstimate.spaceSize(modes.size(), getNumerOfPoints());
+        return SpaceEstimate.spaceSize(getFaultModes().size(), getNumerOfPoints());
     }
 
     @Override
-    public Set<FailureMode> getFaultModes() {
-        return modes;
+    public List<FailureMode> getFaultModes() {
+        return store.getModes();
     }
 
     @Override
-    public Set<FaultUid> getFaultInjectionPoints() {
+    public List<FaultUid> getFaultInjectionPoints() {
         return store.getFaultInjectionPoints();
-    }
-
-    @Override
-    public Map<FaultUid, Set<Set<Fault>>> getConditionalFaultInjectionPoints() {
-        return store.getInclusionConditions().getStore();
-    }
-
-    @Override
-    public Map<FaultUid, Set<Set<Fault>>> getExclusionsForFaultInjectionPoints() {
-        return store.getExclusionConditions().getStore();
     }
 
     @Override
@@ -258,7 +245,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     }
 
     public long getSpaceLeft() {
-        return iterator == null ? 0 : iterator.size(this.modes.size());
+        return iterator == null ? 0 : iterator.size(getFaultModes().size());
     }
 
     @Override

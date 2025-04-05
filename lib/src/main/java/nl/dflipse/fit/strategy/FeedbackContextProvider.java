@@ -1,7 +1,6 @@
 package nl.dflipse.fit.strategy;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,6 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
-import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.StringFormat;
 
 public class FeedbackContextProvider implements FeedbackContext {
@@ -44,74 +42,13 @@ public class FeedbackContextProvider implements FeedbackContext {
     }
 
     @Override
-    public Set<FailureMode> getFaultModes() {
+    public List<FailureMode> getFaultModes() {
         return runner.getGenerator().getFaultModes();
     }
 
     @Override
-    public Set<FaultUid> getFaultUids() {
+    public List<FaultUid> getFaultUids() {
         return runner.getGenerator().getFaultInjectionPoints();
-    }
-
-    @Override
-    public Map<FaultUid, Set<Set<Fault>>> getConditionals() {
-        return runner.getGenerator().getConditionalFaultInjectionPoints();
-    }
-
-    @Override
-    public Map<FaultUid, Set<Set<Fault>>> getExclusions() {
-        return runner.getGenerator().getExclusionsForFaultInjectionPoints();
-    }
-
-    @Override
-    public Set<Set<Fault>> getConditions(FaultUid fault) {
-        if (fault == null) {
-            return Set.of();
-        }
-
-        var mapping = getConditionals();
-        if (!mapping.containsKey(fault)) {
-            return Set.of();
-        }
-
-        return mapping.get(fault);
-    }
-
-    @Override
-    public Set<FaultUid> getConditionalForFaultload() {
-        Set<Fault> injectedFaults = result.trace.getInjectedFaults();
-        Set<FaultUid> res = new HashSet<>();
-        for (var entry : getConditionals().entrySet()) {
-            FaultUid conditional = entry.getKey();
-
-            // check if any condition is matched by the injected faults
-            for (var condition : entry.getValue()) {
-                if (Sets.isSubsetOf(injectedFaults, condition)) {
-                    res.add(conditional);
-                    break;
-                }
-            }
-        }
-
-        return res;
-    }
-
-    @Override
-    public Set<FaultUid> getExclusionsForFaultload() {
-        Set<Fault> intentedFaults = result.trackedFaultload.getFaultload().faultSet();
-
-        Set<FaultUid> res = new HashSet<>();
-        for (var entry : getExclusions().entrySet()) {
-            FaultUid conditional = entry.getKey();
-            for (var condition : entry.getValue()) {
-                if (Sets.isSubsetOf(intentedFaults, condition)) {
-                    res.add(conditional);
-                    break;
-                }
-            }
-        }
-
-        return res;
     }
 
     @Override
@@ -206,7 +143,7 @@ public class FeedbackContextProvider implements FeedbackContext {
             }
         }
 
-        var inclusions = store.getInclusionConditions().getStore();
+        var inclusions = store.getInclusionConditions().getConditionsByUid();
         if (!inclusions.isEmpty()) {
             hasImpact = true;
             report.put("Points with inclusion condition", inclusions.size() + "");
@@ -215,7 +152,7 @@ public class FeedbackContextProvider implements FeedbackContext {
             }
         }
 
-        var exclusions = store.getExclusionConditions().getStore();
+        var exclusions = store.getExclusionConditions().getConditionsByUid();
         if (!exclusions.isEmpty()) {
             hasImpact = true;
             report.put("Points with exclusion condition", exclusions.size() + "");
@@ -225,7 +162,7 @@ public class FeedbackContextProvider implements FeedbackContext {
         }
 
         if (hasImpact) {
-            Set<FaultUid> points = generator.getFaultInjectionPoints();
+            List<FaultUid> points = generator.getFaultInjectionPoints();
             long totalSize = generator.spaceSize();
             long estimateValue = store.estimatePruned(points);
             report.put("Indirectly pruned", estimateValue + " ("
@@ -233,5 +170,10 @@ public class FeedbackContextProvider implements FeedbackContext {
         }
 
         return report;
+    }
+
+    @Override
+    public DynamicAnalysisStore getStore() {
+        return store;
     }
 }

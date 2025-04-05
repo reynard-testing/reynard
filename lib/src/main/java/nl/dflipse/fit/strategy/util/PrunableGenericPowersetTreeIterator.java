@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -11,79 +12,52 @@ import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 
 public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>> {
     private final Logger logger = LoggerFactory.getLogger(PrunableGenericPowersetTreeIterator.class);
-    private final List<FaultUid> elements;
+    private final List<FaultUid> points;
+    private final List<FailureMode> modes;
     private final List<TreeNode> toExpand = new ArrayList<>();
-
-    private final DynamicAnalysisStore store;
-    private int maxSize;
+    private int maxQueueSize;
+    private final Predicate<Set<Fault>> prunePredicate;
 
     public record TreeNode(Set<Fault> value, List<FaultUid> expansion) {
     }
 
-    public PrunableGenericPowersetTreeIterator(List<FaultUid> elements, DynamicAnalysisStore store,
+    public PrunableGenericPowersetTreeIterator(List<FaultUid> points,
+            List<FailureMode> modes,
+            Predicate<Set<Fault>> prunePredicate,
             boolean skipEmptySet) {
-        this.store = store;
-        this.elements = new ArrayList<>();
 
-        if (elements != null && !elements.isEmpty()) {
-            this.elements.addAll(elements);
+        this.prunePredicate = prunePredicate;
+        this.points = new ArrayList<>();
+        this.modes = modes;
+
+        if (points != null && !points.isEmpty()) {
+            this.points.addAll(points);
         }
 
-        toExpand.add(new TreeNode(Set.of(), List.copyOf(elements)));
-        maxSize = 1;
+        toExpand.add(new TreeNode(Set.of(), List.copyOf(points)));
+        maxQueueSize = 1;
 
         if (skipEmptySet) {
             this.skip();
         }
     }
 
+    public PrunableGenericPowersetTreeIterator(DynamicAnalysisStore store, boolean skipEmptySet) {
+        this(store.getFaultUids().stream().toList(), store.getModes(), store::isRedundant, skipEmptySet);
+    }
+
     private boolean shouldPrune(TreeNode node) {
-        for (Fault fault : node.value) {
-            FaultUid point = fault.uid();
-
-            // Prune on preconditions
-            if (store.getInclusionConditions().hasConditions(point)) {
-                boolean hasPrecondition = store.getInclusionConditions().hasCondition(node.value, point);
-
-                if (!hasPrecondition) {
-                    logger.debug("Pruning node due to not matching preconditions for {}", fault);
-                    return true;
-                }
-            }
-
-            // Prune on exclusions
-            if (store.getExclusionConditions().hasConditions(point)) {
-                boolean hasExclusion = store.getExclusionConditions().hasCondition(node.value, point);
-
-                if (hasExclusion) {
-                    logger.debug("Pruning node due to matching exclusion for {}", fault);
-                    return true;
-                }
-            }
-        }
-
-        // Prune on subsets
-        if (store.hasFaultSubset(node.value)) {
-            logger.debug("Pruning node {} due pruned subset", node.value);
-            return true;
-        }
-
-        // Prune on faultload
-        if (store.hasFaultload(node.value)) {
-            logger.debug("Pruning node {} due pruned faultload", node.value);
-            return true;
-        }
-
-        return false;
+        return prunePredicate.test(node.value);
     }
 
     private List<Fault> expand(FaultUid node) {
         List<Fault> collection = new ArrayList<>();
-        for (var mode : store.getModes()) {
+        for (var mode : modes) {
             collection.add(new Fault(node, mode));
         }
         return collection;
@@ -127,7 +101,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
     public Set<Fault> next() {
         TreeNode node = toExpand.remove(0);
         expand(node);
-        maxSize = Math.max(maxSize, toExpand.size());
+        maxQueueSize = Math.max(maxQueueSize, toExpand.size());
         return node.value;
     }
 
@@ -140,7 +114,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
     public void add(FaultUid extension) {
         for (Fault additionalElement : expand(extension)) {
             Set<Fault> newValue = Set.of(additionalElement);
-            var newNode = new TreeNode(newValue, List.copyOf(elements));
+            var newNode = new TreeNode(newValue, List.copyOf(points));
 
             if (shouldPrune(newNode)) {
                 continue;
@@ -149,7 +123,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
             toExpand.add(newNode);
         }
 
-        elements.add(extension);
+        points.add(extension);
     }
 
     public void addConditional(Set<Fault> condition, FaultUid extension) {
@@ -159,7 +133,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
                 .map(f -> f.uid())
                 .collect(Collectors.toSet());
 
-        List<FaultUid> expansionsLeft = elements.stream()
+        List<FaultUid> expansionsLeft = points.stream()
                 .filter(e -> !alreadyExpanded.contains(e))
                 .filter(e -> !e.equals(extension))
                 .toList();
@@ -176,8 +150,8 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
             toExpand.add(newNode);
         }
 
-        if (!elements.contains(extension)) {
-            elements.add(extension);
+        if (!points.contains(extension)) {
+            points.add(extension);
         }
     }
 
@@ -201,7 +175,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
     }
 
     public int getMaxQueueSize() {
-        return maxSize;
+        return maxQueueSize;
     }
 
     public int getQueuSize() {

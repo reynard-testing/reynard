@@ -71,8 +71,9 @@ public class FiTestExtension
         boolean pruneImpactless = annotation.optimizeForImpactless();
         int maxFaultloadSize = annotation.maxFaultloadSize();
 
-        strategy = new StrategyRunner()
-                .withComponent(new IncreasingSizeGenerator(modes))
+        strategy = new StrategyRunner(modes);
+        strategy
+                .withComponent(new IncreasingSizeGenerator(strategy.getStore()))
                 // .withComponent(new RandomDetector())
                 .withComponent(new BreadthFirstDetector())
                 // .withComponent(new DepthFirstDetector())

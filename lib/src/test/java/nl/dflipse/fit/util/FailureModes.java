@@ -3,16 +3,16 @@ package nl.dflipse.fit.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 
 public class FailureModes {
-    public static FaultMode getMode(int i) {
+    public static FailureMode getMode(int i) {
         String istr = "" + i;
-        return new FaultMode(istr, List.of(istr));
+        return new FailureMode(istr, List.of(istr));
     }
 
-    public static List<FaultMode> getModes(int n) {
-        List<FaultMode> modes = new ArrayList<>();
+    public static List<FailureMode> getModes(int n) {
+        List<FailureMode> modes = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
             modes.add(getMode(i));

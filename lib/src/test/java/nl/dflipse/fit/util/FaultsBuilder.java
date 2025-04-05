@@ -4,13 +4,13 @@ import java.util.List;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 
 public class FaultsBuilder {
     private final List<FaultUid> fids;
-    private final List<FaultMode> modes;
+    private final List<FailureMode> modes;
 
-    public FaultsBuilder(List<FaultUid> fids, List<FaultMode> modes) {
+    public FaultsBuilder(List<FaultUid> fids, List<FailureMode> modes) {
         this.fids = fids;
         this.modes = modes;
     }

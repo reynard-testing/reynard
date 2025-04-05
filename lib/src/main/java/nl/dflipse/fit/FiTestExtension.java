@@ -79,7 +79,7 @@ public class FiTestExtension
                 .withComponent(new ConditionalFaultDetector(onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
-                .withComponent(new BehaviorAnalyzer())
+                .withComponent(new BehaviorAnalyzer(modes))
                 .withComponent(new ConcurrencyDetector())
                 .withComponent(new ParentChildPruner())
                 .withComponent(new ErrorPropogationPruner())

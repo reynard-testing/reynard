@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.TrackedFaultload;
@@ -94,8 +94,8 @@ public class DynamicReductionTest {
         FaultloadResult result = new FaultloadResult(initialFaultload, initialTrace, true);
         pruner.handleFeedback(result, null);
 
-        FaultMode injectedFault = ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE);
-        FaultMode resultedFault = ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR);
+        FailureMode injectedFault = ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE);
+        FailureMode resultedFault = ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR);
 
         TraceTreeSpan spanC2 = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceC)

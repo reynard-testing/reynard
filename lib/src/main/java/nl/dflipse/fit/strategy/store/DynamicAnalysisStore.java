@@ -12,14 +12,14 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
 public class DynamicAnalysisStore {
     private final Logger logger = LoggerFactory.getLogger(DynamicAnalysisStore.class);
 
-    private final Set<FaultMode> modes;
+    private final Set<FailureMode> modes;
     private final Set<FaultUid> points = new HashSet<>();
 
     // Stores which faults must be present for a faultuid to be injected
@@ -31,7 +31,7 @@ public class DynamicAnalysisStore {
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
 
-    public DynamicAnalysisStore(Set<FaultMode> modes) {
+    public DynamicAnalysisStore(Set<FailureMode> modes) {
         this.modes = modes;
     }
 
@@ -39,7 +39,7 @@ public class DynamicAnalysisStore {
         return points;
     }
 
-    public Set<FaultMode> getModes() {
+    public Set<FailureMode> getModes() {
         return modes;
     }
 

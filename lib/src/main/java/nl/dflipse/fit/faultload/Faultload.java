@@ -11,8 +11,12 @@ import java.util.stream.Collectors;
 public record Faultload(Set<Fault> faultSet) {
 
     public Set<FaultUid> getFaultUids() {
+        return getFaultUids(faultSet);
+    }
+
+    public static Set<FaultUid> getFaultUids(Set<Fault> faults) {
         Set<FaultUid> faultUids = new HashSet<>();
-        for (Fault fault : faultSet) {
+        for (Fault fault : faults) {
             faultUids.add(fault.uid());
         }
         return faultUids;

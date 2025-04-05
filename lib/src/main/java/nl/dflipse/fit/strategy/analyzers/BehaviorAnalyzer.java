@@ -13,12 +13,16 @@ import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
+import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.Reporter;
 import nl.dflipse.fit.strategy.StrategyReporter;
+import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.SubsetStore;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.trace.tree.TraceSpanReport;
 import nl.dflipse.fit.trace.tree.TraceSpanResponse;
@@ -26,18 +30,16 @@ import nl.dflipse.fit.trace.tree.TraceSpanResponse;
 public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(BehaviorAnalyzer.class);
 
-    private final Map<Fault, List<Set<Fault>>> knownFailures = new LinkedHashMap<>();
-    private final Map<FaultUid, List<Set<Fault>>> knownResolutions = new LinkedHashMap<>();
+    // TODO: equality checks (wrt masks)
+    private final Map<Fault, SubsetStore<Fault>> knownFailures = new LinkedHashMap<>();
+    private final Map<FaultUid, SubsetStore<Fault>> knownResolutions = new LinkedHashMap<>();
     private final Map<FaultUid, TraceSpanResponse> happyPath = new LinkedHashMap<>();
     private final Map<FaultUid, Integer> maxArity = new LinkedHashMap<>();
 
-    private Set<Fault> hasKnownCause(List<Set<Fault>> known, Set<Fault> faults) {
-        for (var knownSet : known) {
-            if (Sets.isSubsetOf(faults, knownSet)) {
-                return knownSet;
-            }
-        }
-        return null;
+    private final List<FailureMode> failureModes;
+
+    public BehaviorAnalyzer(List<FailureMode> failureModes) {
+        this.failureModes = failureModes;
     }
 
     @Override
@@ -53,8 +55,8 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                 return;
             }
 
-            Set<FaultUid> children = result.trace.getDecendants(injectionPoint);
-            // Set<FaultUid> children = result.trace.getChildren(injectionPoint);
+            // Set<FaultUid> children = result.trace.getDecendants(injectionPoint);
+            Set<FaultUid> children = result.trace.getChildren(injectionPoint);
             boolean isHappyPath = !report.response.isErrenous();
 
             maxArity.computeIfAbsent(injectionPoint, x -> 0);
@@ -122,17 +124,18 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             if (hasFailure) {
                 Fault pointFault = report.getFault();
                 if (knownFailures.containsKey(pointFault)) {
-                    List<Set<Fault>> knownCauses = knownFailures.get(pointFault);
-                    Set<Fault> hasKnownCause = hasKnownCause(knownCauses, causes);
-                    if (hasKnownCause == null) {
+                    SubsetStore<Fault> knownCauses = knownFailures.get(pointFault);
+                    boolean hasKnownCause = knownCauses.hasSubsetOf(causes);
+
+                    if (!hasKnownCause) {
                         logger.warn("For failure {} discovered new cause: {}", pointFault, causes);
                         knownCauses.add(causes);
                     }
                 } else {
                     logger.warn("Detected failure {} for cause: {}", pointFault, causes);
-                    List<Set<Fault>> causesSet = new ArrayList<>();
-                    causesSet.add(causes);
-                    knownFailures.put(pointFault, causesSet);
+                    var newCauses = new SubsetStore<Fault>();
+                    newCauses.add(causes);
+                    knownFailures.put(pointFault, newCauses);
                 }
             }
 
@@ -143,20 +146,82 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             if (!hasFailure) {
                 FaultUid point = report.faultUid;
                 if (knownResolutions.containsKey(point)) {
-                    List<Set<Fault>> knownCauses = knownResolutions.get(point);
-                    Set<Fault> hasKnownCause = hasKnownCause(knownCauses, causes);
-                    if (hasKnownCause == null) {
+                    SubsetStore<Fault> knownCauses = knownResolutions.get(point);
+                    boolean hasKnownCause = knownCauses.hasSubsetOf(causes);
+
+                    if (!hasKnownCause) {
                         logger.warn("Point {} can also recover from cause: {}", point, causes);
                         knownCauses.add(causes);
                     }
                 } else {
                     logger.warn("Detected resilient point {} for cause: {}", point, causes);
-                    List<Set<Fault>> causesSet = new ArrayList<>();
-                    causesSet.add(causes);
-                    knownResolutions.put(point, causesSet);
+                    var newCauses = new SubsetStore<Fault>();
+                    newCauses.add(causes);
+                    knownResolutions.put(point, newCauses);
                 }
             }
         });
+    }
+
+    private Pair<List<Set<Fault>>, List<Set<FaultUid>>> simplify(List<Set<Fault>> sets) {
+        List<Set<Fault>> faultSets = new ArrayList<>();
+        List<Set<FaultUid>> faultUidSets = new ArrayList<>();
+
+        Set<Integer> toSkip = new HashSet<>();
+
+        for (int i = 0; i < sets.size(); i++) {
+            if (toSkip.contains(i)) {
+                continue;
+            }
+
+            var subset = sets.get(i);
+            Set<FaultUid> faultUids = Faultload.getFaultUids(subset);
+
+            Map<FaultUid, Set<FailureMode>> represented = new HashMap<>();
+            for (var uid : faultUids) {
+                represented.put(uid, new HashSet<>());
+            }
+            Set<Integer> skipIfFound = new HashSet<>();
+
+            // if for every element in the subset,
+            // all faults of all failure modes are present
+            for (int j = i; j < sets.size(); j++) {
+                if (toSkip.contains(j)) {
+                    continue;
+                }
+                var other = sets.get(j);
+                Set<FaultUid> otherUids = Faultload.getFaultUids(other);
+
+                if (!otherUids.equals(faultUids)) {
+                    continue;
+                }
+
+                skipIfFound.add(j);
+                for (var fault : other) {
+                    represented.get(fault.uid()).add(fault.mode());
+                }
+            }
+
+            boolean allRepresented = true;
+            for (var entry : represented.entrySet()) {
+                var modes = entry.getValue();
+
+                if (modes.size() != failureModes.size()) {
+                    allRepresented = false;
+                    break;
+                }
+            }
+
+            if (allRepresented) {
+                faultUidSets.add(faultUids);
+                toSkip.addAll(skipIfFound);
+            } else {
+                faultSets.add(subset);
+            }
+        }
+
+        return Pair.of(faultSets, faultUidSets);
+
     }
 
     @Override
@@ -167,16 +232,15 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
         StrategyReporter.printNewline();
         StrategyReporter.printHeader("Happy Path", 48, "-");
         for (var entry : happyPath.entrySet()) {
-            var fault = entry.getKey();
+            var point = entry.getKey();
             var response = entry.getValue();
             StrategyReporter.printNewline();
-            StrategyReporter.printKeyValue("Point", fault.toString());
-            StrategyReporter.printKeyValue("Status", String.valueOf(response.status));
+            StrategyReporter.printKeyValue("Point", point.toStringWithoutOrigin());
             String bodyLimited = response.body;
             if (response.body.length() > 100) {
                 bodyLimited = response.body.substring(0, 97) + "...";
             }
-            StrategyReporter.printKeyValue("Response", bodyLimited);
+            StrategyReporter.printKeyValue("Response", "[" + response.status + "]" + bodyLimited);
         }
 
         StrategyReporter.printNewline();
@@ -184,7 +248,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
         for (var entry : maxArity.entrySet()) {
             var fault = entry.getKey();
             var arity = entry.getValue();
-            maxArityReport.put(fault.toString(), String.valueOf(arity));
+            maxArityReport.put(fault.toStringWithoutOrigin(), String.valueOf(arity));
         }
         StrategyReporter.printReport("Max arity", maxArityReport);
 
@@ -192,14 +256,20 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
         StrategyReporter.printHeader("(Internal) Failures", 48, "-");
         for (var entry : knownFailures.entrySet()) {
             var fault = entry.getKey();
-            var causes = entry.getValue();
+            var store = entry.getValue();
 
             StrategyReporter.printNewline();
             StrategyReporter.printKeyValue("Failure", fault.toString());
 
+            var simplified = simplify(store.getSets());
+
             var i = 0;
-            for (var cause : causes) {
+            for (Set<Fault> cause : simplified.first()) {
                 StrategyReporter.printKeyValue("Cause (" + i + ")", cause.toString());
+                i++;
+            }
+            for (Set<FaultUid> cause : simplified.second()) {
+                StrategyReporter.printKeyValue("Cause (" + i + ")", cause.toString() + " (any failure mode)");
                 i++;
             }
         }
@@ -207,12 +277,21 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
         StrategyReporter.printNewline();
         StrategyReporter.printHeader("(Internal) Resiliency", 48, "-");
         for (var entry : knownResolutions.entrySet()) {
-            var fault = entry.getKey();
-            var causes = entry.getValue();
-            StrategyReporter.printKeyValue("Point", fault.toString());
+            var point = entry.getKey();
+            var store = entry.getValue();
+
+            StrategyReporter.printNewline();
+            StrategyReporter.printKeyValue("Point", point.toString());
+
+            var simplified = simplify(store.getSets());
+
             var i = 0;
-            for (var cause : causes) {
+            for (Set<Fault> cause : simplified.first()) {
                 StrategyReporter.printKeyValue("Redundancy (" + i + ")", cause.toString());
+                i++;
+            }
+            for (Set<FaultUid> cause : simplified.second()) {
+                StrategyReporter.printKeyValue("Redundancy (" + i + ")", cause.toString() + " (any failure mode)");
                 i++;
             }
         }

@@ -2,7 +2,7 @@ package nl.dflipse.fit.faultload.faultmodes;
 
 import java.util.List;
 
-public record FaultMode(String type, List<String> args) {
+public record FailureMode(String type, List<String> args) {
   public String getType() {
     return type;
   }

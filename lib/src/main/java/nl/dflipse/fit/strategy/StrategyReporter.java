@@ -12,7 +12,7 @@ import nl.dflipse.fit.strategy.util.StringFormat;
 import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyReporter {
-    private int maxChars = 48;
+    private static int maxChars = 48;
     private Generator generator;
     private StrategyRunner runner;
     private StrategyStatistics statistics;
@@ -43,14 +43,14 @@ public class StrategyReporter {
         printHeader(header, maxChars);
     }
 
-    private int stringLength(String string) {
+    private static int stringLength(String string) {
         return Arrays.stream(string.split("\n"))
                 .mapToInt(String::length)
                 .max()
                 .orElse(0);
     }
 
-    private int getMaxLength(Set<String> set) {
+    private static int getMaxLength(Set<String> set) {
         return set.stream()
                 .mapToInt(s -> stringLength(s))
                 .max().orElse(0);
@@ -150,7 +150,7 @@ public class StrategyReporter {
         printNewline();
     }
 
-    public void printReport(String name, Map<String, String> keyValues) {
+    public static void printReport(String name, Map<String, String> keyValues) {
         int maxKeyLength = getMaxLength(keyValues.keySet());
         int maxValueLength = keyValues.values().stream()
                 .mapToInt(s -> stringLength(s))

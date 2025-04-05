@@ -3,6 +3,7 @@ package nl.dflipse.fit.strategy.analyzers;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,12 +19,17 @@ import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.Reporter;
 import nl.dflipse.fit.strategy.StrategyReporter;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
+import nl.dflipse.fit.trace.tree.TraceSpanReport;
+import nl.dflipse.fit.trace.tree.TraceSpanResponse;
 
 public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(BehaviorAnalyzer.class);
 
-    private final Map<Fault, List<Set<Fault>>> knownFailures = new HashMap<>();
-    private final Map<FaultUid, List<Set<Fault>>> knownResolutions = new HashMap<>();
+    private final Map<Fault, List<Set<Fault>>> knownFailures = new LinkedHashMap<>();
+    private final Map<FaultUid, List<Set<Fault>>> knownResolutions = new LinkedHashMap<>();
+    private final Map<FaultUid, TraceSpanResponse> happyPath = new LinkedHashMap<>();
+    private final Map<FaultUid, Integer> maxArity = new LinkedHashMap<>();
 
     private Set<Fault> hasKnownCause(List<Set<Fault>> known, Set<Fault> faults) {
         for (var knownSet : known) {
@@ -36,10 +42,8 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        boolean wasFailureOutcome = result.trace.getRootReport().response.isErrenous();
-
-        result.trace.traverseFaults(injectionPoint -> {
-            var report = result.trace.getReportByFaultUid(injectionPoint);
+        result.trace.traverseFaults(TraversalStrategy.BREADTH_FIRST, true, injectionPoint -> {
+            TraceSpanReport report = result.trace.getReportByFaultUid(injectionPoint);
             if (report == null) {
                 return;
             }
@@ -49,11 +53,18 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                 return;
             }
 
-            boolean hasFailure = report.hasIndirectError();
+            Set<FaultUid> children = result.trace.getDecendants(injectionPoint);
+            // Set<FaultUid> children = result.trace.getChildren(injectionPoint);
+            boolean isHappyPath = !report.response.isErrenous();
 
-            var children = result.trace.getChildren(injectionPoint);
+            maxArity.computeIfAbsent(injectionPoint, x -> 0);
+            maxArity.put(injectionPoint, Math.max(children.size(), maxArity.get(injectionPoint)));
 
             if (children.isEmpty()) {
+                if (isHappyPath && !happyPath.containsKey(injectionPoint)) {
+                    happyPath.put(injectionPoint, report.response);
+                }
+
                 // We are a leaf node.
                 return;
             }
@@ -61,14 +72,15 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             Set<Fault> unexpectedCauses = new HashSet<>();
             Set<Fault> expectedCauses = new HashSet<>();
 
-            for (var child : children) {
-                var childReport = result.trace.getReportByFaultUid(child);
+            for (var childUid : children) {
+                var childReport = result.trace.getReportByFaultUid(childUid);
                 if (childReport == null) {
                     continue;
                 }
 
                 if (childReport.hasError()) {
                     Fault fault = childReport.getFault();
+
                     if (childReport.hasIndirectError()) {
                         unexpectedCauses.add(fault);
                     } else {
@@ -78,10 +90,29 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             }
 
             Set<Fault> causes = Sets.union(unexpectedCauses, expectedCauses);
+            isHappyPath = isHappyPath && expectedCauses.isEmpty();
+
+            if (isHappyPath && !happyPath.containsKey(injectionPoint)) {
+                happyPath.put(injectionPoint, report.response);
+            }
+
+            boolean hasFailure = report.hasIndirectError();
+            boolean hasAlteredResponse = false;
+            var happyPathResponse = happyPath.get(injectionPoint);
+            if (happyPathResponse != null) {
+                hasAlteredResponse = !happyPathResponse.equals(report.response);
+            }
+            boolean hasImpact = hasFailure || hasAlteredResponse;
 
             if (causes.isEmpty()) {
                 if (hasFailure) {
                     logger.warn("Detected failure {} with no cause! This likely due to a bug in the scenario setup!",
+                            report.getFault());
+                }
+
+                if (hasAlteredResponse) {
+                    logger.warn(
+                            "Detected altered response {} with no cause! This likely due to a bug in the scenario setup!",
                             report.getFault());
                 }
 
@@ -92,7 +123,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                 Fault pointFault = report.getFault();
                 if (knownFailures.containsKey(pointFault)) {
                     List<Set<Fault>> knownCauses = knownFailures.get(pointFault);
-                    var hasKnownCause = hasKnownCause(knownCauses, causes);
+                    Set<Fault> hasKnownCause = hasKnownCause(knownCauses, causes);
                     if (hasKnownCause == null) {
                         logger.warn("For failure {} discovered new cause: {}", pointFault, causes);
                         knownCauses.add(causes);
@@ -105,11 +136,15 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                 }
             }
 
+            if (!hasFailure && hasAlteredResponse) {
+                // TODO report
+            }
+
             if (!hasFailure) {
-                var point = report.faultUid;
+                FaultUid point = report.faultUid;
                 if (knownResolutions.containsKey(point)) {
                     List<Set<Fault>> knownCauses = knownResolutions.get(point);
-                    var hasKnownCause = hasKnownCause(knownCauses, causes);
+                    Set<Fault> hasKnownCause = hasKnownCause(knownCauses, causes);
                     if (hasKnownCause == null) {
                         logger.warn("Point {} can also recover from cause: {}", point, causes);
                         knownCauses.add(causes);
@@ -126,12 +161,42 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
 
     @Override
     public Map<String, String> report() {
+        StrategyReporter.printNewline();
         StrategyReporter.printHeader("Behavioral Anlaysis", 48, "=");
+
+        StrategyReporter.printNewline();
+        StrategyReporter.printHeader("Happy Path", 48, "-");
+        for (var entry : happyPath.entrySet()) {
+            var fault = entry.getKey();
+            var response = entry.getValue();
+            StrategyReporter.printNewline();
+            StrategyReporter.printKeyValue("Point", fault.toString());
+            StrategyReporter.printKeyValue("Status", String.valueOf(response.status));
+            String bodyLimited = response.body;
+            if (response.body.length() > 100) {
+                bodyLimited = response.body.substring(0, 97) + "...";
+            }
+            StrategyReporter.printKeyValue("Response", bodyLimited);
+        }
+
+        StrategyReporter.printNewline();
+        Map<String, String> maxArityReport = new LinkedHashMap<>();
+        for (var entry : maxArity.entrySet()) {
+            var fault = entry.getKey();
+            var arity = entry.getValue();
+            maxArityReport.put(fault.toString(), String.valueOf(arity));
+        }
+        StrategyReporter.printReport("Max arity", maxArityReport);
+
+        StrategyReporter.printNewline();
         StrategyReporter.printHeader("(Internal) Failures", 48, "-");
         for (var entry : knownFailures.entrySet()) {
             var fault = entry.getKey();
             var causes = entry.getValue();
+
+            StrategyReporter.printNewline();
             StrategyReporter.printKeyValue("Failure", fault.toString());
+
             var i = 0;
             for (var cause : causes) {
                 StrategyReporter.printKeyValue("Cause (" + i + ")", cause.toString());
@@ -139,18 +204,18 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             }
         }
 
+        StrategyReporter.printNewline();
         StrategyReporter.printHeader("(Internal) Resiliency", 48, "-");
-        for (var entry : knownFailures.entrySet()) {
+        for (var entry : knownResolutions.entrySet()) {
             var fault = entry.getKey();
             var causes = entry.getValue();
-            StrategyReporter.printKeyValue("Failure", fault.toString());
+            StrategyReporter.printKeyValue("Point", fault.toString());
             var i = 0;
             for (var cause : causes) {
-                StrategyReporter.printKeyValue("Cause (" + i + ")", cause.toString());
+                StrategyReporter.printKeyValue("Redundancy (" + i + ")", cause.toString());
                 i++;
             }
         }
-
         // Don't report in the normal sense
         return null;
     }

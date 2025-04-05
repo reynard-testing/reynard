@@ -17,4 +17,11 @@ public class TraceSpanResponse {
     public boolean isErrenous() {
         return !(status >= 200 && status < 300);
     }
+
+    public boolean equals(TraceSpanResponse other) {
+        if (other == null) {
+            return false;
+        }
+        return status == other.status && body.equals(other.body);
+    }
 }

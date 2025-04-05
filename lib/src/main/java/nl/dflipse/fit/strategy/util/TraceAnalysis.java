@@ -48,18 +48,18 @@ public class TraceAnalysis {
     }
 
     private void analyseReport(TraceSpanReport report) {
-        if (!reports.contains(report)) {
+        if (!reportByPoint.containsKey(report.faultUid)) {
             reports.add(report);
             reportByPoint.put(report.faultUid, report);
         }
 
         if (report.isInitial) {
-            rootReport = report;
-            hasInitial = true;
-
-            if (rootReport.response != null && !rootReport.faultUid.equals(report.faultUid)) {
+            if (rootReport != null && rootReport.response != null && !rootReport.faultUid.equals(report.faultUid)) {
                 hasMultipleRoots = true;
             }
+
+            rootReport = report;
+            hasInitial = true;
         } else {
             // Do not inject faults between client and first proxy
             faultUids.add(report.faultUid);
@@ -187,12 +187,12 @@ public class TraceAnalysis {
         return parentChildRelation.getParent(faultUid);
     }
 
-    public Set<FaultUid> getDecendants(FaultUid parent) {
-        return parentChildRelation.getDecendants(parent);
+    public Set<FaultUid> getDecendants(FaultUid node) {
+        return parentChildRelation.getDecendants(node);
     }
 
-    public Set<FaultUid> getChildren(FaultUid parent) {
-        return parentChildRelation.getChildren(parent);
+    public Set<FaultUid> getChildren(FaultUid node) {
+        return parentChildRelation.getChildren(node);
     }
 
     public Set<FaultUid> getNeighbours(FaultUid child) {
@@ -238,7 +238,7 @@ public class TraceAnalysis {
 
     public List<FaultUid> getFaultUids(TraversalStrategy strategy) {
         List<FaultUid> foundFaults = new ArrayList<>();
-        traverseFaults(foundFaults::add, strategy);
+        traverseFaults(strategy, false, foundFaults::add);
 
         // ensure each known fault is present, not just those in the tree
         int missing = 0;
@@ -256,39 +256,43 @@ public class TraceAnalysis {
         return foundFaults;
     }
 
-    public void traverseFaults(Consumer<FaultUid> consumer, TraversalStrategy strategy) {
+    public void traverseFaults(TraversalStrategy strategy, boolean includeInitial, Consumer<FaultUid> consumer) {
         switch (strategy) {
             case DEPTH_FIRST:
-                traverseDepthFirst(null, consumer);
+                traverseDepthFirst(null, includeInitial, consumer);
                 break;
             case BREADTH_FIRST:
-                traverseBreadthFirst(null, consumer);
+                traverseBreadthFirst(null, includeInitial, consumer);
                 break;
         }
     }
 
     public void traverseFaults(Consumer<FaultUid> consumer) {
-        traverseFaults(consumer, TraversalStrategy.DEPTH_FIRST);
+        traverseFaults(TraversalStrategy.DEPTH_FIRST, true, consumer);
     }
 
-    public void traverseDepthFirst(FaultUid node, Consumer<FaultUid> consumer) {
+    public void traverseDepthFirst(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
         for (var child : getChildren(node)) {
-            traverseDepthFirst(child, consumer);
+            traverseDepthFirst(child, includeInitial, consumer);
         }
 
-        if (node != null && !node.isFromInitial()) {
-            consumer.accept(node);
+        if (node != null) {
+            if (includeInitial || !node.isFromInitial()) {
+                consumer.accept(node);
+            }
         }
 
     }
 
-    public void traverseBreadthFirst(FaultUid node, Consumer<FaultUid> consumer) {
-        if (node != null && !node.isFromInitial()) {
-            consumer.accept(node);
+    public void traverseBreadthFirst(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
+        if (node != null) {
+            if (includeInitial || !node.isFromInitial()) {
+                consumer.accept(node);
+            }
         }
 
         for (var child : getChildren(node)) {
-            traverseBreadthFirst(child, consumer);
+            traverseBreadthFirst(child, includeInitial, consumer);
         }
 
     }

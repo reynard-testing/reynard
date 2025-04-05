@@ -41,7 +41,7 @@ public class TraceSpanReport {
     }
 
     public boolean hasIndirectError() {
-        return injectedFault != null && (response != null && response.isErrenous());
+        return injectedFault == null && response != null && response.isErrenous();
     }
 
     public Fault getFault() {

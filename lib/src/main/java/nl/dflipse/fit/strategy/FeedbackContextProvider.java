@@ -17,7 +17,7 @@ import nl.dflipse.fit.strategy.util.StringFormat;
 public class FeedbackContextProvider implements FeedbackContext {
 
     private final StrategyRunner runner;
-    private final DynamicAnalysisStore store;
+    private final DynamicAnalysisStore localStore;
     private final FaultloadResult result;
 
     private final static Map<String, DynamicAnalysisStore> stores = new HashMap<>();
@@ -26,7 +26,7 @@ public class FeedbackContextProvider implements FeedbackContext {
         this.runner = runner;
         this.result = result;
         assertGeneratorPresent();
-        this.store = stores.computeIfAbsent(clazz.getSimpleName(),
+        this.localStore = stores.computeIfAbsent(clazz.getSimpleName(),
                 k -> new DynamicAnalysisStore(runner.getGenerator().getFaultModes()));
     }
 
@@ -53,37 +53,37 @@ public class FeedbackContextProvider implements FeedbackContext {
 
     @Override
     public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
-        store.addFaultUids(faultInjectionPoints);
+        localStore.addFaultUids(faultInjectionPoints);
         runner.getGenerator().reportFaultUids(faultInjectionPoints);
     }
 
     @Override
     public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
-        store.addConditionForFaultUid(condition, fid);
+        localStore.addConditionForFaultUid(condition, fid);
         runner.getGenerator().reportPreconditionOfFaultUid(condition, fid);
     }
 
     @Override
     public void reportExclusionOfFaultUid(Set<Fault> condition, FaultUid fid) {
-        store.addExclusionForFaultUid(condition, fid);
+        localStore.addExclusionForFaultUid(condition, fid);
         runner.getGenerator().reportExclusionOfFaultUid(condition, fid);
     }
 
     @Override
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
-        store.pruneFaultUidSubset(subset);
+        localStore.pruneFaultUidSubset(subset);
         runner.getGenerator().pruneFaultUidSubset(subset);
     }
 
     @Override
     public void pruneFaultSubset(Set<Fault> subset) {
-        store.pruneFaultSubset(subset);
+        localStore.pruneFaultSubset(subset);
         runner.getGenerator().pruneFaultSubset(subset);
     }
 
     @Override
     public void pruneFaultload(Faultload fautload) {
-        store.pruneFaultload(fautload);
+        localStore.pruneFaultload(fautload);
         runner.getGenerator().pruneFaultload(fautload);
     }
 
@@ -174,6 +174,6 @@ public class FeedbackContextProvider implements FeedbackContext {
 
     @Override
     public DynamicAnalysisStore getStore() {
-        return store;
+        return runner.getStore();
     }
 }

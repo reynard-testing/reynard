@@ -9,6 +9,7 @@ public class SubsetStore<E> {
     private final List<Set<E>> sets = new ArrayList<>();
     private final boolean allowNull = false;
     private final boolean minimize;
+    private BiPredicate<E, E> equality = (a, b) -> a.equals(b);
 
     public SubsetStore(boolean minimize) {
         this.minimize = minimize;
@@ -17,8 +18,6 @@ public class SubsetStore<E> {
     public SubsetStore() {
         this(true);
     }
-
-    private BiPredicate<E, E> equality = (a, b) -> a.equals(b);
 
     public SubsetStore<E> withEquality(BiPredicate<E, E> equality) {
         this.equality = equality;

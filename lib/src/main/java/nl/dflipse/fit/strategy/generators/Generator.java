@@ -30,5 +30,7 @@ public interface Generator {
 
     public Set<FaultUid> getExpectedPoints(Faultload faultload);
 
+    public Set<FaultUid> getExpectedPoints(Set<Fault> faultload);
+
     public long spaceSize();
 }

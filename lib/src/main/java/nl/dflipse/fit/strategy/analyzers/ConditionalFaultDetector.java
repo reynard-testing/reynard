@@ -91,7 +91,8 @@ public class ConditionalFaultDetector implements FeedbackHandler {
 
         Set<FaultUid> expectedPoints = new HashSet<>(pointsInHappyPath);
         expectedPoints
-                .addAll(context.getStore().getInclusionConditions().getForCondition(result.trace.getInjectedFaults()));
+                .addAll(context.getStore().getInclusionConditions()
+                        .getForCondition(result.trace.getInjectedFaults()));
 
         // Analyse new paths that were not in the happy path
         var appeared = Sets.difference(traceFaultUids, expectedPoints);

@@ -1,8 +1,10 @@
 package nl.dflipse.fit.strategy.store;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,9 @@ public class DynamicAnalysisStore {
     private final ConditionalStore inclusionConditions = new ConditionalStore();
     // Stores which faults must not be present for a faultuid to be injected
     private final ConditionalStore exclusionConditions = new ConditionalStore();
+
+    // TODO: store substitutions
+    private final Map<Set<Fault>, Fault> substitutions = new HashMap<>();
 
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
@@ -223,6 +228,8 @@ public class DynamicAnalysisStore {
     }
 
     public boolean isRedundant(Set<Fault> faultload) {
+        // TODO: use substitutions
+
         for (Fault fault : faultload) {
             FaultUid point = fault.uid();
 

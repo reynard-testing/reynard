@@ -87,28 +87,24 @@ public class TraceAnalysis {
 
         // Check if the node has a report from a fault injection proxy
         if (node.hasReport()) {
-            // Save the faultUid
             treeFaultPoints.add(node);
 
-            // TODO: correctly handle parent-child relation
-            // For multiple reports
-            for (var report : node.reports) {
-                analyseReport(report);
+            var report = node.report;
+            analyseReport(report);
 
-                // Save the parent-child relation
-                // Update the most direct parent
-                var child = report.faultUid;
-                parentChildRelation.addRelation(parent, child);
-                nextParent = child;
+            // Save the parent-child relation
+            // Update the most direct parent
+            var child = report.faultUid;
+            parentChildRelation.addRelation(parent, child);
+            nextParent = child;
 
-                // If a remote call is detected (so our own proxy)
-                // But no children exist.
-                // TODO: is this solvable? Often is a misconfiguration, but we can still
-                // exercise the FI point.
-                // if (node.children.isEmpty()) {
-                // isIncomplete = true;
-                // }
-            }
+            // If a remote call is detected (so our own proxy)
+            // But no children exist.
+            // TODO: is this solvable? Often is a misconfiguration, but we can still
+            // exercise the FI point.
+            // if (node.children.isEmpty()) {
+            // isIncomplete = true;
+            // }
 
         }
 

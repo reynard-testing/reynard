@@ -72,10 +72,9 @@ public class FiTestExtension
 
         strategy = new StrategyRunner()
                 .withComponent(new IncreasingSizeGenerator(modes))
-                // .withGenerator(new IncreasingSizeMixedGenerator(modes))
-                // .withAnalyzer(new RandomDetector())
+                // .withComponent(new RandomDetector())
                 .withComponent(new BreadthFirstDetector())
-                // .withAnalyzer(new DepthFirstDetector())
+                // .withComponent(new DepthFirstDetector())
                 .withComponent(new ConditionalFaultDetector(onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
@@ -236,7 +235,7 @@ public class FiTestExtension
             // var annotation = testMethod.getAnnotation(FiTest.class);
 
             boolean testFailed = context.getExecutionException().isPresent();
-            logger.info("Result: " + (testFailed ? "FAIL" : "PASS"));
+            logger.info("Invariant: " + (testFailed ? "VIOLATED" : "HOLDS"));
 
             strategy.statistics.registerRun();
 

@@ -19,6 +19,7 @@ type ResponseData struct {
 type RequestReport struct {
 	TraceId       string                `json:"trace_id"`
 	SpanId        string                `json:"span_id"`
+	ParentId      string                `json:"parent_span_id"`
 	FaultUid      faultload.FaultUid    `json:"uid"`
 	IsInitial     bool                  `json:"is_initial"`
 	InjectedFault *faultload.Fault      `json:"injected_fault"`
@@ -28,6 +29,7 @@ type RequestReport struct {
 
 type RequestMetadata struct {
 	TraceId   string
+	ParentId  string
 	SpanId    string
 	FaultUid  faultload.FaultUid
 	IsInitial bool

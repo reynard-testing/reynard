@@ -40,6 +40,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
         }
 
         var conditionals = context.getConditionals();
+        var points = context.getFaultUids();
 
         for (Fault fault : injected) {
             FaultUid parent = result.trace.getParent(fault.uid());
@@ -54,6 +55,12 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
             }
 
             if (report.response.isErrenous()) {
+                continue;
+            }
+
+            // Note: this quite hardwired to the logic of ConditionalFaultDetector
+            boolean isCauseForRetry = points.contains(fault.uid().asAnyCount());
+            if (isCauseForRetry) {
                 continue;
             }
 

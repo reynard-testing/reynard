@@ -15,10 +15,10 @@ public class TraceTreeSpan {
     @JsonProperty("span")
     public TraceSpan span;
 
-    @JsonProperty("reports")
-    public List<TraceSpanReport> reports;
+    @JsonProperty("report")
+    public TraceSpanReport report;
 
     public boolean hasReport() {
-        return !reports.isEmpty();
+        return report != null;
     }
 }

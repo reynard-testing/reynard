@@ -3,7 +3,6 @@ package nl.dflipse.fit.pruners;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import nl.dflipse.fit.faultload.Fault;
@@ -42,7 +41,7 @@ public class DynamicReductionTest {
         TraceTreeSpan spanA = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceB)
                 .withChildren(spanB)
-                .withReport(null, apiA1)
+                .withReport(apiA1)
                 .withResponse(200, "OK")
                 .build();
 
@@ -119,13 +118,13 @@ public class DynamicReductionTest {
                 .build();
 
         // The empty faultload is pruned
-        Faultload faultload = new Faultload(Set.of(new Fault(spanC2.reports.get(0).faultUid, injectedFault)));
+        Faultload faultload = new Faultload(Set.of(new Fault(spanC2.report.faultUid, injectedFault)));
         TraceAnalysis trace = new TraceAnalysis(spanA2);
         FaultloadResult result2 = new FaultloadResult(new TrackedFaultload(faultload), trace, true);
         pruner.handleFeedback(result2, null);
 
         Faultload faultloadToPrune = new Faultload(
-                Set.of(new Fault(spanB2.reports.get(0).faultUid, resultedFault)));
+                Set.of(new Fault(spanB2.report.faultUid, resultedFault)));
 
         // The empty faultload is pruned
         PruneDecision decision = pruner.prune(faultloadToPrune);

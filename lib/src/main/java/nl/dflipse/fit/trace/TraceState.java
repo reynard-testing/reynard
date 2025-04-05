@@ -13,7 +13,15 @@ public class TraceState {
     private Map<String, String> state = new HashMap<String, String>();
 
     public TraceState(String header) {
+        if (header.length() == 0) {
+            return;
+        }
+
         String[] parts = header.split(",");
+        if (parts.length == 0) {
+            return;
+        }
+
         for (String part : parts) {
             String[] keyValue = part.split("=");
             if (keyValue.length == 2) {

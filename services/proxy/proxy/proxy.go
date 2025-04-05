@@ -73,19 +73,19 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		// Get and parse the "traceparent" headers
 		traceparent := r.Header.Get("traceparent")
-		parent := tracing.ParseTraceParent(traceparent)
+		parentSpan := tracing.ParseTraceParent(traceparent)
 
 		// If no traceparent is found, forward the request without inspection
-		if parent == nil {
+		if parentSpan == nil {
 			proxy.ServeHTTP(w, r)
 			return
 		}
 
 		// Determine if registered as an interesting trace
-		faults, ok := control.RegisteredFaults.Get(parent.TraceID)
+		faults, ok := control.RegisteredFaults.Get(parentSpan.TraceID)
 		if !ok {
 			// Forward the request to the target server
-			log.Printf("No faults registered for trace ID: %s\n", parent.TraceID)
+			log.Printf("No faults registered for trace ID: %s\n", parentSpan.TraceID)
 			proxy.ServeHTTP(w, r)
 			return
 		}
@@ -93,6 +93,10 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// Get and parse the "tracestate" header
 		tracestate := r.Header.Get("tracestate")
 		state := tracing.ParseTraceState(tracestate)
+		traceId := parentSpan.TraceID
+		// TODO (optional): export to collector, so that jeager understands whats going on
+		currentSpan := parentSpan.GenerateNew()
+		r.Header.Set("traceparent", currentSpan.String())
 
 		// only forward the request if the "fit" flag is set in the tracestate
 		shouldInspect := state.GetWithDefault("fit", "0") == "1"
@@ -102,7 +106,8 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		log.Printf("Received injectable request: %s %s\n", r.Method, r.URL)
-		log.Printf("Traceparent: %+v\n", parent)
+		log.Printf("Traceparent: %+v\n", parentSpan)
+		log.Printf("New span id: %+v\n", currentSpan.ParentID)
 		log.Printf("Tracestate: %+v\n", state)
 
 		// determine the span ID for the current request
@@ -123,13 +128,13 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		faultUid := tracing.FaultUidFromRequest(r, destination, shouldMaskPayload, isInitial)
-		traceId := parent.TraceID
 		log.Printf("Determined Fault UID: %s\n", faultUid.String())
 		tracing.TrackFault(traceId, &faultUid)
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
 			TraceId:   traceId,
-			SpanId:    parent.ParentID,
+			ParentId:  parentSpan.ParentID,
+			SpanId:    currentSpan.ParentID,
 			FaultUid:  faultUid,
 			IsInitial: isInitial,
 		}

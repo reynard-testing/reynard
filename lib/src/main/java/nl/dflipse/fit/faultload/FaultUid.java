@@ -36,9 +36,13 @@ public record FaultUid(String origin, String destination, String signature, Stri
 
     @Override
     public String toString() {
+        return origin + ">" + toStringWithoutOrigin();
+    }
+
+    public String toStringWithoutOrigin() {
         String payloadStr = (payload.equals("*") || payload.equals("")) ? "" : "(" + payload + ")";
         String countStr = count < 0 ? "#∞" : ("#" + count);
-        return origin + ">" + destination + ":" + signature + payloadStr + countStr;
+        return destination + ":" + signature + payloadStr + countStr;
     }
 
     private boolean isMasked(String value) {
@@ -57,10 +61,10 @@ public record FaultUid(String origin, String destination, String signature, Stri
         return count < 0;
     }
 
-    public static String ORIGIN_NAME = "<origin>";
+    public static String ROOT_ORIGIN_NAME = "<origin>";
 
     public boolean isFromInitial() {
-        return origin.equals(ORIGIN_NAME);
+        return origin.equals(ROOT_ORIGIN_NAME);
     }
 
     public FaultUid applyMask(FaultUid mask) {

@@ -49,7 +49,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
                 continue;
             }
 
-            var report = result.trace.getReport(parent);
+            var report = result.trace.getReportByFaultUid(parent);
             if (report == null) {
                 continue;
             }

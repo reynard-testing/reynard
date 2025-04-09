@@ -12,7 +12,7 @@ import nl.dflipse.fit.strategy.util.StringFormat;
 import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyReporter {
-    private int maxChars = 48;
+    private static int maxChars = 48;
     private Generator generator;
     private StrategyRunner runner;
     private StrategyStatistics statistics;
@@ -23,19 +23,19 @@ public class StrategyReporter {
         this.generator = runner.getGenerator();
     }
 
-    private void printNewline() {
+    public static void printNewline() {
         System.out.println();
     }
 
-    private void printLine(String line) {
+    public static void printLine(String line) {
         System.out.println(line);
     }
 
-    private void printHeader(String header, int width, String padChar) {
+    public static void printHeader(String header, int width, String padChar) {
         printLine(StringFormat.padBoth(" " + header + " ", width, padChar));
     }
 
-    private void printHeader(String header, int width) {
+    public static void printHeader(String header, int width) {
         printHeader(header, width, "-");
     }
 
@@ -43,14 +43,14 @@ public class StrategyReporter {
         printHeader(header, maxChars);
     }
 
-    private int stringLength(String string) {
+    private static int stringLength(String string) {
         return Arrays.stream(string.split("\n"))
                 .mapToInt(String::length)
                 .max()
                 .orElse(0);
     }
 
-    private int getMaxLength(Set<String> set) {
+    private static int getMaxLength(Set<String> set) {
         return set.stream()
                 .mapToInt(s -> stringLength(s))
                 .max().orElse(0);
@@ -84,8 +84,12 @@ public class StrategyReporter {
         }
     }
 
-    private void printKeyValue(String key, String value, int keyPadding) {
+    public static void printKeyValue(String key, String value, int keyPadding) {
         printLine(StringFormat.padRight(key, keyPadding) + " : " + value);
+    }
+
+    public static void printKeyValue(String key, String value) {
+        printLine(key + " : " + value);
     }
 
     public void reportGeneratorStats() {
@@ -146,7 +150,7 @@ public class StrategyReporter {
         printNewline();
     }
 
-    public void printReport(String name, Map<String, String> keyValues) {
+    public static void printReport(String name, Map<String, String> keyValues) {
         int maxKeyLength = getMaxLength(keyValues.keySet());
         int maxValueLength = keyValues.values().stream()
                 .mapToInt(s -> stringLength(s))
@@ -165,6 +169,9 @@ public class StrategyReporter {
 
     public void reportOnReporter(Reporter reporter) {
         Map<String, String> report = reporter.report();
+        if (report == null || report.isEmpty()) {
+            return;
+        }
         String name = reporter.getClass().getSimpleName();
         printReport(name, report);
     }

@@ -9,6 +9,9 @@ def get_args():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('yaml_file', type=str,
                             help='Path to the YAML file')
+    arg_parser.add_argument('--filibuster',
+                            action='store_true',
+                            help='Patch filibuster build config')
 
     args = arg_parser.parse_args()
     return args
@@ -75,7 +78,10 @@ class ServiceBuilder:
 
 
 class Converter:
-    def __init__(self, data):
+    def __init__(self, data, filibuster_project: str):
+        self.patch_filibuster = filibuster_project is not None
+        self.filibuster_project = filibuster_project
+
         self.service_names = {
             'otel_collector': 'otel-collector',
             'jaeger': 'jaeger',
@@ -109,10 +115,20 @@ class Converter:
 
         container_port = None
         host_port = None
-        if 'image' in service_def:
-            real_service.with_image(service_def['image'])
-        if 'build' in service_def:
-            real_service.with_build(service_def['build'])
+        if self.patch_filibuster:
+            real_service.with_build({
+                "context": '../',
+                "dockerfile": './Dockerfile.python.service',
+                "args": {
+                    "benchmark": self.filibuster_project,
+                    "service": service_name,
+                }
+            })
+        else:
+            if 'image' in service_def:
+                real_service.with_image(service_def['image'])
+            if 'build' in service_def:
+                real_service.with_build(service_def['build'])
         if 'ports' in service_def:
             for port in service_def['ports']:
                 host_port, container_port = port.split(':')
@@ -185,7 +201,10 @@ if __name__ == '__main__':
     with open(args.yaml_file, 'r') as file:
         data = yaml.safe_load(file)
 
-    converter = Converter(data)
+    filibuster_project = None
+    if args.filibuster:
+        filibuster_project = args.yaml_file.split('/')[-2]
+    converter = Converter(data, filibuster_project)
     converter.convert()
 
     new_file_name = '.'.join(args.yaml_file.split('.')

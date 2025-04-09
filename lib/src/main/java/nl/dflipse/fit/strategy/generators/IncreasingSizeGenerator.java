@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
@@ -22,16 +22,16 @@ import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
 public class IncreasingSizeGenerator implements Generator, Reporter {
     private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
-    private Set<FaultMode> modes;
+    private Set<FailureMode> modes;
     private PrunableGenericPowersetTreeIterator iterator;
 
     private final DynamicAnalysisStore store;
 
-    public IncreasingSizeGenerator(List<FaultMode> modes) {
+    public IncreasingSizeGenerator(List<FailureMode> modes) {
         this(Set.copyOf(modes));
     }
 
-    public IncreasingSizeGenerator(Set<FaultMode> modes) {
+    public IncreasingSizeGenerator(Set<FailureMode> modes) {
         this.modes = modes;
         this.store = new DynamicAnalysisStore(modes);
     }
@@ -216,7 +216,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     }
 
     @Override
-    public Set<FaultMode> getFaultModes() {
+    public Set<FailureMode> getFaultModes() {
         return modes;
     }
 

@@ -10,7 +10,7 @@ import static org.mockito.Mockito.mock;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.TrackedFaultload;
@@ -22,7 +22,7 @@ import nl.dflipse.fit.util.NodeBuilder;
 import nl.dflipse.fit.util.ShapeBuilder;
 
 public class ParentChildTest {
-    private final FaultMode mode = FailureModes.getMode(0);
+    private final FailureMode mode = FailureModes.getMode(0);
 
     private FaultUid bySignature(TraceAnalysis trace, String signature) {
         for (var r : trace.getReports()) {

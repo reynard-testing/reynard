@@ -6,7 +6,7 @@ import java.util.List;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.trace.tree.TraceSpan;
 import nl.dflipse.fit.trace.tree.TraceSpanReport;
 import nl.dflipse.fit.trace.tree.TraceSpanResponse;
@@ -140,7 +140,7 @@ public class NodeBuilder {
       return buildReport().build();
     }
 
-    public ReportBuilder withFault(FaultMode mode) {
+    public ReportBuilder withFault(FailureMode mode) {
       Fault fault = new Fault(report.faultUid, mode);
       String body = "err";
       this.builder.span.errorMessage = body;

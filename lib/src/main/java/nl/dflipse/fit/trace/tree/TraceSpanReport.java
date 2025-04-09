@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
+import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -33,4 +35,25 @@ public class TraceSpanReport {
 
     @JsonProperty("response")
     public TraceSpanResponse response;
+
+    public boolean hasError() {
+        return injectedFault != null || (response != null && response.isErrenous());
+    }
+
+    public boolean hasIndirectError() {
+        return injectedFault == null && response != null && response.isErrenous();
+    }
+
+    public Fault getFault() {
+        if (injectedFault != null) {
+            return injectedFault;
+        }
+
+        if (!response.isErrenous()) {
+            return null;
+        }
+
+        FailureMode faultMode = new FailureMode(ErrorFault.FAULT_TYPE, List.of("" + response.status));
+        return new Fault(faultUid, faultMode);
+    }
 }

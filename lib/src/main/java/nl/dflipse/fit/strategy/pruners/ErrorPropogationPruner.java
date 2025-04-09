@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.FaultMode;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
@@ -42,7 +42,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
                 continue;
             }
 
-            FaultMode faultMode = new FaultMode(ErrorFault.FAULT_TYPE, List.of("" + report.response.status));
+            FailureMode faultMode = new FailureMode(ErrorFault.FAULT_TYPE, List.of("" + report.response.status));
             Fault responseFault = new Fault(report.faultUid, faultMode);
 
             handlePropogation(injectedFaults, responseFault, context);

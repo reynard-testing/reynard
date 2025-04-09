@@ -27,7 +27,7 @@ public class FeedbackContextProvider implements FeedbackContext {
         this.result = result;
         assertGeneratorPresent();
         this.localStore = stores.computeIfAbsent(clazz.getSimpleName(),
-                k -> new DynamicAnalysisStore(runner.getGenerator().getFaultModes()));
+                k -> new DynamicAnalysisStore(runner.getGenerator().getFaultModes(), true));
     }
 
     private void assertGeneratorPresent() {

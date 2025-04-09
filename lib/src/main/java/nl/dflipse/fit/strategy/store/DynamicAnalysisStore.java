@@ -17,10 +17,10 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
+import nl.dflipse.fit.util.NoOpLogger;
 
 public class DynamicAnalysisStore {
-    private final Logger logger = LoggerFactory.getLogger(DynamicAnalysisStore.class);
-
+    private final Logger logger;
     private final List<FailureMode> modes;
     private final List<FaultUid> points = new ArrayList<>();
 
@@ -36,8 +36,17 @@ public class DynamicAnalysisStore {
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
 
-    public DynamicAnalysisStore(List<FailureMode> modes) {
+    public DynamicAnalysisStore(List<FailureMode> modes, boolean quiet) {
         this.modes = modes;
+        if (quiet) {
+            logger = new NoOpLogger();
+        } else {
+            logger = LoggerFactory.getLogger(DynamicAnalysisStore.class);
+        }
+    }
+
+    public DynamicAnalysisStore(List<FailureMode> modes) {
+        this(modes, false);
     }
 
     public List<FaultUid> getFaultInjectionPoints() {

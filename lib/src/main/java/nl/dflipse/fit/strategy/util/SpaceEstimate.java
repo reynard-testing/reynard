@@ -33,15 +33,8 @@ public class SpaceEstimate {
             long contribution = SpaceEstimate.nonEmptySpaceSize(modeCount, pointCount, subset.size());
             sum += contribution;
 
-            // TODO: this overlap estimate is not accurate, can sometimes go below zero?
-            // for (int j = i + 1; j < subsets.size(); j++) {
-            // var other = subsets.get(j);
-            // var overlap = Sets.union(subset, other);
-
-            // long overlapContribution = SpaceEstimate.nonEmptySpaceSize(modeCount,
-            // pointCount, overlap.size());
-            // sum -= overlapContribution;
-            // }
+            // Note: we can estimate the overlap of the subsets, but it is not accurate
+            // enough to be useful. It is better to overestimate than to underestimate.
         }
 
         return sum;
@@ -56,41 +49,8 @@ public class SpaceEstimate {
             long contribution = SpaceEstimate.spaceSize(modeCount, pointCount - subset.size());
             sum += contribution;
 
-            // TODO: this overlap estimate is not accurate, can sometimes go below zero?
-            // Set<FaultUid> uids = subset.stream()
-            // .map(Fault::uid)
-            // .collect(Collectors.toSet());
-
-            // Set<Set<Fault>> newlyCovered = new HashSet<>();
-
-            // for (var j = 0; j < i; j++) {
-            // var other = subsets.get(j);
-            // // if both sets contain a fault for the same uid
-            // boolean isIncompatible = other.stream()
-            // // for each in other that is not in the original subset
-            // .filter(x -> !subset.contains(x))
-            // // but has the same uid as one in the original subset
-            // .anyMatch(x -> uids.contains(x.uid()));
-
-            // if (isIncompatible) {
-            // continue;
-            // }
-
-            // var overlap = Sets.union(subset, other);
-            // if (newlyCovered.contains(overlap)) {
-            // continue;
-            // }
-
-            // int pointsLeft = pointCount - overlap.size();
-            // if (pointsLeft < 0) {
-            // // Famous last words: this should never happen
-            // continue;
-            // }
-
-            // long overlapContribution = SpaceEstimate.spaceSize(modeCount, pointsLeft);
-            // sum -= overlapContribution;
-            // newlyCovered.add(overlap);
-            // }
+            // Note: we can estimate the overlap of the subsets, but it is not accurate
+            // enough to be useful. It is better to overestimate than to underestimate.
         }
 
         return sum;

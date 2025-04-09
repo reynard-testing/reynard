@@ -6,7 +6,7 @@ import requests
 # import trace
 from flask import Flask, request
 
-from lib.models import Span, ReportedSpan, ResponseData, FaultUid, TraceTreeNode
+from lib.models import Span, ReportedSpan, ResponseData, FaultUid, TraceTreeNode, InjectionPoint
 from lib.otel import otelTraceExportToSpans, parse_otel_protobuf
 from lib.span_store import SpanStore
 from lib.report_store import ReportStore
@@ -223,15 +223,16 @@ def get_reports_by_trace_id(trace_id):
 @app.route('/v1/parent_uid', methods=['POST'])
 async def get_fault_uid():
     data = request.get_json()
+    print("Received request for parent uid", data, flush=True)
     is_initial = data.get('is_initial')
     if is_initial:
         return [], 200
-    parent_id = data.get('parent_id')
+    parent_id = data.get('parent_span_id')
     report = report_store.get_by_span_id(parent_id)
     if report is None:
-        return None, 404
+        return [], 404
     
-    return report.uid, 200
+    return {"stack": report.uid.stack}, 200
 
 @app.route('/v1/link', methods=['POST'])
 async def report_span_id():
@@ -273,13 +274,8 @@ async def report_span_id():
             body=response.get('body')
         )
 
-    fault_uid = FaultUid(
-        stack=uid.get('stack'),
-        signature=uid.get('signature'),
-        count=uid.get('count'),
-        destination=uid.get('destination'),
-        payload=uid.get('payload'),
-    )
+    stack = tuple([InjectionPoint(**fip) for fip in uid.get('stack', [])])
+    fault_uid = FaultUid(stack=stack)
 
     span_report = ReportedSpan(
         trace_id=trace_id,

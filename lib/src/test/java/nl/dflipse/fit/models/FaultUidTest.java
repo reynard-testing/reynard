@@ -26,10 +26,24 @@ public class FaultUidTest {
         });
     }
 
+    public static Collection<Object[]> inequalUids() {
+        return Arrays.asList(new Object[][] {
+                { new FaultUid(List.of(point1, point2)), new FaultUid(List.of(point1)) },
+
+        });
+    }
+
     @Test
     @ParameterizedTest
     @MethodSource("equalUids")
     public void testMatch(FaultUid f1, FaultUid f2) {
         assert f1.matches(f2);
+    }
+
+    @Test
+    @ParameterizedTest
+    @MethodSource("inequalUids")
+    public void testNotMatch(FaultUid f1, FaultUid f2) {
+        assert !f1.matches(f2);
     }
 }

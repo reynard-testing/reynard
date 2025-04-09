@@ -1,7 +1,6 @@
 package nl.dflipse.fit.strategy.generators;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import nl.dflipse.fit.faultload.Fault;

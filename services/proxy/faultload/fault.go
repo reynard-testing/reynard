@@ -17,7 +17,9 @@ type InjectionPoint struct {
 	Payload     string `json:"payload"`
 	Count       int    `json:"count"`
 }
-type FaultUid []InjectionPoint
+type FaultUid struct {
+	Stack []InjectionPoint `json:"stack"`
+}
 
 func stringMatches(v1, v2 string) bool {
 	return v1 == v2 || v1 == "*" || v2 == "*"
@@ -28,12 +30,12 @@ func intMatches(v1, v2 int) bool {
 }
 
 func (f1 FaultUid) Matches(f2 FaultUid) bool {
-	if len(f1) != len(f2) {
+	if len(f1.Stack) != len(f2.Stack) {
 		return false
 	}
 
-	for i := range f1 {
-		if !f1[i].Matches(f2[i]) {
+	for i := range f1.Stack {
+		if !f1.Stack[i].Matches(f2.Stack[i]) {
 			return false
 		}
 	}
@@ -49,8 +51,8 @@ func (f1 InjectionPoint) Matches(f2 InjectionPoint) bool {
 }
 
 func (fid FaultUid) String() string {
-	ip_strings := make([]string, len(fid))
-	for i, ip := range fid {
+	ip_strings := make([]string, len(fid.Stack))
+	for i, ip := range fid.Stack {
 		ip_strings[i] = ip.String()
 	}
 	return strings.Join(ip_strings, ">")
@@ -90,17 +92,19 @@ type FaultMode struct {
 	Args []string `json:"args"`
 }
 
-func BuildFaultUid(stack []InjectionPoint, partial PartialInjectionPoint, count int) FaultUid {
-	fid := make([]InjectionPoint, len(stack)+1)
+func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, count int) FaultUid {
+	fid := make([]InjectionPoint, len(parent.Stack)+1)
 	// Copy the existing stack
-	copy(fid, stack)
+	copy(fid, parent.Stack)
 	// Add the new injection point
-	fid[len(stack)] = InjectionPoint{
+	fid[len(parent.Stack)] = InjectionPoint{
 		Destination: partial.Destination,
 		Signature:   partial.Signature,
 		Payload:     partial.Payload,
 		Count:       count,
 	}
 
-	return fid
+	return FaultUid{
+		Stack: fid,
+	}
 }

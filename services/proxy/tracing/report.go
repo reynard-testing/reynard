@@ -18,8 +18,7 @@ type ResponseData struct {
 
 type UidRequest struct {
 	TraceId        string `json:"trace_id"`
-	SpanId         string `json:"span_id"`
-	ReportParentId string `json:"parent_id"`
+	ReportParentId string `json:"parent_span_id"`
 	IsInitial      bool   `json:"is_initial"`
 }
 
@@ -126,7 +125,9 @@ func GetUid(req UidRequest) faultload.FaultUid {
 
 	if res == nil {
 		log.Printf("Failed to get UID from orchestrator after retry.\n")
-		return []faultload.InjectionPoint{}
+		return faultload.FaultUid{
+			Stack: []faultload.InjectionPoint{},
+		}
 	} else {
 		return *res
 	}

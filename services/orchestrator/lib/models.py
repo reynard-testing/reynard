@@ -29,7 +29,7 @@ class InjectionPoint:
 
 @dataclass(frozen=True)
 class FaultUid:
-    stack: list[InjectionPoint]
+    stack: tuple[InjectionPoint, ...]
 
 @dataclass(frozen=True)
 class FaultMode:

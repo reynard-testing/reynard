@@ -17,15 +17,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.analyzers.BehaviorAnalyzer;
-import nl.dflipse.fit.strategy.analyzers.BreadthFirstDetector;
 import nl.dflipse.fit.strategy.analyzers.ConcurrencyDetector;
-import nl.dflipse.fit.strategy.analyzers.ConditionalFaultDetector;
+import nl.dflipse.fit.strategy.analyzers.FaultDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.analyzers.StatusAnalyzer;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
@@ -37,6 +37,7 @@ import nl.dflipse.fit.strategy.pruners.FaultloadSizePruner;
 import nl.dflipse.fit.strategy.pruners.NoImpactPruner;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
+import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
@@ -61,23 +62,25 @@ public class FiTestExtension
             annotation = context.getRequiredTestClass().getAnnotation(FiTest.class);
         }
 
-        var modes = List.of(
+        List<FailureMode> modes = List.of(
                 ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE),
                 ErrorFault.fromError(HttpError.BAD_GATEWAY),
                 ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR),
                 ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
+        // List<FailureMode> modes =
+        // List.of(ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE));
+
         boolean onlyPersistantOrTransientRetries = annotation.optimizeForRetries();
         boolean pruneImpactless = annotation.optimizeForImpactless();
         int maxFaultloadSize = annotation.maxFaultloadSize();
 
+        TraversalStrategy traversalStrategy = TraversalStrategy.BREADTH_FIRST;
+
         strategy = new StrategyRunner(modes);
         strategy
                 .withComponent(new IncreasingSizeGenerator(strategy.getStore()))
-                // .withComponent(new RandomDetector())
-                .withComponent(new BreadthFirstDetector())
-                // .withComponent(new DepthFirstDetector())
-                .withComponent(new ConditionalFaultDetector(onlyPersistantOrTransientRetries))
+                .withComponent(new FaultDetector(traversalStrategy, onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
                 .withComponent(new BehaviorAnalyzer(modes))

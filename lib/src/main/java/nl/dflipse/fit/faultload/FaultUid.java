@@ -47,10 +47,15 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
 
     @Override
     public String toString() {
-        List<String> stackStrings = stack.stream()
-                .map(FaultInjectionPoint::toString)
+        List<String> stackStrings = getTail().stream()
+                .map(FaultInjectionPoint::toSimplifiedString)
                 .toList();
-        return String.join(">", stackStrings);
+
+        if (stackStrings.isEmpty()) {
+            return getPoint().toString();
+        }
+
+        return String.join(">", stackStrings) + ">" + getPoint().toString();
     }
 
     public FaultInjectionPoint getPoint() {

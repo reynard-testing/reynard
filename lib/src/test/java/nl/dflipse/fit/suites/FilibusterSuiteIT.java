@@ -138,7 +138,7 @@ public class FilibusterSuiteIT {
             String traceUrl = "http://localhost:8686/trace/" + faultload.getTraceId();
 
             TraceAnalysis result = getController().getTrace(faultload);
-            // boolean injectedFaults = !result.getInjectedFaults().isEmpty();
+            boolean injectedFaults = !result.getInjectedFaults().isEmpty();
 
             // if (injectedFaults) {
             // assert (response.code() >= 500);

@@ -236,7 +236,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             var response = entry.getValue();
             StrategyReporter.printNewline();
             StrategyReporter.printKeyValue("Point", point.toString());
-            String bodyLimited = response.body;
+            String bodyLimited = response.body.replace("\n", "");
             if (response.body.length() > 100) {
                 bodyLimited = response.body.substring(0, 97) + "...";
             }

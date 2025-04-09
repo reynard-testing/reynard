@@ -233,7 +233,7 @@ public class TraceAnalysis {
     }
 
     public enum TraversalStrategy {
-        DEPTH_FIRST, BREADTH_FIRST
+        DEPTH_FIRST, BREADTH_FIRST, RANDOM
     }
 
     public List<FaultUid> getFaultUids(TraversalStrategy strategy) {
@@ -264,6 +264,9 @@ public class TraceAnalysis {
             case BREADTH_FIRST:
                 traverseBreadthFirst(null, includeInitial, consumer);
                 break;
+            case RANDOM:
+                traverseRandom(null, includeInitial, consumer);
+                break;
         }
     }
 
@@ -281,7 +284,28 @@ public class TraceAnalysis {
                 consumer.accept(node);
             }
         }
+    }
 
+    public void traverseRandom(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
+        boolean depthFirstForThisNode = Math.random() < 0.5;
+        if (depthFirstForThisNode) {
+
+            for (var child : getChildren(node)) {
+                traverseRandom(child, includeInitial, consumer);
+            }
+        }
+
+        if (node != null) {
+            if (includeInitial || !node.isFromInitial()) {
+                consumer.accept(node);
+            }
+        }
+
+        if (!depthFirstForThisNode) {
+            for (var child : getChildren(node)) {
+                traverseRandom(child, includeInitial, consumer);
+            }
+        }
     }
 
     public void traverseBreadthFirst(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {

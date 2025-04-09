@@ -6,17 +6,16 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonSerialize
 @JsonDeserialize
 public record FaultInjectionPoint(String destination, String signature, String payload, int count) {
-
     @Override
     public String toString() {
-        String countStr = count < 0 ? "#∞" : ("#" + count);
-        return toStringWithoutOrigin() + countStr;
-    }
-
-    public String toStringWithoutOrigin() {
         String payloadStr = (payload.equals("*") || payload.equals("")) ? "" : "(" + payload + ")";
         String countStr = count < 0 ? "#∞" : ("#" + count);
         return destination + ":" + signature + payloadStr + countStr;
+    }
+
+    public String toSimplifiedString() {
+        String countStr = count < 0 ? "#∞" : ("#" + count);
+        return destination + countStr;
     }
 
     public FaultInjectionPoint asAnyPayload() {

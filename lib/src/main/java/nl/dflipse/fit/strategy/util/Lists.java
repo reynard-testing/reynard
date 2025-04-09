@@ -16,4 +16,11 @@ public class Lists {
         list.add(e);
         return list;
     }
+
+    /** Return A - B */
+    public static <T> List<T> difference(List<T> A, List<T> B) {
+        List<T> difference = new ArrayList<>(A);
+        difference.removeAll(B);
+        return difference;
+    }
 }

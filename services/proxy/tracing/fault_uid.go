@@ -58,7 +58,12 @@ func getPayloadHash(r *http.Request) string {
 	// This is necessary because the proxy will read the body to forward the request
 	r.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
 
-	hash := sha256.Sum256(bodyBytes)
+	hash := ""
+	if len(bodyBytes) > 0 {
+		bodyHash := sha256.Sum256(bodyBytes)
+		hash = fmt.Sprintf("%x", bodyHash)
+	}
+
 	// shortHash := hash[:8] // Use only the first 8 bytes of the hash
 	// return fmt.Sprintf("%x", shortHash)
 	return fmt.Sprintf("%x", hash)

@@ -209,6 +209,6 @@ if __name__ == '__main__':
     converter.convert()
 
     new_file_name = '.'.join(args.yaml_file.split('.')
-                             [:-1]) + '.fit.yaml'
+                             [:-1]) + '.fit.yml'
     with open(new_file_name, 'w') as file:
         yaml.dump(converter.output, file, sort_keys=False)

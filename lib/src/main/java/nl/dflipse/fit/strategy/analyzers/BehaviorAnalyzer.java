@@ -81,7 +81,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                 }
 
                 if (childReport.hasError()) {
-                    Fault fault = childReport.getFault();
+                    Fault fault = childReport.getRepresentativeFault();
 
                     if (childReport.hasIndirectError()) {
                         unexpectedCauses.add(fault);
@@ -109,20 +109,20 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             if (causes.isEmpty()) {
                 if (hasFailure) {
                     logger.warn("Detected failure {} with no cause! This likely due to a bug in the scenario setup!",
-                            report.getFault());
+                            report.getRepresentativeFault());
                 }
 
                 if (hasAlteredResponse) {
                     logger.warn(
                             "Detected altered response {} with no cause! This likely due to a bug in the scenario setup!",
-                            report.getFault());
+                            report.getRepresentativeFault());
                 }
 
                 return;
             }
 
             if (hasFailure) {
-                Fault pointFault = report.getFault();
+                Fault pointFault = report.getRepresentativeFault();
                 if (knownFailures.containsKey(pointFault)) {
                     SubsetStore<Fault> knownCauses = knownFailures.get(pointFault);
                     boolean hasKnownCause = knownCauses.hasSubsetOf(causes);

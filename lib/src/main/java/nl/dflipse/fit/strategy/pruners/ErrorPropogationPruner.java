@@ -1,51 +1,63 @@
 package nl.dflipse.fit.strategy.pruners;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.trace.tree.TraceSpanReport;
 
 public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ErrorPropogationPruner.class);
 
-    private List<Set<Fault>> redundantFautloads = new ArrayList<>();
-    private List<Set<Fault>> redundantSubsets = new ArrayList<>();
+    private Set<Fault> redundantFaults = new HashSet<>();
 
     // TODO: if the body is the same as the error, and the status code,
     // Do we need to check for the other modes?
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        Set<Fault> injectedFaults = result.trace.getInjectedFaults();
-
-        for (var report : result.trace.getReports()) {
+        for (TraceSpanReport report : result.trace.getReports()) {
+            // Skip the initial report, we don't care about it
             if (report.isInitial || report.response == null) {
                 continue;
             }
 
-            boolean isErrenousResponse = report.response.isErrenous();
-            boolean isInjectedError = report.injectedFault != null
-                    && report.injectedFault.mode().getType().equals(ErrorFault.FAULT_TYPE);
+            // Are we reporting a fault, that we did not inject?
+            boolean isIndirectError = report.hasIndirectError();
+            if (!isIndirectError) {
+                continue;
+            }
 
-            boolean isErrorPropogated = isErrenousResponse && !isInjectedError;
+            // Find the direct causes that can influence the response
+            List<TraceSpanReport> childrenReports = result.trace.getChildren(report);
+            // Get the direct and indirect causes
+            Set<Fault> childCauses = childrenReports.stream()
+                    .map(f -> f.getRepresentativeFault())
+                    .filter(f -> f != null)
+                    .collect(Collectors.toSet());
+
+            boolean isUnexpectedError = childCauses.isEmpty();
+            if (isUnexpectedError) {
+                logger.warn("Unexpected error {}: " + report.response.status);
+                continue;
+            }
+
+            boolean isErrorPropogated = !childCauses.isEmpty();
             if (!isErrorPropogated) {
                 continue;
             }
 
-            FailureMode faultMode = new FailureMode(ErrorFault.FAULT_TYPE, List.of("" + report.response.status));
-            Fault responseFault = new Fault(report.faultUid, faultMode);
-
-            handlePropogation(injectedFaults, responseFault, context);
+            Fault responseFault = report.getRepresentativeFault();
+            handlePropogation(childCauses, responseFault, context);
         }
 
     }
@@ -54,36 +66,23 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
     private void handlePropogation(Set<Fault> causes, Fault effect, FeedbackContext context) {
         logger.info("Found that fault(s) " + causes + " causes error " + effect);
 
-        // We don't need to check for this exact fault, as it is already
-        // been tested
-        // Set<Fault> newRedundantFaultload = Set.of(effect);
-        // redundantFautloads.add(newRedundantFaultload);
-        // context.pruneFaultload(new Faultload(newRedundantFaultload));
+        // TODO: if a cause is directly propogated (body, status)
+        // Can we prune the faultUid?
 
-        // We also don't need to check for the subset of this fault
-        // and its causes
-        Set<Fault> newRedundantSubset = Sets.plus(causes, effect);
-        // TODO: a reduction would be to only test the cause, not the effect
-        // This is the same as the error propogation in DR?
-        // Set<Fault> newRedundantSubset = Set.of(effect);
+        // TODO: what can we prune?
+        // We can always test the cause, not the effect?
+        // Its more of a substitution, if someting counts for the effect
+        // The same is true for the cause
+        redundantFaults.add(effect);
+        context.pruneFaultSubset(Set.of(effect));
 
-        redundantSubsets.add(newRedundantSubset);
-        context.pruneFaultSubset(newRedundantSubset);
-
-        // TODO: if a cause is directly propogated -> cause & effect are redundant
-        // TODO: use unique fault ids to correlate fault & behaviour.
     }
 
     @Override
     public PruneDecision prune(Faultload faultload) {
-        for (var redundantFaultload : redundantFautloads) {
-            if (faultload.faultSet().equals(redundantFaultload)) {
-                return PruneDecision.PRUNE;
-            }
-        }
-
-        for (var redundantSubset : redundantSubsets) {
-            if (faultload.faultSet().containsAll(redundantSubset)) {
+        for (Fault fault : faultload.faultSet()) {
+            if (redundantFaults.contains(fault)) {
+                logger.info("Pruning due to error propogation: {} in {}", fault, faultload.readableString());
                 return PruneDecision.PRUNE_SUBTREE;
             }
         }

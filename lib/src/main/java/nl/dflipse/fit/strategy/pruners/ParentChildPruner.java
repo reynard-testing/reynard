@@ -15,12 +15,14 @@ public class ParentChildPruner implements Pruner, FeedbackHandler {
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        for (var pair : result.trace.getParentsAndTransativeChildren()) {
+        for (var pair : result.trace.getParentsAndChildren()) {
             var parent = pair.getFirst();
             var child = pair.getSecond();
             happensBefore.addRelation(parent, child);
         }
 
+        // TODO: is it necessary to prune the combination here?
+        // Can we just use the prune fn?
         for (var pair : happensBefore.getTransativeRelations()) {
             var parent = pair.getFirst();
             var child = pair.getSecond();

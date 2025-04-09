@@ -75,8 +75,8 @@ public class FiTestExtension
         boolean pruneImpactless = annotation.optimizeForImpactless();
         int maxFaultloadSize = annotation.maxFaultloadSize();
 
-        TraversalStrategy traversalStrategy = TraversalStrategy.BREADTH_FIRST;
-        // TraversalStrategy traversalStrategy = TraversalStrategy.DEPTH_FIRST;
+        // TraversalStrategy traversalStrategy = TraversalStrategy.BREADTH_FIRST;
+        TraversalStrategy traversalStrategy = TraversalStrategy.DEPTH_FIRST;
 
         strategy = new StrategyRunner(modes);
         strategy

@@ -146,6 +146,21 @@ public class TraceAnalysis {
         return reports;
     }
 
+    public List<TraceSpanReport> getReports(Set<FaultUid> faultUids) {
+        return getReports(List.copyOf(faultUids));
+    }
+
+    public List<TraceSpanReport> getReports(List<FaultUid> faultUids) {
+        List<TraceSpanReport> reports = new ArrayList<>();
+        for (var faultUid : faultUids) {
+            var report = getReportByFaultUid(faultUid);
+            if (report != null) {
+                reports.add(report);
+            }
+        }
+        return reports;
+    }
+
     public TraceSpanReport getReportByFaultUid(FaultUid faultUid) {
         return reportByPoint.get(faultUid);
     }
@@ -193,6 +208,10 @@ public class TraceAnalysis {
 
     public Set<FaultUid> getChildren(FaultUid node) {
         return parentChildRelation.getChildren(node);
+    }
+
+    public List<TraceSpanReport> getChildren(TraceSpanReport report) {
+        return getReports(getChildren(report.faultUid));
     }
 
     public Set<FaultUid> getNeighbours(FaultUid child) {

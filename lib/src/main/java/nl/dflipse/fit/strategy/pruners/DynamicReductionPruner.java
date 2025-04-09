@@ -120,7 +120,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
             }
         }
 
-        logger.info("Found redundant fautload " + faultload);
+        logger.info("Found redundant fautload=" + faultload.readableString());
         return PruneDecision.PRUNE;
     }
 

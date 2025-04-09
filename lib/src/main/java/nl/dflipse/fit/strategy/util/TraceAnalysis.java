@@ -236,6 +236,31 @@ public class TraceAnalysis {
         DEPTH_FIRST, BREADTH_FIRST, RANDOM
     }
 
+    public List<TraceSpanReport> getReports(TraversalStrategy strategy) {
+        List<TraceSpanReport> foundReports = new ArrayList<>();
+        traverseFaults(strategy, false, f -> {
+            var report = getReportByFaultUid(f);
+            if (report != null) {
+                foundReports.add(report);
+            }
+        });
+
+        // ensure each known fault is present, not just those in the tree
+        int missing = 0;
+        for (var report : reports) {
+            if (!foundReports.contains(report)) {
+                foundReports.add(report);
+                missing++;
+            }
+        }
+
+        if (missing > 0) {
+            logger.warn("Missing " + missing + " reports in trace tree!");
+        }
+
+        return foundReports;
+    }
+
     public List<FaultUid> getFaultUids(TraversalStrategy strategy) {
         List<FaultUid> foundFaults = new ArrayList<>();
         traverseFaults(strategy, false, foundFaults::add);

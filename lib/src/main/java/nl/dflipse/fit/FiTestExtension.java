@@ -76,6 +76,7 @@ public class FiTestExtension
         int maxFaultloadSize = annotation.maxFaultloadSize();
 
         TraversalStrategy traversalStrategy = TraversalStrategy.BREADTH_FIRST;
+        // TraversalStrategy traversalStrategy = TraversalStrategy.DEPTH_FIRST;
 
         strategy = new StrategyRunner(modes);
         strategy

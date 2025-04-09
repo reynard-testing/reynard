@@ -50,6 +50,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
 
     }
 
+    /* Causes result in fault at effect */
     private void handlePropogation(Set<Fault> causes, Fault effect, FeedbackContext context) {
         logger.info("Found that fault(s) " + causes + " causes error " + effect);
 
@@ -62,6 +63,9 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
         // We also don't need to check for the subset of this fault
         // and its causes
         Set<Fault> newRedundantSubset = Sets.plus(causes, effect);
+        // TODO: a reduction would be to only test the cause, not the effect
+        // This is the same as the error propogation in DR?
+        // Set<Fault> newRedundantSubset = Set.of(effect);
 
         redundantSubsets.add(newRedundantSubset);
         context.pruneFaultSubset(newRedundantSubset);

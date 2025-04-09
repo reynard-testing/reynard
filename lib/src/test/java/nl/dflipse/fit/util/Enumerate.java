@@ -12,7 +12,7 @@ public class Enumerate {
 
     public static long getGeneratedCount(Generator gen) {
         long i = 0;
-        while (gen.generate().size() > 0) {
+        while (gen.generate() != null) {
             i++;
         }
         return i;
@@ -21,13 +21,13 @@ public class Enumerate {
     public static List<Faultload> getGenerated(Generator gen) {
         List<Faultload> faultloads = new ArrayList<>();
         while (true) {
-            var newFaultloads = gen.generate();
+            var newFaultload = gen.generate();
 
-            if (newFaultloads.size() == 0) {
+            if (newFaultload == null) {
                 break;
             }
 
-            faultloads.addAll(newFaultloads);
+            faultloads.add(newFaultload);
         }
         return faultloads;
     }

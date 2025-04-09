@@ -9,7 +9,7 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 
 public interface Generator {
-    public List<Faultload> generate();
+    public Faultload generate();
 
     public void reportFaultUids(List<FaultUid> faultInjectionPoints);
 

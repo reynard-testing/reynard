@@ -46,18 +46,18 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
             return;
         }
 
-        int m = getFaultModes().size();
+        int modeCount = getFaultModes().size();
 
         if (iterator == null) {
             store.addFaultUids(potentialFaults);
             iterator = new PrunableGenericPowersetTreeIterator(store, true);
 
-            long expectedSize = iterator.size(m);
+            long expectedSize = iterator.size(modeCount);
             logger.info("Found " + potentialFaults.size() + " fault points. Will generate at most "
                     + expectedSize
                     + " new test cases");
         } else {
-            long oldSize = iterator.size(m);
+            long oldSize = iterator.size(modeCount);
 
             for (var fid : potentialFaults) {
                 boolean isNew = store.addFaultUid(fid);
@@ -69,7 +69,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
                 iterator.add(fid);
             }
 
-            long newSize = iterator.size(m) - oldSize;
+            long newSize = iterator.size(modeCount) - oldSize;
             logger.info("Added " + newSize + " new test cases");
         }
     }
@@ -130,12 +130,12 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     }
 
     @Override
-    public List<Faultload> generate() {
+    public Faultload generate() {
         // If we have exhausted the mode-faultUid pairings
         // we need to get the next fault injection space point (subset of fault
         // injection points)
         if (iterator == null || !iterator.hasNext()) {
-            return List.of();
+            return null;
         }
 
         // create next faultload
@@ -148,7 +148,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
             return generate();
         }
 
-        return List.of(faultLoad);
+        return faultLoad;
     }
 
     private Set<Set<Fault>> allFaults(List<FaultUid> uids) {
@@ -184,7 +184,6 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
         if (isNew && iterator != null) {
             iterator.pruneQueue();
         }
-
     }
 
     private int getNumerOfPoints() {
@@ -224,12 +223,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
 
     @Override
     public Set<FaultUid> getExpectedPoints(Set<Fault> faultload) {
-        Set<Fault> faults = faultload;
-        Set<FaultUid> basePoints = store.getNonConditionalFaultUids();
-        basePoints.addAll(store.getInclusionConditions().getForCondition(faults));
-        basePoints.removeAll(store.getExclusionConditions().getForCondition(faults));
-
-        return basePoints;
+        return store.getExpectedPoints(faultload);
     }
 
     @Override

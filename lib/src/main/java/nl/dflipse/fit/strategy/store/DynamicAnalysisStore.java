@@ -1,8 +1,10 @@
 package nl.dflipse.fit.strategy.store;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,27 +21,30 @@ import nl.dflipse.fit.strategy.util.SpaceEstimate;
 public class DynamicAnalysisStore {
     private final Logger logger = LoggerFactory.getLogger(DynamicAnalysisStore.class);
 
-    private final Set<FailureMode> modes;
-    private final Set<FaultUid> points = new HashSet<>();
+    private final List<FailureMode> modes;
+    private final List<FaultUid> points = new ArrayList<>();
 
     // Stores which faults must be present for a faultuid to be injected
     private final ConditionalStore inclusionConditions = new ConditionalStore();
     // Stores which faults must not be present for a faultuid to be injected
     private final ConditionalStore exclusionConditions = new ConditionalStore();
 
+    // TODO: store substitutions
+    private final Map<Set<Fault>, Fault> substitutions = new HashMap<>();
+
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
 
-    public DynamicAnalysisStore(Set<FailureMode> modes) {
+    public DynamicAnalysisStore(List<FailureMode> modes) {
         this.modes = modes;
     }
 
-    public Set<FaultUid> getFaultInjectionPoints() {
+    public List<FaultUid> getFaultInjectionPoints() {
         return points;
     }
 
-    public Set<FailureMode> getModes() {
+    public List<FailureMode> getModes() {
         return modes;
     }
 
@@ -55,7 +60,7 @@ public class DynamicAnalysisStore {
         return this.redundantFaultSubsets;
     }
 
-    public Set<FaultUid> getFaultUids() {
+    public List<FaultUid> getFaultUids() {
         return points;
     }
 
@@ -212,6 +217,60 @@ public class DynamicAnalysisStore {
 
     public boolean hasFaultload(Set<Fault> faultload) {
         return this.redundantFaultloads.contains(faultload);
+    }
+
+    public Set<FaultUid> getExpectedPoints(Set<Fault> faults) {
+        Set<FaultUid> basePoints = getNonConditionalFaultUids();
+        basePoints.addAll(inclusionConditions.getForCondition(faults));
+        basePoints.removeAll(exclusionConditions.getForCondition(faults));
+
+        return basePoints;
+    }
+
+    public boolean isRedundant(Set<Fault> faultload) {
+        // TODO: use substitutions
+
+        for (Fault fault : faultload) {
+            FaultUid point = fault.uid();
+
+            // Prune on preconditions
+            if (inclusionConditions.hasConditions(point)) {
+                boolean hasPrecondition = inclusionConditions.hasCondition(point, faultload);
+
+                if (!hasPrecondition) {
+                    logger.debug("Pruning node due to not matching preconditions for {}", fault);
+                    return true;
+                }
+            }
+
+            // Prune on exclusions
+            if (exclusionConditions.hasConditions(point)) {
+                boolean hasExclusion = exclusionConditions.hasCondition(point, faultload);
+
+                if (hasExclusion) {
+                    logger.debug("Pruning node due to matching exclusion for {}", fault);
+                    return true;
+                }
+            }
+        }
+
+        // Prune on subsets
+        if (hasFaultSubset(faultload)) {
+            logger.debug("Pruning node {} due pruned subset", faultload);
+            return true;
+        }
+
+        // Prune on faultload
+        if (hasFaultload(faultload)) {
+            logger.debug("Pruning node {} due pruned faultload", faultload);
+            return true;
+        }
+
+        return false;
+    }
+
+    public long estimatePruned(List<FaultUid> allUids) {
+        return estimatePruned(Set.copyOf(allUids));
     }
 
     public long estimatePruned(Set<FaultUid> allUids) {

@@ -65,6 +65,11 @@ public class Sets {
         return union;
     }
 
+    /** Return A - B + x */
+    public static <T> Set<T> replace(Set<T> A, Set<T> B, T x) {
+        return plus(difference(A, B), x);
+    }
+
     /**
      * Return all pairs of elements in A
      * 

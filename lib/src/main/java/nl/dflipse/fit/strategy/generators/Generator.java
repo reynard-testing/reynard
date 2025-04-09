@@ -24,15 +24,13 @@ public interface Generator {
 
     public void pruneFaultload(Faultload faultload);
 
-    public Set<FailureMode> getFaultModes();
+    public List<FailureMode> getFaultModes();
 
-    public Set<FaultUid> getFaultInjectionPoints();
+    public List<FaultUid> getFaultInjectionPoints();
 
     public Set<FaultUid> getExpectedPoints(Faultload faultload);
 
-    public Map<FaultUid, Set<Set<Fault>>> getConditionalFaultInjectionPoints();
-
-    public Map<FaultUid, Set<Set<Fault>>> getExclusionsForFaultInjectionPoints();
+    public Set<FaultUid> getExpectedPoints(Set<Fault> faultload);
 
     public long spaceSize();
 }

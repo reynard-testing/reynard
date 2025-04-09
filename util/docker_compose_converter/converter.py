@@ -105,7 +105,8 @@ class Converter:
         proxy_service = ServiceBuilder() \
             .with_image(IMAGES['proxy']) \
             .with_environment('ORCHESTRATOR_HOST', self.service_names['orchestrator'] + ":5000") \
-            .with_environment('CONTROLLER_PORT', self.controller_port)
+            .with_environment('CONTROLLER_PORT', self.controller_port) \
+            .with_environment('SERVICE_NAME', service_name)
 
         hostname = service_def.get('hostname', service_name)
         proxy_service_name = f'{service_name}-proxy'

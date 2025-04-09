@@ -20,15 +20,16 @@ class ResponseData:
     status: int
     body: str
 
-
 @dataclass(frozen=True)
-class FaultUid:
-    origin: str
+class InjectionPoint:
     destination: str
     signature: str
     payload: str
     count: int
 
+@dataclass(frozen=True)
+class FaultUid:
+    stack: list[InjectionPoint]
 
 @dataclass(frozen=True)
 class FaultMode:
@@ -47,7 +48,6 @@ class Faultload:
     # Faultload data
     faults: list[Fault]
     trace_id: str
-
 
 @dataclass
 class ReportedSpan:

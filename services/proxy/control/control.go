@@ -109,7 +109,8 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("\n----------------------------\n")
 	log.Printf("Registering faultload (size=%d) for trace ID %s\n", len(newFaultload.Faults), newFaultload.TraceId)
 	for _, fault := range faults {
-		if fault.Uid.Destination == destination {
+		lastIp := fault.Uid[len(fault.Uid)-1]
+		if lastIp.Destination == destination {
 			myFaults = append(myFaults, fault)
 		}
 	}

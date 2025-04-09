@@ -34,7 +34,7 @@ public class DynamicReductionTest {
 
         TraceTreeSpan spanB = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceB)
-                .withReport(serviceA, apiB1)
+                .withReport(apiB1)
                 .withResponse(200, "OK")
                 .build();
 
@@ -72,21 +72,21 @@ public class DynamicReductionTest {
 
         TraceTreeSpan spanC1 = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceC)
-                .withReport(serviceB, apiC1)
+                .withReport(apiC1)
                 .withResponse(200, "OK")
                 .build();
 
         TraceTreeSpan spanB1 = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceB)
                 .withChildren(spanC1)
-                .withReport(serviceA, apiB1)
+                .withReport(apiB1)
                 .withResponse(200, "OK")
                 .build();
 
         TraceTreeSpan spanA1 = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceB)
                 .withChildren(spanB1)
-                .withReport(null, apiA1)
+                .withReport(apiA1)
                 .withResponse(200, "OK")
                 .build();
 
@@ -99,21 +99,21 @@ public class DynamicReductionTest {
 
         TraceTreeSpan spanC2 = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceC)
-                .withReport(serviceB, apiC1)
+                .withReport(apiC1)
                 .withFault(injectedFault)
                 .build();
 
         TraceTreeSpan spanB2 = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceB)
                 .withChildren(spanC2)
-                .withReport(serviceA, apiB1)
+                .withReport(apiB1)
                 .withResponse(HttpError.INTERNAL_SERVER_ERROR.getErrorCode(), "err")
                 .build();
 
         TraceTreeSpan spanA2 = new NodeBuilder(initialFaultload.getTraceId())
                 .withService(serviceB)
                 .withChildren(spanB2)
-                .withReport(null, apiA1)
+                .withReport(apiA1)
                 .withResponse(200, "OK")
                 .build();
 

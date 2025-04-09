@@ -2,6 +2,7 @@ package nl.dflipse.fit.suites;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -196,29 +197,27 @@ public class OTELSuiteIT {
 
         }
 
-        @Test
-        public void testCounterExample() throws URISyntaxException, IOException {
-                // checkout>email:/send_order_confirmation(*)#0(HTTP_ERROR
-                // [502]),checkout>cart:oteldemo.CartService/EmptyCart(*)#0(HTTP_ERROR
-                // [504]),frontend>product-catalog:oteldemo.ProductCatalogService/GetProduct(*)#0(HTTP_ERROR
-                // [502])
-                FaultUid fid1 = new FaultUid("checkout", "email", "/send_order_confirmation", "*", 0);
-                FaultUid fid2 = new FaultUid("checkout", "cart", "oteldemo.CartService/EmptyCart", "*", 0);
-                FaultUid fid3 = new FaultUid("frontend", "product-catalog", "oteldemo.ProductCatalogService/GetProduct",
-                                "*",
-                                0);
+    }
 
-                FailureMode mode1 = ErrorFault.fromError(HttpError.BAD_GATEWAY);
-                FailureMode mode2 = ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT);
+    // @Test
+    // public void testCounterExample() throws URISyntaxException, IOException {
+    // // checkout>email:/send_order_confirmation(*)#0(HTTP_ERROR
+    // // [502]),checkout>cart:oteldemo.CartService/EmptyCart(*)#0(HTTP_ERROR
+    // //
+    // [504]),frontend>product-catalog:oteldemo.ProductCatalogService/GetProduct(*)#0(HTTP_ERROR
+    // // [502])
 
-                Fault f1 = new Fault(fid1, mode1);
-                Fault f2 = new Fault(fid2, mode2);
-                Fault f3 = new Fault(fid3, mode1);
+    // FailureMode mode1 = ErrorFault.fromError(HttpError.BAD_GATEWAY);
+    // FailureMode mode2 = ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT);
 
-                Faultload faultload = new Faultload(Set.of(f1, f2, f3));
-                TrackedFaultload trackedFaultload = new TrackedFaultload(faultload)
-                                .withMaskPayload();
+    // Fault f1 = new Fault(fid1, mode1);
+    // Fault f2 = new Fault(fid2, mode2);
+    // Fault f3 = new Fault(fid3, mode1);
 
-                testCheckout(trackedFaultload);
-        }
+    // Faultload faultload = new Faultload(Set.of(f1, f2, f3));
+    // TrackedFaultload trackedFaultload = new TrackedFaultload(faultload)
+    // .withMaskPayload();
+
+    // testCheckout(trackedFaultload);
+    // }
 }

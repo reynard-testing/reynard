@@ -1,6 +1,10 @@
 package tracing
 
-import "sync"
+import (
+	"sync"
+
+	"dflipse.nl/fit-proxy/faultload"
+)
 
 type TraceInvocationCounter struct {
 	sync.RWMutex
@@ -8,6 +12,10 @@ type TraceInvocationCounter struct {
 }
 
 var traceInvocationCounter = TraceInvocationCounter{m: make(map[string]map[string]int)}
+
+func getKey(stack faultload.FaultUid, partial faultload.PartialInjectionPoint) string {
+	return stack.String() + ">" + partial.String()
+}
 
 func (t *TraceInvocationCounter) GetCount(trace, key string) int {
 	t.Lock()
@@ -36,8 +44,8 @@ func (t *TraceInvocationCounter) Clear(trace string) {
 	delete(t.m, trace)
 }
 
-func GetCountForTrace(trace, key string) int {
-	return traceInvocationCounter.GetCount(trace, key)
+func GetCountForTrace(trace string, stack faultload.FaultUid, partial faultload.PartialInjectionPoint) int {
+	return traceInvocationCounter.GetCount(trace, getKey(stack, partial))
 }
 
 func ClearTraceCount(trace string) {

@@ -235,7 +235,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             var point = entry.getKey();
             var response = entry.getValue();
             StrategyReporter.printNewline();
-            StrategyReporter.printKeyValue("Point", point.toStringWithoutOrigin());
+            StrategyReporter.printKeyValue("Point", point.toString());
             String bodyLimited = response.body;
             if (response.body.length() > 100) {
                 bodyLimited = response.body.substring(0, 97) + "...";
@@ -248,7 +248,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
         for (var entry : maxArity.entrySet()) {
             var fault = entry.getKey();
             var arity = entry.getValue();
-            maxArityReport.put(fault.toStringWithoutOrigin(), String.valueOf(arity));
+            maxArityReport.put(fault.toString(), String.valueOf(arity));
         }
         StrategyReporter.printReport("Max arity", maxArityReport);
 

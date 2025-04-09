@@ -220,6 +220,18 @@ def get_reports_by_trace_id(trace_id):
 
 
 # --- LINK/REPORT ENDPOINTS ---
+@app.route('/v1/parent_uid', methods=['POST'])
+async def get_fault_uid():
+    data = request.get_json()
+    is_initial = data.get('is_initial')
+    if is_initial:
+        return [], 200
+    parent_id = data.get('parent_id')
+    report = report_store.get_by_span_id(parent_id)
+    if report is None:
+        return None, 404
+    
+    return report.uid, 200
 
 @app.route('/v1/link', methods=['POST'])
 async def report_span_id():
@@ -262,7 +274,7 @@ async def report_span_id():
         )
 
     fault_uid = FaultUid(
-        origin=uid.get('origin'),
+        stack=uid.get('stack'),
         signature=uid.get('signature'),
         count=uid.get('count'),
         destination=uid.get('destination'),

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public class LRUCache<K, V> extends HashMap<K, V> {
+    private static final int MAX_CAPACITY = 100;
     private final List<K> keys = new ArrayList<>();
 
     public LRUCache(int maxCapacity) {
@@ -20,7 +21,7 @@ public class LRUCache<K, V> extends HashMap<K, V> {
 
     @Override
     public V put(K key, V value) {
-        if (keys.size() > 100) {
+        if (keys.size() > MAX_CAPACITY) {
             K lruKey = keys.remove(0);
             super.remove(lruKey);
         }

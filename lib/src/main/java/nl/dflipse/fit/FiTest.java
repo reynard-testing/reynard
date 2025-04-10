@@ -29,5 +29,5 @@ public @interface FiTest {
 
     int maxFaultloadSize() default 0;
 
-    int getTraceInitialDelay() default 100;
+    int getTraceInitialDelay() default 0;
 }

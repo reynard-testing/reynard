@@ -39,7 +39,7 @@ public class RemoteController implements FaultController {
     }
 
     private TraceAnalysis attemptToGetTrace(TrackedFaultload faultload) throws IOException {
-        String queryUrl = apiHost + "/v1/trace/" + faultload.getTraceId();
+        String queryUrl = apiHost + "/v1/trace/" + faultload.getTraceId() + "/reports";
         Request request = new Request.Builder()
                 // .addHeader("Content-Type", "application/json")
                 .url(queryUrl)

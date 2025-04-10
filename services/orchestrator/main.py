@@ -219,7 +219,7 @@ def get_report_tree_by_trace_id(trace_id):
 @app.route('/v1/trace/<trace_id>/reports', methods=['GET'])
 def get_reports_by_trace_id(trace_id):
     reports = report_store.get_by_trace_id(trace_id)
-    return reports, 200
+    return {"reports": reports}, 200
 
 
 # --- LINK/REPORT ENDPOINTS ---

@@ -13,18 +13,16 @@ import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.trace.tree.TraceSpanReport;
-import nl.dflipse.fit.trace.tree.TraceTreeSpan;
+import nl.dflipse.fit.trace.tree.TraceReport;
 
 public class TraceAnalysis {
     private final Logger logger = LoggerFactory.getLogger(TraceAnalysis.class);
 
     private final Set<FaultUid> faultUids = new HashSet<>();
     private final Set<Fault> injectedFaults = new HashSet<>();
-    private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
-    private final List<TraceSpanReport> reports = new ArrayList<>();
-    private final Map<FaultUid, TraceSpanReport> reportByPoint = new HashMap<>();
-    private TraceSpanReport rootReport;
+    private final List<TraceReport> reports = new ArrayList<>();
+    private final Map<FaultUid, TraceReport> reportByPoint = new HashMap<>();
+    private TraceReport rootReport;
 
     private boolean anyIncomplete = false;
     private boolean hasInitial = false;
@@ -34,23 +32,22 @@ public class TraceAnalysis {
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
     UndirectedRelation<FaultUid> concurrentRelation = new UndirectedRelation<>();
 
-    public TraceAnalysis(TraceTreeSpan rootNode) {
-        this(rootNode, List.of());
-    }
-
-    public TraceAnalysis(TraceTreeSpan rootNode, List<TraceSpanReport> reports) {
+    public TraceAnalysis(List<TraceReport> reports) {
         // Parent null indicates the root request
         for (var report : reports) {
             analyseReport(report);
         }
-
-        analyseNode(rootNode, null);
     }
 
-    private void analyseReport(TraceSpanReport report) {
+    private void analyseReport(TraceReport report) {
         if (!reportByPoint.containsKey(report.faultUid)) {
             reports.add(report);
             reportByPoint.put(report.faultUid, report);
+        }
+
+        if (report.faultUid.hasParent()) {
+            var parent = report.faultUid.getParent();
+            parentChildRelation.addRelation(parent, report.faultUid);
         }
 
         if (report.isInitial) {
@@ -80,42 +77,6 @@ public class TraceAnalysis {
         }
     }
 
-    /** Analyse the node, given the most direct FaultUid ancestor */
-    private void analyseNode(TraceTreeSpan node, FaultUid parent) {
-        FaultUid nextParent = parent;
-
-        if (node.span.endTime <= 0) {
-            anyIncomplete = true;
-        }
-
-        // Check if the node has a report from a fault injection proxy
-        if (node.hasReport()) {
-            treeFaultPoints.add(node);
-
-            var report = node.report;
-            analyseReport(report);
-
-            // Save the parent-child relation
-            // Update the most direct parent
-            var child = report.faultUid;
-            parentChildRelation.addRelation(parent, child);
-            nextParent = child;
-
-            // If a remote call is detected (so our own proxy)
-            // But no children exist.
-            // TODO: is this solvable? Often is a misconfiguration, but we can still
-            // exercise the FI point.
-            // if (node.children.isEmpty()) {
-            // isIncomplete = true;
-            // }
-
-        }
-
-        for (var child : node.children) {
-            analyseNode(child, nextParent);
-        }
-    }
-
     public Set<FaultUid> getFaultUids() {
         return faultUids;
     }
@@ -142,16 +103,16 @@ public class TraceAnalysis {
         return false;
     }
 
-    public List<TraceSpanReport> getReports() {
+    public List<TraceReport> getReports() {
         return reports;
     }
 
-    public List<TraceSpanReport> getReports(Set<FaultUid> faultUids) {
+    public List<TraceReport> getReports(Set<FaultUid> faultUids) {
         return getReports(List.copyOf(faultUids));
     }
 
-    public List<TraceSpanReport> getReports(List<FaultUid> faultUids) {
-        List<TraceSpanReport> reports = new ArrayList<>();
+    public List<TraceReport> getReports(List<FaultUid> faultUids) {
+        List<TraceReport> reports = new ArrayList<>();
         for (var faultUid : faultUids) {
             var report = getReportByFaultUid(faultUid);
             if (report != null) {
@@ -161,11 +122,11 @@ public class TraceAnalysis {
         return reports;
     }
 
-    public TraceSpanReport getReportByFaultUid(FaultUid faultUid) {
+    public TraceReport getReportByFaultUid(FaultUid faultUid) {
         return reportByPoint.get(faultUid);
     }
 
-    public TraceSpanReport getRootReport() {
+    public TraceReport getRootReport() {
         return rootReport;
     }
 
@@ -210,7 +171,7 @@ public class TraceAnalysis {
         return parentChildRelation.getChildren(node);
     }
 
-    public List<TraceSpanReport> getChildren(TraceSpanReport report) {
+    public List<TraceReport> getChildren(TraceReport report) {
         return getReports(getChildren(report.faultUid));
     }
 
@@ -255,8 +216,8 @@ public class TraceAnalysis {
         DEPTH_FIRST, BREADTH_FIRST, RANDOM
     }
 
-    public List<TraceSpanReport> getReports(TraversalStrategy strategy) {
-        List<TraceSpanReport> foundReports = new ArrayList<>();
+    public List<TraceReport> getReports(TraversalStrategy strategy) {
+        List<TraceReport> foundReports = new ArrayList<>();
         traverseFaults(strategy, false, f -> {
             var report = getReportByFaultUid(f);
             if (report != null) {

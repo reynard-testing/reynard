@@ -16,23 +16,11 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
 import nl.dflipse.fit.strategy.pruners.PruneDecision;
-import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.util.FailureModes;
-import nl.dflipse.fit.util.NodeBuilder;
-import nl.dflipse.fit.util.ShapeBuilder;
+import nl.dflipse.fit.util.EventBuilder;
 
 public class ParentChildTest {
     private final FailureMode mode = FailureModes.getMode(0);
-
-    private FaultUid bySignature(TraceAnalysis trace, String signature) {
-        for (var r : trace.getReports()) {
-            if (r.faultUid.signature().equals(signature)) {
-                return r.faultUid;
-            }
-        }
-
-        return null;
-    }
 
     private Faultload getFaultload(FaultUid... fs) {
         Set<Fault> faults = new HashSet<>();
@@ -47,9 +35,12 @@ public class ParentChildTest {
         ParentChildPruner pruner = new ParentChildPruner();
         var faultload = new Faultload(Set.of());
         FeedbackContext contextMock = mock(FeedbackContext.class);
-        ShapeBuilder builder = new ShapeBuilder("");
-        var shape = builder.leafNode();
-        var trace = new TraceAnalysis(shape);
+        EventBuilder root = new EventBuilder()
+                .withPoint("A", "a1");
+        EventBuilder node1 = root.createChild()
+                .withPoint("B", "b1");
+
+        var trace = EventBuilder.buildTrace(root, node1);
         var result = new FaultloadResult(new TrackedFaultload(faultload), trace, true);
         pruner.handleFeedback(result, contextMock);
         assertEquals(PruneDecision.KEEP, pruner.prune(faultload));
@@ -61,22 +52,19 @@ public class ParentChildTest {
         ParentChildPruner pruner = new ParentChildPruner();
 
         // -> A/a1 -> B/b1
-        var shape = new NodeBuilder()
-                .withReport("a1")
-                .buildReport()
-                .withChild(new NodeBuilder()
-                        .withReport("b1")
-                        .buildReport())
-                .build();
-        var trace = new TraceAnalysis(shape);
+        EventBuilder nodeA = new EventBuilder()
+                .withPoint("A", "a1");
+        EventBuilder nodeB = nodeA.createChild()
+                .withPoint("B", "b1");
+        var trace = EventBuilder.buildTrace(nodeA, nodeB);
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback
         var result = new FaultloadResult(new TrackedFaultload(faultload1), trace, true);
         pruner.handleFeedback(result, contextMock);
 
-        var f1 = bySignature(trace, "a1");
-        var f2 = bySignature(trace, "b1");
+        var f1 = nodeA.getFaultUid();
+        var f2 = nodeB.getFaultUid();
 
         // Then - it should prune the combination
         assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(f1, f2)));

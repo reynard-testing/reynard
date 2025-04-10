@@ -30,6 +30,25 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(Lists.add(tail, head.asAnyPayload()));
     }
 
+    public boolean hasParent() {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+
+        if (stack.size() == 1) {
+            return false;
+        }
+        return true;
+    }
+
+    public FaultUid getParent() {
+        if (!hasParent()) {
+            return null;
+        }
+
+        return new FaultUid(getTail());
+    }
+
     public FaultUid asAnyCount() {
         var head = getPoint();
         var tail = getTail();

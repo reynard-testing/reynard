@@ -24,8 +24,8 @@ import nl.dflipse.fit.strategy.store.SubsetStore;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
-import nl.dflipse.fit.trace.tree.TraceSpanReport;
-import nl.dflipse.fit.trace.tree.TraceSpanResponse;
+import nl.dflipse.fit.trace.tree.TraceReport;
+import nl.dflipse.fit.trace.tree.TraceResponse;
 
 public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(BehaviorAnalyzer.class);
@@ -33,7 +33,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     // TODO: equality checks (wrt masks)
     private final Map<Fault, SubsetStore<Fault>> knownFailures = new LinkedHashMap<>();
     private final Map<FaultUid, SubsetStore<Fault>> knownResolutions = new LinkedHashMap<>();
-    private final Map<FaultUid, TraceSpanResponse> happyPath = new LinkedHashMap<>();
+    private final Map<FaultUid, TraceResponse> happyPath = new LinkedHashMap<>();
     private final Map<FaultUid, Integer> maxArity = new LinkedHashMap<>();
 
     private final List<FailureMode> failureModes;
@@ -45,7 +45,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         result.trace.traverseFaults(TraversalStrategy.BREADTH_FIRST, true, injectionPoint -> {
-            TraceSpanReport report = result.trace.getReportByFaultUid(injectionPoint);
+            TraceReport report = result.trace.getReportByFaultUid(injectionPoint);
             if (report == null) {
                 return;
             }

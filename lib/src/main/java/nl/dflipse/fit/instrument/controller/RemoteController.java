@@ -51,24 +51,8 @@ public class RemoteController implements FaultController {
                     new TypeReference<ControllerResponse>() {
                     });
 
-            if (response.trees.isEmpty()) {
-                throw new IOException("Empty trace tree found for traceId: " + faultload.getTraceId());
-            }
-
-            if (response.trees.size() > 1) {
-                throw new IOException("Trace is not fully connected for traceId: " + faultload.getTraceId());
-            }
-
-            var traceTreeRoot = response.trees.get(0);
             var traceReports = response.reports;
-
-            TraceAnalysis trace = new TraceAnalysis(traceTreeRoot, traceReports);
-
-            var rootSpanId = traceTreeRoot.span.spanId;
-            var expectedRoot = faultload.getTraceParent().parentSpanId;
-            if (!rootSpanId.equals(expectedRoot)) {
-                throw new IOException("Root span mismatch: " + rootSpanId + " != " + expectedRoot);
-            }
+            TraceAnalysis trace = new TraceAnalysis(traceReports);
 
             if (trace.isInvalid()) {
                 throw new IOException("Trace is invalid!");

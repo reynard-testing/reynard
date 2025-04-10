@@ -35,8 +35,8 @@ def to_trace_tree_nodes(spans: list[Span], reports: list[ReportedSpan]) -> list[
         report_lookup[report.span_id] = report
 
     return [TraceTreeNode(
-        span=span, 
-        report = report_lookup.get(span.span_id, None)) for span in spans]
+        span=span,
+        report=report_lookup.get(span.span_id, None)) for span in spans]
 
 
 def get_trace_tree(spans: list[Span], reports: list[ReportedSpan]) -> list[TraceTreeNode]:
@@ -118,6 +118,8 @@ def get_report_tree(node: TraceTreeNode) -> list[TraceTreeNode]:
     return get_report_tree_children(node.children)
 
 # ----------------- API Endpoints -----------------
+
+
 def upsert_span(span: Span):
     # store all spans for debugging
     if debug_flag_set:
@@ -138,6 +140,7 @@ def upsert_span(span: Span):
 
     # otherwise, add the span
     span_store.add(span)
+
 
 @app.route('/v1/traces', methods=['POST'])
 def collect():
@@ -231,8 +234,9 @@ async def get_fault_uid():
     report = report_store.get_by_span_id(parent_id)
     if report is None:
         return [], 404
-    
+
     return {"stack": report.uid.stack}, 200
+
 
 @app.route('/v1/link', methods=['POST'])
 async def report_span_id():
@@ -251,7 +255,7 @@ async def report_span_id():
         print(
             f"Trace id ({trace_id}) not registered anymore for uid {uid}", flush=True)
         return "Trace not registered", 404
-    
+
     span = Span(
         trace_id=trace_id,
         span_id=span_id,
@@ -271,7 +275,8 @@ async def report_span_id():
     if response:
         responseData = ResponseData(
             status=response.get('status'),
-            body=response.get('body')
+            body=response.get('body'),
+            duration_ms=response.get('duration_ms'),
         )
 
     stack = tuple([InjectionPoint(**fip) for fip in uid.get('stack', [])])

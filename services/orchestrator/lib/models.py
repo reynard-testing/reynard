@@ -17,8 +17,10 @@ class Span:
 
 @dataclass(frozen=True)
 class ResponseData:
+    duration_ms: int
     status: int
     body: str
+
 
 @dataclass(frozen=True)
 class InjectionPoint:
@@ -27,9 +29,11 @@ class InjectionPoint:
     payload: str
     count: int
 
+
 @dataclass(frozen=True)
 class FaultUid:
     stack: tuple[InjectionPoint, ...]
+
 
 @dataclass(frozen=True)
 class FaultMode:
@@ -48,6 +52,7 @@ class Faultload:
     # Faultload data
     faults: list[Fault]
     trace_id: str
+
 
 @dataclass
 class ReportedSpan:

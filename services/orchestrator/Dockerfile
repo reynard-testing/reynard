@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.12-bullseye
 
 WORKDIR /usr/src/app
 

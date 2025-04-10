@@ -30,7 +30,7 @@ import okhttp3.Response;
 public class MetaSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final String PROXY_IMAGE = "fit-proxy:latest";
-    private static final String COORDINATOR_IMAGE = "fit-otel-orchestrator:latest";
+    private static final String COORDINATOR_IMAGE = "fit-orchestrator:latest";
     private static final String COLLECTOR_ENDPOINT = "http://" + app.collectorHost + ":4317";
     public static final MediaType JSON = MediaType.get("application/json");
 

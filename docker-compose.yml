@@ -12,7 +12,7 @@ services:
       - COLLECTOR_OTLP_ENABLED=true
 
   orchestrator:
-    image: fit-otel-orchestrator:latest
+    image: fit-orchestrator:latest
     ports:
       - "5050:5000"
     environment:

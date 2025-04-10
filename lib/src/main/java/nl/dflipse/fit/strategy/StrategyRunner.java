@@ -1,7 +1,6 @@
 package nl.dflipse.fit.strategy;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -9,14 +8,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
+import nl.dflipse.fit.strategy.pruners.PruneDecision;
 import nl.dflipse.fit.strategy.pruners.Pruner;
-import nl.dflipse.fit.strategy.util.Pair;
+import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 
 public class StrategyRunner {
-    public final List<Faultload> queue = new ArrayList<>();
-
+    private DynamicAnalysisStore store;
     private Generator generator = null;
 
     private final List<FeedbackHandler> analyzers = new ArrayList<>();
@@ -26,6 +26,8 @@ public class StrategyRunner {
 
     public StrategyStatistics statistics = new StrategyStatistics(this);
 
+    private boolean intialRun = true;
+
     private boolean withPayloadMasking = false;
     private boolean withBodyHashing = false;
     private boolean withLogHeader = false;
@@ -34,9 +36,8 @@ public class StrategyRunner {
 
     private final Logger logger = LoggerFactory.getLogger(StrategyRunner.class);
 
-    public StrategyRunner() {
-        // Initialize the queue with an empty faultload
-        queue.add(new Faultload(Set.of()));
+    public StrategyRunner(List<FailureMode> modes) {
+        this.store = new DynamicAnalysisStore(modes);
     }
 
     public StrategyRunner withPayloadMasking() {
@@ -104,6 +105,10 @@ public class StrategyRunner {
         return generator;
     }
 
+    public DynamicAnalysisStore getStore() {
+        return store;
+    }
+
     public List<Reporter> getReporters() {
         return reporters;
     }
@@ -112,12 +117,14 @@ public class StrategyRunner {
         return componentNames;
     }
 
-    public TrackedFaultload nextFaultload() {
-        // Queue is empty, no more faultloads to run
-        if (queue.isEmpty()) {
-            return null;
+    private Faultload getNextFaultload() {
+        if (intialRun) {
+            intialRun = false;
+            logger.info("Starting with initial empty faultload!");
+            return new Faultload(Set.of());
         }
 
+        // Queue is empty, no more faultloads to run
         // Test case limit reached
         if (testCasesLeft == 0) {
             logger.warn("Reached test case limit, stopping!");
@@ -126,13 +133,20 @@ public class StrategyRunner {
             testCasesLeft--;
         }
 
-        // Get the next faultload from the queue
-        var queued = queue.remove(0);
+        Faultload faultload = generateAndPruneTillNext();
 
+        if (faultload == null) {
+            logger.info("No new faultload generated, stopping!");
+            return null;
+        }
+
+        return faultload;
+    }
+
+    private TrackedFaultload toTracked(Faultload faultload) {
         // Wrap the faultload in a tracked faultload
         // And prepare its properties
-        var tracked = new TrackedFaultload(queued);
-        boolean isInitial = tracked.getFaultload().faultSet().isEmpty();
+        var tracked = new TrackedFaultload(faultload);
 
         if (withPayloadMasking) {
             tracked.withMaskPayload();
@@ -147,6 +161,7 @@ public class StrategyRunner {
         }
 
         if (withGetDelayMs > 0) {
+            boolean isInitial = tracked.getFaultload().faultSet().isEmpty();
             // Wait longer on the initial run, to ensure we got everyting
             int multiplier = isInitial ? 4 : 1;
             tracked.withGetDelay(multiplier * withGetDelayMs);
@@ -155,42 +170,48 @@ public class StrategyRunner {
         return tracked;
     }
 
-    public Pair<Integer, Integer> generateAndPrune() {
-        // Generate new faultloads
-        List<Faultload> newFaultloads = generate();
+    public TrackedFaultload nextFaultload() {
+        Faultload faultload = getNextFaultload();
 
-        queue.addAll(newFaultloads);
+        if (faultload == null) {
+            return null;
+        }
 
-        // Prune the queue
-        int pruned = prune();
-        return new Pair<>(newFaultloads.size(), pruned);
+        return toTracked(faultload);
     }
 
-    public Pair<Integer, Integer> generateAndPruneTillNext() {
+    public Faultload generateAndPruneTillNext() {
         int orders = 2;
-        int generated = 0;
-        int pruned = 0;
+        int generateCount = 0;
+        int pruneCount = 0;
+
+        Faultload next = null;
 
         while (true) {
-            var res = generateAndPrune();
-            int newFaultloads = res.getFirst();
+            // Generate new faultloads
+            Faultload generated = generate();
+            generateCount++;
 
-            if (newFaultloads == 0) {
+            // Generator is exhausted
+            if (generated == null) {
                 break;
             }
 
-            generated += newFaultloads;
-            pruned += res.getSecond();
+            PruneDecision decision = prune(generated);
+            boolean shouldPrune = decision == PruneDecision.PRUNE ||
+                    decision == PruneDecision.PRUNE_SUBTREE;
 
+            if (!shouldPrune) {
+                // We found a new faultload!
+                next = generated;
+                break;
+            }
+            // Log some progress, in case we are generating and pruning a lot
+            pruneCount++;
             long order = (long) Math.pow(10, orders);
-            if (generated > order) {
+            if (generateCount > order) {
                 logger.info("Progress: generated and pruned >" + order + " faultloads");
                 orders++;
-            }
-
-            // Keep generating and pruning until we have new faultloads in the queue
-            if (!queue.isEmpty()) {
-                break;
             }
         }
 
@@ -198,7 +219,8 @@ public class StrategyRunner {
             logger.info("Generator queue size: {}", gen.getQueuSize());
         }
 
-        return new Pair<>(generated, pruned);
+        logger.info("Generated {} and pruned {} faultloads", generateCount, pruneCount);
+        return next;
     }
 
     public void registerTime(TrackedFaultload faultload) {
@@ -209,23 +231,18 @@ public class StrategyRunner {
         logger.info("Analyzing result of running faultload with traceId=" + result.trackedFaultload.getTraceId());
         analyze(result);
         logger.info("Selecting next faultload");
-
-        result.trackedFaultload.timer.start("StrategyRunner.generateAndPrune");
-        var res = generateAndPruneTillNext();
-        int generated = res.getFirst();
-        int pruned = res.getSecond();
-        result.trackedFaultload.timer.stop("StrategyRunner.generateAndPrune");
-
-        logger.info("Generated " + generated + " new faultloads, pruned " + pruned + " faultloads");
     }
 
-    public List<Faultload> generate() {
+    public Faultload generate() {
         if (generator == null) {
             throw new RuntimeException("[Strategy] No generators are available, make sure to register at least one!");
         }
 
         var generated = generator.generate();
-        statistics.incrementGenerator("Generated", generated.size());
+
+        if (generated != null) {
+            statistics.incrementGenerator("Generated", 1);
+        }
 
         return generated;
     }
@@ -247,39 +264,39 @@ public class StrategyRunner {
         result.trackedFaultload.timer.stop("StrategyRunner.analyze");
     }
 
-    public int prune() {
-        Set<Faultload> toRemove = new HashSet<>();
+    public PruneDecision prune(Faultload faultload) {
+        boolean shouldPrune = false;
+        boolean shouldPruneSubtree = false;
 
-        for (var faultload : this.queue) {
-            boolean shouldPrune = false;
-
-            for (Pruner pruner : pruners) {
-                var decision = pruner.prune(faultload);
-                switch (decision) {
-                    case PRUNE -> {
-                        statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
-                        shouldPrune = true;
-                    }
-                    case PRUNE_SUBTREE -> {
-                        statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
-                        new FeedbackContextProvider(this, pruner.getClass(), null)
-                                .pruneFaultSubset(faultload.faultSet());
-                        shouldPrune = true;
-                    }
-                    case KEEP -> {
-                    }
-                    default -> {
-                    }
+        for (Pruner pruner : pruners) {
+            var decision = pruner.prune(faultload);
+            switch (decision) {
+                case PRUNE -> {
+                    statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
+                    shouldPrune = true;
                 }
-            }
-
-            if (shouldPrune) {
-                toRemove.add(faultload);
+                case PRUNE_SUBTREE -> {
+                    statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
+                    new FeedbackContextProvider(this, pruner.getClass(), null)
+                            .pruneFaultSubset(faultload.faultSet());
+                    shouldPrune = true;
+                    shouldPruneSubtree = true;
+                }
+                case KEEP -> {
+                }
             }
         }
 
-        statistics.incrementPruned(toRemove.size());
-        this.queue.removeAll(toRemove);
-        return toRemove.size();
+        if (shouldPrune) {
+            statistics.incrementPruned(1);
+        }
+
+        if (shouldPruneSubtree) {
+            return PruneDecision.PRUNE_SUBTREE;
+        } else if (shouldPrune) {
+            return PruneDecision.PRUNE;
+        } else {
+            return PruneDecision.KEEP;
+        }
     }
 }

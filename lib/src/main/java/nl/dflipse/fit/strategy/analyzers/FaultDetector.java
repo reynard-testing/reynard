@@ -1,6 +1,8 @@
 package nl.dflipse.fit.strategy.analyzers;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,19 +14,27 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.util.Lists;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
-public class ConditionalFaultDetector implements FeedbackHandler {
-    private final Logger logger = LoggerFactory.getLogger(ConditionalFaultDetector.class);
-    private final Set<FaultUid> pointsInHappyPath = new HashSet<>();
+public class FaultDetector implements FeedbackHandler {
+    private final Logger logger = LoggerFactory.getLogger(FaultDetector.class);
+    private final List<FaultUid> pointsInHappyPath = new ArrayList<>();
     // Note: this is unsound in general, but can be useful in practice
     private final boolean onlyPersistantOrTransientRetries;
+    private final TraversalStrategy traversalStrategy;
 
-    public ConditionalFaultDetector(boolean onlyPersistantOrTransientRetries) {
+    public FaultDetector(TraversalStrategy traversalStrategy, boolean onlyPersistantOrTransientRetries) {
+        this.traversalStrategy = traversalStrategy;
         this.onlyPersistantOrTransientRetries = onlyPersistantOrTransientRetries;
     }
 
-    public ConditionalFaultDetector() {
+    public FaultDetector(boolean onlyPersistantOrTransientRetries) {
+        this(TraversalStrategy.BREADTH_FIRST, onlyPersistantOrTransientRetries);
+    }
+
+    public FaultDetector() {
         this(false);
     }
 
@@ -81,19 +91,27 @@ public class ConditionalFaultDetector implements FeedbackHandler {
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        var traceFaultUids = result.trace.getFaultUids();
+        List<FaultUid> traceFaultUids = result.trace.getFaultUids(traversalStrategy);
 
         // --- Happy path ---
         if (result.isInitial()) {
             pointsInHappyPath.addAll(traceFaultUids);
+
+            for (var fault : traceFaultUids) {
+                logger.info("Found fault: " + fault);
+            }
+
+            context.reportFaultUids(traceFaultUids);
             return;
         }
 
         Set<FaultUid> expectedPoints = new HashSet<>(pointsInHappyPath);
-        expectedPoints.addAll(context.getConditionalForFaultload());
+        expectedPoints
+                .addAll(context.getStore().getInclusionConditions()
+                        .getForCondition(result.trace.getInjectedFaults()));
 
         // Analyse new paths that were not in the happy path
-        var appeared = Sets.difference(traceFaultUids, expectedPoints);
+        var appeared = Lists.difference(traceFaultUids, List.copyOf(expectedPoints));
 
         // Report newly found points
         if (!appeared.isEmpty()) {

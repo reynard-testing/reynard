@@ -27,35 +27,19 @@ func getEnvOrDefault(envVar, defaultValue string) string {
 	return value
 }
 
-func FaultUidFromRequest(r *http.Request, destination string, maskPayload, isInitial bool) faultload.FaultUid {
-	traceId := getTraceId(r)
+func PartialPointFromRequest(r *http.Request, destination string, maskPayload bool) faultload.PartialInjectionPoint {
 	signature := getCallSignature(r)
 
-	origin := "<origin>"
-	if !isInitial {
-		origin = getOrigin(r)
-	}
-
-	// destination := getDestination(r)
 	payload := "*"
 	if !maskPayload {
 		payload = getPayloadHash(r)
 	}
-	invocationCount := getInvocationCount(origin, signature, payload, traceId)
 
-	return faultload.FaultUid{
-		Origin:      origin,
+	return faultload.PartialInjectionPoint{
 		Destination: destination,
 		Signature:   signature,
 		Payload:     payload,
-		Count:       invocationCount,
 	}
-}
-
-func getInvocationCount(origin, signature, payload, traceId string) int {
-	key := fmt.Sprintf("%s-%s-%s", origin, signature, payload)
-	currentIndex := GetCountForTrace(traceId, key)
-	return currentIndex
 }
 
 func getPayloadHash(r *http.Request) string {
@@ -74,20 +58,15 @@ func getPayloadHash(r *http.Request) string {
 	// This is necessary because the proxy will read the body to forward the request
 	r.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
 
-	hash := sha256.Sum256(bodyBytes)
+	hash := ""
+	if len(bodyBytes) > 0 {
+		bodyHash := sha256.Sum256(bodyBytes)
+		hash = fmt.Sprintf("%x", bodyHash)
+	}
+
 	// shortHash := hash[:8] // Use only the first 8 bytes of the hash
 	// return fmt.Sprintf("%x", shortHash)
 	return fmt.Sprintf("%x", hash)
-}
-
-func getTraceId(r *http.Request) string {
-	traceParentHeader := r.Header.Get("traceparent")
-	parts := strings.Split(traceParentHeader, "-")
-	if len(parts) < 4 {
-		return ""
-	}
-
-	return parts[1]
 }
 
 var digitCheck = regexp.MustCompile(`^[0-9]+$`)

@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.util;
+package nl.dflipse.fit.strategy.store;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +9,7 @@ public class SubsetStore<E> {
     private final List<Set<E>> sets = new ArrayList<>();
     private final boolean allowNull = false;
     private final boolean minimize;
+    private BiPredicate<E, E> equality = (a, b) -> a.equals(b);
 
     public SubsetStore(boolean minimize) {
         this.minimize = minimize;
@@ -17,8 +18,6 @@ public class SubsetStore<E> {
     public SubsetStore() {
         this(true);
     }
-
-    private BiPredicate<E, E> equality = (a, b) -> a.equals(b);
 
     public SubsetStore<E> withEquality(BiPredicate<E, E> equality) {
         this.equality = equality;
@@ -78,6 +77,21 @@ public class SubsetStore<E> {
         return false;
     }
 
+    public boolean hasSupersetOf(Set<E> set) {
+        if (set.isEmpty() && !sets.isEmpty()) {
+            return true;
+        }
+
+        for (Set<E> s : sets) {
+            // if set <= s
+            if (isSubsetOf(set, s)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public boolean hasSet(Set<E> set) {
         if (set.isEmpty() && !allowNull) {
             return false;
@@ -110,7 +124,7 @@ public class SubsetStore<E> {
         sets.add(set);
     }
 
-    public int getSize() {
+    public int size() {
         return sets.size();
     }
 

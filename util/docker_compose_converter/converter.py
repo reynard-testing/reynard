@@ -105,7 +105,8 @@ class Converter:
         proxy_service = ServiceBuilder() \
             .with_image(IMAGES['proxy']) \
             .with_environment('ORCHESTRATOR_HOST', self.service_names['orchestrator'] + ":5000") \
-            .with_environment('CONTROLLER_PORT', self.controller_port)
+            .with_environment('CONTROLLER_PORT', self.controller_port) \
+            .with_environment('SERVICE_NAME', service_name)
 
         hostname = service_def.get('hostname', service_name)
         proxy_service_name = f'{service_name}-proxy'
@@ -208,6 +209,6 @@ if __name__ == '__main__':
     converter.convert()
 
     new_file_name = '.'.join(args.yaml_file.split('.')
-                             [:-1]) + '.fit.yaml'
+                             [:-1]) + '.fit.yml'
     with open(new_file_name, 'w') as file:
         yaml.dump(converter.output, file, sort_keys=False)

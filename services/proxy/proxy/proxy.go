@@ -10,12 +10,23 @@ import (
 
 	"dflipse.nl/fit-proxy/config"
 	"dflipse.nl/fit-proxy/control"
+	"dflipse.nl/fit-proxy/faultload"
 	"dflipse.nl/fit-proxy/tracing"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
 var destination string
+
+const FIT_PARENT_KEY = "fit-parent"
+const FIT_IS_INITIAL_KEY = "init"
+const FIT_FLAG = "fit"
+const FIT_MASK_PAYLOAD_FLAG = "mask"
+const FIT_HASH_BODY_FLAG = "hashbody"
+const FIT_HEADER_LOGGING_FLAG = "headerlog"
+
+const OTEL_PARENT_HEADER = "traceparent"
+const OTEL_STATE_HEADER = "tracestate"
 
 func StartProxy(config config.ProxyConfig) {
 	// Set up the proxy host and target
@@ -72,7 +83,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// Inspect request before forwarding
 
 		// Get and parse the "traceparent" headers
-		traceparent := r.Header.Get("traceparent")
+		traceparent := r.Header.Get(OTEL_PARENT_HEADER)
 		parentSpan := tracing.ParseTraceParent(traceparent)
 
 		// If no traceparent is found, forward the request without inspection
@@ -91,15 +102,15 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		// Get and parse the "tracestate" header
-		tracestate := r.Header.Get("tracestate")
+		tracestate := r.Header.Get(OTEL_STATE_HEADER)
 		state := tracing.ParseTraceState(tracestate)
 		traceId := parentSpan.TraceID
 		// TODO (optional): export to collector, so that jeager understands whats going on
 		currentSpan := parentSpan.GenerateNew()
-		r.Header.Set("traceparent", currentSpan.String())
+		r.Header.Set(OTEL_PARENT_HEADER, currentSpan.String())
 
 		// only forward the request if the "fit" flag is set in the tracestate
-		shouldInspect := state.GetWithDefault("fit", "0") == "1"
+		shouldInspect := state.GetWithDefault(FIT_FLAG, "0") == "1"
 		if !shouldInspect {
 			proxy.ServeHTTP(w, r)
 			return
@@ -113,30 +124,43 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// determine the span ID for the current request
 		// and report the link to the parent span
 		log.Printf("Faults registered for this trace: %s\n", faults)
-		shouldMaskPayload := state.GetWithDefault("mask", "0") == "1"
+		shouldMaskPayload := state.GetWithDefault(FIT_MASK_PAYLOAD_FLAG, "0") == "1"
 		if shouldMaskPayload {
 			log.Printf("Payload masking enabled.\n")
 		}
 
 		// determine if this is the initial request
 		// and update the tracestate accordingly
-		isInitial := state.GetWithDefault("init", "0") == "1"
+		isInitial := state.GetWithDefault(FIT_IS_INITIAL_KEY, "0") == "1"
 		if isInitial {
 			log.Printf("Initial request.\n")
-			state.Delete("init")
-			r.Header.Set("tracestate", state.String())
+			state.Delete(FIT_IS_INITIAL_KEY)
+			r.Header.Set(OTEL_STATE_HEADER, state.String())
 		}
 
-		faultUid := tracing.FaultUidFromRequest(r, destination, shouldMaskPayload, isInitial)
-		log.Printf("Determined Fault UID: %s\n", faultUid.String())
-		tracing.TrackFault(traceId, &faultUid)
+		// -- Determine FID --
+		reportParentId := state.GetWithDefault(FIT_PARENT_KEY, "0")
+		log.Printf("Report parent ID: %s\n", reportParentId)
+		partialPoint := tracing.PartialPointFromRequest(r, destination, shouldMaskPayload)
+		parentStack := tracing.GetUid(tracing.UidRequest{
+			TraceId:        traceId,
+			ReportParentId: reportParentId,
+			IsInitial:      isInitial,
+		})
+		invocationCount := tracing.GetCountForTrace(traceId, parentStack, partialPoint)
+		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, invocationCount)
+		// --
+
+		state.Set(FIT_PARENT_KEY, currentSpan.ParentID)
+		r.Header.Set(OTEL_STATE_HEADER, state.String())
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
-			TraceId:   traceId,
-			ParentId:  parentSpan.ParentID,
-			SpanId:    currentSpan.ParentID,
-			FaultUid:  faultUid,
-			IsInitial: isInitial,
+			TraceId:        traceId,
+			ReportParentId: reportParentId,
+			ParentId:       parentSpan.ParentID,
+			SpanId:         currentSpan.ParentID,
+			FaultUid:       faultUid,
+			IsInitial:      isInitial,
 		}
 
 		capture := &ResponseCapture{
@@ -155,18 +179,20 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		// Start reporting the span for the request
-		shouldHashBody := state.GetWithDefault("hashbody", "0") == "1"
+		shouldHashBody := state.GetWithDefault(FIT_HASH_BODY_FLAG, "0") == "1"
 		if shouldHashBody {
 			log.Printf("Body hashing enabled.\n")
 		}
 
-		shouldLogHeader := state.GetWithDefault("headerlog", "0") == "1"
+		shouldLogHeader := state.GetWithDefault(FIT_HEADER_LOGGING_FLAG, "0") == "1"
 		if shouldLogHeader {
 			log.Printf("Header logging enabled.\n")
 			log.Printf("Headers: %s\n", r.Header)
 		}
 
+		log.Printf("Determined Fault UID: %s\n", faultUid.String())
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
+		tracing.TrackFault(traceId, &faultUid)
 
 		for _, fault := range faults {
 			if fault.Uid.Matches(faultUid) {
@@ -190,10 +216,10 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		proxyState.Complete = true
 
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
+		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
+
 		if len(proxyState.ConcurrentFaults) > 0 {
 			log.Printf("Concurrent faults: %s\n", proxyState.ConcurrentFaults)
 		}
-
-		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 	})
 }

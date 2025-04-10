@@ -20,9 +20,9 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.Reporter;
 import nl.dflipse.fit.strategy.StrategyReporter;
+import nl.dflipse.fit.strategy.store.SubsetStore;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.strategy.util.SubsetStore;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.trace.tree.TraceSpanReport;
 import nl.dflipse.fit.trace.tree.TraceSpanResponse;
@@ -81,7 +81,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                 }
 
                 if (childReport.hasError()) {
-                    Fault fault = childReport.getFault();
+                    Fault fault = childReport.getRepresentativeFault();
 
                     if (childReport.hasIndirectError()) {
                         unexpectedCauses.add(fault);
@@ -109,20 +109,20 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             if (causes.isEmpty()) {
                 if (hasFailure) {
                     logger.warn("Detected failure {} with no cause! This likely due to a bug in the scenario setup!",
-                            report.getFault());
+                            report.getRepresentativeFault());
                 }
 
                 if (hasAlteredResponse) {
                     logger.warn(
                             "Detected altered response {} with no cause! This likely due to a bug in the scenario setup!",
-                            report.getFault());
+                            report.getRepresentativeFault());
                 }
 
                 return;
             }
 
             if (hasFailure) {
-                Fault pointFault = report.getFault();
+                Fault pointFault = report.getRepresentativeFault();
                 if (knownFailures.containsKey(pointFault)) {
                     SubsetStore<Fault> knownCauses = knownFailures.get(pointFault);
                     boolean hasKnownCause = knownCauses.hasSubsetOf(causes);
@@ -235,8 +235,8 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             var point = entry.getKey();
             var response = entry.getValue();
             StrategyReporter.printNewline();
-            StrategyReporter.printKeyValue("Point", point.toStringWithoutOrigin());
-            String bodyLimited = response.body;
+            StrategyReporter.printKeyValue("Point", point.toString());
+            String bodyLimited = response.body.replace("\n", "");
             if (response.body.length() > 100) {
                 bodyLimited = response.body.substring(0, 97) + "...";
             }
@@ -248,7 +248,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
         for (var entry : maxArity.entrySet()) {
             var fault = entry.getKey();
             var arity = entry.getValue();
-            maxArityReport.put(fault.toStringWithoutOrigin(), String.valueOf(arity));
+            maxArityReport.put(fault.toString(), String.valueOf(arity));
         }
         StrategyReporter.printReport("Max arity", maxArityReport);
 

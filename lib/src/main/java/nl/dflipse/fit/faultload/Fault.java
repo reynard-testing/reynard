@@ -13,10 +13,10 @@ public record Fault(
         @JsonProperty("mode") FailureMode mode) {
 
     public boolean isTransient() {
-        return uid.isTransient();
+        return uid.getPoint().isTransient();
     }
 
     public boolean isPersistent() {
-        return uid.isPersistent();
+        return uid.getPoint().isPersistent();
     }
 }

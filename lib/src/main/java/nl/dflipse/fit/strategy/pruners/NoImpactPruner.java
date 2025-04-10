@@ -12,7 +12,6 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.store.ConditionalStore;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class NoImpactPruner implements Pruner, FeedbackHandler {
@@ -39,7 +38,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
             return;
         }
 
-        var conditionals = context.getConditionals();
+        var conditionals = context.getStore().getInclusionConditions();
         var points = context.getFaultUids();
 
         for (Fault fault : injected) {
@@ -64,7 +63,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
                 continue;
             }
 
-            boolean isCauseForAlternativePath = ConditionalStore.isPartOfAnyCondition(conditionals, Set.of(fault));
+            boolean isCauseForAlternativePath = conditionals.isPartOfAnyCondition(Set.of(fault));
 
             if (isCauseForAlternativePath) {
                 continue;

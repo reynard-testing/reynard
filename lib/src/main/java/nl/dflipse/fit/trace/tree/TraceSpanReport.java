@@ -44,7 +44,7 @@ public class TraceSpanReport {
         return injectedFault == null && response != null && response.isErrenous();
     }
 
-    public Fault getFault() {
+    public Fault getRepresentativeFault() {
         if (injectedFault != null) {
             return injectedFault;
         }

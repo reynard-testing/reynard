@@ -24,7 +24,7 @@ public class ShapeBuilder {
     public TraceTreeSpan leafNode() {
         TraceTreeSpan span = new NodeBuilder(traceId)
                 .withService(newService())
-                .withReport(null, "Endpoint 1")
+                .withReport("Endpoint 1")
                 .withResponse(200, "OK")
                 .build();
 

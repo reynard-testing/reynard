@@ -33,7 +33,7 @@ public class PrunedGeneratorSpaceTest {
         }
 
         var faults = generator.generate();
-        assert faults.size() == 0;
+        assert faults == null;
     }
 
     @Test

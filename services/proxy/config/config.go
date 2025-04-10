@@ -26,9 +26,18 @@ func GetProxyConfig() ProxyConfig {
 	proxyTarget := os.Getenv("PROXY_TARGET")     // Target server address
 	useHttp2 := os.Getenv("USE_HTTP2") == "true" // Use HTTP/2?
 
-	proxyTargetAddr := util.AsHostAndPortFromUrl(proxyTarget)
-	proxyTargetHost, _ := util.AsHostAndPort(proxyTargetAddr)
-	destination := tracing.GetHostIdentifier(proxyTargetHost)
+	// Use either predefined service name or fallback to target host
+	destination := os.Getenv("SERVICE_NAME")
+
+	if destination == "" {
+		destination = os.Getenv("OTEL_SERVICE_NAME")
+	}
+
+	if destination == "" {
+		proxyTargetAddr := util.AsHostAndPortFromUrl(proxyTarget)
+		proxyTargetHost, _ := util.AsHostAndPort(proxyTargetAddr)
+		destination = tracing.GetHostIdentifier(proxyTargetHost)
+	}
 
 	return ProxyConfig{
 		Host:        proxyHost,

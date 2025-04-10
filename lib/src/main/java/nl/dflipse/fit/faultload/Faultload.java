@@ -35,6 +35,7 @@ public record Faultload(Set<Fault> faultSet) {
                     + fault.mode().getArgs() + ")");
         }
 
+        readableFaults.sort(String::compareTo);
         return String.join(", ", readableFaults);
     }
 

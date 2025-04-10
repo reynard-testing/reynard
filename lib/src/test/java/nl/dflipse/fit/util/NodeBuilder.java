@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.dflipse.fit.faultload.Fault;
+import nl.dflipse.fit.faultload.FaultInjectionPoint;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.strategy.util.Lists;
 import nl.dflipse.fit.trace.tree.TraceSpan;
 import nl.dflipse.fit.trace.tree.TraceSpanReport;
 import nl.dflipse.fit.trace.tree.TraceSpanResponse;
@@ -57,13 +59,9 @@ public class NodeBuilder {
     return this;
   }
 
-  public ReportBuilder withReport(String origin, String signature) {
-    return new ReportBuilder(this, origin, signature);
-  }
-
   public ReportBuilder withReport(String signature) {
     if (this.parent != null && this.parent.report != null) {
-      return new ReportBuilder(this, this.parent.report.faultUid.destination(), signature);
+      return new ReportBuilder(this, this.parent.report.faultUid, signature);
     }
 
     return new ReportBuilder(this, signature);
@@ -112,11 +110,13 @@ public class NodeBuilder {
     private TraceSpanReport report = new TraceSpanReport();
     private NodeBuilder builder;
 
-    public ReportBuilder(NodeBuilder builder, String origin, String signature) {
+    public ReportBuilder(NodeBuilder builder, FaultUid origin, String signature) {
       this.builder = builder;
       report.spanId = builder.span.spanId;
       report.traceId = builder.span.traceId;
-      report.faultUid = new FaultUid(origin, builder.span.serviceName, signature, "*", 0);
+      FaultInjectionPoint p = new FaultInjectionPoint(signature, signature,
+          signature, spanCounter);
+      report.faultUid = new FaultUid(Lists.add(origin.stack(), p));
     }
 
     public ReportBuilder(NodeBuilder builder, String signature) {
@@ -124,7 +124,8 @@ public class NodeBuilder {
       report.spanId = builder.span.spanId;
       report.traceId = builder.span.traceId;
       // report.isInitial = true;
-      report.faultUid = new FaultUid("<none>", builder.span.serviceName, signature, "*", 0);
+      FaultInjectionPoint p = new FaultInjectionPoint(builder.span.serviceName, signature, "*", 0);
+      report.faultUid = new FaultUid(List.of(p));
     }
 
     public NodeBuilder buildReport() {

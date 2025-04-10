@@ -146,6 +146,21 @@ public class TraceAnalysis {
         return reports;
     }
 
+    public List<TraceSpanReport> getReports(Set<FaultUid> faultUids) {
+        return getReports(List.copyOf(faultUids));
+    }
+
+    public List<TraceSpanReport> getReports(List<FaultUid> faultUids) {
+        List<TraceSpanReport> reports = new ArrayList<>();
+        for (var faultUid : faultUids) {
+            var report = getReportByFaultUid(faultUid);
+            if (report != null) {
+                reports.add(report);
+            }
+        }
+        return reports;
+    }
+
     public TraceSpanReport getReportByFaultUid(FaultUid faultUid) {
         return reportByPoint.get(faultUid);
     }
@@ -195,6 +210,10 @@ public class TraceAnalysis {
         return parentChildRelation.getChildren(node);
     }
 
+    public List<TraceSpanReport> getChildren(TraceSpanReport report) {
+        return getReports(getChildren(report.faultUid));
+    }
+
     public Set<FaultUid> getNeighbours(FaultUid child) {
         FaultUid parent = getParent(child);
         Set<FaultUid> neighbours = getChildren(parent);
@@ -233,7 +252,32 @@ public class TraceAnalysis {
     }
 
     public enum TraversalStrategy {
-        DEPTH_FIRST, BREADTH_FIRST
+        DEPTH_FIRST, BREADTH_FIRST, RANDOM
+    }
+
+    public List<TraceSpanReport> getReports(TraversalStrategy strategy) {
+        List<TraceSpanReport> foundReports = new ArrayList<>();
+        traverseFaults(strategy, false, f -> {
+            var report = getReportByFaultUid(f);
+            if (report != null) {
+                foundReports.add(report);
+            }
+        });
+
+        // ensure each known fault is present, not just those in the tree
+        int missing = 0;
+        for (var report : reports) {
+            if (!foundReports.contains(report)) {
+                foundReports.add(report);
+                missing++;
+            }
+        }
+
+        if (missing > 0) {
+            logger.warn("Missing " + missing + " reports in trace tree!");
+        }
+
+        return foundReports;
     }
 
     public List<FaultUid> getFaultUids(TraversalStrategy strategy) {
@@ -264,6 +308,9 @@ public class TraceAnalysis {
             case BREADTH_FIRST:
                 traverseBreadthFirst(null, includeInitial, consumer);
                 break;
+            case RANDOM:
+                traverseRandom(null, includeInitial, consumer);
+                break;
         }
     }
 
@@ -281,7 +328,28 @@ public class TraceAnalysis {
                 consumer.accept(node);
             }
         }
+    }
 
+    public void traverseRandom(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
+        boolean depthFirstForThisNode = Math.random() < 0.5;
+        if (depthFirstForThisNode) {
+
+            for (var child : getChildren(node)) {
+                traverseRandom(child, includeInitial, consumer);
+            }
+        }
+
+        if (node != null) {
+            if (includeInitial || !node.isFromInitial()) {
+                consumer.accept(node);
+            }
+        }
+
+        if (!depthFirstForThisNode) {
+            for (var child : getChildren(node)) {
+                traverseRandom(child, includeInitial, consumer);
+            }
+        }
     }
 
     public void traverseBreadthFirst(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {

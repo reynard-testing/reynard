@@ -3,7 +3,7 @@ include .env
 .PHONY: test build-orchestrator build-proxy build-all run-test install
 
 build-orchestrator:
-	cd ./services/orchestrator; ${DOCKER_EXEC} build -t fit-otel-orchestrator:latest .
+	cd ./services/orchestrator; ${DOCKER_EXEC} build -t fit-orchestrator:latest .
 
 build-proxy:
 	cd ./services/proxy; ${DOCKER_EXEC} build -t fit-proxy:latest .

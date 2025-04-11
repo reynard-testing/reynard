@@ -39,7 +39,7 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
         Set<FaultUid> expectedPoints = context.getStore().getExpectedPoints(injectedErrorFaults);
 
-        result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, false, report -> {
+        result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
             List<TraceReport> childrenReports = result.trace.getChildren(report);
 
             Set<FaultUid> expectedChildren = expectedPoints.stream()

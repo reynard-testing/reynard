@@ -24,10 +24,10 @@ import nl.dflipse.fit.trace.tree.TraceReport;
  * I.e. if a fault is injected, and another fault disappears,
  * s set of fault causes the disappearance of the fault (the effect)
  */
-public class CauseEffectPruner implements Pruner, FeedbackHandler {
+public class HappensBeforeNeighbourPruner implements Pruner, FeedbackHandler {
 
     private final ConditionalStore redundancyStore = new ConditionalStore();
-    private final Logger logger = LoggerFactory.getLogger(CauseEffectPruner.class);
+    private final Logger logger = LoggerFactory.getLogger(HappensBeforeNeighbourPruner.class);
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {

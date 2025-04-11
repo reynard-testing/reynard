@@ -1,4 +1,4 @@
-package nl.dflipse.fit.faultload.faultmodes;
+package nl.dflipse.fit.faultload.modes;
 
 public enum HttpError {
     INTERNAL_SERVER_ERROR(500),

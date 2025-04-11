@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.trace.tree.TraceReport;
@@ -20,14 +21,16 @@ public class TraceAnalysis {
 
     private final Set<FaultUid> faultUids = new HashSet<>();
     private final Set<Fault> injectedFaults = new HashSet<>();
+    private final Set<Fault> traceFaults = new HashSet<>();
     private final List<TraceReport> reports = new ArrayList<>();
     private final Map<FaultUid, TraceReport> reportByPoint = new HashMap<>();
-    private final Set<Fault> reportedFaults = new HashSet<>();
+    private final Set<Behaviour> behaviours = new HashSet<>();
     private TraceReport rootReport;
 
     private boolean hasIncomplete = false;
     private boolean hasInitial = false;
     private boolean hasMultipleInitial = false;
+    private boolean hasMultipleReports = false;
 
     // --- Parent-Child relations
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
@@ -64,8 +67,15 @@ public class TraceAnalysis {
     private void analyseReport(TraceReport report) {
         // Save map of points by faultUid
         if (!reportByPoint.containsKey(report.faultUid)) {
-            reports.add(report);
             reportByPoint.put(report.faultUid, report);
+            reports.add(report);
+        } else {
+            hasMultipleReports = true;
+        }
+        behaviours.add(report.getBehaviour());
+
+        if (report.hasFaultBehaviour()) {
+            traceFaults.add(report.getFault());
         }
 
         // Update parent-child relation
@@ -78,12 +88,6 @@ public class TraceAnalysis {
             for (var concurrent : report.concurrentTo) {
                 concurrentRelation.addRelation(report.faultUid, concurrent);
             }
-        }
-
-        // Reported (not injected)
-        if (report.hasError()) {
-            var fault = report.getRepresentativeFault();
-            reportedFaults.add(fault);
         }
 
         // Handle initial report
@@ -121,8 +125,12 @@ public class TraceAnalysis {
         return injectedFaults;
     }
 
+    public Set<Behaviour> getBehaviours() {
+        return behaviours;
+    }
+
     public Set<Fault> getReportedFaults() {
-        return reportedFaults;
+        return traceFaults;
     }
 
     public Map<FaultUid, Set<FaultUid>> getAllConcurrent() {
@@ -185,6 +193,11 @@ public class TraceAnalysis {
         if (!hasInitial) {
             logger.warn(
                     "Trace is not incomplete, but has no initial request! Ensure that the first request goes through a proxy!");
+            return true;
+        }
+
+        if (hasMultipleReports) {
+            logger.warn("Trace has multiple reports for a single point! That should not happen!");
             return true;
         }
 

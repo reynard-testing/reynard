@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
+import nl.dflipse.fit.faultload.modes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;

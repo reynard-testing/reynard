@@ -9,10 +9,9 @@ import java.util.Set;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
-import nl.dflipse.fit.strategy.util.Faults;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.StringFormat;
 
@@ -61,7 +60,7 @@ public class FeedbackContextProvider implements FeedbackContext {
 
     @Override
     public void reportConditionalFaultUidByUid(Set<FaultUid> condition, FaultUid fid) {
-        for (var c : Faults.allFaults(condition, getFailureModes())) {
+        for (var c : Fault.allFaults(condition, getFailureModes())) {
             reportConditionalFaultUid(c, fid);
         }
     }
@@ -74,7 +73,7 @@ public class FeedbackContextProvider implements FeedbackContext {
 
     @Override
     public void reportExclusionOfFaultUidByUid(Set<FaultUid> condition, FaultUid fid) {
-        for (var c : Faults.allFaults(condition, getFailureModes())) {
+        for (var c : Fault.allFaults(condition, getFailureModes())) {
             reportExclusionOfFaultUid(c, fid);
         }
     }
@@ -87,8 +86,8 @@ public class FeedbackContextProvider implements FeedbackContext {
 
     @Override
     public void reportSubstitutionByUid(Set<FaultUid> given, Set<FaultUid> replacement) {
-        for (var g : Faults.allFaults(given, getFailureModes())) {
-            for (var r : Faults.allFaults(replacement, getFailureModes())) {
+        for (var g : Fault.allFaults(given, getFailureModes())) {
+            for (var r : Fault.allFaults(replacement, getFailureModes())) {
                 var redundant = Sets.union(g, r);
                 pruneFaultSubset(redundant);
             }

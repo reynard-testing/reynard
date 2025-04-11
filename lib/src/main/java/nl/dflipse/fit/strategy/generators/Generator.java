@@ -6,7 +6,7 @@ import java.util.Set;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 
 public interface Generator {
     public Faultload generate();

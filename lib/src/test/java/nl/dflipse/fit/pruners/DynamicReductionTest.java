@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
-import nl.dflipse.fit.faultload.faultmodes.HttpError;
+import nl.dflipse.fit.faultload.modes.ErrorFault;
+import nl.dflipse.fit.faultload.modes.FailureMode;
+import nl.dflipse.fit.faultload.modes.HttpError;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.TrackedFaultload;
@@ -34,7 +34,7 @@ public class DynamicReductionTest {
         EventBuilder nodeB = nodeA.createChild()
                 .withPoint("B", "b1");
 
-        TraceAnalysis initialTrace = EventBuilder.buildTrace(nodeA, nodeB);
+        TraceAnalysis initialTrace = nodeA.buildTrace();
         FaultloadResult result = new FaultloadResult(initialFaultload, initialTrace, true);
         FeedbackContext contextMock = mock(FeedbackContext.class);
         pruner.handleFeedback(result, contextMock);
@@ -60,7 +60,7 @@ public class DynamicReductionTest {
         EventBuilder nodeC = nodeB.createChild()
                 .withPoint("C", "c1");
 
-        TraceAnalysis initialTrace = EventBuilder.buildTrace(nodeA, nodeB, nodeC);
+        TraceAnalysis initialTrace = nodeA.buildTrace();
         FaultloadResult result = new FaultloadResult(initialFaultload, initialTrace, true);
         FeedbackContext contextMock = mock(FeedbackContext.class);
         pruner.handleFeedback(result, contextMock);
@@ -74,7 +74,7 @@ public class DynamicReductionTest {
 
         // The empty faultload is pruned
         Faultload faultload = new Faultload(Set.of(new Fault(nodeC.getFaultUid(), injectedMode)));
-        TraceAnalysis trace = EventBuilder.buildTrace(nodeA, nodeB, nodeC);
+        TraceAnalysis trace = nodeA.buildTrace();
         FaultloadResult result2 = new FaultloadResult(new TrackedFaultload(faultload), trace, true);
         pruner.handleFeedback(result2, contextMock);
 

@@ -14,9 +14,10 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
+import nl.dflipse.fit.strategy.util.TransativeRelation;
 import nl.dflipse.fit.util.NoOpLogger;
 
 public class DynamicAnalysisStore {
@@ -35,6 +36,7 @@ public class DynamicAnalysisStore {
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
+    private TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
 
     public DynamicAnalysisStore(List<FailureMode> modes, boolean quiet) {
         this.modes = modes;

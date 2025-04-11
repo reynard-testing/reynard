@@ -3,11 +3,12 @@ package nl.dflipse.fit.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultInjectionPoint;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.ErrorFault;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.util.Lists;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.trace.tree.TraceReport;
@@ -16,6 +17,7 @@ import nl.dflipse.fit.trace.tree.TraceResponse;
 public class EventBuilder {
   TraceReport report = new TraceReport();
   private static int spanCounter = 0;
+  List<EventBuilder> children = new ArrayList<>();
   EventBuilder parent = null;
   FaultInjectionPoint point = null;
 
@@ -59,11 +61,27 @@ public class EventBuilder {
   }
 
   public EventBuilder createChild() {
-    return new EventBuilder(this);
+    var builder = new EventBuilder(this);
+    children.add(builder);
+    return builder;
+  }
+
+  public EventBuilder findService(String service) {
+    if (point != null && point.destination().equals(service)) {
+      return this;
+    }
+
+    for (var child : children) {
+      var builder = child.findService(service);
+      if (builder != null) {
+        return builder;
+      }
+    }
+    return null;
   }
 
   public EventBuilder withFault(FailureMode mode) {
-    Fault fault = new Fault(report.faultUid, mode);
+    Fault fault = new Fault(getFaultUid(), mode);
     this.report.injectedFault = fault;
 
     if (fault.mode().getType().equals(ErrorFault.FAULT_TYPE)) {
@@ -81,6 +99,14 @@ public class EventBuilder {
     return Lists.add(parent.getStack(), point);
   }
 
+  public Behaviour getBehaviour() {
+    if (report.injectedFault != null) {
+      return new Behaviour(report.injectedFault.uid(), report.injectedFault.mode());
+    }
+
+    return new Behaviour(getFaultUid(), null);
+  }
+
   public FaultUid getFaultUid() {
     if (point == null) {
       point = new FaultInjectionPoint("unknown", "unknown", "", 0);
@@ -96,15 +122,16 @@ public class EventBuilder {
     return report;
   }
 
-  public static List<TraceReport> buildAll(EventBuilder... events) {
+  public List<TraceReport> buildAll() {
     List<TraceReport> reports = new ArrayList<>();
-    for (var event : events) {
-      reports.add(event.build());
+    reports.add(build());
+    for (var child : children) {
+      reports.addAll(child.buildAll());
     }
     return reports;
   }
 
-  public static TraceAnalysis buildTrace(EventBuilder... events) {
-    return new TraceAnalysis(buildAll(events));
+  public TraceAnalysis buildTrace() {
+    return new TraceAnalysis(buildAll());
   }
 }

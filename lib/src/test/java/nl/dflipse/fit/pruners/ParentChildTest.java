@@ -10,7 +10,7 @@ import static org.mockito.Mockito.mock;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.TrackedFaultload;
@@ -40,7 +40,7 @@ public class ParentChildTest {
         EventBuilder node1 = root.createChild()
                 .withPoint("B", "b1");
 
-        var trace = EventBuilder.buildTrace(root, node1);
+        var trace = root.buildTrace();
         var result = new FaultloadResult(new TrackedFaultload(faultload), trace, true);
         pruner.handleFeedback(result, contextMock);
         assertEquals(PruneDecision.KEEP, pruner.prune(faultload));
@@ -56,7 +56,7 @@ public class ParentChildTest {
                 .withPoint("A", "a1");
         EventBuilder nodeB = nodeA.createChild()
                 .withPoint("B", "b1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback
@@ -85,7 +85,7 @@ public class ParentChildTest {
                 .withPoint("B", "b1");
         EventBuilder nodeC = nodeB.createChild()
                 .withPoint("C", "c1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB, nodeC);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback
@@ -119,7 +119,7 @@ public class ParentChildTest {
                 .withPoint("B", "b1");
         EventBuilder nodeC = nodeA.createChild()
                 .withPoint("C", "c1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB, nodeC);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback
@@ -153,7 +153,7 @@ public class ParentChildTest {
                 .withPoint("C", "c1");
         EventBuilder nodeB2 = nodeC.createChild()
                 .withPoint("B", "b1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB, nodeC, nodeB2);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback
@@ -188,7 +188,7 @@ public class ParentChildTest {
                 .withPoint("C", "c1");
         EventBuilder nodeB2C = nodeB2.createChild()
                 .withPoint("C", "c1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB1, nodeB2, nodeB1C, nodeB2C);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback

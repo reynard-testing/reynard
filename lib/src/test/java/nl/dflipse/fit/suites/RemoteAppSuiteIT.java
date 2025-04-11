@@ -5,8 +5,8 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 
 import nl.dflipse.fit.FiTest;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
+import nl.dflipse.fit.faultload.modes.ErrorFault;
+import nl.dflipse.fit.faultload.modes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.controller.RemoteController;
 import nl.dflipse.fit.strategy.TrackedFaultload;

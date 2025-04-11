@@ -16,9 +16,9 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
-import nl.dflipse.fit.faultload.faultmodes.HttpError;
+import nl.dflipse.fit.faultload.modes.ErrorFault;
+import nl.dflipse.fit.faultload.modes.FailureMode;
+import nl.dflipse.fit.faultload.modes.HttpError;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 
 public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>> {

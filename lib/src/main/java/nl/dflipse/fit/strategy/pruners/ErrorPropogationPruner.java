@@ -31,7 +31,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
             }
 
             // Are we reporting a fault, that we did not inject?
-            boolean isIndirectError = report.hasIndirectError();
+            boolean isIndirectError = report.hasIndirectFaultBehaviour();
             if (!isIndirectError) {
                 continue;
             }
@@ -40,8 +40,8 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
             List<TraceReport> childrenReports = result.trace.getChildren(report);
             // Get the direct and indirect causes
             Set<Fault> childCauses = childrenReports.stream()
-                    .map(f -> f.getRepresentativeFault())
-                    .filter(f -> f != null)
+                    .filter(f -> f.hasFaultBehaviour())
+                    .map(f -> f.getFault())
                     .collect(Collectors.toSet());
 
             boolean isUnexpectedError = childCauses.isEmpty();
@@ -55,7 +55,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
                 continue;
             }
 
-            Fault responseFault = report.getRepresentativeFault();
+            Fault responseFault = report.getFault();
             handlePropogation(childCauses, responseFault, context);
         }
     }

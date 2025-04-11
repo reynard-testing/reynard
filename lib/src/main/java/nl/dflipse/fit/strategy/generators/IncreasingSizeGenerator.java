@@ -11,10 +11,9 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
-import nl.dflipse.fit.strategy.util.Faults;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
@@ -146,7 +145,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     @Override
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
         boolean isNew = false;
-        var allFaults = Faults.allFaults(subset, getFailureModes());
+        var allFaults = Fault.allFaults(subset, getFailureModes());
         for (Set<Fault> prunedSet : allFaults) {
             boolean wasNew = store.pruneFaultSubset(prunedSet);
             isNew = isNew || wasNew;

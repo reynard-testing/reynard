@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.PruneDecision;

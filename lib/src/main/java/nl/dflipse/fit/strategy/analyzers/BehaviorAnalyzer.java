@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
@@ -75,10 +75,10 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                     continue;
                 }
 
-                if (childReport.hasError()) {
-                    Fault fault = childReport.getRepresentativeFault();
+                if (childReport.hasFaultBehaviour()) {
+                    Fault fault = childReport.getFault();
 
-                    if (childReport.hasIndirectError()) {
+                    if (childReport.hasIndirectFaultBehaviour()) {
                         unexpectedCauses.add(fault);
                     } else {
                         expectedCauses.add(fault);
@@ -93,7 +93,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                 happyPath.put(injectionPoint, report.response);
             }
 
-            boolean hasFailure = report.hasIndirectError();
+            boolean hasFailure = report.hasIndirectFaultBehaviour();
             boolean hasAlteredResponse = false;
             var happyPathResponse = happyPath.get(injectionPoint);
             if (happyPathResponse != null) {
@@ -104,7 +104,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             if (causes.isEmpty()) {
                 if (hasFailure) {
                     logger.warn("Detected failure {} with no cause! This can be indicative of a bug!",
-                            report.getRepresentativeFault());
+                            report.getFault());
                 }
 
                 if (hasAlteredResponse) {
@@ -117,7 +117,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             }
 
             if (hasFailure) {
-                Fault pointFault = report.getRepresentativeFault();
+                Fault pointFault = report.getFault();
                 if (knownFailures.containsKey(pointFault)) {
                     SubsetStore<Fault> knownCauses = knownFailures.get(pointFault);
                     boolean hasKnownCause = knownCauses.hasSubsetOf(causes);

@@ -23,7 +23,7 @@ public interface Generator {
 
     public void pruneFaultload(Faultload faultload);
 
-    public List<FailureMode> getFaultModes();
+    public List<FailureMode> getFailureModes();
 
     public List<FaultUid> getFaultInjectionPoints();
 

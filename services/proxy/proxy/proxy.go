@@ -69,6 +69,15 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 	// Create the reverse proxy
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
+	// Fix issue with wrongly inferred content type if none set
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		if resp.Header.Get("content-type") == "" {
+			resp.Header.Set("content-type", "application/octet-stream")
+		}
+
+		return nil
+	}
+
 	if useHttp2 {
 		proxy.Transport = &http2.Transport{
 			AllowHTTP: true,

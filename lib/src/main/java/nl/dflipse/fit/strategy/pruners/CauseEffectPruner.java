@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy.pruners;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,9 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.strategy.store.ConditionalStore;
+import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
+import nl.dflipse.fit.trace.tree.TraceReport;
 
 /**
  * Pruner that prunes faults that are redundant due to cause-effect
@@ -26,14 +30,54 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
     private final ConditionalStore redundancyStore = new ConditionalStore();
     private final Logger logger = LoggerFactory.getLogger(CauseEffectPruner.class);
 
-    private Set<FaultUid> missingPoints(Set<FaultUid> expected, Set<FaultUid> seen) {
+    @Override
+    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
+        if (result.isInitial()) {
+            return;
+        }
+
+        Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
+        Set<FaultUid> expectedPoints = context.getStore().getExpectedPoints(injectedErrorFaults);
+
+        result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, false, report -> {
+            List<TraceReport> childrenReports = result.trace.getChildren(report);
+
+            Set<FaultUid> expectedChildren = expectedPoints.stream()
+                    .filter(f -> f.hasParent() && f.getParent().matches(report.faultUid))
+                    .collect(Collectors.toSet());
+
+            Set<FaultUid> observedChildren = childrenReports.stream()
+                    .map(f -> f.faultUid)
+                    .filter(f -> f != null)
+                    .collect(Collectors.toSet());
+
+            Set<FaultUid> dissappeared = missingPoints(expectedChildren, observedChildren);
+
+            if (dissappeared.isEmpty()) {
+                return;
+            }
+
+            // TODO: use only children and substitution
+            // using representative faults!
+            Set<Fault> causes = result.trace.getDecendants(report).stream()
+                    .map(r -> r.injectedFault)
+                    .filter(f -> f != null)
+                    .collect(Collectors.toSet());
+
+            for (FaultUid fault : dissappeared) {
+                handleHappensBefore(causes, fault, context);
+            }
+        });
+    }
+
+    private Set<FaultUid> missingPoints(Set<FaultUid> expected, Set<FaultUid> observed) {
         Set<FaultUid> missing = new HashSet<>();
 
         for (FaultUid point : expected) {
             boolean found = false;
 
-            for (FaultUid pointSeen : seen) {
-                if (pointSeen.matches(point)) {
+            for (FaultUid seen : observed) {
+                if (seen.matches(point)) {
                     found = true;
                     break;
                 }
@@ -47,55 +91,12 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
         return missing;
     }
 
-    @Override
-    public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        if (result.isInitial()) {
-            return;
-        }
-
-        Set<FaultUid> faultsInTrace = result.trace.getFaultUids();
-
-        // if (a set of) fault(s) causes another fault to disappear
-        // then the cause(s) happens before the effect
-        Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
-
-        // if we have a singular cause
-        if (injectedErrorFaults.isEmpty()) {
-            return;
-        }
-
-        // dissappeared faults
-        // are those that were in the initial trace
-        // or that we expect given the preconditions and the expected faults
-        // but not in the current trace
-        Set<FaultUid> expectedPoints = context.getStore().getExpectedPoints(injectedErrorFaults);
-
-        Set<FaultUid> seenPoints = new HashSet<>(faultsInTrace);
-        // injected fault injection points can be those with an negative count (=all)
-        // we include these too
-        // e.g. expected = X#0, X#1, injected = X#-1, then we have seen them
-        Set<FaultUid> injectedPoints = injectedErrorFaults.stream()
-                .map(f -> f.uid())
-                .collect(Collectors.toSet());
-        seenPoints.addAll(injectedPoints);
-
-        Set<FaultUid> dissappearedFaultPoints = missingPoints(expectedPoints, seenPoints);
-
-        if (dissappearedFaultPoints.isEmpty()) {
-            return;
-        }
-
-        // We have identified a cause, and its effects
-        // We can now relate the happens before
-        for (var disappearedFaultPoint : dissappearedFaultPoints) {
-            // TODO: handle case where the happy path contains two counts
-            // And the first causes the second to dissappear
-            handleHappensBefore(injectedErrorFaults, disappearedFaultPoint, context);
-        }
-    }
-
     private void handleHappensBefore(Set<Fault> cause, FaultUid effect, FeedbackContext context) {
-        logger.info("Found exclusion: " + cause + " hides " + effect);
+        if (cause.isEmpty()) {
+            logger.info("Found unknown cause that hides {}", effect);
+            return;
+        }
+        logger.info("Found exclusion: {} hides {}", cause, effect);
         redundancyStore.addCondition(cause, effect);
         context.reportExclusionOfFaultUid(cause, effect);
     }

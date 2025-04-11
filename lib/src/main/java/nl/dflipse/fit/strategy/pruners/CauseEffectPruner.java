@@ -23,7 +23,6 @@ import nl.dflipse.fit.strategy.store.ConditionalStore;
  */
 public class CauseEffectPruner implements Pruner, FeedbackHandler {
 
-    private final Set<FaultUid> pointsInHappyPath = new HashSet<>();
     private final ConditionalStore redundancyStore = new ConditionalStore();
     private final Logger logger = LoggerFactory.getLogger(CauseEffectPruner.class);
 
@@ -50,12 +49,11 @@ public class CauseEffectPruner implements Pruner, FeedbackHandler {
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        Set<FaultUid> faultsInTrace = result.trace.getFaultUids();
-
         if (result.isInitial()) {
-            pointsInHappyPath.addAll(faultsInTrace);
             return;
         }
+
+        Set<FaultUid> faultsInTrace = result.trace.getFaultUids();
 
         // if (a set of) fault(s) causes another fault to disappear
         // then the cause(s) happens before the effect

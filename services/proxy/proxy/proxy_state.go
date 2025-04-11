@@ -30,7 +30,6 @@ func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) tr
 
 	return tracing.RequestReport{
 		TraceId:       metadata.TraceId,
-		ParentId:      metadata.ParentId,
 		SpanId:        metadata.SpanId,
 		FaultUid:      metadata.FaultUid,
 		IsInitial:     metadata.IsInitial,

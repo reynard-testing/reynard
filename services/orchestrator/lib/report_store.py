@@ -1,11 +1,11 @@
-from .models import ReportedSpan, FaultUid
+from .models import TraceReport, FaultUid
 
 
 class ReportStore:
-    reports: list[ReportedSpan] = []
-    reports_by_span_id: dict[str, ReportedSpan] = {}
-    reports_by_trace_id: dict[str, list[ReportedSpan]] = {}
-    reports_by_trace_by_fault_uid: dict[str, dict[FaultUid, ReportedSpan]] = {}
+    reports: list[TraceReport] = []
+    reports_by_span_id: dict[str, TraceReport] = {}
+    reports_by_trace_id: dict[str, list[TraceReport]] = {}
+    reports_by_trace_by_fault_uid: dict[str, dict[FaultUid, TraceReport]] = {}
 
     def clear(self):
         self.spans = []
@@ -25,7 +25,7 @@ class ReportStore:
                 self.reports_by_span_id.pop(trace_report.span_id, None)
                 self.reports_by_trace_by_fault_uid.get(trace_id, {}).pop(trace_report.uid, None)
 
-    def add(self, report: ReportedSpan):
+    def add(self, report: TraceReport):
         self.reports.append(report)
         self.reports_by_span_id[report.span_id] = report
         self.reports_by_trace_id.setdefault(report.trace_id, []).append(report)
@@ -37,15 +37,15 @@ class ReportStore:
         return trace_id in self.reports_by_trace_by_fault_uid and \
             fid in self.reports_by_trace_by_fault_uid.get(trace_id)
 
-    def get_by_span_id(self, span_id: str) -> ReportedSpan:
+    def get_by_span_id(self, span_id: str) -> TraceReport:
         return self.reports_by_span_id.get(span_id, None)
 
-    def get_by_trace_and_fault_uid(self, trace_id: str, fid: FaultUid) -> ReportedSpan:
+    def get_by_trace_and_fault_uid(self, trace_id: str, fid: FaultUid) -> TraceReport:
         reports_for_trace_by_fault_uid = self.reports_by_trace_by_fault_uid.get(
             trace_id)
         if reports_for_trace_by_fault_uid is None:
             return None
         return reports_for_trace_by_fault_uid.get(fid, None)
 
-    def get_by_trace_id(self, trace_id: str) -> list[ReportedSpan]:
+    def get_by_trace_id(self, trace_id: str) -> list[TraceReport]:
         return list(self.reports_by_trace_id.get(trace_id, []))

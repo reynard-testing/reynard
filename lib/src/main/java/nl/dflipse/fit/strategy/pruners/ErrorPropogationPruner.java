@@ -59,7 +59,6 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
             Fault responseFault = report.getRepresentativeFault();
             handlePropogation(childCauses, responseFault, context);
         }
-
     }
 
     /* Causes result in fault at effect */

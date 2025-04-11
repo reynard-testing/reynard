@@ -23,14 +23,9 @@ ADDITIONAL_ENV = [
 ]
 
 IMAGES = {
-    'otel_collector': 'otel/opentelemetry-collector-contrib:latest',
     'jaeger': 'jaegertracing/jaeger:latest',
     'orchestrator': 'fit-orchestrator:latest',
     'proxy': 'fit-proxy:latest',
-}
-
-FILE_PATHS = {
-    'otel_collector_config': '../config/otel-collector/otel-config.yaml',
 }
 
 
@@ -83,7 +78,6 @@ class Converter:
         self.filibuster_project = filibuster_project
 
         self.service_names = {
-            'otel_collector': 'otel-collector',
             'jaeger': 'jaeger',
             'orchestrator': 'orchestrator',
         }
@@ -145,8 +139,7 @@ class Converter:
 
         real_service.with_environment("OTEL_SERVICE_NAME", service_name)\
             .with_environment("OTEL_TRACES_EXPORTER", "otlp")\
-            .with_environment("OTEL_BSP_SCHEDULE_DELAY", "1")\
-            .with_environment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://"+self.service_names['otel_collector']+":4317")
+            .with_environment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://"+self.service_names['jaeger']+":4317")
 
         for env in ADDITIONAL_ENV:
             real_service.with_environment(env[0], env[1])
@@ -155,16 +148,6 @@ class Converter:
                                ":" + str(self.controller_port))
         self.add_service(proxy_service_name, proxy_service.build())
         self.add_service(real_service_name, real_service.build())
-
-    def add_otel_collector(self):
-        config_path = FILE_PATHS['otel_collector_config']
-        service = ServiceBuilder() \
-            .with_image(IMAGES['otel_collector']) \
-            .with_command('--config=/etc/otel-collector-config.yaml') \
-            .with_volume(config_path, '/etc/otel-collector-config.yaml') \
-            .build()
-        service_name = self.service_names['otel_collector']
-        self.add_service(service_name, service)
 
     def add_jaeger(self):
         service = ServiceBuilder() \
@@ -185,7 +168,6 @@ class Converter:
         self.add_service(service_name, service)
 
     def add_extra_services(self):
-        self.add_otel_collector()
         self.add_jaeger()
         self.add_orchestrator()
 
@@ -208,7 +190,8 @@ if __name__ == '__main__':
     converter = Converter(data, filibuster_project)
     converter.convert()
 
-    new_file_name = '.'.join(args.yaml_file.split('.')
-                             [:-1]) + '.fit.yml'
+    file_extension = args.yaml_file.split('.')[-1]
+    file_name = '.'.join(args.yaml_file.split('.')[:-1])
+    new_file_name = f'{file_name}.fit.{file_extension}'
     with open(new_file_name, 'w') as file:
         yaml.dump(converter.output, file, sort_keys=False)

@@ -44,11 +44,8 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        result.trace.traverseFaults(TraversalStrategy.BREADTH_FIRST, true, injectionPoint -> {
-            TraceReport report = result.trace.getReportByFaultUid(injectionPoint);
-            if (report == null) {
-                return;
-            }
+        result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
+            var injectionPoint = report.faultUid;
 
             if (report.injectedFault != null) {
                 // Not interesting, we caused it ourselves

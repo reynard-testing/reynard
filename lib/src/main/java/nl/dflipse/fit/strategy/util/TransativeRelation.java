@@ -8,11 +8,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class TransativeRelation<X> {
+    private final Set<X> elements = new HashSet<>();
     private final Map<X, X> inverseRelation = new HashMap<>();
     private final Map<X, Set<X>> relation = new HashMap<>();
     private final Map<X, Set<X>> transitiveRelations = new HashMap<>();
 
     public void addRelation(X parent, X child) {
+        elements.add(parent);
+        elements.add(child);
+
         if ((parent == null && child == null) || (parent != null && parent.equals(child))) {
             throw new IllegalArgumentException(
                     "Cannot relate two equal items, this will create a circular dependency.");
@@ -110,6 +114,10 @@ public class TransativeRelation<X> {
 
     public Set<X> getChildren(X parent) {
         return relation.getOrDefault(parent, Set.of());
+    }
+
+    public Set<X> getElements() {
+        return elements;
     }
 
 }

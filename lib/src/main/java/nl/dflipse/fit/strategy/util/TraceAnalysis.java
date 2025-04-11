@@ -24,9 +24,9 @@ public class TraceAnalysis {
     private final Map<FaultUid, TraceReport> reportByPoint = new HashMap<>();
     private TraceReport rootReport;
 
-    private boolean anyIncomplete = false;
+    private boolean hasIncomplete = false;
     private boolean hasInitial = false;
-    private boolean hasMultipleRoots = false;
+    private boolean hasMultipleInitial = false;
 
     // --- Parent-Child relations
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
@@ -37,22 +37,52 @@ public class TraceAnalysis {
         for (var report : reports) {
             analyseReport(report);
         }
+
+        // Ensure all parents are reported
+        for (FaultUid uid : parentChildRelation.getElements()) {
+            if (uid == null || uid.isRoot()) {
+                continue;
+            }
+
+            if (!reportByPoint.containsKey(uid)) {
+                hasIncomplete = true;
+                logger.debug("Missing report for parent {}", uid);
+            }
+        }
+    }
+
+    private void addParents(FaultUid uid) {
+        FaultUid current = uid;
+        while (current.hasParent()) {
+            FaultUid next = current.getParent();
+            parentChildRelation.addRelation(next, current);
+            current = next;
+        }
     }
 
     private void analyseReport(TraceReport report) {
+        // Save map of points by faultUid
         if (!reportByPoint.containsKey(report.faultUid)) {
             reports.add(report);
             reportByPoint.put(report.faultUid, report);
         }
 
+        // Update parent-child relation
         if (report.faultUid.hasParent()) {
-            var parent = report.faultUid.getParent();
-            parentChildRelation.addRelation(parent, report.faultUid);
+            addParents(report.faultUid);
         }
 
+        // Update concurrent relations
+        if (report.concurrentTo != null) {
+            for (var concurrent : report.concurrentTo) {
+                concurrentRelation.addRelation(report.faultUid, concurrent);
+            }
+        }
+
+        // Handle initial report
         if (report.isInitial) {
             if (rootReport != null && rootReport.response != null && !rootReport.faultUid.equals(report.faultUid)) {
-                hasMultipleRoots = true;
+                hasMultipleInitial = true;
             }
 
             rootReport = report;
@@ -62,19 +92,18 @@ public class TraceAnalysis {
             faultUids.add(report.faultUid);
         }
 
+        // Handle injected faults
         if (report.injectedFault != null) {
             injectedFaults.add(report.injectedFault);
         }
 
+        // The response is null if the request was not completed yet
+        // This can happen, as the report is updated after the response is sent through
+        // the proxy
         if (report.response == null) {
-            anyIncomplete = true;
+            hasIncomplete = true;
         }
 
-        if (report.concurrentTo != null) {
-            for (var concurrent : report.concurrentTo) {
-                concurrentRelation.addRelation(report.faultUid, concurrent);
-            }
-        }
     }
 
     public Set<FaultUid> getFaultUids() {
@@ -131,13 +160,13 @@ public class TraceAnalysis {
     }
 
     public boolean isInvalid() {
-        if (hasMultipleRoots) {
+        if (hasMultipleInitial) {
             logger.debug(
                     "Trace has multiple roots! This is likely because the first request does not go through a proxy. Ensure that the first request goes through a proxy!");
             return true;
         }
 
-        if (anyIncomplete) {
+        if (hasIncomplete) {
             logger.debug("Trace is incomplete!");
             return true;
         }
@@ -218,12 +247,7 @@ public class TraceAnalysis {
 
     public List<TraceReport> getReports(TraversalStrategy strategy) {
         List<TraceReport> foundReports = new ArrayList<>();
-        traverseFaults(strategy, false, f -> {
-            var report = getReportByFaultUid(f);
-            if (report != null) {
-                foundReports.add(report);
-            }
-        });
+        traverseReports(strategy, false, foundReports::add);
 
         // ensure each known fault is present, not just those in the tree
         int missing = 0;
@@ -261,17 +285,27 @@ public class TraceAnalysis {
         return foundFaults;
     }
 
+    public void traverseReports(TraversalStrategy strategy, boolean includeInitial, Consumer<TraceReport> consumer) {
+        Consumer<FaultUid> mappedConsumer = (faultUid) -> {
+            var report = getReportByFaultUid(faultUid);
+            if (report != null) {
+                consumer.accept(report);
+            }
+        };
+
+        traverseFaults(strategy, includeInitial, mappedConsumer);
+    }
+
+    public void traverseReports(Consumer<TraceReport> consumer) {
+        traverseReports(TraversalStrategy.DEPTH_FIRST, true, consumer);
+    }
+
     public void traverseFaults(TraversalStrategy strategy, boolean includeInitial, Consumer<FaultUid> consumer) {
+        FaultUid root = rootReport.faultUid;
         switch (strategy) {
-            case DEPTH_FIRST:
-                traverseDepthFirst(null, includeInitial, consumer);
-                break;
-            case BREADTH_FIRST:
-                traverseBreadthFirst(null, includeInitial, consumer);
-                break;
-            case RANDOM:
-                traverseRandom(null, includeInitial, consumer);
-                break;
+            case DEPTH_FIRST -> traverseDepthFirst(root, includeInitial, consumer);
+            case BREADTH_FIRST -> traverseBreadthFirst(root, includeInitial, consumer);
+            case RANDOM -> traverseRandom(root, includeInitial, consumer);
         }
     }
 
@@ -284,8 +318,8 @@ public class TraceAnalysis {
             traverseDepthFirst(child, includeInitial, consumer);
         }
 
-        if (node != null) {
-            if (includeInitial || !node.isFromInitial()) {
+        if (node != null && !node.isRoot()) {
+            if (includeInitial || !node.isInitial()) {
                 consumer.accept(node);
             }
         }
@@ -300,8 +334,8 @@ public class TraceAnalysis {
             }
         }
 
-        if (node != null) {
-            if (includeInitial || !node.isFromInitial()) {
+        if (node != null && !node.isRoot()) {
+            if (includeInitial || !node.isInitial()) {
                 consumer.accept(node);
             }
         }
@@ -314,8 +348,8 @@ public class TraceAnalysis {
     }
 
     public void traverseBreadthFirst(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
-        if (node != null) {
-            if (includeInitial || !node.isFromInitial()) {
+        if (node != null && !node.isRoot()) {
+            if (includeInitial || !node.isInitial()) {
                 consumer.accept(node);
             }
         }

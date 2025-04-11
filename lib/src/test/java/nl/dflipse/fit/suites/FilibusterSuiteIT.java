@@ -78,7 +78,7 @@ public class FilibusterSuiteIT {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId() + "/reports";
+            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
             String traceUrl = "http://localhost:8686/trace/" + faultload.getTraceId();
 
             TraceAnalysis result = getController().getTrace(faultload);

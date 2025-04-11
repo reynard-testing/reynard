@@ -20,13 +20,11 @@ type ResponseData struct {
 type UidRequest struct {
 	TraceId        string `json:"trace_id"`
 	ReportParentId string `json:"parent_span_id"`
-	IsInitial      bool   `json:"is_initial"`
 }
 
 type RequestReport struct {
 	TraceId       string                `json:"trace_id"`
 	SpanId        string                `json:"span_id"`
-	ParentId      string                `json:"parent_span_id"`
 	FaultUid      faultload.FaultUid    `json:"uid"`
 	IsInitial     bool                  `json:"is_initial"`
 	InjectedFault *faultload.Fault      `json:"injected_fault"`
@@ -47,7 +45,7 @@ var queryHost string = os.Getenv("ORCHESTRATOR_HOST")
 
 func attemptReport(report RequestReport) bool {
 
-	queryUrl := fmt.Sprintf("http://%s/v1/link", queryHost)
+	queryUrl := fmt.Sprintf("http://%s/v1/proxy/report", queryHost)
 
 	jsonBodyBytes, err := json.Marshal(report)
 	if err != nil {
@@ -85,7 +83,7 @@ func ReportSpanUID(report RequestReport) bool {
 }
 
 func attemptGetUid(req UidRequest) *faultload.FaultUid {
-	queryUrl := fmt.Sprintf("http://%s/v1/parent_uid", queryHost)
+	queryUrl := fmt.Sprintf("http://%s/v1/proxy/get-parent-uid", queryHost)
 
 	jsonBodyBytes, err := json.Marshal(req)
 	if err != nil {
@@ -116,7 +114,18 @@ func attemptGetUid(req UidRequest) *faultload.FaultUid {
 	return &response
 }
 
-func GetUid(req UidRequest) faultload.FaultUid {
+func GetUid(traceId, parentId string, isInitial bool) faultload.FaultUid {
+	if isInitial {
+		return faultload.FaultUid{
+			Stack: []faultload.InjectionPoint{},
+		}
+	}
+
+	req := UidRequest{
+		TraceId:        traceId,
+		ReportParentId: parentId,
+	}
+
 	res := attemptGetUid(req)
 
 	if res == nil {

@@ -12,6 +12,8 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.strategy.util.Faults;
+import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.StringFormat;
 
 public class FeedbackContextProvider implements FeedbackContext {
@@ -27,7 +29,7 @@ public class FeedbackContextProvider implements FeedbackContext {
         this.result = result;
         assertGeneratorPresent();
         this.localStore = stores.computeIfAbsent(clazz.getSimpleName(),
-                k -> new DynamicAnalysisStore(runner.getGenerator().getFaultModes(), true));
+                k -> new DynamicAnalysisStore(runner.getGenerator().getFailureModes(), true));
     }
 
     private void assertGeneratorPresent() {
@@ -42,8 +44,8 @@ public class FeedbackContextProvider implements FeedbackContext {
     }
 
     @Override
-    public List<FailureMode> getFaultModes() {
-        return runner.getGenerator().getFaultModes();
+    public List<FailureMode> getFailureModes() {
+        return runner.getGenerator().getFailureModes();
     }
 
     @Override
@@ -58,15 +60,45 @@ public class FeedbackContextProvider implements FeedbackContext {
     }
 
     @Override
+    public void reportConditionalFaultUidByUid(Set<FaultUid> condition, FaultUid fid) {
+        for (var c : Faults.allFaults(condition, getFailureModes())) {
+            reportConditionalFaultUid(c, fid);
+        }
+    }
+
+    @Override
     public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
         localStore.addConditionForFaultUid(condition, fid);
         runner.getGenerator().reportPreconditionOfFaultUid(condition, fid);
     }
 
     @Override
+    public void reportExclusionOfFaultUidByUid(Set<FaultUid> condition, FaultUid fid) {
+        for (var c : Faults.allFaults(condition, getFailureModes())) {
+            reportExclusionOfFaultUid(c, fid);
+        }
+    }
+
+    @Override
     public void reportExclusionOfFaultUid(Set<Fault> condition, FaultUid fid) {
         localStore.addExclusionForFaultUid(condition, fid);
         runner.getGenerator().reportExclusionOfFaultUid(condition, fid);
+    }
+
+    @Override
+    public void reportSubstitutionByUid(Set<FaultUid> given, Set<FaultUid> replacement) {
+        for (var g : Faults.allFaults(given, getFailureModes())) {
+            for (var r : Faults.allFaults(replacement, getFailureModes())) {
+                var redundant = Sets.union(g, r);
+                pruneFaultSubset(redundant);
+            }
+        }
+    }
+
+    @Override
+    public void reportSubstitution(Set<Fault> given, Set<Fault> replacement) {
+        var redundant = Sets.union(given, replacement);
+        pruneFaultSubset(redundant);
     }
 
     @Override

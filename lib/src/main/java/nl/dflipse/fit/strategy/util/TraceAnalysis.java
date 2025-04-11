@@ -22,6 +22,7 @@ public class TraceAnalysis {
     private final Set<Fault> injectedFaults = new HashSet<>();
     private final List<TraceReport> reports = new ArrayList<>();
     private final Map<FaultUid, TraceReport> reportByPoint = new HashMap<>();
+    private final Set<Fault> reportedFaults = new HashSet<>();
     private TraceReport rootReport;
 
     private boolean hasIncomplete = false;
@@ -79,6 +80,12 @@ public class TraceAnalysis {
             }
         }
 
+        // Reported (not injected)
+        if (report.hasError()) {
+            var fault = report.getRepresentativeFault();
+            reportedFaults.add(fault);
+        }
+
         // Handle initial report
         if (report.isInitial) {
             if (rootReport != null && rootReport.response != null && !rootReport.faultUid.equals(report.faultUid)) {
@@ -112,6 +119,10 @@ public class TraceAnalysis {
 
     public Set<Fault> getInjectedFaults() {
         return injectedFaults;
+    }
+
+    public Set<Fault> getReportedFaults() {
+        return reportedFaults;
     }
 
     public Map<FaultUid, Set<FaultUid>> getAllConcurrent() {

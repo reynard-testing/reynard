@@ -105,14 +105,14 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
 
             if (causes.isEmpty()) {
                 if (hasFailure) {
-                    logger.warn("Detected failure {} with no cause! This likely due to a bug in the scenario setup!",
+                    logger.warn("Detected failure {} with no cause! This can be indicative of a bug!",
                             report.getRepresentativeFault());
                 }
 
                 if (hasAlteredResponse) {
                     logger.warn(
-                            "Detected altered response {} with no cause! This likely due to a bug in the scenario setup!",
-                            report.getRepresentativeFault());
+                            "Detected altered response {} at {} with no cause! This can be indicative of a bug!",
+                            report.response, report.faultUid);
                 }
 
                 return;
@@ -125,11 +125,11 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                     boolean hasKnownCause = knownCauses.hasSubsetOf(causes);
 
                     if (!hasKnownCause) {
-                        logger.warn("For failure {} discovered new cause: {}", pointFault, causes);
+                        logger.info("For failure {} discovered new cause: {}", pointFault, causes);
                         knownCauses.add(causes);
                     }
                 } else {
-                    logger.warn("Detected failure {} for cause: {}", pointFault, causes);
+                    logger.info("Detected failure {} for cause: {}", pointFault, causes);
                     var newCauses = new SubsetStore<Fault>();
                     newCauses.add(causes);
                     knownFailures.put(pointFault, newCauses);
@@ -147,11 +147,11 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                     boolean hasKnownCause = knownCauses.hasSubsetOf(causes);
 
                     if (!hasKnownCause) {
-                        logger.warn("Point {} can also recover from cause: {}", point, causes);
+                        logger.info("Point {} can also recover from cause: {}", point, causes);
                         knownCauses.add(causes);
                     }
                 } else {
-                    logger.warn("Detected resilient point {} for cause: {}", point, causes);
+                    logger.info("Detected resilient point {} for cause: {}", point, causes);
                     var newCauses = new SubsetStore<Fault>();
                     newCauses.add(causes);
                     knownResolutions.put(point, newCauses);

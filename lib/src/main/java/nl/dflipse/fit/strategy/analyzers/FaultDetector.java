@@ -38,57 +38,6 @@ public class FaultDetector implements FeedbackHandler {
         this(false);
     }
 
-    private boolean handleRetry(Set<FaultUid> expectedPoints, FaultUid newFid,
-            Set<Fault> condition, FeedbackContext context) {
-        if (!onlyPersistantOrTransientRetries) {
-            return false;
-        }
-
-        // edge case: the happy path should only have one count
-        // Otherwise, we cannot be sure which one is the retry, especially
-        // in the presence of multiple faults.
-        boolean happyPathOnlyHasOne = pointsInHappyPath.stream()
-                .filter(f -> f.matchesUpToCount(newFid))
-                .count() == 1;
-
-        if (!happyPathOnlyHasOne) {
-            return false;
-        }
-
-        // We are a retry of a fault that has the same uid, expect for a transient count
-        // less than ours
-        Set<FaultUid> retriedFaults = expectedPoints.stream()
-                .filter(f -> f.matchesUpToCount(newFid))
-                .filter(f -> f.isTransient())
-                .filter(f -> f.count() == newFid.count() - 1)
-                .collect(Collectors.toSet());
-
-        if (retriedFaults.size() != 1) {
-            return false;
-        }
-
-        FaultUid retriedFault = Sets.getOnlyElement(retriedFaults);
-        // only distinguish between transient (once) or always
-        FaultUid persistentFault = newFid.asAnyCount();
-
-        logger.info("Detected retry: {} -> {}", retriedFault, newFid);
-        logger.debug("Turning transient fault into persistent {}", persistentFault);
-        // do not add the transient and the persistent fault
-        context.pruneFaultUidSubset(Set.of(retriedFault, persistentFault));
-
-        // TODO: handle case were retry is caused by effect of cause
-        // Which the persistent fault will block from happening.
-        // We need to persistently block, STARTING at retry x?
-
-        // ensure we replace the transient fault with the persistent one
-        Set<Fault> relatedCondition = condition.stream()
-                .filter(f -> !f.uid().matchesUpToCount(persistentFault))
-                .collect(Collectors.toSet());
-        context.reportConditionalFaultUid(relatedCondition, persistentFault);
-
-        return true;
-    }
-
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         List<FaultUid> traceFaultUids = result.trace.getFaultUids(traversalStrategy);
@@ -126,5 +75,56 @@ public class FaultDetector implements FeedbackHandler {
                 }
             }
         }
+    }
+
+    private boolean handleRetry(Set<FaultUid> expectedPoints, FaultUid newFid,
+            Set<Fault> condition, FeedbackContext context) {
+        if (!onlyPersistantOrTransientRetries) {
+            return false;
+        }
+
+        // edge case: the happy path should only have one count
+        // Otherwise, we cannot be sure which one is the retry, especially
+        // in the presence of multiple faults.
+        boolean happyPathOnlyHasOne = pointsInHappyPath.stream()
+                .filter(f -> f.matchesUpToCount(newFid))
+                .count() == 1;
+
+        if (!happyPathOnlyHasOne) {
+            return false;
+        }
+
+        // We are a retry of a fault that has the same uid, expect for a transient count
+        // less than ours
+        Set<FaultUid> retriedFaults = expectedPoints.stream()
+                .filter(f -> f.matchesUpToCount(newFid))
+                .filter(f -> f.isTransient())
+                .filter(f -> f.count() == newFid.count() - 1)
+                .collect(Collectors.toSet());
+
+        if (retriedFaults.size() != 1) {
+            return false;
+        }
+
+        FaultUid retriedFault = Sets.getOnlyElement(retriedFaults);
+        // only distinguish between transient (once) or always
+        FaultUid persistentFault = newFid.asAnyCount();
+
+        logger.info("Detected retry: {} -> {}", retriedFault, newFid);
+        logger.debug("Turning transient fault into persistent {}", persistentFault);
+        // do not add the transient and the persistent fault
+        context.reportSubstitutionByUid(Set.of(retriedFault), Set.of(persistentFault));
+
+        // TODO: handle case were retry is caused by effect of cause
+        // Which the persistent fault will block from happening.
+        // We need to persistently block, STARTING at retry x?
+
+        // ensure we replace the transient fault with the persistent one
+        Set<Fault> relatedCondition = condition.stream()
+                .filter(f -> !f.uid().matchesUpToCount(persistentFault))
+                .collect(Collectors.toSet());
+        context.reportConditionalFaultUid(relatedCondition, persistentFault);
+
+        return true;
     }
 }

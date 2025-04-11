@@ -1,6 +1,5 @@
 package nl.dflipse.fit.strategy.pruners;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -73,8 +72,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
         // Its more of a substitution, if someting counts for the effect
         // The same is true for the cause
         redundantFaults.add(effect);
-        context.pruneFaultSubset(Set.of(effect));
-
+        context.reportSubstitution(causes, Set.of(effect));
     }
 
     @Override

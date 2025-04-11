@@ -13,7 +13,7 @@ import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 public interface FeedbackContext {
     public Generator getGenerator();
 
-    public List<FailureMode> getFaultModes();
+    public List<FailureMode> getFailureModes();
 
     public List<FaultUid> getFaultUids();
 
@@ -21,9 +21,14 @@ public interface FeedbackContext {
 
     public void reportFaultUids(List<FaultUid> faultInjectionPoints);
 
+    public void reportConditionalFaultUidByUid(Set<FaultUid> condition, FaultUid fid);
     public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid);
 
+    public void reportExclusionOfFaultUidByUid(Set<FaultUid> condition, FaultUid fid);
     public void reportExclusionOfFaultUid(Set<Fault> condition, FaultUid fid);
+
+    public void reportSubstitutionByUid(Set<FaultUid> given, Set<FaultUid> replacement);
+    public void reportSubstitution(Set<Fault> given, Set<Fault> replacement);
 
     public void pruneFaultUidSubset(Set<FaultUid> subset);
 

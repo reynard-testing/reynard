@@ -14,7 +14,7 @@ services:
       - PROXY_LIST=proxy1:8050,proxy2:8050,proxy3:8050
       - OTEL_SERVICE_NAME=orchestrator
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger4137
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137
 
   proxy1:
     image: fit-proxy:latest
@@ -25,7 +25,7 @@ services:
       - CONTROLLER_PORT=8050
       - USE_OTEL=true
       - OTEL_SERVICE_NAME=proxy1
-      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger4137
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137
 
   proxy2:
     image: fit-proxy:latest
@@ -36,7 +36,7 @@ services:
       - CONTROLLER_PORT=8050
       - USE_OTEL=true
       - OTEL_SERVICE_NAME=proxy2
-      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger4137
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137
   proxy3:
     image: fit-proxy:latest
     environment:
@@ -46,4 +46,4 @@ services:
       - CONTROLLER_PORT=8050
       - USE_OTEL=true
       - OTEL_SERVICE_NAME=proxy3
-      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger4137
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137

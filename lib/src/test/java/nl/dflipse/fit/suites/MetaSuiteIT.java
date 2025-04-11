@@ -28,7 +28,7 @@ public class MetaSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final String PROXY_IMAGE = "fit-proxy:latest";
     private static final String COORDINATOR_IMAGE = "fit-orchestrator:latest";
-    private static final String COLLECTOR_ENDPOINT = "http://" + app.collectorHost + ":4317";
+    private static final String COLLECTOR_ENDPOINT = "http://" + app.jaegerHost + ":4317";
     public static final MediaType JSON = MediaType.get("application/json");
 
     private OkHttpClient client = new OkHttpClient.Builder()
@@ -77,7 +77,6 @@ public class MetaSuiteIT {
                     .withEnv("OTEL_SERVICE_NAME", "orchestrator")
                     .withEnv("OTEL_TRACES_EXPORTER", "otlp")
                     .withEnv("OTEL_BSP_SCHEDULE_DELAY", "1")
-                    .withEnv("OTEL_BSP_EXPORT_TIMEOUT", "100")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT))
             .withExposedPorts(5000);
 

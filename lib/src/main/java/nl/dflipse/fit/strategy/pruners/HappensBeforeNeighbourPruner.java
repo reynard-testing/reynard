@@ -25,7 +25,6 @@ import nl.dflipse.fit.trace.tree.TraceReport;
  * s set of fault causes the disappearance of the fault (the effect)
  */
 public class HappensBeforeNeighbourPruner implements Pruner, FeedbackHandler {
-
     private final ConditionalStore redundancyStore = new ConditionalStore();
     private final Logger logger = LoggerFactory.getLogger(HappensBeforeNeighbourPruner.class);
 

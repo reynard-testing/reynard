@@ -15,7 +15,7 @@ public class TrackedFaultload {
     private TraceState traceState;
 
     public TaggedTimer timer = new TaggedTimer();
-    public int getDelayMs = 100;
+    public int getDelayMs = 0;
 
     public TrackedFaultload() {
         this(new Faultload(Set.of()));

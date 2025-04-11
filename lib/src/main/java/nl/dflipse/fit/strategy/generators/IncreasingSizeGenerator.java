@@ -1,11 +1,9 @@
 package nl.dflipse.fit.strategy.generators;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +14,8 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.strategy.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.strategy.util.Faults;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
-import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
 public class IncreasingSizeGenerator implements Generator, Reporter {
@@ -34,19 +32,13 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
         this.store = new DynamicAnalysisStore(modes);
     }
 
-    private Set<Fault> faultUidtoFaults(FaultUid uid) {
-        return getFaultModes().stream()
-                .map(mode -> new Fault(uid, mode))
-                .collect(Collectors.toSet());
-    }
-
     @Override
     public void reportFaultUids(List<FaultUid> potentialFaults) {
         if (potentialFaults == null || potentialFaults.isEmpty()) {
             return;
         }
 
-        int modeCount = getFaultModes().size();
+        int modeCount = getFailureModes().size();
 
         if (iterator == null) {
             store.addFaultUids(potentialFaults);
@@ -90,7 +82,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
                     "Cannot add conditional fault injection point if no normal fault injection points are discovered");
         }
 
-        int m = getFaultModes().size();
+        int m = getFailureModes().size();
         long oldSize = iterator.size(m);
         boolean isNew = store.addConditionForFaultUid(condition, fid);
 
@@ -151,31 +143,10 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
         return faultLoad;
     }
 
-    private Set<Set<Fault>> allFaults(List<FaultUid> uids) {
-        return allFaults(uids, Set.of());
-    }
-
-    private Set<Set<Fault>> allFaults(List<FaultUid> uids, Set<Fault> current) {
-        if (uids.isEmpty()) {
-            return Set.of(current);
-        }
-
-        var head = uids.get(0);
-        var tail = uids.subList(1, uids.size());
-        Set<Fault> additions = faultUidtoFaults(head);
-        Set<Set<Fault>> allSets = new HashSet<>();
-        for (var addition : additions) {
-            Set<Fault> newCurrent = Sets.plus(current, addition);
-            allSets.addAll(allFaults(tail, newCurrent));
-        }
-
-        return allSets;
-    }
-
     @Override
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
         boolean isNew = false;
-        var allFaults = allFaults(List.copyOf(subset));
+        var allFaults = Faults.allFaults(subset, getFailureModes());
         for (Set<Fault> prunedSet : allFaults) {
             boolean wasNew = store.pruneFaultSubset(prunedSet);
             isNew = isNew || wasNew;
@@ -208,11 +179,11 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
 
     @Override
     public long spaceSize() {
-        return SpaceEstimate.spaceSize(getFaultModes().size(), getNumerOfPoints());
+        return SpaceEstimate.spaceSize(getFailureModes().size(), getNumerOfPoints());
     }
 
     @Override
-    public List<FailureMode> getFaultModes() {
+    public List<FailureMode> getFailureModes() {
         return store.getModes();
     }
 
@@ -244,14 +215,14 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     }
 
     public long getSpaceLeft() {
-        return iterator == null ? 0 : iterator.size(getFaultModes().size());
+        return iterator == null ? 0 : iterator.size(getFailureModes().size());
     }
 
     @Override
     public Map<String, String> report() {
         Map<String, String> report = new LinkedHashMap<>();
         report.put("Fault injection points", String.valueOf(getNumerOfPoints()));
-        report.put("Modes", String.valueOf(getFaultModes().size()));
+        report.put("Modes", String.valueOf(getFailureModes().size()));
         report.put("Redundant faultloads", String.valueOf(store.getRedundantFaultloads().size()));
         report.put("Redundant fault points", String.valueOf(store.getRedundantUidSubsets().size()));
         report.put("Redundant fault subsets", String.valueOf(store.getRedundantFaultSubsets().size()));

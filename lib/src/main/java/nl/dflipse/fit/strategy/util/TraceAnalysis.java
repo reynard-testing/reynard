@@ -21,6 +21,7 @@ public class TraceAnalysis {
 
     private final Set<FaultUid> faultUids = new HashSet<>();
     private final Set<Fault> injectedFaults = new HashSet<>();
+    private final Set<Fault> reportedFaults = new HashSet<>();
     private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
     private final List<TraceSpanReport> reports = new ArrayList<>();
     private final Map<FaultUid, TraceSpanReport> reportByPoint = new HashMap<>();
@@ -51,6 +52,11 @@ public class TraceAnalysis {
         if (!reportByPoint.containsKey(report.faultUid)) {
             reports.add(report);
             reportByPoint.put(report.faultUid, report);
+        }
+
+        if (report.hasError()) {
+            var fault = report.getRepresentativeFault();
+            reportedFaults.add(fault);
         }
 
         if (report.isInitial) {
@@ -122,6 +128,10 @@ public class TraceAnalysis {
 
     public Set<Fault> getInjectedFaults() {
         return injectedFaults;
+    }
+
+    public Set<Fault> getReportedFaults() {
+        return reportedFaults;
     }
 
     public Map<FaultUid, Set<FaultUid>> getAllConcurrent() {

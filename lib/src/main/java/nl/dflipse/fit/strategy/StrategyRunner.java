@@ -229,6 +229,13 @@ public class StrategyRunner {
 
     public void handleResult(FaultloadResult result) {
         logger.info("Analyzing result of running faultload with traceId=" + result.trackedFaultload.getTraceId());
+        if (result.isInitial() && !result.trace.getReportedFaults().isEmpty()) {
+            logger.error("The intial happy path should be fault free, but its not! Stopping the test suite.");
+            logger.error("Found {}", result.trace.getReportedFaults());
+            testCasesLeft = 0;
+            return;
+        }
+
         analyze(result);
         logger.info("Selecting next faultload");
     }

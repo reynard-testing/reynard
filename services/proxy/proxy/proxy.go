@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 
 	"dflipse.nl/fit-proxy/config"
 	"dflipse.nl/fit-proxy/control"
@@ -18,15 +19,17 @@ import (
 
 var destination string
 
-const FIT_PARENT_KEY = "fit-parent"
-const FIT_IS_INITIAL_KEY = "init"
-const FIT_FLAG = "fit"
-const FIT_MASK_PAYLOAD_FLAG = "mask"
-const FIT_HASH_BODY_FLAG = "hashbody"
-const FIT_HEADER_LOGGING_FLAG = "headerlog"
+const (
+	FIT_PARENT_KEY          = "fit-parent"
+	FIT_IS_INITIAL_KEY      = "init"
+	FIT_FLAG                = "fit"
+	FIT_MASK_PAYLOAD_FLAG   = "mask"
+	FIT_HASH_BODY_FLAG      = "hashbody"
+	FIT_HEADER_LOGGING_FLAG = "headerlog"
 
-const OTEL_PARENT_HEADER = "traceparent"
-const OTEL_STATE_HEADER = "tracestate"
+	OTEL_PARENT_HEADER = "traceparent"
+	OTEL_STATE_HEADER  = "tracestate"
+)
 
 func StartProxy(config config.ProxyConfig) {
 	// Set up the proxy host and target
@@ -182,6 +185,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			Proxy:              proxy,
 			ResponseWriter:     capture,
 			Request:            r,
+			DurationMs:         0,
 			ReponseOverwritten: false,
 			Complete:           false,
 			ConcurrentFaults:   nil,
@@ -203,6 +207,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 		tracing.TrackFault(traceId, &faultUid)
 
+		startTime := time.Now()
 		for _, fault := range faults {
 			if fault.Uid.Matches(faultUid) {
 				Perform(fault, &proxyState)
@@ -223,8 +228,9 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		proxyState.Complete = true
-
+		proxyState.DurationMs = uint64(time.Since(startTime).Milliseconds())
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
+
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 
 		if len(proxyState.ConcurrentFaults) > 0 {

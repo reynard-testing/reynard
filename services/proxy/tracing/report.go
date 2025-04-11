@@ -12,8 +12,9 @@ import (
 )
 
 type ResponseData struct {
-	Status int    `json:"status"`
-	Body   string `json:"body"`
+	Status     int    `json:"status"`
+	Body       string `json:"body"`
+	DurationMs uint64 `json:"duration_ms"`
 }
 
 type UidRequest struct {

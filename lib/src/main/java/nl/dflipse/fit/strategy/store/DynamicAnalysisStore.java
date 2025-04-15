@@ -36,7 +36,6 @@ public class DynamicAnalysisStore {
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
-    private TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
 
     public DynamicAnalysisStore(List<FailureMode> modes, boolean quiet) {
         this.modes = modes;

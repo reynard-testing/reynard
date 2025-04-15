@@ -55,8 +55,8 @@ public class HappensBeforeNeighbourPruner implements Pruner, FeedbackHandler {
             }
 
             Set<Behaviour> causes = result.trace.getChildren(report).stream()
+                    .filter(f -> f.hasFaultBehaviour())
                     .map(r -> r.getBehaviour())
-                    .filter(f -> f != null)
                     .collect(Collectors.toSet());
 
             for (FaultUid fault : dissappeared) {

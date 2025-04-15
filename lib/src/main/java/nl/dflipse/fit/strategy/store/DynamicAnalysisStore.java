@@ -101,9 +101,9 @@ public class DynamicAnalysisStore {
         }
 
         if (isNew) {
-            logger.info("Found new precondition {} for NOVEL fault {}", condition, inclusion);
+            logger.info("Found new precondition {} for NOVEL point {}", condition, inclusion);
         } else {
-            logger.info("Found new precondition {} for existing fault {}", condition, inclusion);
+            logger.info("Found new precondition {} for existing point {}", condition, inclusion);
         }
 
         return true;

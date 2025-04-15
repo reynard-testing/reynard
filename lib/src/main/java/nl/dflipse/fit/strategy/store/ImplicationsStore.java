@@ -126,7 +126,7 @@ public class ImplicationsStore {
     }
 
     target.add(new Substitution(causesSet, effect));
-    // target.removeAll(x -> Behaviour.isSubsetOf(x.causes, causesSet));
+    target.removeIf(x -> x.effect.matches(effect) && Behaviour.isSubsetOf(causesSet, x.causes));
     return true;
   }
 

@@ -67,7 +67,7 @@ public class ParentChildTest {
                 var f2 = nodeB.getFaultUid();
 
                 // Then - it should prune the combination
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(f1, f2)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(f1, f2)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(f1)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(f2)));
         }
@@ -97,9 +97,9 @@ public class ParentChildTest {
                 var fc = nodeC.getFaultUid();
 
                 // Then - it should prune the combination
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(fa, fc)));
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(fa, fb)));
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(fb, fc)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(fa, fc)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(fa, fb)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(fb, fc)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(fa)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(fb)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(fc)));
@@ -131,9 +131,9 @@ public class ParentChildTest {
                 var fc = nodeC.getFaultUid();
 
                 // Then - it should prune the combination
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(fa, fc)));
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(fa, fc)));
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(fa, fb, fc)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(fa, fc)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(fa, fc)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(fa, fb, fc)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(fb, fc)));
         }
 
@@ -166,7 +166,7 @@ public class ParentChildTest {
                 var fcb = nodeB2.getFaultUid();
 
                 // Then - it should prune the combination
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(fa, fcb)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(fa, fcb)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(fcb, fb)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(fc, fb)));
         }
@@ -201,8 +201,8 @@ public class ParentChildTest {
                 var fb2c = nodeB2C.getFaultUid();
 
                 // Then - it should prune the combination
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(fb1, fb1c)));
-                assertEquals(PruneDecision.PRUNE, pruner.prune(getFaultload(fb2, fb2c)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(fb1, fb1c)));
+                assertEquals(PruneDecision.PRUNE_SUBTREE, pruner.prune(getFaultload(fb2, fb2c)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(fb1, fb2)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(fb1, fb2c)));
                 assertEquals(PruneDecision.KEEP, pruner.prune(getFaultload(fb2, fb1c)));

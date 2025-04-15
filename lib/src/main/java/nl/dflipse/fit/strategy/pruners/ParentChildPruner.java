@@ -54,7 +54,7 @@ public class ParentChildPruner implements Pruner, FeedbackHandler {
         });
 
         if (isRedundant) {
-            return PruneDecision.PRUNE;
+            return PruneDecision.PRUNE_SUBTREE;
         } else {
             return PruneDecision.KEEP;
         }

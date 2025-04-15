@@ -18,7 +18,7 @@ public class FailStopPruner implements Pruner, FeedbackHandler {
     @Override
     public PruneDecision prune(Faultload faultload) {
         if (failed) {
-            return PruneDecision.PRUNE;
+            return PruneDecision.PRUNE_SUBTREE;
         }
 
         return PruneDecision.KEEP;

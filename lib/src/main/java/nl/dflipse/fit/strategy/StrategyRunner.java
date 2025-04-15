@@ -277,16 +277,23 @@ public class StrategyRunner {
             switch (decision) {
                 case PRUNE -> {
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
+                    if (pruneDecision == PruneDecision.KEEP) {
+                        pruneDecision = PruneDecision.PRUNE;
+                    }
+                }
+                case PRUNE_SUBTREE -> {
+                    statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
                     new FeedbackContextProvider(this, pruner.getClass(), null)
                             .pruneFaultSubset(faultload.faultSet());
-                    pruneDecision = PruneDecision.PRUNE;
+
+                    pruneDecision = PruneDecision.PRUNE_SUBTREE;
                 }
                 case KEEP -> {
                 }
             }
         }
 
-        if (pruneDecision == PruneDecision.PRUNE) {
+        if (pruneDecision != PruneDecision.KEEP) {
             statistics.incrementPruned(1);
         }
 

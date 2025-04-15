@@ -80,7 +80,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
         for (Fault fault : faultload.faultSet()) {
             if (redundantFaults.contains(fault)) {
                 logger.info("Pruning due to error propogation: {} in {}", fault, faultload.readableString());
-                return PruneDecision.PRUNE;
+                return PruneDecision.PRUNE_SUBTREE;
             }
         }
 

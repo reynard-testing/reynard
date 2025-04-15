@@ -3,6 +3,8 @@ package nl.dflipse.fit.pruners;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+
 import org.junit.jupiter.api.Test;
 
 import nl.dflipse.fit.faultload.Fault;
@@ -11,12 +13,12 @@ import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
 import nl.dflipse.fit.faultload.faultmodes.FailureMode;
 import nl.dflipse.fit.faultload.faultmodes.HttpError;
 import nl.dflipse.fit.strategy.FaultloadResult;
+import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.PruneDecision;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
-import nl.dflipse.fit.trace.tree.TraceTreeSpan;
-import nl.dflipse.fit.util.NodeBuilder;
+import nl.dflipse.fit.util.EventBuilder;
 
 public class DynamicReductionTest {
 
@@ -26,28 +28,16 @@ public class DynamicReductionTest {
 
         TrackedFaultload initialFaultload = new TrackedFaultload();
 
-        String serviceB = "B";
-        String apiB1 = "B1";
+        EventBuilder nodeA = new EventBuilder()
+                .withPoint("A", "a1");
 
-        String serviceA = "A";
-        String apiA1 = "A1";
+        EventBuilder nodeB = nodeA.createChild()
+                .withPoint("B", "b1");
 
-        TraceTreeSpan spanB = new NodeBuilder(initialFaultload.getTraceId())
-                .withService(serviceB)
-                .withReport(apiB1)
-                .withResponse(200, "OK")
-                .build();
-
-        TraceTreeSpan spanA = new NodeBuilder(initialFaultload.getTraceId())
-                .withService(serviceB)
-                .withChildren(spanB)
-                .withReport(apiA1)
-                .withResponse(200, "OK")
-                .build();
-
-        TraceAnalysis initialTrace = new TraceAnalysis(spanA);
+        TraceAnalysis initialTrace = EventBuilder.buildTrace(nodeA, nodeB);
         FaultloadResult result = new FaultloadResult(initialFaultload, initialTrace, true);
-        pruner.handleFeedback(result, null);
+        FeedbackContext contextMock = mock(FeedbackContext.class);
+        pruner.handleFeedback(result, contextMock);
 
         // The empty faultload is pruned
         PruneDecision decision = pruner.prune(initialFaultload.getFaultload());
@@ -56,75 +46,40 @@ public class DynamicReductionTest {
 
     @Test
     public void testBase() {
-        // A -> B -> C
         DynamicReductionPruner pruner = new DynamicReductionPruner();
 
         TrackedFaultload initialFaultload = new TrackedFaultload();
 
-        String serviceA = "A";
-        String apiA1 = "A1";
+        // A -> B -> C
+        EventBuilder nodeA = new EventBuilder()
+                .withPoint("A", "a1");
 
-        String serviceB = "B";
-        String apiB1 = "B1";
+        EventBuilder nodeB = nodeA.createChild()
+                .withPoint("B", "b1");
 
-        String serviceC = "C";
-        String apiC1 = "C1";
+        EventBuilder nodeC = nodeB.createChild()
+                .withPoint("C", "c1");
 
-        TraceTreeSpan spanC1 = new NodeBuilder(initialFaultload.getTraceId())
-                .withService(serviceC)
-                .withReport(apiC1)
-                .withResponse(200, "OK")
-                .build();
-
-        TraceTreeSpan spanB1 = new NodeBuilder(initialFaultload.getTraceId())
-                .withService(serviceB)
-                .withChildren(spanC1)
-                .withReport(apiB1)
-                .withResponse(200, "OK")
-                .build();
-
-        TraceTreeSpan spanA1 = new NodeBuilder(initialFaultload.getTraceId())
-                .withService(serviceB)
-                .withChildren(spanB1)
-                .withReport(apiA1)
-                .withResponse(200, "OK")
-                .build();
-
-        TraceAnalysis initialTrace = new TraceAnalysis(spanA1);
+        TraceAnalysis initialTrace = EventBuilder.buildTrace(nodeA, nodeB, nodeC);
         FaultloadResult result = new FaultloadResult(initialFaultload, initialTrace, true);
-        pruner.handleFeedback(result, null);
+        FeedbackContext contextMock = mock(FeedbackContext.class);
+        pruner.handleFeedback(result, contextMock);
 
-        FailureMode injectedFault = ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE);
+        // Inject a fault in node C, and propogate it to node B
+        FailureMode injectedMode = ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE);
         FailureMode resultedFault = ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR);
 
-        TraceTreeSpan spanC2 = new NodeBuilder(initialFaultload.getTraceId())
-                .withService(serviceC)
-                .withReport(apiC1)
-                .withFault(injectedFault)
-                .build();
-
-        TraceTreeSpan spanB2 = new NodeBuilder(initialFaultload.getTraceId())
-                .withService(serviceB)
-                .withChildren(spanC2)
-                .withReport(apiB1)
-                .withResponse(HttpError.INTERNAL_SERVER_ERROR.getErrorCode(), "err")
-                .build();
-
-        TraceTreeSpan spanA2 = new NodeBuilder(initialFaultload.getTraceId())
-                .withService(serviceB)
-                .withChildren(spanB2)
-                .withReport(apiA1)
-                .withResponse(200, "OK")
-                .build();
+        nodeC.withFault(injectedMode);
+        nodeB.withFault(resultedFault);
 
         // The empty faultload is pruned
-        Faultload faultload = new Faultload(Set.of(new Fault(spanC2.report.faultUid, injectedFault)));
-        TraceAnalysis trace = new TraceAnalysis(spanA2);
+        Faultload faultload = new Faultload(Set.of(new Fault(nodeC.getFaultUid(), injectedMode)));
+        TraceAnalysis trace = EventBuilder.buildTrace(nodeA, nodeB, nodeC);
         FaultloadResult result2 = new FaultloadResult(new TrackedFaultload(faultload), trace, true);
-        pruner.handleFeedback(result2, null);
+        pruner.handleFeedback(result2, contextMock);
 
         Faultload faultloadToPrune = new Faultload(
-                Set.of(new Fault(spanB2.report.faultUid, resultedFault)));
+                Set.of(new Fault(nodeB.getFaultUid(), resultedFault)));
 
         // The empty faultload is pruned
         PruneDecision decision = pruner.prune(faultloadToPrune);

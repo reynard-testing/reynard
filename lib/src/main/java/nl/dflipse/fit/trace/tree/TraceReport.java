@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonSerialize
 @JsonDeserialize
-public class TraceSpanReport {
+public class TraceReport {
     @JsonProperty("trace_id")
     public String traceId;
 
@@ -34,7 +34,7 @@ public class TraceSpanReport {
     public boolean isInitial;
 
     @JsonProperty("response")
-    public TraceSpanResponse response;
+    public TraceResponse response;
 
     public boolean hasError() {
         return injectedFault != null || (response != null && response.isErrenous());

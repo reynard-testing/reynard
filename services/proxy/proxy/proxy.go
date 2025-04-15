@@ -154,11 +154,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		reportParentId := state.GetWithDefault(FIT_PARENT_KEY, "0")
 		log.Printf("Report parent ID: %s\n", reportParentId)
 		partialPoint := tracing.PartialPointFromRequest(r, destination, shouldMaskPayload)
-		parentStack := tracing.GetUid(tracing.UidRequest{
-			TraceId:        traceId,
-			ReportParentId: reportParentId,
-			IsInitial:      isInitial,
-		})
+		parentStack := tracing.GetUid(traceId, reportParentId, isInitial)
 		invocationCount := tracing.GetCountForTrace(traceId, parentStack, partialPoint)
 		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, invocationCount)
 		// --

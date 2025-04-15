@@ -6,9 +6,7 @@ import requests
 # import trace
 from flask import Flask, request
 
-from lib.models import Span, ReportedSpan, ResponseData, FaultUid, TraceTreeNode, InjectionPoint
-from lib.otel import otelTraceExportToSpans, parse_otel_protobuf
-from lib.span_store import SpanStore
+from lib.models import TraceReport, ResponseData, FaultUid, InjectionPoint
 from lib.report_store import ReportStore
 
 app = Flask(__name__)
@@ -19,231 +17,36 @@ proxy_retry_count: int = int(os.getenv('PROXY_RETRY_COUNT', 3))
 debug_flag_set = os.getenv('DEBUG', "true").lower() == "true"
 
 # Local in-memory storage
-span_store = SpanStore()
 report_store = ReportStore()
 trace_ids: set[str] = set()
 
-CLIENT_ROOT_SPAN_ID = "0000000000000001"
-
-debug_all_spans: list[Span] = []
-debug_raw_exports: list = []
-
-
-def to_trace_tree_nodes(spans: list[Span], reports: list[ReportedSpan]) -> list[TraceTreeNode]:
-    report_lookup: dict[str, ReportedSpan] = {}
-    for report in reports:
-        report_lookup[report.span_id] = report
-
-    return [TraceTreeNode(
-        span=span,
-        report=report_lookup.get(span.span_id, None)) for span in spans]
-
-
-def get_trace_tree(spans: list[Span], reports: list[ReportedSpan]) -> list[TraceTreeNode]:
-    """Convert spans to a trace tree (list of root nodes)"""
-    # convert to nodes & build lookup
-    tree_nodes = to_trace_tree_nodes(spans, reports)
-    tree_node_by_span_id = {node.span.span_id: node for node in tree_nodes}
-
-    # build tree
-    for node in tree_nodes:
-        # find parent
-        parent = tree_node_by_span_id.get(node.span.parent_span_id, None)
-        if parent is None:
-            continue
-
-        # add node as child of parent
-        parent.children.append(node)
-
-    # find root nodes
-    root_spans = [
-        node for node in tree_nodes if tree_node_by_span_id.get(node.span.parent_span_id, None) is None
-    ]
-
-    # if there is only one root, return it
-    if len(root_spans) <= 1:
-        return root_spans
-
-    # > 1 roots
-    # filter out root spans that have no children
-    root_spans = [x for x in root_spans if len(x.children) > 0]
-
-    return root_spans
-
-
-def get_trace_tree_for_trace(trace_id: str) -> tuple[list[Span], list[TraceTreeNode]]:
-    spans = span_store.get_by_trace_id(trace_id)
-    reports = report_store.get_by_trace_id(trace_id)
-
-    # If the clients sends a fictional root span, add it to build the correct tree
-    needs_client_root_span = any(
-        span.parent_span_id == CLIENT_ROOT_SPAN_ID for span in spans)
-
-    if needs_client_root_span:
-        root_span = Span(
-            span_id=CLIENT_ROOT_SPAN_ID,
-            trace_id=trace_id,
-            parent_span_id=None,
-            name="Client Root Span",
-            start_time=0,
-            end_time=1,
-            service_name="Client",
-            trace_state=None,
-            is_error=False,
-            error_message=None,
-        )
-        spans.append(root_span)
-
-    # convert to tree
-    return spans, get_trace_tree(spans, reports)
-
-
-def get_report_tree_children(children: list[TraceTreeNode]) -> list[TraceTreeNode]:
-    res = []
-    for child in children:
-        res += get_report_tree(child)
-    return res
-
-
-def get_report_tree(node: TraceTreeNode) -> list[TraceTreeNode]:
-    is_report_node = node.report != None or node.span.span_id == CLIENT_ROOT_SPAN_ID
-
-    if is_report_node:
-        return [TraceTreeNode(
-            span=node.span,
-            report=node.report,
-            children=get_report_tree_children(node.children)
-        )]
-
-    return get_report_tree_children(node.children)
-
-# ----------------- API Endpoints -----------------
-
-
-def upsert_span(span: Span):
-    # store all spans for debugging
-    if debug_flag_set:
-        debug_all_spans.append(span)
-
-    # ignore spans that are not part of a trace of interest
-    if span.trace_id not in trace_ids:
-        return
-
-    # if the span already exists, update it
-    existing_span = span_store.get_by_span_id(span.span_id)
-    if existing_span is not None:
-        # update existing span and return
-        existing_span.is_error = span.is_error
-        existing_span.error_message = span.error_message
-        existing_span.end_time = span.end_time
-        return
-
-    # otherwise, add the span
-    span_store.add(span)
-
-
-@app.route('/v1/traces', methods=['POST'])
-def collect():
-    """OTEL span export collection endpoint"""
-    # parse data
-    raw_data = request.data
-    data_dict = parse_otel_protobuf(raw_data)
-
-    # store raw data for debugging
-    if debug_flag_set:
-        debug_raw_exports.append(data_dict)
-
-    spans = otelTraceExportToSpans(data_dict)
-    trace_set = set([span.trace_id for span in spans])
-    for span in spans:
-        upsert_span(span)
-
-    print("Collected spans", len(spans), " for traces: ", trace_set, flush=True)
-    return "Data collected", 200
-
-# --- DEBUG ENDPOINTS ---
-
-
-@app.route('/v1/debug/all-trees', methods=['GET'])
-def debug_get_all_span_trees():
-    trees = get_trace_tree(debug_all_spans, [])
-    return {
-        "spans": debug_all_spans,
-        "trees": trees
-    }, 200
-
-
-@app.route('/v1/debug/raw', methods=['GET'])
-def debug_get_all_exports():
-    return {
-        "data": debug_raw_exports,
-    }, 200
-
 # --- DATA ENDPOINTS ---
 
-
 @app.route('/v1/trace/<trace_id>', methods=['GET'])
-def get_all_by_trace_id(trace_id):
-    if not trace_id in trace_ids:
-        return f"Trace id {trace_id} not known", 404
-    spans, trees = get_trace_tree_for_trace(trace_id)
-
-    reports = report_store.get_by_trace_id(trace_id)
-    report_tree = get_report_tree(trees[0]) if len(trees) == 1 else None
-
-    return {
-        "spans": spans,
-        "reports": reports,
-        "report_trees": report_tree,
-        "trees": trees
-    }, 200
-
-
-@app.route('/v1/trace/<trace_id>/trees', methods=['GET'])
-def get_trees_by_trace_id(trace_id):
-    _, trees = get_trace_tree_for_trace(trace_id)
-    return trees, 200
-
-
-@app.route('/v1/trace/<trace_id>/report-trees', methods=['GET'])
-def get_report_tree_by_trace_id(trace_id):
-    _, trees = get_trace_tree_for_trace(trace_id)
-
-    if len(trees) != 1:
-        return [], 404
-
-    report_tree = get_report_tree(trees[0])
-    return report_tree, 200
-
-
-@app.route('/v1/trace/<trace_id>/reports', methods=['GET'])
 def get_reports_by_trace_id(trace_id):
     reports = report_store.get_by_trace_id(trace_id)
-    return reports, 200
+    return {"reports": reports}, 200
 
 
-# --- LINK/REPORT ENDPOINTS ---
-@app.route('/v1/parent_uid', methods=['POST'])
+# --- PROXY ENDPOINTS ---
+@app.route('/v1/proxy/get-parent-uid', methods=['POST'])
 async def get_fault_uid():
     data = request.get_json()
     print("Received request for parent uid", data, flush=True)
-    is_initial = data.get('is_initial')
-    if is_initial:
-        return [], 200
     parent_id = data.get('parent_span_id')
     report = report_store.get_by_span_id(parent_id)
+
     if report is None:
         return [], 404
 
     return {"stack": report.uid.stack}, 200
 
 
-@app.route('/v1/link', methods=['POST'])
+@app.route('/v1/proxy/report', methods=['POST'])
 async def report_span_id():
     data = request.get_json()
 
     trace_id = data.get('trace_id')
-    parent_span_id = data.get('parent_span_id')
     span_id = data.get('span_id')
     uid = data.get('uid')
     injected_fault = data.get('injected_fault')
@@ -256,33 +59,16 @@ async def report_span_id():
             f"Trace id ({trace_id}) not registered anymore for uid {uid}", flush=True)
         return "Trace not registered", 404
 
-    span = Span(
-        trace_id=trace_id,
-        span_id=span_id,
-        parent_span_id=parent_span_id,
-        name="Proxied request",
-        service_name="FIT Proxy",
-        start_time=0,
-        end_time=1,
-        trace_state="",
-        is_error=False,
-        error_message="",
-    )
 
-    upsert_span(span)
-
+    # Convert data to tracereport
     responseData = None
     if response:
-        responseData = ResponseData(
-            status=response.get('status'),
-            body=response.get('body'),
-            duration_ms=response.get('duration_ms'),
-        )
+        responseData = ResponseData(**response)
 
     stack = tuple([InjectionPoint(**fip) for fip in uid.get('stack', [])])
     fault_uid = FaultUid(stack=stack)
 
-    span_report = ReportedSpan(
+    span_report = TraceReport(
         trace_id=trace_id,
         span_id=span_id,
         uid=fault_uid,
@@ -306,7 +92,6 @@ async def report_span_id():
     return "OK", 200
 
 # --- FAULTLOAD (UN)REGISTER ENDPOINTS ---
-
 
 async def with_retry(func: callable, retries: int):
     last_error = None
@@ -369,7 +154,6 @@ async def unregister_faultload():
     trace_ids.remove(trace_id)
     if not debug_flag_set:
         try:
-            span_store.remove_by_trace_id(trace_id)
             report_store.remove_by_trace_id(trace_id)
         except:
             pass
@@ -380,16 +164,13 @@ async def unregister_faultload():
 @app.route("/v1/clear", methods=['GET'])
 async def clear_all():
     trace_ids.clear()
-    span_store.clear()
     report_store.clear()
-    debug_all_spans.clear()
-    debug_raw_exports.clear()
 
     return "OK", 200
 
-print("Registered proxies: ", proxy_list, flush=True)
-print("Debug?: ", debug_flag_set, flush=True)
 if __name__ == '__main__':
+    print("Registered proxies: ", proxy_list, flush=True)
+    print("Debug?: ", debug_flag_set, flush=True)
     print("Starting orchestrator", flush=True)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(app.run(host='0.0.0.0', port=5000))

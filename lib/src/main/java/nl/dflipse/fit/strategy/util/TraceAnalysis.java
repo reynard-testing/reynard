@@ -13,55 +13,83 @@ import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.trace.tree.TraceSpanReport;
-import nl.dflipse.fit.trace.tree.TraceTreeSpan;
+import nl.dflipse.fit.trace.tree.TraceReport;
 
 public class TraceAnalysis {
     private final Logger logger = LoggerFactory.getLogger(TraceAnalysis.class);
 
     private final Set<FaultUid> faultUids = new HashSet<>();
     private final Set<Fault> injectedFaults = new HashSet<>();
+    private final List<TraceReport> reports = new ArrayList<>();
+    private final Map<FaultUid, TraceReport> reportByPoint = new HashMap<>();
     private final Set<Fault> reportedFaults = new HashSet<>();
-    private final Set<TraceTreeSpan> treeFaultPoints = new HashSet<>();
-    private final List<TraceSpanReport> reports = new ArrayList<>();
-    private final Map<FaultUid, TraceSpanReport> reportByPoint = new HashMap<>();
-    private TraceSpanReport rootReport;
+    private TraceReport rootReport;
 
-    private boolean anyIncomplete = false;
+    private boolean hasIncomplete = false;
     private boolean hasInitial = false;
-    private boolean hasMultipleRoots = false;
+    private boolean hasMultipleInitial = false;
 
     // --- Parent-Child relations
     TransativeRelation<FaultUid> parentChildRelation = new TransativeRelation<>();
     UndirectedRelation<FaultUid> concurrentRelation = new UndirectedRelation<>();
 
-    public TraceAnalysis(TraceTreeSpan rootNode) {
-        this(rootNode, List.of());
-    }
-
-    public TraceAnalysis(TraceTreeSpan rootNode, List<TraceSpanReport> reports) {
+    public TraceAnalysis(List<TraceReport> reports) {
         // Parent null indicates the root request
         for (var report : reports) {
             analyseReport(report);
         }
 
-        analyseNode(rootNode, null);
+        // Ensure all parents are reported
+        for (FaultUid uid : parentChildRelation.getElements()) {
+            if (uid == null || uid.isRoot()) {
+                continue;
+            }
+
+            if (!reportByPoint.containsKey(uid)) {
+                hasIncomplete = true;
+                logger.debug("Missing report for parent {}", uid);
+            }
+        }
     }
 
-    private void analyseReport(TraceSpanReport report) {
+    private void addParents(FaultUid uid) {
+        FaultUid current = uid;
+        while (current.hasParent()) {
+            FaultUid next = current.getParent();
+            parentChildRelation.addRelation(next, current);
+            current = next;
+        }
+    }
+
+    private void analyseReport(TraceReport report) {
+        // Save map of points by faultUid
         if (!reportByPoint.containsKey(report.faultUid)) {
             reports.add(report);
             reportByPoint.put(report.faultUid, report);
         }
 
+        // Update parent-child relation
+        if (report.faultUid.hasParent()) {
+            addParents(report.faultUid);
+        }
+
+        // Update concurrent relations
+        if (report.concurrentTo != null) {
+            for (var concurrent : report.concurrentTo) {
+                concurrentRelation.addRelation(report.faultUid, concurrent);
+            }
+        }
+
+        // Reported (not injected)
         if (report.hasError()) {
             var fault = report.getRepresentativeFault();
             reportedFaults.add(fault);
         }
 
+        // Handle initial report
         if (report.isInitial) {
             if (rootReport != null && rootReport.response != null && !rootReport.faultUid.equals(report.faultUid)) {
-                hasMultipleRoots = true;
+                hasMultipleInitial = true;
             }
 
             rootReport = report;
@@ -71,55 +99,18 @@ public class TraceAnalysis {
             faultUids.add(report.faultUid);
         }
 
+        // Handle injected faults
         if (report.injectedFault != null) {
             injectedFaults.add(report.injectedFault);
         }
 
+        // The response is null if the request was not completed yet
+        // This can happen, as the report is updated after the response is sent through
+        // the proxy
         if (report.response == null) {
-            anyIncomplete = true;
+            hasIncomplete = true;
         }
 
-        if (report.concurrentTo != null) {
-            for (var concurrent : report.concurrentTo) {
-                concurrentRelation.addRelation(report.faultUid, concurrent);
-            }
-        }
-    }
-
-    /** Analyse the node, given the most direct FaultUid ancestor */
-    private void analyseNode(TraceTreeSpan node, FaultUid parent) {
-        FaultUid nextParent = parent;
-
-        if (node.span.endTime <= 0) {
-            anyIncomplete = true;
-        }
-
-        // Check if the node has a report from a fault injection proxy
-        if (node.hasReport()) {
-            treeFaultPoints.add(node);
-
-            var report = node.report;
-            analyseReport(report);
-
-            // Save the parent-child relation
-            // Update the most direct parent
-            var child = report.faultUid;
-            parentChildRelation.addRelation(parent, child);
-            nextParent = child;
-
-            // If a remote call is detected (so our own proxy)
-            // But no children exist.
-            // TODO: is this solvable? Often is a misconfiguration, but we can still
-            // exercise the FI point.
-            // if (node.children.isEmpty()) {
-            // isIncomplete = true;
-            // }
-
-        }
-
-        for (var child : node.children) {
-            analyseNode(child, nextParent);
-        }
     }
 
     public Set<FaultUid> getFaultUids() {
@@ -152,16 +143,16 @@ public class TraceAnalysis {
         return false;
     }
 
-    public List<TraceSpanReport> getReports() {
+    public List<TraceReport> getReports() {
         return reports;
     }
 
-    public List<TraceSpanReport> getReports(Set<FaultUid> faultUids) {
+    public List<TraceReport> getReports(Set<FaultUid> faultUids) {
         return getReports(List.copyOf(faultUids));
     }
 
-    public List<TraceSpanReport> getReports(List<FaultUid> faultUids) {
-        List<TraceSpanReport> reports = new ArrayList<>();
+    public List<TraceReport> getReports(List<FaultUid> faultUids) {
+        List<TraceReport> reports = new ArrayList<>();
         for (var faultUid : faultUids) {
             var report = getReportByFaultUid(faultUid);
             if (report != null) {
@@ -171,22 +162,22 @@ public class TraceAnalysis {
         return reports;
     }
 
-    public TraceSpanReport getReportByFaultUid(FaultUid faultUid) {
+    public TraceReport getReportByFaultUid(FaultUid faultUid) {
         return reportByPoint.get(faultUid);
     }
 
-    public TraceSpanReport getRootReport() {
+    public TraceReport getRootReport() {
         return rootReport;
     }
 
     public boolean isInvalid() {
-        if (hasMultipleRoots) {
+        if (hasMultipleInitial) {
             logger.debug(
                     "Trace has multiple roots! This is likely because the first request does not go through a proxy. Ensure that the first request goes through a proxy!");
             return true;
         }
 
-        if (anyIncomplete) {
+        if (hasIncomplete) {
             logger.debug("Trace is incomplete!");
             return true;
         }
@@ -220,7 +211,7 @@ public class TraceAnalysis {
         return parentChildRelation.getChildren(node);
     }
 
-    public List<TraceSpanReport> getChildren(TraceSpanReport report) {
+    public List<TraceReport> getChildren(TraceReport report) {
         return getReports(getChildren(report.faultUid));
     }
 
@@ -265,14 +256,9 @@ public class TraceAnalysis {
         DEPTH_FIRST, BREADTH_FIRST, RANDOM
     }
 
-    public List<TraceSpanReport> getReports(TraversalStrategy strategy) {
-        List<TraceSpanReport> foundReports = new ArrayList<>();
-        traverseFaults(strategy, false, f -> {
-            var report = getReportByFaultUid(f);
-            if (report != null) {
-                foundReports.add(report);
-            }
-        });
+    public List<TraceReport> getReports(TraversalStrategy strategy) {
+        List<TraceReport> foundReports = new ArrayList<>();
+        traverseReports(strategy, false, foundReports::add);
 
         // ensure each known fault is present, not just those in the tree
         int missing = 0;
@@ -310,17 +296,27 @@ public class TraceAnalysis {
         return foundFaults;
     }
 
+    public void traverseReports(TraversalStrategy strategy, boolean includeInitial, Consumer<TraceReport> consumer) {
+        Consumer<FaultUid> mappedConsumer = (faultUid) -> {
+            var report = getReportByFaultUid(faultUid);
+            if (report != null) {
+                consumer.accept(report);
+            }
+        };
+
+        traverseFaults(strategy, includeInitial, mappedConsumer);
+    }
+
+    public void traverseReports(Consumer<TraceReport> consumer) {
+        traverseReports(TraversalStrategy.DEPTH_FIRST, true, consumer);
+    }
+
     public void traverseFaults(TraversalStrategy strategy, boolean includeInitial, Consumer<FaultUid> consumer) {
+        FaultUid root = rootReport.faultUid;
         switch (strategy) {
-            case DEPTH_FIRST:
-                traverseDepthFirst(null, includeInitial, consumer);
-                break;
-            case BREADTH_FIRST:
-                traverseBreadthFirst(null, includeInitial, consumer);
-                break;
-            case RANDOM:
-                traverseRandom(null, includeInitial, consumer);
-                break;
+            case DEPTH_FIRST -> traverseDepthFirst(root, includeInitial, consumer);
+            case BREADTH_FIRST -> traverseBreadthFirst(root, includeInitial, consumer);
+            case RANDOM -> traverseRandom(root, includeInitial, consumer);
         }
     }
 
@@ -333,8 +329,8 @@ public class TraceAnalysis {
             traverseDepthFirst(child, includeInitial, consumer);
         }
 
-        if (node != null) {
-            if (includeInitial || !node.isFromInitial()) {
+        if (node != null && !node.isRoot()) {
+            if (includeInitial || !node.isInitial()) {
                 consumer.accept(node);
             }
         }
@@ -349,8 +345,8 @@ public class TraceAnalysis {
             }
         }
 
-        if (node != null) {
-            if (includeInitial || !node.isFromInitial()) {
+        if (node != null && !node.isRoot()) {
+            if (includeInitial || !node.isInitial()) {
                 consumer.accept(node);
             }
         }
@@ -363,8 +359,8 @@ public class TraceAnalysis {
     }
 
     public void traverseBreadthFirst(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
-        if (node != null) {
-            if (includeInitial || !node.isFromInitial()) {
+        if (node != null && !node.isRoot()) {
+            if (includeInitial || !node.isInitial()) {
                 consumer.accept(node);
             }
         }

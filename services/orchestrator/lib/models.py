@@ -1,19 +1,4 @@
-from dataclasses import dataclass, field
-
-
-@dataclass
-class Span:
-    span_id: str
-    trace_id: str
-    parent_span_id: str
-    name: str
-    start_time: int
-    end_time: int
-    service_name: str
-    trace_state: str
-    is_error: bool
-    error_message: str
-
+from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ResponseData:
@@ -55,7 +40,7 @@ class Faultload:
 
 
 @dataclass
-class ReportedSpan:
+class TraceReport:
     # Proxy reported data
     trace_id: str
     span_id: str
@@ -64,10 +49,3 @@ class ReportedSpan:
     injected_fault: Fault
     concurrent_to: list[FaultUid]
     response: ResponseData
-
-
-@dataclass
-class TraceTreeNode:
-    span: Span
-    report: ReportedSpan
-    children: list['TraceTreeNode'] = field(default_factory=list)

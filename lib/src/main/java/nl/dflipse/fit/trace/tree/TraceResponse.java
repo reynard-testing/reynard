@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonSerialize
 @JsonDeserialize
-public class TraceSpanResponse {
+public class TraceResponse {
     @JsonProperty("status")
     public int status;
 
@@ -21,7 +21,7 @@ public class TraceSpanResponse {
         return !(status >= 200 && status < 300);
     }
 
-    public boolean equals(TraceSpanResponse other) {
+    public boolean equals(TraceResponse other) {
         if (other == null) {
             return false;
         }

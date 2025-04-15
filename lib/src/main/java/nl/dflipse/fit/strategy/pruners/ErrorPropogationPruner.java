@@ -13,7 +13,7 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.trace.tree.TraceSpanReport;
+import nl.dflipse.fit.trace.tree.TraceReport;
 
 public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ErrorPropogationPruner.class);
@@ -24,7 +24,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
     // Do we need to check for the other modes?
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        for (TraceSpanReport report : result.trace.getReports()) {
+        for (TraceReport report : result.trace.getReports()) {
             // Skip the initial report, we don't care about it
             if (report.isInitial || report.response == null) {
                 continue;
@@ -37,7 +37,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
             }
 
             // Find the direct causes that can influence the response
-            List<TraceSpanReport> childrenReports = result.trace.getChildren(report);
+            List<TraceReport> childrenReports = result.trace.getChildren(report);
             // Get the direct and indirect causes
             Set<Fault> childCauses = childrenReports.stream()
                     .map(f -> f.getRepresentativeFault())

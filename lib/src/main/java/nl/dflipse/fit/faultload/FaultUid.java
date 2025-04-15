@@ -10,6 +10,11 @@ import nl.dflipse.fit.strategy.util.Lists;
 @JsonSerialize
 @JsonDeserialize
 public record FaultUid(List<FaultInjectionPoint> stack) {
+    public FaultUid {
+        if (stack == null || stack.isEmpty()) {
+            throw new IllegalArgumentException("Stack must not be null and must have at least one element.");
+        }
+    }
 
     public int count() {
         return getPoint().count();
@@ -28,6 +33,26 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         var tail = getTail();
 
         return new FaultUid(Lists.add(tail, head.asAnyPayload()));
+    }
+
+    public boolean hasParent() {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+
+        if (stack.size() == 1) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public FaultUid getParent() {
+        if (!hasParent()) {
+            return null;
+        }
+
+        return new FaultUid(getTail());
     }
 
     public FaultUid asAnyCount() {
@@ -69,7 +94,11 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return stack.subList(0, stack.size() - 1);
     }
 
-    public boolean isFromInitial() {
+    public boolean isRoot() {
+        return stack.isEmpty();
+    }
+
+    public boolean isInitial() {
         return stack.size() == 1;
     }
 

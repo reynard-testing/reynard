@@ -17,7 +17,7 @@ public class FaultloadSizePruner implements Pruner {
     public PruneDecision prune(Faultload faultload) {
         if (faultload.size() > maxSize) {
             logger.info("Pruning faultload of size " + faultload.size() + " to " + maxSize);
-            return PruneDecision.PRUNE_SUBTREE;
+            return PruneDecision.PRUNE;
         }
 
         return PruneDecision.KEEP;

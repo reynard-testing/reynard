@@ -7,6 +7,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
@@ -344,7 +345,7 @@ public class PrunedGeneratorSpaceTest {
                 Set.of(faults.get(2, 0)));
 
         for (var precondition : preconditions) {
-            generator2.reportPreconditionOfFaultUid(precondition, point3);
+            generator2.reportPreconditionOfFaultUid(Behaviour.of(precondition), point3);
         }
 
         List<Faultload> allFaultloads2 = Enumerate.getGenerated(generator2);

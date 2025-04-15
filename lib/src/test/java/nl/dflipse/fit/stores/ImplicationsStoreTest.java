@@ -3,6 +3,7 @@ package nl.dflipse.fit.stores;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,9 +77,9 @@ public class ImplicationsStoreTest {
     store = new ImplicationsStore();
 
     // happy path
-    store.addUpstreamCause(a, Set.of(b, c, f));
-    store.addUpstreamCause(c, Set.of(d, e));
-    store.addUpstreamCause(f, Set.of(g));
+    store.addUpstreamEffect(a.uid(), Set.of(b.uid(), c.uid(), f.uid()));
+    store.addUpstreamEffect(c.uid(), Set.of(d.uid(), e.uid()));
+    store.addUpstreamEffect(f.uid(), Set.of(g.uid()));
   }
 
   private void setupDownstream() {
@@ -89,14 +90,14 @@ public class ImplicationsStoreTest {
     Behaviour fe2 = new Behaviour(e.uid(), mode2);
     Behaviour fc1 = new Behaviour(c.uid(), mode1);
 
-    store.addDownstreamCause(Set.of(fd1, e), fc1);
-    store.addDownstreamCause(Set.of(fd2, e), fc1);
-    store.addDownstreamCause(Set.of(d, fe1), fc1);
-    store.addDownstreamCause(Set.of(d, fe2), fc1);
-    store.addDownstreamCause(Set.of(fd1, fe1), fc1);
-    store.addDownstreamCause(Set.of(fd1, fe2), fc1);
-    store.addDownstreamCause(Set.of(fd2, fe1), fc1);
-    store.addDownstreamCause(Set.of(fd2, fe2), fc1);
+    store.addDownstreamEffect(Set.of(fd1, e), fc1);
+    store.addDownstreamEffect(Set.of(fd2, e), fc1);
+    store.addDownstreamEffect(Set.of(d, fe1), fc1);
+    store.addDownstreamEffect(Set.of(d, fe2), fc1);
+    store.addDownstreamEffect(Set.of(fd1, fe1), fc1);
+    store.addDownstreamEffect(Set.of(fd1, fe2), fc1);
+    store.addDownstreamEffect(Set.of(fd2, fe1), fc1);
+    store.addDownstreamEffect(Set.of(fd2, fe2), fc1);
 
     // G has no effect downstream (F)
   }
@@ -105,53 +106,78 @@ public class ImplicationsStoreTest {
     // B before c and e
     Behaviour fb1 = new Behaviour(b.uid(), mode1);
     Behaviour fb2 = new Behaviour(b.uid(), mode2);
-    store.addExclusionEffect(Set.of(fb1), Set.of(c, f));
-    store.addExclusionEffect(Set.of(fb2), Set.of(c, f));
+    store.addExclusionEffect(Set.of(fb1), c.uid());
+    store.addExclusionEffect(Set.of(fb1), f.uid());
+    store.addExclusionEffect(Set.of(fb2), c.uid());
+    store.addExclusionEffect(Set.of(fb2), f.uid());
 
-    // C before e
+    // C before f
     Behaviour fc1 = new Behaviour(c.uid(), mode1);
     Behaviour fc2 = new Behaviour(c.uid(), mode2);
-    store.addExclusionEffect(Set.of(fc1), Set.of(f));
-    store.addExclusionEffect(Set.of(fc2), Set.of(f));
+    store.addExclusionEffect(Set.of(fc1), f.uid());
+    store.addExclusionEffect(Set.of(fc2), f.uid());
   }
 
-  private void setupInclusion() {
+  private void setupInclusionAndExclusion() {
     // retry on F
     nodeF_retry = nodeA.createChild()
         .withPoint("F", "f1", 1);
     f2 = nodeF_retry.getBehaviour();
-    nodeG_F_retry = nodeF.createChild()
+    nodeG_F_retry = nodeF_retry.createChild()
         .withPoint("G", "g1");
     g2 = nodeG_F_retry.getBehaviour();
     Behaviour ff1 = new Behaviour(f.uid(), mode1);
     Behaviour ff2 = new Behaviour(f.uid(), mode2);
-    store.addUpstreamCause(f2, Set.of(g2));
-    store.addInclusionEffect(Set.of(ff1), Set.of(f2));
-    store.addInclusionEffect(Set.of(ff2), Set.of(f2));
+    store.addUpstreamEffect(f2.uid(), Set.of(g2.uid()));
+    store.addInclusionEffect(Set.of(ff1), f2.uid());
+    store.addInclusionEffect(Set.of(ff2), f2.uid());
 
     // alternative for B, for mode 1
     nodeB_alt = nodeA.createChild()
         .withPoint("B_prime", "b1", 0);
     bprime = nodeB_alt.getBehaviour();
     Behaviour fb = new Behaviour(b.uid(), mode1);
-    store.addInclusionEffect(Set.of(fb), Set.of(bprime));
+    store.addInclusionEffect(Set.of(fb), bprime.uid());
 
+    // B and B' before c and e
+    Behaviour fb1 = new Behaviour(b.uid(), mode1);
+    Behaviour fb2 = new Behaviour(b.uid(), mode2);
+    Behaviour fbp1 = new Behaviour(bprime.uid(), mode1);
+    Behaviour fbp2 = new Behaviour(bprime.uid(), mode2);
+    store.addExclusionEffect(Set.of(fb1, fbp1), c.uid());
+    store.addExclusionEffect(Set.of(fb1, fbp1), f.uid());
+    store.addExclusionEffect(Set.of(fb1, fbp2), c.uid());
+    store.addExclusionEffect(Set.of(fb1, fbp2), f.uid());
+    store.addExclusionEffect(Set.of(fb2, fbp2), c.uid());
+    store.addExclusionEffect(Set.of(fb2, fbp2), c.uid());
+    store.addExclusionEffect(Set.of(fb2, fbp1), f.uid());
+    store.addExclusionEffect(Set.of(fb2, fbp1), f.uid());
+
+    // C before f (and thus f2)
+    Behaviour fc1 = new Behaviour(c.uid(), mode1);
+    Behaviour fc2 = new Behaviour(c.uid(), mode2);
+    store.addExclusionEffect(Set.of(fc1), f.uid());
+    store.addExclusionEffect(Set.of(fc2), f.uid());
+  }
+
+  private Set<Behaviour> getFaultyBehaviours(Set<Behaviour> s) {
+    return s.stream().filter(b -> b.isFault()).collect(Collectors.toSet());
   }
 
   private int faultyBehaviours(Set<Behaviour> s) {
-    return (int) (s.stream().filter(b -> b.isFault()).count());
+    return getFaultyBehaviours(s).size();
   }
 
   @Test
   public void testUpstream() {
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of());
+    Set<Behaviour> result = store.getBehaviours(Set.of());
     assertEquals(7, result.size());
     assertEquals(0, faultyBehaviours(result));
   }
 
   @Test
   public void testDirectCausalAtA() {
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(
+    Set<Behaviour> result = store.getBehaviours(Set.of(
         new Fault(a.uid(), mode1)));
     assertEquals(1, result.size());
     assertEquals(1, faultyBehaviours(result));
@@ -159,21 +185,21 @@ public class ImplicationsStoreTest {
 
   @Test
   public void testDirectCausalAtB() {
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(b.uid(), mode1)));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(b.uid(), mode1)));
     assertEquals(7, result.size());
     assertEquals(1, faultyBehaviours(result));
   }
 
   @Test
   public void testDirectCausalAtC() {
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(c.uid(), mode1)));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(c.uid(), mode1)));
     assertEquals(7 - 2, result.size());
     assertEquals(1, faultyBehaviours(result));
   }
 
   @Test
   public void testDirectCausalAtF() {
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(f.uid(), mode1)));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(f.uid(), mode1)));
     assertEquals(7 - 1, result.size());
     assertEquals(1, faultyBehaviours(result));
   }
@@ -182,7 +208,7 @@ public class ImplicationsStoreTest {
   public void testHideB() {
     setupExclusion();
 
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(b.uid(), mode1)));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(b.uid(), mode1)));
     assertEquals(2, result.size());
     assertEquals(1, faultyBehaviours(result));
   }
@@ -191,7 +217,7 @@ public class ImplicationsStoreTest {
   public void testHideC() {
     setupExclusion();
 
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(c.uid(), mode1)));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(c.uid(), mode1)));
     assertEquals(3, result.size());
     assertEquals(1, faultyBehaviours(result));
   }
@@ -200,15 +226,16 @@ public class ImplicationsStoreTest {
   public void testDownstreamD() {
     setupDownstream();
 
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(d.uid(), mode1)));
-    assertEquals(2, faultyBehaviours(result));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(d.uid(), mode1)));
+    Set<Behaviour> faulty = getFaultyBehaviours(result);
+    assertEquals(2, faulty.size());
   }
 
   @Test
   public void testDownstreamE() {
     setupDownstream();
 
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(e.uid(), mode1)));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(e.uid(), mode1)));
     assertEquals(2, faultyBehaviours(result));
   }
 
@@ -216,7 +243,7 @@ public class ImplicationsStoreTest {
   public void testDownstreamG() {
     setupDownstream();
 
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(g.uid(), mode1)));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(g.uid(), mode1)));
     assertEquals(1, faultyBehaviours(result));
   }
 
@@ -224,17 +251,102 @@ public class ImplicationsStoreTest {
   public void testDownstreamDE() {
     setupDownstream();
 
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(d.uid(), mode1), new Fault(e.uid(), mode2)));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(d.uid(), mode1), new Fault(e.uid(), mode2)));
     assertEquals(3, faultyBehaviours(result));
   }
 
   @Test
-  public void testHideDDownstream() {
+  public void testHideDDownstreamHideF() {
     setupDownstream();
     setupExclusion();
 
-    Set<Behaviour> result = store.getBehaviours(a.uid(), Set.of(new Fault(d.uid(), mode1)));
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(d.uid(), mode1)));
     assertEquals(5, result.size());
+    assertEquals(2, faultyBehaviours(result));
+  }
+
+  @Test
+  public void testAppearBprime() {
+    setupInclusionAndExclusion();
+
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(b.uid(), mode1)));
+    assertEquals(8, result.size());
+  }
+
+  @Test
+  public void testNotAppearBprime() {
+    setupInclusionAndExclusion();
+
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(b.uid(), mode2)));
+    assertEquals(7, result.size());
+  }
+
+  @Test
+  public void testAppearF2() {
+    setupInclusionAndExclusion();
+
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(f.uid(), mode1)));
+    assertEquals(8, result.size());
+  }
+
+  @Test
+  public void testAppearBoth() {
+    setupInclusionAndExclusion();
+
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(b.uid(), mode1), new Fault(f.uid(), mode1)));
+    assertEquals(9, result.size());
+  }
+
+  @Test
+  public void testAppearBHideCF() {
+    setupInclusionAndExclusion();
+
+    Set<Behaviour> result = store.getBehaviours(
+        Set.of(new Fault(b.uid(), mode1), new Fault(bprime.uid(), mode1)));
+
+    // only A, b and b', which hides C and F
+    assertEquals(3, result.size());
+    assertEquals(2, faultyBehaviours(result));
+  }
+
+  @Test
+  public void testComplex() {
+    setupDownstream();
+    setupInclusionAndExclusion();
+
+    Set<Behaviour> result = store.getBehaviours(
+        Set.of(new Fault(b.uid(), mode1), new Fault(d.uid(), mode1)));
+
+    // A, b, b', c, d, e; exludes f, g
+    assertEquals(6, result.size());
+    assertEquals(3, faultyBehaviours(result));
+  }
+
+  @Test
+  public void testComplexRedundant() {
+    setupDownstream();
+    setupInclusionAndExclusion();
+
+    Set<Behaviour> result = store.getBehaviours(
+        Set.of(new Fault(f.uid(), mode1), new Fault(d.uid(), mode1)));
+
+    // A, b, b', c, d, e; exludes f, g, and thus f2
+    // (f is redundant)
+    assertEquals(5, result.size());
+    assertEquals(2, faultyBehaviours(result));
+  }
+
+  @Test
+  public void testComplexRedundant2() {
+    setupDownstream();
+    setupInclusionAndExclusion();
+
+    Set<Behaviour> result = store.getBehaviours(
+        Set.of(new Fault(b.uid(), mode1), new Fault(bprime.uid(), mode1), new Fault(e.uid(), mode1)));
+
+    // A, b, b'; exludes c, d, e f, g
+    // (e is redundant)
+    assertEquals(3, result.size());
     assertEquals(2, faultyBehaviours(result));
   }
 }

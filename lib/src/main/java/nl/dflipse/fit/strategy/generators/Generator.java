@@ -1,35 +1,47 @@
 package nl.dflipse.fit.strategy.generators;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 
-public interface Generator {
-    public Faultload generate();
+public abstract class Generator {
+    public abstract Faultload generate();
 
-    public void reportFaultUids(List<FaultUid> faultInjectionPoints);
+    public abstract void reportFaultUid(FaultUid faultInjectionPoint);
 
-    public void reportPreconditionOfFaultUid(Set<Fault> condition, FaultUid fid);
+    public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
+        for (var f : faultInjectionPoints) {
+            reportFaultUid(f);
+        }
+    }
 
-    public void reportExclusionOfFaultUid(Set<Fault> condition, FaultUid fid);
+    public abstract void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect);
 
-    public void pruneFaultUidSubset(Set<FaultUid> subset);
+    public abstract void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid result);
 
-    public void pruneFaultSubset(Set<Fault> subset);
+    public abstract void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid);
 
-    public void pruneFaultload(Faultload faultload);
+    public abstract void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect);
 
-    public List<FailureMode> getFailureModes();
+    public abstract void pruneFaultUidSubset(Set<FaultUid> subset);
 
-    public List<FaultUid> getFaultInjectionPoints();
+    public abstract void pruneFaultSubset(Set<Fault> subset);
 
-    public Set<FaultUid> getExpectedPoints(Faultload faultload);
+    public abstract void pruneFaultload(Faultload faultload);
 
-    public Set<FaultUid> getExpectedPoints(Set<Fault> faultload);
+    public abstract List<FailureMode> getFailureModes();
 
-    public long spaceSize();
+    public abstract List<FaultUid> getFaultInjectionPoints();
+
+    public abstract Set<Behaviour> getExpectedBehaviours(Set<Fault> faultload);
+
+    public abstract Set<FaultUid> getExpectedPoints(Set<Fault> faultload);
+
+    public abstract long spaceSize();
 }

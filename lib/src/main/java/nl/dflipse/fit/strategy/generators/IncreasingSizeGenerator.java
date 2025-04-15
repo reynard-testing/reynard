@@ -1,5 +1,6 @@
 package nl.dflipse.fit.strategy.generators;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
@@ -17,62 +19,48 @@ import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
-public class IncreasingSizeGenerator implements Generator, Reporter {
+public class IncreasingSizeGenerator extends Generator implements Reporter {
     private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
-    private PrunableGenericPowersetTreeIterator iterator;
+    private final PrunableGenericPowersetTreeIterator iterator;
 
     private final DynamicAnalysisStore store;
 
     public IncreasingSizeGenerator(DynamicAnalysisStore store) {
         this.store = store;
+        iterator = new PrunableGenericPowersetTreeIterator(store, true);
     }
 
     public IncreasingSizeGenerator(List<FailureMode> modes) {
-        this.store = new DynamicAnalysisStore(modes);
+        this(new DynamicAnalysisStore(modes));
     }
 
     @Override
-    public void reportFaultUids(List<FaultUid> potentialFaults) {
-        if (potentialFaults == null || potentialFaults.isEmpty()) {
+    public void reportFaultUid(FaultUid potentialFault) {
+        if (potentialFault == null) {
             return;
         }
 
-        int modeCount = getFailureModes().size();
-
-        if (iterator == null) {
-            store.addFaultUids(potentialFaults);
-            iterator = new PrunableGenericPowersetTreeIterator(store, true);
-
-            long expectedSize = iterator.size(modeCount);
-            logger.info("Found " + potentialFaults.size() + " fault points. Will generate at most "
-                    + expectedSize
-                    + " new test cases");
-        } else {
-            long oldSize = iterator.size(modeCount);
-
-            for (var fid : potentialFaults) {
-                boolean isNew = store.addFaultUid(fid);
-                if (!isNew) {
-                    continue;
-                }
-
-                logger.info("Found NEW fault injection point: " + fid);
-                iterator.add(fid);
-            }
-
-            long newSize = iterator.size(modeCount) - oldSize;
-            logger.info("Added " + newSize + " new test cases");
+        boolean isNew = store.addFaultUid(potentialFault);
+        if (!isNew) {
+            return;
         }
+
+        iterator.add(potentialFault);
     }
 
     @Override
-    public void reportPreconditionOfFaultUid(Set<Fault> condition, FaultUid fid) {
+    public void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect) {
+        store.addUpstreamEffect(cause, effect);
+    }
+
+    @Override
+    public void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         if (fid == null) {
             return;
         }
 
         if (condition.isEmpty()) {
-            reportFaultUids(List.of(fid));
+            reportFaultUid(fid);
             return;
         }
 
@@ -81,29 +69,20 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
                     "Cannot add conditional fault injection point if no normal fault injection points are discovered");
         }
 
-        int m = getFailureModes().size();
-        long oldSize = iterator.size(m);
         boolean isNew = store.addConditionForFaultUid(condition, fid);
 
         if (!isNew) {
             return;
         }
 
-        iterator.pruneQueue();
         iterator.addConditional(condition, fid);
-
-        long newSize = iterator.size(m) - oldSize;
-        logger.info("Added " + newSize + " new test cases");
+        iterator.pruneQueue();
     }
 
     @Override
-    public void reportExclusionOfFaultUid(Set<Fault> condition, FaultUid fid) {
-        if (fid == null) {
+    public void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid exclusion) {
+        if (exclusion == null) {
             return;
-        }
-
-        if (condition.isEmpty()) {
-            throw new IllegalArgumentException("Exclusion must be non-empty");
         }
 
         if (iterator == null) {
@@ -111,13 +90,18 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
                     "Cannot exlude fault injection point if no normal fault injection points are discovered");
         }
 
-        boolean isNew = store.addExclusionForFaultUid(condition, fid);
+        boolean isNew = store.addExclusionForFaultUid(condition, exclusion);
 
         if (!isNew) {
             return;
         }
 
         iterator.pruneQueue();
+    }
+
+    @Override
+    public void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
+        store.addDownstreamEffect(condition, effect);
     }
 
     @Override
@@ -157,7 +141,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     }
 
     private int getNumerOfPoints() {
-        return store.getFaultInjectionPoints().size();
+        return store.getPoints().size();
     }
 
     @Override
@@ -188,7 +172,7 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
 
     @Override
     public List<FaultUid> getFaultInjectionPoints() {
-        return store.getFaultInjectionPoints();
+        return store.getPoints();
     }
 
     @Override
@@ -197,8 +181,8 @@ public class IncreasingSizeGenerator implements Generator, Reporter {
     }
 
     @Override
-    public Set<FaultUid> getExpectedPoints(Faultload faultload) {
-        return getExpectedPoints(faultload.faultSet());
+    public Set<Behaviour> getExpectedBehaviours(Set<Fault> faultload) {
+        return store.getExpectedBehaviour(faultload);
     }
 
     public DynamicAnalysisStore getStore() {

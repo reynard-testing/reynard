@@ -1,6 +1,8 @@
 package nl.dflipse.fit.faultload;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import nl.dflipse.fit.faultload.modes.FailureMode;
 
@@ -8,6 +10,10 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
 
     public boolean isFault() {
         return mode != null;
+    }
+
+    public boolean isHappyPath() {
+        return mode == null;
     }
 
     public Fault getFault() {
@@ -27,6 +33,22 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
 
         boolean uidMatches = uid.matches(other.uid);
         return uidMatches;
+    }
+
+    public static Behaviour of(FaultUid uid) {
+        return new Behaviour(uid, null);
+    }
+
+    public static Set<Behaviour> of(Set<Fault> uids) {
+        return uids.stream()
+                .map(Fault::asBehaviour)
+                .collect(Collectors.toSet());
+    }
+
+    public static List<Behaviour> of(List<Fault> uids) {
+        return uids.stream()
+                .map(Fault::asBehaviour)
+                .collect(Collectors.toList());
     }
 
     public static boolean matches(Set<Behaviour> a, Set<Behaviour> b) {

@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy.store;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,13 +12,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
-import nl.dflipse.fit.strategy.util.TransativeRelation;
 import nl.dflipse.fit.util.NoOpLogger;
 
 public class DynamicAnalysisStore {
@@ -25,13 +26,7 @@ public class DynamicAnalysisStore {
     private final List<FailureMode> modes;
     private final List<FaultUid> points = new ArrayList<>();
 
-    // Stores which faults must be present for a faultuid to be injected
-    private final ConditionalStore inclusionConditions = new ConditionalStore();
-    // Stores which faults must not be present for a faultuid to be injected
-    private final ConditionalStore exclusionConditions = new ConditionalStore();
-
-    // TODO: store substitutions
-    private final Map<Set<Fault>, Fault> substitutions = new HashMap<>();
+    private final ImplicationsStore implicationsStore = new ImplicationsStore();
 
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
@@ -50,12 +45,12 @@ public class DynamicAnalysisStore {
         this(modes, false);
     }
 
-    public List<FaultUid> getFaultInjectionPoints() {
-        return points;
-    }
-
     public List<FailureMode> getModes() {
         return modes;
+    }
+
+    public List<FaultUid> getPoints() {
+        return points;
     }
 
     public List<Set<Fault>> getRedundantFaultloads() {
@@ -70,22 +65,10 @@ public class DynamicAnalysisStore {
         return this.redundantFaultSubsets;
     }
 
-    public List<FaultUid> getFaultUids() {
-        return points;
-    }
-
     public Set<FaultUid> getNonConditionalFaultUids() {
         return points.stream()
-                .filter(fid -> !inclusionConditions.hasConditions(fid))
+                .filter(fid -> implicationsStore.isInclusionEffect(fid))
                 .collect(Collectors.toSet());
-    }
-
-    public ConditionalStore getInclusionConditions() {
-        return inclusionConditions;
-    }
-
-    public ConditionalStore getExclusionConditions() {
-        return exclusionConditions;
     }
 
     public boolean hasFaultUid(FaultUid fid) {
@@ -101,38 +84,33 @@ public class DynamicAnalysisStore {
         return true;
     }
 
-    public int addFaultUids(List<FaultUid> fids) {
-        int added = 0;
-
-        for (var fid : fids) {
-            boolean isNew = addFaultUid(fid);
-            if (isNew) {
-                added++;
-            }
-        }
-
-        return added;
+    public boolean addUpstreamEffect(FaultUid fid, Collection<FaultUid> children) {
+        return implicationsStore.addUpstreamEffect(fid, children);
     }
 
-    public boolean addConditionForFaultUid(Set<Fault> condition, FaultUid fid) {
-        boolean isNew = addFaultUid(fid);
-        boolean isNewPrecondition = inclusionConditions.addCondition(condition, fid);
+    public boolean addDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
+        return implicationsStore.addDownstreamEffect(condition, effect);
+    }
+
+    public boolean addConditionForFaultUid(Collection<Behaviour> condition, FaultUid inclusion) {
+        boolean isNew = addFaultUid(inclusion);
+        boolean isNewPrecondition = implicationsStore.addInclusionEffect(condition, inclusion);
 
         if (!isNewPrecondition) {
             return false;
         }
 
         if (isNew) {
-            logger.info("Found new precondition {} for NOVEL fault {}", condition, fid);
+            logger.info("Found new precondition {} for NOVEL fault {}", condition, inclusion);
         } else {
-            logger.info("Found new precondition {} for existing fault {}", condition, fid);
+            logger.info("Found new precondition {} for existing fault {}", condition, inclusion);
         }
 
         return true;
     }
 
-    public boolean addExclusionForFaultUid(Set<Fault> condition, FaultUid fid) {
-        boolean isNewPrecondition = exclusionConditions.addCondition(condition, fid);
+    public boolean addExclusionForFaultUid(Collection<Behaviour> condition, FaultUid exclusion) {
+        boolean isNewPrecondition = implicationsStore.addExclusionEffect(condition, exclusion);
 
         if (!isNewPrecondition) {
             return false;
@@ -229,39 +207,20 @@ public class DynamicAnalysisStore {
         return this.redundantFaultloads.contains(faultload);
     }
 
-    public Set<FaultUid> getExpectedPoints(Set<Fault> faults) {
-        Set<FaultUid> basePoints = getNonConditionalFaultUids();
-        basePoints.addAll(inclusionConditions.getForCondition(faults));
-        basePoints.removeAll(exclusionConditions.getForCondition(faults));
+    public Set<Behaviour> getExpectedBehaviour(Set<Fault> faults) {
+        return implicationsStore.getBehaviours(faults);
+    }
 
-        return basePoints;
+    public Set<FaultUid> getExpectedPoints(Set<Fault> faults) {
+        return implicationsStore.getBehaviours(faults)
+                .stream()
+                .map(Behaviour::uid)
+                .collect(Collectors.toSet());
     }
 
     public boolean isRedundant(Set<Fault> faultload) {
-        // TODO: use substitutions
-
-        for (Fault fault : faultload) {
-            FaultUid point = fault.uid();
-
-            // Prune on preconditions
-            if (inclusionConditions.hasConditions(point)) {
-                boolean hasPrecondition = inclusionConditions.hasCondition(point, faultload);
-
-                if (!hasPrecondition) {
-                    logger.debug("Pruning node due to not matching preconditions for {}", fault);
-                    return true;
-                }
-            }
-
-            // Prune on exclusions
-            if (exclusionConditions.hasConditions(point)) {
-                boolean hasExclusion = exclusionConditions.hasCondition(point, faultload);
-
-                if (hasExclusion) {
-                    logger.debug("Pruning node due to matching exclusion for {}", fault);
-                    return true;
-                }
-            }
+        if (faultload == null || faultload.isEmpty()) {
+            return false;
         }
 
         // Prune on subsets
@@ -274,6 +233,27 @@ public class DynamicAnalysisStore {
         if (hasFaultload(faultload)) {
             logger.debug("Pruning node {} due pruned faultload", faultload);
             return true;
+        }
+
+        // Prune on injecting faults on unreachable points
+        var expected = getExpectedPoints(faultload);
+        if (expected.isEmpty()) {
+            return false;
+        }
+
+        for (Fault toInject : faultload) {
+            boolean found = false;
+            for (FaultUid point : expected) {
+                if (point.matches(toInject.uid())) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                logger.debug("Pruning node {} due to unreachable point {}", faultload, toInject);
+                return true;
+            }
         }
 
         return false;
@@ -309,7 +289,7 @@ public class DynamicAnalysisStore {
     }
 
     public long estimatePruned() {
-        return estimatePruned(getFaultInjectionPoints());
+        return estimatePruned(getPoints());
     }
 
 }

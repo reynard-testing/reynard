@@ -33,10 +33,10 @@ public class ParentChildPruner implements Pruner, FeedbackHandler {
 
             // The parent makes the child disappear
             // so we can prune the combination
-            context.reportExclusionOfFaultUidByUid(Set.of(parent), child);
+            context.pruneFaultUidSubset(Set.of(parent, child));
             // We can also exclude the child for any #inf
-            FaultUid anyCount = parent.asAnyCount();
-            context.reportExclusionOfFaultUidByUid(Set.of(anyCount), child);
+            FaultUid anyCountParent = parent.asAnyCount();
+            context.pruneFaultUidSubset(Set.of(anyCountParent, child));
         }
     }
 
@@ -54,7 +54,7 @@ public class ParentChildPruner implements Pruner, FeedbackHandler {
         });
 
         if (isRedundant) {
-            return PruneDecision.PRUNE_SUBTREE;
+            return PruneDecision.PRUNE;
         } else {
             return PruneDecision.KEEP;
         }

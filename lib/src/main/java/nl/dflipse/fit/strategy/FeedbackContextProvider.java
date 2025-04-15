@@ -1,11 +1,13 @@
 package nl.dflipse.fit.strategy;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
@@ -38,11 +40,6 @@ public class FeedbackContextProvider implements FeedbackContext {
     }
 
     @Override
-    public Generator getGenerator() {
-        return runner.getGenerator();
-    }
-
-    @Override
     public List<FailureMode> getFailureModes() {
         return runner.getGenerator().getFailureModes();
     }
@@ -53,51 +50,47 @@ public class FeedbackContextProvider implements FeedbackContext {
     }
 
     @Override
-    public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
-        localStore.addFaultUids(faultInjectionPoints);
-        runner.getGenerator().reportFaultUids(faultInjectionPoints);
+    public void reportFaultUid(FaultUid faultInjectionPoint) {
+        localStore.addFaultUid(faultInjectionPoint);
+        runner.getGenerator().reportFaultUid(faultInjectionPoint);
     }
 
     @Override
-    public void reportConditionalFaultUidByUid(Set<FaultUid> condition, FaultUid fid) {
+    public void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect) {
+        localStore.addUpstreamEffect(cause, effect);
+        runner.getGenerator().reportUpstreamEffect(cause, effect);
+    }
+
+    @Override
+    public void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
+        localStore.addDownstreamEffect(condition, effect);
+        runner.getGenerator().reportDownstreamEffect(condition, effect);
+    }
+
+    @Override
+    public void reportConditionalFaultUidByUid(Collection<FaultUid> condition, FaultUid fid) {
         for (var c : Fault.allFaults(condition, getFailureModes())) {
-            reportConditionalFaultUid(c, fid);
+            reportConditionalFaultUid(Behaviour.of(c), fid);
         }
     }
 
     @Override
-    public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
+    public void reportConditionalFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         localStore.addConditionForFaultUid(condition, fid);
         runner.getGenerator().reportPreconditionOfFaultUid(condition, fid);
     }
 
     @Override
-    public void reportExclusionOfFaultUidByUid(Set<FaultUid> condition, FaultUid fid) {
+    public void reportExclusionOfFaultUidByUid(Collection<FaultUid> condition, FaultUid fid) {
         for (var c : Fault.allFaults(condition, getFailureModes())) {
-            reportExclusionOfFaultUid(c, fid);
+            reportExclusionOfFaultUid(Behaviour.of(c), fid);
         }
     }
 
     @Override
-    public void reportExclusionOfFaultUid(Set<Fault> condition, FaultUid fid) {
+    public void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         localStore.addExclusionForFaultUid(condition, fid);
         runner.getGenerator().reportExclusionOfFaultUid(condition, fid);
-    }
-
-    @Override
-    public void reportSubstitutionByUid(Set<FaultUid> given, Set<FaultUid> replacement) {
-        for (var g : Fault.allFaults(given, getFailureModes())) {
-            for (var r : Fault.allFaults(replacement, getFailureModes())) {
-                var redundant = Sets.union(g, r);
-                pruneFaultSubset(redundant);
-            }
-        }
-    }
-
-    @Override
-    public void reportSubstitution(Set<Fault> given, Set<Fault> replacement) {
-        var redundant = Sets.union(given, replacement);
-        pruneFaultSubset(redundant);
     }
 
     @Override
@@ -174,23 +167,24 @@ public class FeedbackContextProvider implements FeedbackContext {
             }
         }
 
-        var inclusions = store.getInclusionConditions().getConditionsByUid();
-        if (!inclusions.isEmpty()) {
-            hasImpact = true;
-            report.put("Points with inclusion condition", inclusions.size() + "");
-            for (var entry : inclusions.entrySet()) {
-                report.put(entry.getKey().toString(), entry.getValue().size() + "");
-            }
-        }
+        // TODO: fix pointer
+        // var inclusions = store.getInclusionConditions().getConditionsByUid();
+        // if (!inclusions.isEmpty()) {
+        // hasImpact = true;
+        // report.put("Points with inclusion condition", inclusions.size() + "");
+        // for (var entry : inclusions.entrySet()) {
+        // report.put(entry.getKey().toString(), entry.getValue().size() + "");
+        // }
+        // }
 
-        var exclusions = store.getExclusionConditions().getConditionsByUid();
-        if (!exclusions.isEmpty()) {
-            hasImpact = true;
-            report.put("Points with exclusion condition", exclusions.size() + "");
-            for (var entry : exclusions.entrySet()) {
-                report.put(entry.getKey().toString(), entry.getValue().size() + "");
-            }
-        }
+        // var exclusions = store.getExclusionConditions().getConditionsByUid();
+        // if (!exclusions.isEmpty()) {
+        // hasImpact = true;
+        // report.put("Points with exclusion condition", exclusions.size() + "");
+        // for (var entry : exclusions.entrySet()) {
+        // report.put(entry.getKey().toString(), entry.getValue().size() + "");
+        // }
+        // }
 
         if (hasImpact) {
             List<FaultUid> points = generator.getFaultInjectionPoints();

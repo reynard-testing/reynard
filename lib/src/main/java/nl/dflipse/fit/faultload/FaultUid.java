@@ -35,12 +35,31 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(Lists.add(tail, head.asAnyPayload()));
     }
 
+    /** Whether all points are without persistent faults */
+    public boolean isNormalForm() {
+        var head = getPoint();
+
+        if (head.isPersistent()) {
+            return false;
+        }
+
+        if (hasParent(false)) {
+            return getParent(false).isNormalForm();
+        } else {
+            return true;
+        }
+    }
+
     public boolean hasParent() {
+        return hasParent(false);
+    }
+
+    public boolean hasParent(boolean includeRoot) {
         if (stack == null || stack.isEmpty()) {
             return false;
         }
 
-        if (stack.size() == 1) {
+        if (!includeRoot && stack.size() == 1) {
             return false;
         }
 
@@ -48,7 +67,11 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     }
 
     public FaultUid getParent() {
-        if (!hasParent()) {
+        return getParent(false);
+    }
+
+    public FaultUid getParent(boolean includeRoot) {
+        if (!hasParent(includeRoot)) {
             return null;
         }
 

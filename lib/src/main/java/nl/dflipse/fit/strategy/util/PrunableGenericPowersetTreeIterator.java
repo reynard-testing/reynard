@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.modes.FailureMode;
@@ -48,14 +50,14 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
     }
 
     public PrunableGenericPowersetTreeIterator(DynamicAnalysisStore store, boolean skipEmptySet) {
-        this(store.getFaultUids().stream().toList(), store.getModes(), store::isRedundant, skipEmptySet);
+        this(store.getPoints().stream().toList(), store.getModes(), store::isRedundant, skipEmptySet);
     }
 
     private boolean shouldPrune(TreeNode node) {
         return prunePredicate.test(node.value);
     }
 
-    private List<Fault> expand(FaultUid node) {
+    private List<Fault> expandModes(FaultUid node) {
         List<Fault> collection = new ArrayList<>();
         for (var mode : modes) {
             collection.add(new Fault(node, mode));
@@ -72,7 +74,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
             FaultUid expansionElement = node.expansion.get(i);
             List<FaultUid> newExpansion = node.expansion.subList(i + 1, node.expansion.size());
 
-            for (Fault additionalElement : expand(expansionElement)) {
+            for (Fault additionalElement : expandModes(expansionElement)) {
                 Set<Fault> newValue = Sets.plus(node.value(), additionalElement);
                 var newNode = new TreeNode(newValue, newExpansion);
 
@@ -112,7 +114,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
 
     // Add new element to explore
     public void add(FaultUid extension) {
-        for (Fault additionalElement : expand(extension)) {
+        for (Fault additionalElement : expandModes(extension)) {
             Set<Fault> newValue = Set.of(additionalElement);
             var newNode = new TreeNode(newValue, List.copyOf(points));
 
@@ -126,7 +128,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
         points.add(extension);
     }
 
-    public void addConditional(Set<Fault> condition, FaultUid extension) {
+    public void addConditional(Collection<Behaviour> condition, FaultUid extension) {
 
         // We cannot expand to extensions already in the condition
         Set<FaultUid> alreadyExpanded = condition.stream()
@@ -138,9 +140,14 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
                 .filter(e -> !e.equals(extension))
                 .toList();
 
-        for (Fault additionalElement : expand(extension)) {
+        List<Fault> conditionList = condition.stream()
+                .map(x -> x.getFault())
+                .filter(x -> x != null)
+                .toList();
+
+        for (Fault additionalElement : expandModes(extension)) {
             // Add new node
-            Set<Fault> newValue = Sets.plus(condition, additionalElement);
+            Set<Fault> newValue = Sets.plus(conditionList, additionalElement);
             var newNode = new TreeNode(newValue, expansionsLeft);
 
             if (shouldPrune(newNode)) {

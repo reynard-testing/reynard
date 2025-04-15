@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
@@ -39,9 +40,8 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
             // Find the direct causes that can influence the response
             List<TraceReport> childrenReports = result.trace.getChildren(report);
             // Get the direct and indirect causes
-            Set<Fault> childCauses = childrenReports.stream()
-                    .filter(f -> f.hasFaultBehaviour())
-                    .map(f -> f.getFault())
+            Set<Behaviour> childCauses = childrenReports.stream()
+                    .map(r -> r.getBehaviour())
                     .collect(Collectors.toSet());
 
             boolean isUnexpectedError = childCauses.isEmpty();
@@ -61,7 +61,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
     }
 
     /* Causes result in fault at effect */
-    private void handlePropogation(Set<Fault> causes, Fault effect, FeedbackContext context) {
+    private void handlePropogation(Set<Behaviour> causes, Fault effect, FeedbackContext context) {
         logger.info("Found that fault(s) " + causes + " causes error " + effect);
 
         // TODO: if a cause is directly propogated (body, status)
@@ -72,7 +72,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
         // Its more of a substitution, if someting counts for the effect
         // The same is true for the cause
         redundantFaults.add(effect);
-        context.reportSubstitution(causes, Set.of(effect));
+        context.reportDownstreamEffect(causes, effect.asBehaviour());
     }
 
     @Override
@@ -80,7 +80,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
         for (Fault fault : faultload.faultSet()) {
             if (redundantFaults.contains(fault)) {
                 logger.info("Pruning due to error propogation: {} in {}", fault, faultload.readableString());
-                return PruneDecision.PRUNE_SUBTREE;
+                return PruneDecision.PRUNE;
             }
         }
 

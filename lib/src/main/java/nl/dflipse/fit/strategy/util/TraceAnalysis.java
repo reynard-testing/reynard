@@ -239,6 +239,11 @@ public class TraceAnalysis {
         return neighbours;
     }
 
+    public List<TraceReport> getNeighbours(TraceReport report) {
+        Set<FaultUid> neighbours = getNeighbours(report.faultUid);
+        return getReports(neighbours);
+    }
+
     public List<FaultUid> getParents(FaultUid parent) {
         List<FaultUid> parents = parentChildRelation.getParents(parent);
         parents.add(null);

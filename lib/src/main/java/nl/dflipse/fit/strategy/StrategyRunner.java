@@ -198,10 +198,8 @@ public class StrategyRunner {
             }
 
             PruneDecision decision = prune(generated);
-            boolean shouldPrune = decision == PruneDecision.PRUNE ||
-                    decision == PruneDecision.PRUNE_SUBTREE;
 
-            if (!shouldPrune) {
+            if (decision == PruneDecision.KEEP) {
                 // We found a new faultload!
                 next = generated;
                 break;
@@ -272,38 +270,26 @@ public class StrategyRunner {
     }
 
     public PruneDecision prune(Faultload faultload) {
-        boolean shouldPrune = false;
-        boolean shouldPruneSubtree = false;
+        PruneDecision pruneDecision = PruneDecision.KEEP;
 
         for (Pruner pruner : pruners) {
             var decision = pruner.prune(faultload);
             switch (decision) {
                 case PRUNE -> {
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
-                    shouldPrune = true;
-                }
-                case PRUNE_SUBTREE -> {
-                    statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
                     new FeedbackContextProvider(this, pruner.getClass(), null)
                             .pruneFaultSubset(faultload.faultSet());
-                    shouldPrune = true;
-                    shouldPruneSubtree = true;
+                    pruneDecision = PruneDecision.PRUNE;
                 }
                 case KEEP -> {
                 }
             }
         }
 
-        if (shouldPrune) {
+        if (pruneDecision == PruneDecision.PRUNE) {
             statistics.incrementPruned(1);
         }
 
-        if (shouldPruneSubtree) {
-            return PruneDecision.PRUNE_SUBTREE;
-        } else if (shouldPrune) {
-            return PruneDecision.PRUNE;
-        } else {
-            return PruneDecision.KEEP;
-        }
+        return pruneDecision;
     }
 }

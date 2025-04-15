@@ -1,72 +1,74 @@
 package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
 public class Sets {
     /** Whether A ⊆ B */
-    public static <T> boolean isSubsetOf(Set<T> A, Set<T> B) {
+    public static <T> boolean isSubsetOf(Collection<T> A, Collection<T> B) {
         return B.containsAll(A);
     }
 
     /** Whether A ⊂ B */
-    public static <T> boolean isProperSubset(Set<T> A, Set<T> B) {
+    public static <T> boolean isProperSubset(Collection<T> A, Collection<T> B) {
         return B.stream().anyMatch(x -> !A.contains(x)) && isSubsetOf(A, B);
     }
 
     /** Whether A ⊇ B */
-    public static <T> boolean isSupersetOf(Set<T> A, Set<T> B) {
+    public static <T> boolean isSupersetOf(Collection<T> A, Collection<T> B) {
         return A.containsAll(B);
     }
 
     /** Whether A ⊃ B */
-    public static <T> boolean isProperSupersetOf(Set<T> A, Set<T> B) {
+    public static <T> boolean isProperSupersetOf(Collection<T> A, Collection<T> B) {
         return A.stream().anyMatch(x -> !B.contains(x)) && isSupersetOf(A, B);
     }
 
-    public static <T> boolean areEqual(Set<T> set1, Set<T> set2) {
+    public static <T> boolean areEqual(Collection<T> set1, Collection<T> set2) {
         return set1.containsAll(set2) && set2.containsAll(set1);
     }
 
     /** Return A ∪ B */
-    public static <T> Set<T> union(Set<T> A, Set<T> B) {
-        Set<T> union = new java.util.HashSet<>(A);
+    public static <T> Set<T> union(Collection<T> A, Collection<T> B) {
+        Set<T> union = new HashSet<>(A);
         union.addAll(B);
         return union;
     }
 
     /** Return A ∩ B */
-    public static <T> Set<T> intersection(Set<T> A, Set<T> B) {
-        Set<T> intersection = new java.util.HashSet<>(A);
+    public static <T> Set<T> intersection(Collection<T> A, Collection<T> B) {
+        Set<T> intersection = new HashSet<>(A);
         intersection.retainAll(B);
         return intersection;
     }
 
     /** Return A - B */
-    public static <T> Set<T> difference(Set<T> A, Set<T> B) {
-        Set<T> difference = new java.util.HashSet<>(A);
+    public static <T> Set<T> difference(Collection<T> A, Collection<T> B) {
+        Set<T> difference = new HashSet<>(A);
         difference.removeAll(B);
         return difference;
     }
 
     /** Return A / B */
-    public static <T> Set<T> minus(Set<T> A, T x) {
-        Set<T> difference = new java.util.HashSet<>(A);
+    public static <T> Set<T> minus(Collection<T> A, T x) {
+        Set<T> difference = new HashSet<>(A);
         difference.remove(x);
         return difference;
     }
 
     /** Return A + B */
-    public static <T> Set<T> plus(Set<T> A, T x) {
-        Set<T> union = new java.util.HashSet<>(A);
+    public static <T> Set<T> plus(Collection<T> A, T x) {
+        Set<T> union = new HashSet<>(A);
         union.add(x);
         return union;
     }
 
     /** Return A - B + x */
-    public static <T> Set<T> replace(Set<T> A, Set<T> B, T x) {
+    public static <T> Set<T> replace(Collection<T> A, Collection<T> B, T x) {
         return plus(difference(A, B), x);
     }
 
@@ -77,7 +79,7 @@ public class Sets {
      * @param A   set of elements
      * @return List of pairs of elements in A
      */
-    public static <T> List<Pair<T, T>> pairs(Set<T> A) {
+    public static <T> List<Pair<T, T>> pairs(Collection<T> A) {
         List<Pair<T, T>> pairs = new ArrayList<>();
         for (T a : A) {
             for (T b : A) {
@@ -91,7 +93,7 @@ public class Sets {
         return pairs;
     }
 
-    public static <T> boolean anyPair(Set<T> A, Predicate<Pair<T, T>> predicate) {
+    public static <T> boolean anyPair(Collection<T> A, Predicate<Pair<T, T>> predicate) {
         var pairs = pairs(A);
         for (var pair : pairs) {
             if (predicate.test(pair)) {
@@ -101,7 +103,7 @@ public class Sets {
         return false;
     }
 
-    public static <T> T getOnlyElement(Set<T> A) {
+    public static <T> T getOnlyElement(Collection<T> A) {
         if (A.size() == 1) {
             return A.iterator().next();
         }
@@ -109,7 +111,7 @@ public class Sets {
         throw new IllegalArgumentException("Set does not contain exactly one element");
     }
 
-    public static <T> T first(Set<T> A) {
+    public static <T> T first(Collection<T> A) {
         if (A.size() > 0) {
             return A.iterator().next();
         }

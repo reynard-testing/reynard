@@ -15,8 +15,8 @@ import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.trace.tree.TraceReport;
 
-public class ErrorPropogationDetector implements FeedbackHandler {
-    private final Logger logger = LoggerFactory.getLogger(ErrorPropogationDetector.class);
+public class ErrorPropagationDetector implements FeedbackHandler {
+    private final Logger logger = LoggerFactory.getLogger(ErrorPropagationDetector.class);
 
     private Set<Fault> redundantFaults = new HashSet<>();
 

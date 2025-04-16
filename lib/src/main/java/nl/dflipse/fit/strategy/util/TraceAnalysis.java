@@ -207,6 +207,10 @@ public class TraceAnalysis {
         return parentChildRelation.getDecendants(node);
     }
 
+    public List<TraceReport> getDecendants(TraceReport report) {
+        return getReports(getDecendants(report.faultUid));
+    }
+
     public Set<FaultUid> getChildren(FaultUid node) {
         return parentChildRelation.getChildren(node);
     }

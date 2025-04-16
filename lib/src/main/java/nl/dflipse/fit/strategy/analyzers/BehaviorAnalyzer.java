@@ -36,14 +36,12 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     private final Map<FaultUid, TraceResponse> happyPath = new LinkedHashMap<>();
     private final Map<FaultUid, Integer> maxArity = new LinkedHashMap<>();
 
-    private final List<FailureMode> failureModes;
-
-    public BehaviorAnalyzer(List<FailureMode> failureModes) {
-        this.failureModes = failureModes;
-    }
+    private List<FailureMode> failureModes;
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
+        failureModes = context.getFailureModes();
+
         result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
             var injectionPoint = report.faultUid;
 

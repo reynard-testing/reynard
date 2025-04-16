@@ -6,6 +6,21 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonSerialize
 @JsonDeserialize
 public record FaultInjectionPoint(String destination, String signature, String payload, int count) {
+
+    private static String ANY_WILDCARD = "*";
+
+    public boolean isAnyDestination() {
+        return destination.equals(ANY_WILDCARD);
+    }
+
+    public boolean isAnySignature() {
+        return signature.equals(ANY_WILDCARD);
+    }
+
+    public boolean isAnyPayload() {
+        return payload.equals(ANY_WILDCARD);
+    }
+
     @Override
     public String toString() {
         String payloadStr = (payload.equals("*") || payload.equals("")) ? "" : "(" + payload + ")";

@@ -3,7 +3,7 @@ package nl.dflipse.fit.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 
 public class FailureModes {
     public static FailureMode getMode(int i) {

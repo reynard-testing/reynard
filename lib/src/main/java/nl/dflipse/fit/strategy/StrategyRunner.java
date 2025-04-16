@@ -8,12 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.PruneDecision;
 import nl.dflipse.fit.strategy.pruners.Pruner;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyRunner {
     private DynamicAnalysisStore store;
@@ -198,10 +199,8 @@ public class StrategyRunner {
             }
 
             PruneDecision decision = prune(generated);
-            boolean shouldPrune = decision == PruneDecision.PRUNE ||
-                    decision == PruneDecision.PRUNE_SUBTREE;
 
-            if (!shouldPrune) {
+            if (decision == PruneDecision.KEEP) {
                 // We found a new faultload!
                 next = generated;
                 break;
@@ -225,6 +224,10 @@ public class StrategyRunner {
 
     public void registerTime(TrackedFaultload faultload) {
         statistics.registerTime(faultload.timer);
+    }
+
+    public void registerTime(TaggedTimer timer) {
+        statistics.registerTime(timer);
     }
 
     public void handleResult(FaultloadResult result) {
@@ -262,7 +265,7 @@ public class StrategyRunner {
             String tag = name + ".handleFeedback<Analyzer>";
             result.trackedFaultload.timer.start(tag);
 
-            FeedbackContext context = new FeedbackContextProvider(this, analyzer.getClass(), result);
+            FeedbackContext context = new FeedbackContextProvider(this, analyzer.getClass());
             analyzer.handleFeedback(result, context);
 
             result.trackedFaultload.timer.stop(tag);
@@ -272,38 +275,33 @@ public class StrategyRunner {
     }
 
     public PruneDecision prune(Faultload faultload) {
-        boolean shouldPrune = false;
-        boolean shouldPruneSubtree = false;
+        PruneDecision pruneDecision = PruneDecision.KEEP;
 
         for (Pruner pruner : pruners) {
             var decision = pruner.prune(faultload);
             switch (decision) {
                 case PRUNE -> {
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
-                    shouldPrune = true;
+                    if (pruneDecision == PruneDecision.KEEP) {
+                        pruneDecision = PruneDecision.PRUNE;
+                    }
                 }
                 case PRUNE_SUBTREE -> {
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
-                    new FeedbackContextProvider(this, pruner.getClass(), null)
+                    new FeedbackContextProvider(this, pruner.getClass())
                             .pruneFaultSubset(faultload.faultSet());
-                    shouldPrune = true;
-                    shouldPruneSubtree = true;
+
+                    pruneDecision = PruneDecision.PRUNE_SUBTREE;
                 }
                 case KEEP -> {
                 }
             }
         }
 
-        if (shouldPrune) {
+        if (pruneDecision != PruneDecision.KEEP) {
             statistics.incrementPruned(1);
         }
 
-        if (shouldPruneSubtree) {
-            return PruneDecision.PRUNE_SUBTREE;
-        } else if (shouldPrune) {
-            return PruneDecision.PRUNE;
-        } else {
-            return PruneDecision.KEEP;
-        }
+        return pruneDecision;
     }
 }

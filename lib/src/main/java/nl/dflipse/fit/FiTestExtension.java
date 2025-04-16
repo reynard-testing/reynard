@@ -16,32 +16,34 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
-import nl.dflipse.fit.faultload.faultmodes.HttpError;
+import nl.dflipse.fit.faultload.modes.ErrorFault;
+import nl.dflipse.fit.faultload.modes.FailureMode;
+import nl.dflipse.fit.faultload.modes.HttpError;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.analyzers.BehaviorAnalyzer;
 import nl.dflipse.fit.strategy.analyzers.ConcurrencyDetector;
-import nl.dflipse.fit.strategy.analyzers.FaultDetector;
+import nl.dflipse.fit.strategy.analyzers.ErrorPropagationDetector;
+import nl.dflipse.fit.strategy.analyzers.HappensBeforeNeighbourDetector;
+import nl.dflipse.fit.strategy.analyzers.InjectionPointDetector;
+import nl.dflipse.fit.strategy.analyzers.ParentChildDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.analyzers.StatusAnalyzer;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
-import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.FaultloadSizePruner;
-import nl.dflipse.fit.strategy.pruners.HappensBeforeNeighbourPruner;
 import nl.dflipse.fit.strategy.pruners.NoImpactPruner;
-import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
+import nl.dflipse.fit.util.TaggedTimer;
 
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
     private StrategyRunner strategy;
+    private final TaggedTimer timer = new TaggedTimer();
     private static final Logger logger = LoggerFactory.getLogger(FiTestExtension.class);
 
     @Override
@@ -53,6 +55,7 @@ public class FiTestExtension
 
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
+        timer.start("Total test time");
         // Retrieve the annotation and its parameters
         var annotation = context.getTestMethod()
                 .orElseThrow()
@@ -81,14 +84,14 @@ public class FiTestExtension
         strategy = new StrategyRunner(modes);
         strategy
                 .withComponent(new IncreasingSizeGenerator(strategy.getStore()))
-                .withComponent(new FaultDetector(traversalStrategy, onlyPersistantOrTransientRetries))
+                .withComponent(new ParentChildDetector())
+                .withComponent(new ErrorPropagationDetector())
+                .withComponent(new HappensBeforeNeighbourDetector())
+                .withComponent(new InjectionPointDetector(traversalStrategy, onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
                 .withComponent(new BehaviorAnalyzer())
                 .withComponent(new ConcurrencyDetector())
-                .withComponent(new ParentChildPruner())
-                .withComponent(new HappensBeforeNeighbourPruner())
-                .withComponent(new ErrorPropogationPruner())
                 .withComponent(new NoImpactPruner(pruneImpactless))
                 .withComponent(new DynamicReductionPruner());
 
@@ -167,6 +170,8 @@ public class FiTestExtension
     }
 
     public void afterAll() {
+        timer.stop("Total test time");
+        strategy.registerTime(timer);
         strategy.statistics.setSize(strategy.getGenerator().spaceSize());
         strategy.statistics.report();
     }
@@ -210,7 +215,7 @@ public class FiTestExtension
             System.out.println();
             logger.info("Test " + displayName);
 
-            faultload.timer.start();
+            faultload.timer.start("Per test");
             faultload.timer.start("registerFaultload");
             try {
                 controller.registerFaultload(faultload);
@@ -266,7 +271,7 @@ public class FiTestExtension
             }
             faultload.timer.stop("unregisterFautload");
 
-            faultload.timer.stop();
+            faultload.timer.stop("Per test");
             strategy.registerTime(faultload);
         }
     }

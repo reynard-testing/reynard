@@ -1,32 +1,30 @@
 package nl.dflipse.fit.strategy;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.generators.Generator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
-import nl.dflipse.fit.strategy.util.Faults;
-import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.StringFormat;
 
-public class FeedbackContextProvider implements FeedbackContext {
+public class FeedbackContextProvider extends FeedbackContext {
 
     private final StrategyRunner runner;
     private final DynamicAnalysisStore localStore;
-    private final FaultloadResult result;
 
     private final static Map<String, DynamicAnalysisStore> stores = new HashMap<>();
 
-    public FeedbackContextProvider(StrategyRunner runner, Class<?> clazz, FaultloadResult result) {
+    public FeedbackContextProvider(StrategyRunner runner, Class<?> clazz) {
         this.runner = runner;
-        this.result = result;
         assertGeneratorPresent();
         this.localStore = stores.computeIfAbsent(clazz.getSimpleName(),
                 k -> new DynamicAnalysisStore(runner.getGenerator().getFailureModes(), true));
@@ -39,66 +37,48 @@ public class FeedbackContextProvider implements FeedbackContext {
     }
 
     @Override
-    public Generator getGenerator() {
-        return runner.getGenerator();
-    }
-
-    @Override
     public List<FailureMode> getFailureModes() {
         return runner.getGenerator().getFailureModes();
     }
 
     @Override
-    public List<FaultUid> getFaultUids() {
+    public List<FaultUid> getFaultInjectionPoints() {
         return runner.getGenerator().getFaultInjectionPoints();
     }
 
     @Override
-    public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
-        localStore.addFaultUids(faultInjectionPoints);
-        runner.getGenerator().reportFaultUids(faultInjectionPoints);
+    public void reportFaultUid(FaultUid faultInjectionPoint) {
+        localStore.addFaultUid(faultInjectionPoint);
+        runner.getGenerator().reportFaultUid(faultInjectionPoint);
     }
 
     @Override
-    public void reportConditionalFaultUidByUid(Set<FaultUid> condition, FaultUid fid) {
-        for (var c : Faults.allFaults(condition, getFailureModes())) {
-            reportConditionalFaultUid(c, fid);
-        }
+    public void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect) {
+        localStore.addUpstreamEffect(cause, effect);
+        runner.getGenerator().reportUpstreamEffect(cause, effect);
     }
 
     @Override
-    public void reportConditionalFaultUid(Set<Fault> condition, FaultUid fid) {
+    public void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
+        localStore.addDownstreamEffect(condition, effect);
+        runner.getGenerator().reportDownstreamEffect(condition, effect);
+    }
+
+    @Override
+    public void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         localStore.addConditionForFaultUid(condition, fid);
         runner.getGenerator().reportPreconditionOfFaultUid(condition, fid);
     }
 
     @Override
-    public void reportExclusionOfFaultUidByUid(Set<FaultUid> condition, FaultUid fid) {
-        for (var c : Faults.allFaults(condition, getFailureModes())) {
-            reportExclusionOfFaultUid(c, fid);
-        }
-    }
-
-    @Override
-    public void reportExclusionOfFaultUid(Set<Fault> condition, FaultUid fid) {
+    public void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         localStore.addExclusionForFaultUid(condition, fid);
         runner.getGenerator().reportExclusionOfFaultUid(condition, fid);
     }
 
     @Override
-    public void reportSubstitutionByUid(Set<FaultUid> given, Set<FaultUid> replacement) {
-        for (var g : Faults.allFaults(given, getFailureModes())) {
-            for (var r : Faults.allFaults(replacement, getFailureModes())) {
-                var redundant = Sets.union(g, r);
-                pruneFaultSubset(redundant);
-            }
-        }
-    }
-
-    @Override
-    public void reportSubstitution(Set<Fault> given, Set<Fault> replacement) {
-        var redundant = Sets.union(given, replacement);
-        pruneFaultSubset(redundant);
+    public void exploreFrom(Collection<Fault> startingNode) {
+        runner.getGenerator().exploreFrom(startingNode);
     }
 
     @Override
@@ -175,23 +155,7 @@ public class FeedbackContextProvider implements FeedbackContext {
             }
         }
 
-        var inclusions = store.getInclusionConditions().getConditionsByUid();
-        if (!inclusions.isEmpty()) {
-            hasImpact = true;
-            report.put("Points with inclusion condition", inclusions.size() + "");
-            for (var entry : inclusions.entrySet()) {
-                report.put(entry.getKey().toString(), entry.getValue().size() + "");
-            }
-        }
-
-        var exclusions = store.getExclusionConditions().getConditionsByUid();
-        if (!exclusions.isEmpty()) {
-            hasImpact = true;
-            report.put("Points with exclusion condition", exclusions.size() + "");
-            for (var entry : exclusions.entrySet()) {
-                report.put(entry.getKey().toString(), entry.getValue().size() + "");
-            }
-        }
+        report.putAll(store.getImplicationsReport());
 
         if (hasImpact) {
             List<FaultUid> points = generator.getFaultInjectionPoints();
@@ -205,7 +169,17 @@ public class FeedbackContextProvider implements FeedbackContext {
     }
 
     @Override
-    public DynamicAnalysisStore getStore() {
-        return runner.getStore();
+    public Set<Behaviour> getExpectedBehaviours(Set<Fault> faultload) {
+        return runner.getGenerator().getExpectedBehaviours(faultload);
+    }
+
+    @Override
+    public Set<FaultUid> getExpectedPoints(Set<Fault> faultload) {
+        return runner.getGenerator().getExpectedPoints(faultload);
+    }
+
+    @Override
+    public long spaceSize() {
+        return runner.getGenerator().spaceSize();
     }
 }

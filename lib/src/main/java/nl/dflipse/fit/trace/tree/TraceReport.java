@@ -5,10 +5,11 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.ErrorFault;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -36,15 +37,24 @@ public class TraceReport {
     @JsonProperty("response")
     public TraceResponse response;
 
-    public boolean hasError() {
+    public boolean hasFaultBehaviour() {
         return injectedFault != null || (response != null && response.isErrenous());
     }
 
-    public boolean hasIndirectError() {
+    public boolean hasIndirectFaultBehaviour() {
         return injectedFault == null && response != null && response.isErrenous();
     }
 
-    public Fault getRepresentativeFault() {
+    public Behaviour getBehaviour() {
+        Fault fault = getFault();
+        if (fault == null) {
+            return new Behaviour(faultUid, null);
+        }
+
+        return new Behaviour(faultUid, fault.mode());
+    }
+
+    public Fault getFault() {
         if (injectedFault != null) {
             return injectedFault;
         }

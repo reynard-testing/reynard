@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.pruners;
+package nl.dflipse.fit.strategy.analyzers;
 
 import java.util.HashSet;
 import java.util.List;
@@ -8,13 +8,15 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.store.ConditionalStore;
+import nl.dflipse.fit.strategy.pruners.PruneDecision;
+import nl.dflipse.fit.strategy.pruners.Pruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.trace.tree.TraceReport;
 
@@ -24,9 +26,8 @@ import nl.dflipse.fit.trace.tree.TraceReport;
  * I.e. if a fault is injected, and another fault disappears,
  * s set of fault causes the disappearance of the fault (the effect)
  */
-public class HappensBeforeNeighbourPruner implements Pruner, FeedbackHandler {
-    private final ConditionalStore redundancyStore = new ConditionalStore();
-    private final Logger logger = LoggerFactory.getLogger(HappensBeforeNeighbourPruner.class);
+public class HappensBeforeNeighbourDetector implements Pruner, FeedbackHandler {
+    private final Logger logger = LoggerFactory.getLogger(HappensBeforeNeighbourDetector.class);
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
@@ -35,7 +36,7 @@ public class HappensBeforeNeighbourPruner implements Pruner, FeedbackHandler {
         }
 
         Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
-        Set<FaultUid> expectedPoints = context.getStore().getExpectedPoints(injectedErrorFaults);
+        Set<FaultUid> expectedPoints = context.getExpectedPoints(injectedErrorFaults);
 
         result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
             List<TraceReport> childrenReports = result.trace.getChildren(report);
@@ -55,11 +56,9 @@ public class HappensBeforeNeighbourPruner implements Pruner, FeedbackHandler {
                 return;
             }
 
-            // TODO: use only children and substitution
-            // using representative faults!
-            Set<Fault> causes = result.trace.getDecendants(report).stream()
-                    .map(r -> r.injectedFault)
-                    .filter(f -> f != null)
+            Set<Behaviour> causes = result.trace.getChildren(report).stream()
+                    .filter(f -> f.hasFaultBehaviour())
+                    .map(r -> r.getBehaviour())
                     .collect(Collectors.toSet());
 
             for (FaultUid fault : dissappeared) {
@@ -89,42 +88,19 @@ public class HappensBeforeNeighbourPruner implements Pruner, FeedbackHandler {
         return missing;
     }
 
-    private void handleHappensBefore(Set<Fault> cause, FaultUid effect, FeedbackContext context) {
+    private void handleHappensBefore(Set<Behaviour> cause, FaultUid effect, FeedbackContext context) {
         if (cause.isEmpty()) {
             logger.info("Found unknown cause that hides {}", effect);
             return;
         }
         logger.info("Found exclusion: {} hides {}", cause, effect);
-        redundancyStore.addCondition(cause, effect);
         context.reportExclusionOfFaultUid(cause, effect);
     }
 
     @Override
     public PruneDecision prune(Faultload faultload) {
-        // if an error is injected, and its children are also injected, it is
-        // redundant.
-
-        Set<Fault> faultset = faultload.faultSet();
-
-        // for each fault in the faultload
-        Set<FaultUid> relatedUidsInFaultload = faultset.stream()
-                // given their uid
-                .map(Fault::uid)
-                // diregard the count
-                .map(FaultUid::asAnyCount)
-                // that has a known redundancy
-                .filter(redundancyStore::hasConditions)
-                .collect(Collectors.toSet());
-
-        boolean isRedundant = relatedUidsInFaultload.stream()
-                // for any related fid's causes
-                .anyMatch(f -> redundancyStore.hasCondition(f, faultset));
-
-        if (isRedundant) {
-            return PruneDecision.PRUNE_SUBTREE;
-        } else {
-            return PruneDecision.KEEP;
-        }
+        // TODO: prune on the faultload
+        return PruneDecision.KEEP;
     }
 
 }

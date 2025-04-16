@@ -38,8 +38,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
             return;
         }
 
-        var conditionals = context.getStore().getInclusionConditions();
-        var points = context.getFaultUids();
+        var points = context.getFaultInjectionPoints();
 
         for (Fault fault : injected) {
             FaultUid parent = result.trace.getParent(fault.uid());
@@ -63,11 +62,13 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
                 continue;
             }
 
-            boolean isCauseForAlternativePath = conditionals.isPartOfAnyCondition(Set.of(fault));
+            // TODO: check if causes alternative paths
+            // boolean isCauseForAlternativePath =
+            // context.getStore().isAnyInclusionCause(fault.asBehaviour());
 
-            if (isCauseForAlternativePath) {
-                continue;
-            }
+            // if (isCauseForAlternativePath) {
+            // continue;
+            // }
 
             // TODO: check if output of parent is the same regardless of the fault
             // To avoid capturing local fallbacks

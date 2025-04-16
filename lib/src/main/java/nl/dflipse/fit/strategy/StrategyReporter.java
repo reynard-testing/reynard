@@ -113,8 +113,7 @@ public class StrategyReporter {
         Map<String, String> report = new LinkedHashMap<>();
 
         for (String tag : statistics.getTags()) {
-            String readableKey = tag.equals(TaggedTimer.DEFAULT_TAG) ? "Total" : tag;
-            report.put(readableKey, getAverageTime(tag) + " (ms)");
+            report.put(tag, getAverageTime(tag) + " (ms)");
         }
 
         printReport("Timings", report);

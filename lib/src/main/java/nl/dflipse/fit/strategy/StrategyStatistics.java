@@ -1,8 +1,8 @@
 package nl.dflipse.fit.strategy;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,10 +11,10 @@ import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyStatistics {
-    private Map<String, Long> generatorCount = new HashMap<>();
-    private Map<String, Long> prunerCount = new HashMap<>();
+    private Map<String, Long> generatorCount = new LinkedHashMap<>();
+    private Map<String, Long> prunerCount = new LinkedHashMap<>();
     private List<Pair<String, Long>> timings = new ArrayList<>();
-    private Set<String> tags = new HashSet<>();
+    private Set<String> tags = new LinkedHashSet<>();
     private StrategyRunner runner;
 
     private long totalRun = 0;

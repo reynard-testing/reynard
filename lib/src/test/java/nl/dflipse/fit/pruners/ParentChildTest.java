@@ -10,11 +10,11 @@ import static org.mockito.Mockito.mock;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.faultmodes.FailureMode;
+import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.TrackedFaultload;
-import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
+import nl.dflipse.fit.strategy.analyzers.ParentChildDetector;
 import nl.dflipse.fit.strategy.pruners.PruneDecision;
 import nl.dflipse.fit.util.FailureModes;
 import nl.dflipse.fit.util.EventBuilder;
@@ -32,7 +32,7 @@ public class ParentChildTest {
 
     @Test
     public void testNone() {
-        ParentChildPruner pruner = new ParentChildPruner();
+        ParentChildDetector pruner = new ParentChildDetector();
         var faultload = new Faultload(Set.of());
         FeedbackContext contextMock = mock(FeedbackContext.class);
         EventBuilder root = new EventBuilder()
@@ -40,7 +40,7 @@ public class ParentChildTest {
         EventBuilder node1 = root.createChild()
                 .withPoint("B", "b1");
 
-        var trace = EventBuilder.buildTrace(root, node1);
+        var trace = root.buildTrace();
         var result = new FaultloadResult(new TrackedFaultload(faultload), trace, true);
         pruner.handleFeedback(result, contextMock);
         assertEquals(PruneDecision.KEEP, pruner.prune(faultload));
@@ -49,14 +49,14 @@ public class ParentChildTest {
     @Test
     public void testParentChild() {
         FeedbackContext contextMock = mock(FeedbackContext.class);
-        ParentChildPruner pruner = new ParentChildPruner();
+        ParentChildDetector pruner = new ParentChildDetector();
 
         // -> A/a1 -> B/b1
         EventBuilder nodeA = new EventBuilder()
                 .withPoint("A", "a1");
         EventBuilder nodeB = nodeA.createChild()
                 .withPoint("B", "b1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback
@@ -75,7 +75,7 @@ public class ParentChildTest {
     @Test
     public void testNestedChild() {
         FeedbackContext contextMock = mock(FeedbackContext.class);
-        ParentChildPruner pruner = new ParentChildPruner();
+        ParentChildDetector pruner = new ParentChildDetector();
 
         // Given structure
         // -> A/a1 -> B/b1 -> C/c1
@@ -85,7 +85,7 @@ public class ParentChildTest {
                 .withPoint("B", "b1");
         EventBuilder nodeC = nodeB.createChild()
                 .withPoint("C", "c1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB, nodeC);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback
@@ -108,7 +108,7 @@ public class ParentChildTest {
     @Test
     public void testArity() {
         FeedbackContext contextMock = mock(FeedbackContext.class);
-        ParentChildPruner pruner = new ParentChildPruner();
+        ParentChildDetector pruner = new ParentChildDetector();
 
         // Given structure
         // -> A/a1 -> B/b1
@@ -119,7 +119,7 @@ public class ParentChildTest {
                 .withPoint("B", "b1");
         EventBuilder nodeC = nodeA.createChild()
                 .withPoint("C", "c1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB, nodeC);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback
@@ -140,7 +140,7 @@ public class ParentChildTest {
     @Test
     public void testNestedArity() {
         FeedbackContext contextMock = mock(FeedbackContext.class);
-        ParentChildPruner pruner = new ParentChildPruner();
+        ParentChildDetector pruner = new ParentChildDetector();
 
         // Given structure
         // -> A/a1 -> B/b1
@@ -153,7 +153,7 @@ public class ParentChildTest {
                 .withPoint("C", "c1");
         EventBuilder nodeB2 = nodeC.createChild()
                 .withPoint("B", "b1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB, nodeC, nodeB2);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback
@@ -174,7 +174,7 @@ public class ParentChildTest {
     @Test
     public void testDifferentEndpoints() {
         FeedbackContext contextMock = mock(FeedbackContext.class);
-        ParentChildPruner pruner = new ParentChildPruner();
+        ParentChildDetector pruner = new ParentChildDetector();
 
         // Given structure
         // -> A/a1 -> (B/b1 | B/b2) --> C/c1
@@ -188,7 +188,7 @@ public class ParentChildTest {
                 .withPoint("C", "c1");
         EventBuilder nodeB2C = nodeB2.createChild()
                 .withPoint("C", "c1");
-        var trace = EventBuilder.buildTrace(nodeA, nodeB1, nodeB2, nodeB1C, nodeB2C);
+        var trace = nodeA.buildTrace();
         var faultload1 = new Faultload(Set.of());
 
         // When pruner receives feedback

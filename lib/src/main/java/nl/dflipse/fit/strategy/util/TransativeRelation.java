@@ -28,22 +28,43 @@ public class TransativeRelation<X> {
 
         inverseRelation.put(child, parent);
         relation.computeIfAbsent(parent, k -> new HashSet<>()).add(child);
-        transitiveRelations.computeIfAbsent(parent, k -> new HashSet<>()).add(child);
-        updateTransitiveRelations(parent, child);
+        updateTransitiveRelations(parent);
     }
 
-    private void updateTransitiveRelations(X parent, X child) {
-        // The children of the child are also transative children of the parent
-        Set<X> children = getDecendants(child);
-        for (X descendant : children) {
-            transitiveRelations.computeIfAbsent(parent, k -> new HashSet<>()).add(descendant);
+    public void removeRelation(X parent, X child) {
+        if (!hasDirectRelation(parent, child)) {
+            throw new IllegalArgumentException("No such relation exists.");
+        }
+        X root = getRoot(parent);
+        clearTransativeRelation(root);
+
+        inverseRelation.remove(child);
+        relation.get(parent).remove(child);
+        if (relation.get(parent).isEmpty()) {
+            relation.remove(parent);
         }
 
-        // The parent is a transative parent of the children
-        var parentParent = inverseRelation.get(parent);
-        if (parentParent != null) {
-            updateTransitiveRelations(parentParent, parent);
+        updateTransitiveRelations(root);
+    }
+
+    private void clearTransativeRelation(X root) {
+        transitiveRelations.remove(root);
+        for (X descendant : getChildren(root)) {
+            clearTransativeRelation(descendant);
         }
+    }
+
+    private Set<X> updateTransitiveRelations(X root) {
+        // The children of the child are also transative children of the parent
+        Set<X> descendants = new HashSet<>();
+        for (X descendant : getChildren(root)) {
+            descendants.add(descendant);
+            descendants.addAll(updateTransitiveRelations(descendant));
+        }
+
+        // Add the transative relation
+        transitiveRelations.computeIfAbsent(root, k -> new HashSet<>()).addAll(descendants);
+        return descendants;
     }
 
     public boolean hasDirectRelation(X parent, X child) {
@@ -59,15 +80,7 @@ public class TransativeRelation<X> {
     }
 
     public Set<X> getDecendants(X parent) {
-        Set<X> descendants = new HashSet<>();
-
-        if (relation.containsKey(parent)) {
-            for (X child : relation.get(parent)) {
-                descendants.add(child);
-                descendants.addAll(getDecendants(child));
-            }
-        }
-        return descendants;
+        return transitiveRelations.getOrDefault(parent, Set.of());
     }
 
     public X getParent(X child) {
@@ -110,6 +123,15 @@ public class TransativeRelation<X> {
         List<X> parents2 = getParents(child2);
         parents1.retainAll(parents2);
         return parents1.stream().findFirst().orElse(null);
+    }
+
+    public X getRoot(X child) {
+        X parent = getParent(child);
+        if (parent == null) {
+            return child;
+        } else {
+            return getRoot(parent);
+        }
     }
 
     public Set<X> getChildren(X parent) {

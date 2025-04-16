@@ -11,8 +11,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import nl.dflipse.fit.FiTest;
-import nl.dflipse.fit.faultload.faultmodes.ErrorFault;
-import nl.dflipse.fit.faultload.faultmodes.OmissionFault;
+import nl.dflipse.fit.faultload.modes.ErrorFault;
+import nl.dflipse.fit.faultload.modes.OmissionFault;
 import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.instrument.InstrumentedApp;
 import nl.dflipse.fit.instrument.services.InstrumentedService;

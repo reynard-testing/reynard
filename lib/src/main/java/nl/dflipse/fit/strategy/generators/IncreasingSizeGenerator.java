@@ -59,11 +59,6 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
             return;
         }
 
-        if (condition.isEmpty()) {
-            reportFaultUid(fid);
-            return;
-        }
-
         if (iterator == null) {
             throw new IllegalStateException(
                     "Cannot add conditional fault injection point if no normal fault injection points are discovered");

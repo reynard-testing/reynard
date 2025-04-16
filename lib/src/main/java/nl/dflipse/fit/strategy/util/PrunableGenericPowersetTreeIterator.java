@@ -129,7 +129,6 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
     }
 
     public void addConditional(Collection<Behaviour> condition, FaultUid extension) {
-
         // We cannot expand to extensions already in the condition
         Set<FaultUid> alreadyExpanded = condition.stream()
                 .map(f -> f.uid())

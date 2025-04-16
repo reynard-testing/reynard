@@ -53,6 +53,7 @@ public class InjectionPointDetector implements FeedbackHandler {
                 return;
             }
 
+            // Find all the effects of this point
             Set<FaultUid> effects = result.trace.getChildren(cause);
             if (effects.isEmpty()) {
                 return;
@@ -82,24 +83,40 @@ public class InjectionPointDetector implements FeedbackHandler {
 
         // Analyse new paths that were not in the happy path
         var appeared = Lists.difference(traceFaultUids, List.copyOf(expectedPoints));
+        List<TraceReport> appearedReports = result.trace.getReports(appeared);
+        var nestedAppeared = appearedReports.stream()
+                .filter(f -> !expectedPoints.contains(result.trace.getParent(f.faultUid)))
+                .toList();
+        var rootAppeared = appearedReports.stream()
+                .filter(f -> expectedPoints.contains(result.trace.getParent(f.faultUid)))
+                .toList();
+
+        for (var nested : nestedAppeared) {
+            // TODO: conditionals are currently expected to from the same parent
+            // So how do we ensure we require the causes?
+            // Because currenlty, this will get pruned directly after creation
+            // Maybe the final call should
+            logger.info("Found point: {}", nested.faultUid);
+            context.reportFaultUid(nested.faultUid);
+        }
 
         // Report newly found points
-        if (!appeared.isEmpty()) {
-            for (var newFid : appeared) {
-                TraceReport fidReport = result.trace.getReportByFaultUid(newFid);
-                if (fidReport == null) {
-                    logger.warn("No report for {} in {}", newFid, result.trace);
-                    continue;
-                }
+        for (var newPoint : rootAppeared) {
+            TraceReport parent = result.trace.getParent(newPoint);
+            if (!expectedPoints.contains(parent.faultUid)) {
+                continue;
+            }
 
-                List<TraceReport> neighbours = result.trace.getNeighbours(fidReport);
-                List<Behaviour> causes = neighbours.stream().map(TraceReport::getBehaviour)
-                        .collect(Collectors.toList());
-                boolean wasRetry = handleRetry(expectedPoints, newFid, causes, context);
+            List<TraceReport> parentalCauses = result.trace.getChildren(parent);
+            List<Behaviour> causes = parentalCauses.stream()
+                    .map(TraceReport::getBehaviour)
+                    .filter(x -> x.isFault())
+                    .collect(Collectors.toList());
+            boolean wasRetry = handleRetry(expectedPoints, newPoint.faultUid, causes, context);
 
-                if (!wasRetry) {
-                    context.reportConditionalFaultUid(causes, newFid);
-                }
+            if (!wasRetry) {
+                logger.info("Found conditional point: {} given {}", newPoint.faultUid, causes);
+                context.reportConditionalFaultUid(causes, newPoint.faultUid);
             }
         }
     }

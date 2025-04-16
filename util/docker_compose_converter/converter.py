@@ -25,7 +25,7 @@ ADDITIONAL_ENV = [
     # audible
     # ["BAD_METADATA", None],
     # mailchimp
-    ["DB_READ_ONLY", None],
+    # ["DB_READ_ONLY", None],
 ]
 
 IMAGES = {

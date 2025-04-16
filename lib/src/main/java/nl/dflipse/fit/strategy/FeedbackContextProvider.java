@@ -65,16 +65,20 @@ public class FeedbackContextProvider extends FeedbackContext {
     }
 
     @Override
-    public void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid,
-            Collection<Fault> rootCauses) {
+    public void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         localStore.addConditionForFaultUid(condition, fid);
-        runner.getGenerator().reportPreconditionOfFaultUid(condition, fid, rootCauses);
+        runner.getGenerator().reportPreconditionOfFaultUid(condition, fid);
     }
 
     @Override
     public void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         localStore.addExclusionForFaultUid(condition, fid);
         runner.getGenerator().reportExclusionOfFaultUid(condition, fid);
+    }
+
+    @Override
+    public void exploreFrom(Collection<Fault> startingNode) {
+        runner.getGenerator().exploreFrom(startingNode);
     }
 
     @Override

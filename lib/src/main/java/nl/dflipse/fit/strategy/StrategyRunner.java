@@ -14,6 +14,7 @@ import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.PruneDecision;
 import nl.dflipse.fit.strategy.pruners.Pruner;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyRunner {
     private DynamicAnalysisStore store;
@@ -223,6 +224,10 @@ public class StrategyRunner {
 
     public void registerTime(TrackedFaultload faultload) {
         statistics.registerTime(faultload.timer);
+    }
+
+    public void registerTime(TaggedTimer timer) {
+        statistics.registerTime(timer);
     }
 
     public void handleResult(FaultloadResult result) {

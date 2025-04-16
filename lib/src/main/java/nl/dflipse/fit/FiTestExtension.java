@@ -38,10 +38,12 @@ import nl.dflipse.fit.strategy.pruners.FaultloadSizePruner;
 import nl.dflipse.fit.strategy.pruners.NoImpactPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
+import nl.dflipse.fit.util.TaggedTimer;
 
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
     private StrategyRunner strategy;
+    private final TaggedTimer timer = new TaggedTimer();
     private static final Logger logger = LoggerFactory.getLogger(FiTestExtension.class);
 
     @Override
@@ -53,6 +55,7 @@ public class FiTestExtension
 
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
+        timer.start("Total test time");
         // Retrieve the annotation and its parameters
         var annotation = context.getTestMethod()
                 .orElseThrow()
@@ -167,6 +170,8 @@ public class FiTestExtension
     }
 
     public void afterAll() {
+        timer.stop("Total test time");
+        strategy.registerTime(timer);
         strategy.statistics.setSize(strategy.getGenerator().spaceSize());
         strategy.statistics.report();
     }
@@ -210,7 +215,7 @@ public class FiTestExtension
             System.out.println();
             logger.info("Test " + displayName);
 
-            faultload.timer.start();
+            faultload.timer.start("Per test");
             faultload.timer.start("registerFaultload");
             try {
                 controller.registerFaultload(faultload);
@@ -266,7 +271,7 @@ public class FiTestExtension
             }
             faultload.timer.stop("unregisterFautload");
 
-            faultload.timer.stop();
+            faultload.timer.stop("Per test");
             strategy.registerTime(faultload);
         }
     }

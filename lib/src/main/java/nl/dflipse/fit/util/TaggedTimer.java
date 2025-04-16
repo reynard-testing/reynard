@@ -1,18 +1,13 @@
 package nl.dflipse.fit.util;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import nl.dflipse.fit.strategy.util.Pair;
 
 public class TaggedTimer {
-    public static final String DEFAULT_TAG = "";
-    private final Map<String, Timer> timers = new HashMap<>();
-
-    public void start() {
-        start(DEFAULT_TAG);
-    }
+    private final Map<String, Timer> timers = new LinkedHashMap<>();
 
     public void start(String tag) {
         if (!timers.containsKey(tag)) {
@@ -20,10 +15,6 @@ public class TaggedTimer {
         }
 
         timers.get(tag).start();
-    }
-
-    public void stop() {
-        stop(DEFAULT_TAG);
     }
 
     public void stop(String tag) {
@@ -34,20 +25,12 @@ public class TaggedTimer {
         timers.get(tag).stop();
     }
 
-    public long durationMs() {
-        return durationMs(DEFAULT_TAG);
-    }
-
     public long durationMs(String tag) {
         if (!timers.containsKey(tag)) {
             throw new IllegalStateException("Timer with tag " + tag + " not started");
         }
 
         return timers.get(tag).durationMs();
-    }
-
-    public double durationSeconds() {
-        return durationSeconds(DEFAULT_TAG);
     }
 
     public double durationSeconds(String tag) {

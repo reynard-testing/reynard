@@ -232,7 +232,7 @@ public class FilibusterSuiteIT {
         var tracestate = faultload.getTraceState().toString();
 
         Request request = new Request.Builder()
-                .url("http://localhost:" + SERVICE_PORT + "/users/chris_rivers/bookings")
+                .url("http://localhost:" + 5001 + "/users/chris_rivers/bookings")
                 .addHeader("traceparent", traceparent)
                 .addHeader("tracestate", tracestate)
                 .build();

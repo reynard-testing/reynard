@@ -31,6 +31,8 @@ public class ImplicationsStoreTest {
   EventBuilder nodeG;
   EventBuilder nodeF_retry;
   EventBuilder nodeG_F_retry;
+  EventBuilder nodeF_retry2;
+  EventBuilder nodeG_F_retry2;
 
   Behaviour a;
   Behaviour b;
@@ -42,6 +44,8 @@ public class ImplicationsStoreTest {
   Behaviour g;
   Behaviour f2;
   Behaviour g2;
+  Behaviour f3;
+  Behaviour g3;
 
   @BeforeEach
   public void setUp() {
@@ -131,6 +135,19 @@ public class ImplicationsStoreTest {
     store.addUpstreamEffect(f2.uid(), Set.of(g2.uid()));
     store.addInclusionEffect(Set.of(ff1), f2.uid());
     store.addInclusionEffect(Set.of(ff2), f2.uid());
+
+    // retry 2 on F
+    nodeF_retry2 = nodeA.createChild()
+        .withPoint("F", "f1", 2);
+    f3 = nodeF_retry2.getBehaviour();
+    nodeG_F_retry2 = nodeF_retry2.createChild()
+        .withPoint("G", "g1");
+    g3 = nodeG_F_retry2.getBehaviour();
+    Behaviour f21 = new Behaviour(f2.uid(), mode1);
+    Behaviour f22 = new Behaviour(f2.uid(), mode2);
+    store.addUpstreamEffect(f3.uid(), Set.of(g3.uid()));
+    store.addInclusionEffect(Set.of(f21), f3.uid());
+    store.addInclusionEffect(Set.of(f22), f3.uid());
 
     // alternative for B, for mode 1
     nodeB_alt = nodeA.createChild()
@@ -348,5 +365,17 @@ public class ImplicationsStoreTest {
     // (e is redundant)
     assertEquals(3, result.size());
     assertEquals(2, faultyBehaviours(result));
+  }
+
+  @Test
+  public void testPersistent() {
+    setupDownstream();
+    setupInclusionAndExclusion();
+
+    Set<Behaviour> result = store.getBehaviours(Set.of(new Fault(f.uid().asAnyCount(), mode1)));
+
+    // a, b, c, d, e, f, f2, f3
+    assertEquals(8, result.size());
+    assertEquals(3, faultyBehaviours(result));
   }
 }

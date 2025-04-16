@@ -190,7 +190,8 @@ public class ImplicationsStore {
         .orElse(null);
 
     if (faultPertubation != null) {
-      return Pair.of(faultPertubation.asBehaviour(), Set.of());
+      Behaviour fault = new Behaviour(cause, faultPertubation.mode());
+      return Pair.of(fault, Set.of());
     }
 
     Behaviour causeBehaviour = Behaviour.of(cause);

@@ -25,12 +25,13 @@ public abstract class FeedbackContext {
 
     public abstract void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect);
 
-    public abstract void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid result,
-            Collection<Fault> rootCauses);
+    public abstract void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid result);
 
     public abstract void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid);
 
     public abstract void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect);
+
+    public abstract void exploreFrom(Collection<Fault> startingNode);
 
     public abstract void pruneFaultUidSubset(Set<FaultUid> subset);
 

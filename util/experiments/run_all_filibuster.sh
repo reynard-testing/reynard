@@ -6,6 +6,8 @@ export STOP_AFTER=1
 export BUILD_BEFORE=1
 
 cd ${project_path}
+trap "exit" INT
+
 ./run_full_filibuster.sh cinema-1
 ./run_full_filibuster.sh cinema-2
 ./run_full_filibuster.sh cinema-3

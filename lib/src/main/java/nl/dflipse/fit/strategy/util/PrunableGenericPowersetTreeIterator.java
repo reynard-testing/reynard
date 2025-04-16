@@ -6,16 +6,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 
 public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>> {
@@ -46,6 +43,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
             logger.debug("Pruning node {}: already visited", node);
             return true;
         }
+
         return store.isRedundant(node.value);
     }
 
@@ -68,9 +66,9 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
 
             for (Fault additionalElement : expandModes(expansionElement)) {
                 Set<Fault> newValue = Sets.plus(node.value(), additionalElement);
-                Set<FaultUid> expectedBehaviours = store.getExpectedPoints(newValue);
+                Set<FaultUid> expectedPoints = store.getExpectedPoints(newValue);
                 List<FaultUid> reachableExtensions = newExpansion.stream()
-                        .filter(x -> expectedBehaviours.contains(x))
+                        .filter(x -> expectedPoints.contains(x))
                         .collect(Collectors.toList());
 
                 var newNode = new TreeNode(newValue, reachableExtensions);

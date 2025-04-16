@@ -333,7 +333,7 @@ public class PrunedGeneratorSpaceTest {
         // Given - a generator with no pruned faults
         var generator1 = new IncreasingSizeGenerator(modes);
         generator1.reportFaultUids(points);
-        generator1.reportPreconditionOfFaultUid(Set.of(), point3);
+        generator1.reportPreconditionOfFaultUid(Set.of(), point3, Set.of());
         List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
         // Given a generator and prunable faults
@@ -345,7 +345,7 @@ public class PrunedGeneratorSpaceTest {
                 Set.of(faults.get(2, 0)));
 
         for (var precondition : preconditions) {
-            generator2.reportPreconditionOfFaultUid(Behaviour.of(precondition), point3);
+            generator2.reportPreconditionOfFaultUid(Behaviour.of(precondition), point3, precondition);
         }
 
         List<Faultload> allFaultloads2 = Enumerate.getGenerated(generator2);

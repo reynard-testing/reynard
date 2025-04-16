@@ -18,8 +18,14 @@ def get_args():
 
 
 ADDITIONAL_ENV = [
-    ["FLASK_DEBUG", "1"],
-    ["RUNNING_IN_DOCKER", "1"],
+    ["FLASK_DEBUG", None],
+    # netflix
+    # ["NETFLIX_FAULTS", None],
+    # ["CHECK_TIMEOUTS", None],
+    # audible
+    # ["BAD_METADATA", None],
+    # mailchimp
+    ["DB_READ_ONLY", None],
 ]
 
 IMAGES = {
@@ -59,7 +65,10 @@ class ServiceBuilder:
     def with_environment(self, key: str, value: str):
         if 'environment' not in self.service:
             self.service['environment'] = []
-        self.service['environment'].append(f'{key}={value}')
+        if value is None:
+            self.service['environment'].append(f'{key}')
+        else:
+            self.service['environment'].append(f'{key}={value}')
         return self
 
     def with_volume(self, host: str, container: str):

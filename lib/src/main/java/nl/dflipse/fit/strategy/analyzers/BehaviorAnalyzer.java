@@ -23,8 +23,8 @@ import nl.dflipse.fit.strategy.StrategyReporter;
 import nl.dflipse.fit.strategy.store.SubsetStore;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.Simplify;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
-import nl.dflipse.fit.trace.tree.TraceReport;
 import nl.dflipse.fit.trace.tree.TraceResponse;
 
 public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
@@ -158,67 +158,6 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
         });
     }
 
-    private Pair<List<Set<Fault>>, List<Set<FaultUid>>> simplify(List<Set<Fault>> sets) {
-        List<Set<Fault>> faultSets = new ArrayList<>();
-        List<Set<FaultUid>> faultUidSets = new ArrayList<>();
-
-        Set<Integer> toSkip = new HashSet<>();
-
-        for (int i = 0; i < sets.size(); i++) {
-            if (toSkip.contains(i)) {
-                continue;
-            }
-
-            var subset = sets.get(i);
-            Set<FaultUid> faultUids = Faultload.getFaultUids(subset);
-
-            Map<FaultUid, Set<FailureMode>> represented = new HashMap<>();
-            for (var uid : faultUids) {
-                represented.put(uid, new HashSet<>());
-            }
-            Set<Integer> skipIfFound = new HashSet<>();
-
-            // if for every element in the subset,
-            // all faults of all failure modes are present
-            for (int j = i; j < sets.size(); j++) {
-                if (toSkip.contains(j)) {
-                    continue;
-                }
-                var other = sets.get(j);
-                Set<FaultUid> otherUids = Faultload.getFaultUids(other);
-
-                if (!otherUids.equals(faultUids)) {
-                    continue;
-                }
-
-                skipIfFound.add(j);
-                for (var fault : other) {
-                    represented.get(fault.uid()).add(fault.mode());
-                }
-            }
-
-            boolean allRepresented = true;
-            for (var entry : represented.entrySet()) {
-                var modes = entry.getValue();
-
-                if (modes.size() != failureModes.size()) {
-                    allRepresented = false;
-                    break;
-                }
-            }
-
-            if (allRepresented) {
-                faultUidSets.add(faultUids);
-                toSkip.addAll(skipIfFound);
-            } else {
-                faultSets.add(subset);
-            }
-        }
-
-        return Pair.of(faultSets, faultUidSets);
-
-    }
-
     @Override
     public Map<String, String> report() {
         StrategyReporter.printNewline();
@@ -256,7 +195,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             StrategyReporter.printNewline();
             StrategyReporter.printKeyValue("Failure", fault.toString());
 
-            var simplified = simplify(store.getSets());
+            var simplified = Simplify.simplify(store.getSets(), failureModes);
 
             var i = 0;
             for (Set<Fault> cause : simplified.first()) {
@@ -278,7 +217,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             StrategyReporter.printNewline();
             StrategyReporter.printKeyValue("Point", point.toString());
 
-            var simplified = simplify(store.getSets());
+            var simplified = Simplify.simplify(store.getSets(), failureModes);
 
             var i = 0;
             for (Set<Fault> cause : simplified.first()) {

@@ -54,7 +54,8 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
     }
 
     @Override
-    public void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
+    public void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid,
+            Collection<Fault> rootCauses) {
         if (fid == null) {
             return;
         }
@@ -64,14 +65,9 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
                     "Cannot add conditional fault injection point if no normal fault injection points are discovered");
         }
 
-        boolean isNew = store.addConditionForFaultUid(condition, fid);
-
-        if (!isNew) {
-            return;
-        }
-
-        iterator.addConditional(condition, fid);
-        iterator.pruneQueue();
+        store.addConditionForFaultUid(condition, fid);
+        // TODO: ensure that this is not a duplicate
+        iterator.expandFrom(rootCauses);
     }
 
     @Override

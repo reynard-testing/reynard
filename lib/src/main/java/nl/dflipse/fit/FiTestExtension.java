@@ -25,17 +25,17 @@ import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.analyzers.BehaviorAnalyzer;
 import nl.dflipse.fit.strategy.analyzers.ConcurrencyDetector;
+import nl.dflipse.fit.strategy.analyzers.ErrorPropogationDetector;
+import nl.dflipse.fit.strategy.analyzers.HappensBeforeNeighbourDetector;
 import nl.dflipse.fit.strategy.analyzers.InjectionPointDetector;
+import nl.dflipse.fit.strategy.analyzers.ParentChildDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.analyzers.StatusAnalyzer;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
-import nl.dflipse.fit.strategy.pruners.ErrorPropogationPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.pruners.FaultloadSizePruner;
-import nl.dflipse.fit.strategy.pruners.HappensBeforeNeighbourPruner;
 import nl.dflipse.fit.strategy.pruners.NoImpactPruner;
-import nl.dflipse.fit.strategy.pruners.ParentChildPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
@@ -81,14 +81,14 @@ public class FiTestExtension
         strategy = new StrategyRunner(modes);
         strategy
                 .withComponent(new IncreasingSizeGenerator(strategy.getStore()))
+                .withComponent(new ParentChildDetector())
+                .withComponent(new ErrorPropogationDetector())
+                .withComponent(new HappensBeforeNeighbourDetector())
                 .withComponent(new InjectionPointDetector(traversalStrategy, onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
                 .withComponent(new BehaviorAnalyzer())
                 .withComponent(new ConcurrencyDetector())
-                .withComponent(new ParentChildPruner())
-                .withComponent(new HappensBeforeNeighbourPruner())
-                .withComponent(new ErrorPropogationPruner())
                 .withComponent(new NoImpactPruner(pruneImpactless))
                 .withComponent(new DynamicReductionPruner());
 

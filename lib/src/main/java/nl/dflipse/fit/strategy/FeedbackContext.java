@@ -9,32 +9,38 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 
-public interface FeedbackContext {
-    public List<FailureMode> getFailureModes();
+public abstract class FeedbackContext {
+    public abstract List<FailureMode> getFailureModes();
 
-    public List<FaultUid> getFaultUids();
+    public abstract List<FaultUid> getFaultInjectionPoints();
 
-    public DynamicAnalysisStore getStore();
+    public abstract void reportFaultUid(FaultUid faultInjectionPoint);
 
-    public void reportFaultUid(FaultUid faultInjectionPoint);
+    public void reportFaultUids(List<FaultUid> faultInjectionPoints) {
+        for (var f : faultInjectionPoints) {
+            reportFaultUid(f);
+        }
+    }
 
-    public void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect);
+    public abstract void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect);
 
-    public void reportConditionalFaultUidByUid(Collection<FaultUid> condition, FaultUid fid);
+    public abstract void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid result,
+            Collection<Fault> rootCauses);
 
-    public void reportConditionalFaultUid(Collection<Behaviour> condition, FaultUid fid);
+    public abstract void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid);
 
-    public void reportExclusionOfFaultUidByUid(Collection<FaultUid> condition, FaultUid fid);
+    public abstract void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect);
 
-    public void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid);
+    public abstract void pruneFaultUidSubset(Set<FaultUid> subset);
 
-    public void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect);
+    public abstract void pruneFaultSubset(Set<Fault> subset);
 
-    public void pruneFaultUidSubset(Set<FaultUid> subset);
+    public abstract void pruneFaultload(Faultload faultload);
 
-    public void pruneFaultSubset(Set<Fault> subset);
+    public abstract Set<Behaviour> getExpectedBehaviours(Set<Fault> faultload);
 
-    public void pruneFaultload(Faultload fautload);
+    public abstract Set<FaultUid> getExpectedPoints(Set<Fault> faultload);
+
+    public abstract long spaceSize();
 }

@@ -24,7 +24,6 @@ import nl.dflipse.fit.trace.tree.TraceReport;
 public class InjectionPointDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(InjectionPointDetector.class);
     private final List<FaultUid> pointsInHappyPath = new ArrayList<>();
-    private final Set<FaultUid> knownPoints = new HashSet<>();
     // Note: this is unsound in general, but can be useful in practice
     private final boolean onlyPersistantOrTransientRetries;
     private final TraversalStrategy traversalStrategy;
@@ -46,27 +45,6 @@ public class InjectionPointDetector implements FeedbackHandler {
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         List<FaultUid> traceFaultUids = result.trace.getFaultUids(traversalStrategy);
 
-        // --- Report upstream causes and effects ---
-        result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
-            FaultUid cause = report.faultUid;
-            if (knownPoints.contains(cause)) {
-                return;
-            }
-
-            // Find all the effects of this point
-            Set<FaultUid> effects = result.trace.getChildren(cause);
-            if (effects.isEmpty()) {
-                return;
-            }
-
-            logger.info("{} is the parent of:", cause);
-            for (var effect : effects) {
-                logger.info("\t--> {}", effect);
-            }
-            knownPoints.add(cause);
-            context.reportUpstreamEffect(cause, effects);
-        });
-
         // --- Happy path ---
         if (result.isInitial()) {
             pointsInHappyPath.addAll(traceFaultUids);
@@ -79,7 +57,7 @@ public class InjectionPointDetector implements FeedbackHandler {
             return;
         }
 
-        Set<FaultUid> expectedPoints = context.getStore().getExpectedPoints(result.trace.getInjectedFaults());
+        Set<FaultUid> expectedPoints = context.getExpectedPoints(result.trace.getInjectedFaults());
 
         // Analyse new paths that were not in the happy path
         var appeared = Lists.difference(traceFaultUids, List.copyOf(expectedPoints));
@@ -112,17 +90,25 @@ public class InjectionPointDetector implements FeedbackHandler {
                     .map(TraceReport::getBehaviour)
                     .filter(x -> x.isFault())
                     .collect(Collectors.toList());
-            boolean wasRetry = handleRetry(expectedPoints, newPoint.faultUid, causes, context);
+            List<Fault> rootCauses = result.trace.getDecendants(parent).stream()
+                    .filter(x -> x.injectedFault != null)
+                    .map(x -> x.injectedFault)
+                    .toList();
+
+            boolean wasRetry = false;
+            // boolean wasRetry = handleRetry(expectedPoints, newPoint.faultUid, causes,
+            // rootCauses, context);
 
             if (!wasRetry) {
                 logger.info("Found conditional point: {} given {}", newPoint.faultUid, causes);
-                context.reportConditionalFaultUid(causes, newPoint.faultUid);
+                logger.info("Exploring new point in combination with {}", rootCauses);
+                context.reportPreconditionOfFaultUid(causes, newPoint.faultUid, rootCauses);
             }
         }
     }
 
     private boolean handleRetry(Set<FaultUid> expectedPoints, FaultUid newFid,
-            Collection<Behaviour> condition, FeedbackContext context) {
+            Collection<Behaviour> condition, Collection<Fault> rootCauses, FeedbackContext context) {
         if (!onlyPersistantOrTransientRetries) {
             return false;
         }
@@ -167,7 +153,7 @@ public class InjectionPointDetector implements FeedbackHandler {
         Set<Behaviour> relatedCondition = condition.stream()
                 .filter(f -> !f.uid().matchesUpToCount(persistentFault))
                 .collect(Collectors.toSet());
-        context.reportConditionalFaultUid(relatedCondition, persistentFault);
+        context.reportPreconditionOfFaultUid(relatedCondition, persistentFault, rootCauses);
 
         return true;
     }

@@ -17,18 +17,17 @@ import nl.dflipse.fit.faultload.modes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 
 public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(DynamicReductionPruner.class);
 
-    private DynamicAnalysisStore store;
+    private FeedbackContext ctx;
     private final Map<FaultUid, Set<FaultUid>> causalMap = new HashMap<>();
     private final List<Map<FaultUid, Integer>> behavioursSeen = new ArrayList<>();
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        store = context.getStore();
+        ctx = context;
 
         // update behaviours seen
         Map<FaultUid, Integer> behaviourMap = new HashMap<>();
@@ -77,7 +76,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     @Override
     public PruneDecision prune(Faultload faultload) {
         Map<FaultUid, Fault> faultsByFaultUid = faultload.getFaultByFaultUid();
-        Set<FaultUid> expectedPoints = store.getExpectedPoints(faultload.faultSet());
+        Set<FaultUid> expectedPoints = ctx.getExpectedPoints(faultload.faultSet());
 
         // for all causes
         for (var cause : causalMap.keySet()) {

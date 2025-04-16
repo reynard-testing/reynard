@@ -38,7 +38,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
             return;
         }
 
-        var points = context.getFaultUids();
+        var points = context.getFaultInjectionPoints();
 
         for (Fault fault : injected) {
             FaultUid parent = result.trace.getParent(fault.uid());

@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.pruners;
+package nl.dflipse.fit.strategy.analyzers;
 
 import java.util.HashSet;
 import java.util.List;
@@ -10,14 +10,13 @@ import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
 import nl.dflipse.fit.trace.tree.TraceReport;
 
-public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
-    private final Logger logger = LoggerFactory.getLogger(ErrorPropogationPruner.class);
+public class ErrorPropogationDetector implements FeedbackHandler {
+    private final Logger logger = LoggerFactory.getLogger(ErrorPropogationDetector.class);
 
     private Set<Fault> redundantFaults = new HashSet<>();
 
@@ -62,7 +61,7 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
 
     /* Causes result in fault at effect */
     private void handlePropogation(Set<Behaviour> causes, Fault effect, FeedbackContext context) {
-        logger.info("Found that fault(s) " + causes + " causes error " + effect);
+        logger.info("Found that {} causes error {}", causes, effect);
 
         // TODO: if a cause is directly propogated (body, status)
         // Can we prune the faultUid?
@@ -74,17 +73,4 @@ public class ErrorPropogationPruner implements Pruner, FeedbackHandler {
         redundantFaults.add(effect);
         context.reportDownstreamEffect(causes, effect.asBehaviour());
     }
-
-    @Override
-    public PruneDecision prune(Faultload faultload) {
-        for (Fault fault : faultload.faultSet()) {
-            if (redundantFaults.contains(fault)) {
-                logger.info("Pruning due to error propogation: {} in {}", fault, faultload.readableString());
-                return PruneDecision.PRUNE_SUBTREE;
-            }
-        }
-
-        return PruneDecision.KEEP;
-    }
-
 }

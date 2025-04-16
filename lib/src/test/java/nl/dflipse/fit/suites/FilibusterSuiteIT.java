@@ -21,9 +21,7 @@ import okhttp3.Response;
 public class FilibusterSuiteIT {
     private static final RemoteController controller = new RemoteController("http://localhost:6050");
 
-    private static final int AUDIBLE_PORT = 5000;
-    private static final int NETFLIX_PORT = 5000;
-    private static final int CINEMA_PORT = 5000;
+    private static final int SERVICE_PORT = 5000;
 
     private OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(5, TimeUnit.SECONDS)
@@ -42,7 +40,7 @@ public class FilibusterSuiteIT {
         var tracestate = faultload.getTraceState().toString();
 
         Request request = new Request.Builder()
-                .url("http://localhost:" + AUDIBLE_PORT + "/users/user1/books/book2")
+                .url("http://localhost:" + SERVICE_PORT + "/users/user1/books/book2")
                 .addHeader("traceparent", traceparent)
                 .addHeader("tracestate", tracestate)
                 .build();
@@ -70,7 +68,7 @@ public class FilibusterSuiteIT {
         var tracestate = faultload.getTraceState().toString();
 
         Request request = new Request.Builder()
-                .url("http://localhost:" + NETFLIX_PORT + "/netflix/homepage/users/chris_rivers")
+                .url("http://localhost:" + SERVICE_PORT + "/netflix/homepage/users/chris_rivers")
                 .addHeader("traceparent", traceparent)
                 .addHeader("tracestate", tracestate)
                 .build();
@@ -98,35 +96,7 @@ public class FilibusterSuiteIT {
         var tracestate = faultload.getTraceState().toString();
 
         Request request = new Request.Builder()
-                .url("http://localhost:" + CINEMA_PORT + "/users/chris_rivers/bookings")
-                .addHeader("traceparent", traceparent)
-                .addHeader("tracestate", tracestate)
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
-            String traceUrl = "http://localhost:8686/trace/" + faultload.getTraceId();
-
-            TraceAnalysis result = getController().getTrace(faultload);
-            boolean injectedFaults = !result.getInjectedFaults().isEmpty();
-
-            if (injectedFaults) {
-                assert (response.code() >= 500);
-                assert (response.code() < 600);
-            } else {
-                assertEquals(200, response.code());
-            }
-        }
-    }
-
-    @FiTest(maxTestCases = 500)
-    public void testCinema3(TrackedFaultload faultload) throws IOException {
-
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-
-        Request request = new Request.Builder()
-                .url("http://localhost:" + CINEMA_PORT + "/users/chris_rivers/bookings")
+                .url("http://localhost:" + SERVICE_PORT + "/users/chris_rivers/bookings")
                 .addHeader("traceparent", traceparent)
                 .addHeader("tracestate", tracestate)
                 .build();
@@ -144,6 +114,163 @@ public class FilibusterSuiteIT {
             // } else {
             // assertEquals(200, response.code());
             // }
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testCinema2(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/users/chris_rivers/bookings")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testCinema3(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/users/chris_rivers/bookings")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
+            String traceUrl = "http://localhost:8686/trace/" + faultload.getTraceId();
+
+            TraceAnalysis result = getController().getTrace(faultload);
+            boolean injectedFaults = !result.getInjectedFaults().isEmpty();
+
+            // if (injectedFaults) {
+            // assert (response.code() >= 500);
+            // assert (response.code() < 600);
+            // } else {
+            // assertEquals(200, response.code());
+            // }
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testCinema4(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/users/chris_rivers/bookings")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testCinema5(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/users/chris_rivers/bookings")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testCinema6(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/users/chris_rivers/bookings")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testCinema7(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/users/chris_rivers/bookings")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testCinema8(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/users/chris_rivers/bookings")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testExpedia(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/review/hotels/hotel1")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testMailchimp(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/urls/randomurl")
+                // .url("http://localhost:" + SERVICE_PORT + "/urls/prettyurl")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
         }
     }
 }

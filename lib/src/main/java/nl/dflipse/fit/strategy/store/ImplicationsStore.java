@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -125,8 +126,11 @@ public class ImplicationsStore {
       return false;
     }
 
-    target.add(new Substitution(causesSet, effect));
+    // Remove supersets
     target.removeIf(x -> x.effect.matches(effect) && Behaviour.isSubsetOf(causesSet, x.causes));
+
+    // Add myself
+    target.add(new Substitution(causesSet, effect));
     return true;
   }
 
@@ -274,6 +278,28 @@ public class ImplicationsStore {
     }
 
     return Pair.of(causeBehaviour, effectsSet);
+  }
+
+  public Map<String, String> getReport() {
+    Map<String, String> report = new LinkedHashMap<>();
+
+    if (!upstreamEffects.isEmpty()) {
+      report.put("Upstream effects", upstreamEffects.size() + "");
+    }
+
+    if (!inclusions.isEmpty()) {
+      report.put("Inclusion effects", inclusions.size() + "");
+    }
+
+    if (!exclusions.isEmpty()) {
+      report.put("Exclusion effects", exclusions.size() + "");
+    }
+
+    if (!downstreamEffects.isEmpty()) {
+      report.put("Downstream effects", downstreamEffects.size() + "");
+    }
+
+    return report;
   }
 
 }

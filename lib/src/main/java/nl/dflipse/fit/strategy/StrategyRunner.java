@@ -260,7 +260,7 @@ public class StrategyRunner {
             String tag = name + ".handleFeedback<Analyzer>";
             result.trackedFaultload.timer.start(tag);
 
-            FeedbackContext context = new FeedbackContextProvider(this, analyzer.getClass(), result);
+            FeedbackContext context = new FeedbackContextProvider(this, analyzer.getClass());
             analyzer.handleFeedback(result, context);
 
             result.trackedFaultload.timer.stop(tag);
@@ -283,7 +283,7 @@ public class StrategyRunner {
                 }
                 case PRUNE_SUBTREE -> {
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
-                    new FeedbackContextProvider(this, pruner.getClass(), null)
+                    new FeedbackContextProvider(this, pruner.getClass())
                             .pruneFaultSubset(faultload.faultSet());
 
                     pruneDecision = PruneDecision.PRUNE_SUBTREE;

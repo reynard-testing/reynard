@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.pruners;
+package nl.dflipse.fit.strategy.analyzers;
 
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +15,8 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.pruners.PruneDecision;
+import nl.dflipse.fit.strategy.pruners.Pruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.trace.tree.TraceReport;
 
@@ -24,8 +26,8 @@ import nl.dflipse.fit.trace.tree.TraceReport;
  * I.e. if a fault is injected, and another fault disappears,
  * s set of fault causes the disappearance of the fault (the effect)
  */
-public class HappensBeforeNeighbourPruner implements Pruner, FeedbackHandler {
-    private final Logger logger = LoggerFactory.getLogger(HappensBeforeNeighbourPruner.class);
+public class HappensBeforeNeighbourDetector implements Pruner, FeedbackHandler {
+    private final Logger logger = LoggerFactory.getLogger(HappensBeforeNeighbourDetector.class);
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
@@ -34,7 +36,7 @@ public class HappensBeforeNeighbourPruner implements Pruner, FeedbackHandler {
         }
 
         Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
-        Set<FaultUid> expectedPoints = context.getStore().getExpectedPoints(injectedErrorFaults);
+        Set<FaultUid> expectedPoints = context.getExpectedPoints(injectedErrorFaults);
 
         result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
             List<TraceReport> childrenReports = result.trace.getChildren(report);

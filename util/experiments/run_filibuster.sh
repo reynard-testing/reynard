@@ -11,4 +11,4 @@ echo "Running ${benchmark_category} benchmark: ${benchmark_id}"
 echo "Storing in ${output_file}"
 
 mkdir -p ${result_path}
-mvn test clean -Dtest=FilibusterSuiteIT#test${benchmark_id} | tee ${output_file}
+mvn clean test -Dtest=FilibusterSuiteIT#test${benchmark_id} | tee ${output_file}

@@ -2,7 +2,6 @@ package nl.dflipse.fit.strategy.store;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +62,10 @@ public class DynamicAnalysisStore {
 
     public List<Set<Fault>> getRedundantFaultSubsets() {
         return this.redundantFaultSubsets;
+    }
+
+    public Map<String, String> getImplicationsReport() {
+        return implicationsStore.getReport();
     }
 
     public Set<FaultUid> getNonConditionalFaultUids() {
@@ -236,15 +239,15 @@ public class DynamicAnalysisStore {
         }
 
         // Prune on injecting faults on unreachable points
-        var expected = getExpectedPoints(faultload);
+        var expected = getExpectedBehaviour(faultload);
         if (expected.isEmpty()) {
             return false;
         }
 
         for (Fault toInject : faultload) {
             boolean found = false;
-            for (FaultUid point : expected) {
-                if (point.matches(toInject.uid())) {
+            for (Behaviour point : expected) {
+                if (point.uid().matches(toInject.uid())) {
                     found = true;
                     break;
                 }

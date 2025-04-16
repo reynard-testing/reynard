@@ -25,8 +25,8 @@ public class ParentChildDetector implements Pruner, FeedbackHandler {
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         for (var pair : result.trace.getParentsAndChildren()) {
-            var parent = pair.getFirst();
-            var child = pair.getSecond();
+            var parent = pair.first();
+            var child = pair.second();
             happensBefore.addRelation(parent, child);
         }
 
@@ -60,8 +60,8 @@ public class ParentChildDetector implements Pruner, FeedbackHandler {
         Set<FaultUid> errorFaults = faultload.getFaultUids();
 
         boolean isRedundant = Sets.anyPair(errorFaults, (pair) -> {
-            var f1 = pair.getFirst();
-            var f2 = pair.getSecond();
+            var f1 = pair.first();
+            var f2 = pair.second();
             return happensBefore.areRelated(f1, f2);
         });
 

@@ -46,7 +46,9 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
     public Map<String, String> report() {
         StrategyReporter.printNewline();
         StrategyReporter.printHeader("Timing per behaviour", 48, "-");
-        NumberFormat formatter = new DecimalFormat("#0.0");  
+        NumberFormat formatter = new DecimalFormat("#0.0");
+
+        // TODO: sort by average
         for (var entry : timings.entrySet()) {
             var point = entry.getKey();
             var values = entry.getValue();

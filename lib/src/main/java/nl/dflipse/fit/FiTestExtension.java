@@ -31,6 +31,7 @@ import nl.dflipse.fit.strategy.analyzers.InjectionPointDetector;
 import nl.dflipse.fit.strategy.analyzers.ParentChildDetector;
 import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
 import nl.dflipse.fit.strategy.analyzers.StatusAnalyzer;
+import nl.dflipse.fit.strategy.analyzers.StatusPropagationOracle;
 import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.pruners.FailStopPruner;
@@ -91,6 +92,7 @@ public class FiTestExtension
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
                 .withComponent(new BehaviorAnalyzer())
+                .withComponent(new StatusPropagationOracle())
                 .withComponent(new ConcurrencyDetector())
                 .withComponent(new NoImpactPruner(pruneImpactless))
                 .withComponent(new DynamicReductionPruner());

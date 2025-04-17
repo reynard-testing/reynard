@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,10 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
         });
     }
 
+    private IntStream asIntStream(List<Integer> v) {
+        return v.stream().mapToInt(i -> i);
+    }
+
     @Override
     public Map<String, String> report() {
         StrategyReporter.printNewline();
@@ -40,10 +45,9 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
         for (var entry : timings.entrySet()) {
             var point = entry.getKey();
             var values = entry.getValue();
-            var intStream = values.stream().mapToInt(x -> x);
-            var average = intStream.average().getAsDouble();
-            var max = intStream.max().getAsInt();
-            var min = intStream.min().getAsInt();
+            var average = asIntStream(values).average().getAsDouble();
+            var max = asIntStream(values).max().getAsInt();
+            var min = asIntStream(values).min().getAsInt();
 
             StrategyReporter.printNewline();
             StrategyReporter.printKeyValue("Behaviour", point.toString());

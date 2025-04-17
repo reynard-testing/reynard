@@ -29,6 +29,11 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
         result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
             var behaviour = report.getBehaviour();
             var timing = report.response.durationMs;
+
+            if (timing == 0 || report.injectedFault != null) {
+                return;
+            }
+
             timings.computeIfAbsent(behaviour, x -> new ArrayList<>()).add(timing);
         });
     }
@@ -52,7 +57,7 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
             StrategyReporter.printNewline();
             StrategyReporter.printKeyValue("Behaviour", point.toString());
             StrategyReporter.printKeyValue("Min (ms)", String.valueOf(min));
-            StrategyReporter.printKeyValue("Average (ms)", formatter.format(average));
+            StrategyReporter.printKeyValue("Average (ms)", formatter.format(average) + "(" + values.size() + ")");
             StrategyReporter.printKeyValue("Max (ms)", String.valueOf(max));
         }
         // Don't report in the normal sense

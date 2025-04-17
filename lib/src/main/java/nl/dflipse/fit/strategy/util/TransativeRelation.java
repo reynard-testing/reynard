@@ -2,13 +2,13 @@ package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class TransativeRelation<X> {
-    private final Set<X> elements = new HashSet<>();
+    private final Set<X> elements = new LinkedHashSet<>();
     private final Map<X, X> inverseRelation = new HashMap<>();
     private final Map<X, Set<X>> relation = new HashMap<>();
     private final Map<X, Set<X>> transitiveRelations = new HashMap<>();
@@ -27,7 +27,7 @@ public class TransativeRelation<X> {
         }
 
         inverseRelation.put(child, parent);
-        relation.computeIfAbsent(parent, k -> new HashSet<>()).add(child);
+        relation.computeIfAbsent(parent, k -> new LinkedHashSet<>()).add(child);
         updateTransitiveRelations(parent);
     }
 
@@ -56,14 +56,14 @@ public class TransativeRelation<X> {
 
     private Set<X> updateTransitiveRelations(X root) {
         // The children of the child are also transative children of the parent
-        Set<X> descendants = new HashSet<>();
+        Set<X> descendants = new LinkedHashSet<>();
         for (X descendant : getChildren(root)) {
             descendants.add(descendant);
             descendants.addAll(updateTransitiveRelations(descendant));
         }
 
         // Add the transative relation
-        transitiveRelations.computeIfAbsent(root, k -> new HashSet<>()).addAll(descendants);
+        transitiveRelations.computeIfAbsent(root, k -> new LinkedHashSet<>()).addAll(descendants);
         return descendants;
     }
 

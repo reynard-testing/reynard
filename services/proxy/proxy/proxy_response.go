@@ -53,7 +53,7 @@ func (rc *ResponseCapture) GetResponseData(hashBody bool) tracing.ResponseData {
 
 	if hashBody && body != "" {
 		bodyHash := sha256.Sum256([]byte(body))
-		body = fmt.Sprintf("%x", bodyHash)
+		body = fmt.Sprintf("%X", bodyHash)
 	}
 
 	return tracing.ResponseData{

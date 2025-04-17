@@ -1,9 +1,8 @@
 package nl.dflipse.fit.trace.tree;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonSerialize
 @JsonDeserialize
@@ -26,5 +25,10 @@ public class TraceResponse {
             return false;
         }
         return status == other.status && body.equals(other.body);
+    }
+
+    @Override
+    public String toString() {
+        return "TraceResponse[status="+status+",duration_ms="+durationMs+", body=\""+body+"\"]";
     }
 }

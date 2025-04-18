@@ -111,6 +111,7 @@ public class InjectionPointDetector implements FeedbackHandler {
         }
     }
 
+    // TODO: fix and seperate
     private boolean handleRetry(FaultloadResult result, Set<FaultUid> expectedPoints, FaultUid newFid,
             Collection<Behaviour> condition,
             List<Fault> actualCauses, FeedbackContext context) {

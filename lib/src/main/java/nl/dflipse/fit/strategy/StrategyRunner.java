@@ -7,6 +7,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
@@ -244,8 +245,11 @@ public class StrategyRunner {
             return;
         }
 
+        // analyze the result
         analyze(result);
-        logger.info("Selecting next faultload");
+
+        // prune generator based on the result
+        generator.prune();
     }
 
     public Faultload generate() {
@@ -277,6 +281,10 @@ public class StrategyRunner {
         }
 
         result.trackedFaultload.timer.stop("StrategyRunner.analyze");
+    }
+
+    public PruneDecision prune(Set<Fault> fs) {
+        return prune(new Faultload(fs));
     }
 
     public PruneDecision prune(Faultload faultload) {

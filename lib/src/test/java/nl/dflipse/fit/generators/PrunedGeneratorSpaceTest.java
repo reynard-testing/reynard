@@ -11,6 +11,7 @@ import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
@@ -26,7 +27,7 @@ public class PrunedGeneratorSpaceTest {
     public void testSkipAllPoints() {
         var modes = FailureModes.getModes(3);
         var points = FaultInjectionPoints.getPoints(12);
-        var generator = new IncreasingSizeGenerator(modes);
+        var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
 
         for (var fault : points) {
@@ -42,7 +43,7 @@ public class PrunedGeneratorSpaceTest {
     public void testSkipAllButOnePoint() {
         var modes = FailureModes.getModes(3);
         var points = FaultInjectionPoints.getPoints(12);
-        var generator = new IncreasingSizeGenerator(modes);
+        var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
 
         var ignored = points.get(4);
@@ -64,7 +65,7 @@ public class PrunedGeneratorSpaceTest {
     public void testSkipAllButTwoPoint() {
         var modes = FailureModes.getModes(3);
         var points = FaultInjectionPoints.getPoints(12);
-        var generator = new IncreasingSizeGenerator(modes);
+        var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
 
         var ignoredSet = Set.of(points.get(4), points.get(7));
@@ -85,7 +86,7 @@ public class PrunedGeneratorSpaceTest {
     public void testSkipAllButFourPoint() {
         var modes = FailureModes.getModes(3);
         var points = FaultInjectionPoints.getPoints(12);
-        var generator = new IncreasingSizeGenerator(modes);
+        var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
 
         var ignoredSet = Set.of(points.get(4), points.get(7), points.get(2), points.get(8));
@@ -107,7 +108,7 @@ public class PrunedGeneratorSpaceTest {
     public void testRemoveOneFaultByModes() {
         var modes = FailureModes.getModes(5);
         var points = FaultInjectionPoints.getPoints(3);
-        var generator = new IncreasingSizeGenerator(modes);
+        var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
 
         for (var mode : modes) {
@@ -126,7 +127,7 @@ public class PrunedGeneratorSpaceTest {
     public void testOneFault() {
         var modes = FailureModes.getModes(5);
         var points = FaultInjectionPoints.getPoints(3);
-        var generator = new IncreasingSizeGenerator(modes);
+        var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
 
         for (int i = 1; i < modes.size(); i++) {
@@ -145,7 +146,7 @@ public class PrunedGeneratorSpaceTest {
         var modes = FailureModes.getModes(1000);
         var points = FaultInjectionPoints.getPoints(3);
 
-        var generator = new IncreasingSizeGenerator(modes);
+        var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
 
         Set<Integer> ignored = Set.of(1, 500, 999);
@@ -172,7 +173,7 @@ public class PrunedGeneratorSpaceTest {
         var modes = FailureModes.getModes(12);
         var points = FaultInjectionPoints.getPoints(6);
 
-        var generator = new IncreasingSizeGenerator(modes);
+        var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
 
         Set<Integer> ignored = Set.of(1, 4, 8);
@@ -202,12 +203,12 @@ public class PrunedGeneratorSpaceTest {
         var faults = new FaultsBuilder(points, modes);
 
         // Given - a generator with no pruned faults
-        var generator1 = new IncreasingSizeGenerator(modes);
+        var generator1 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator1.reportFaultUids(points);
         List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
         // Given a generator and prunable faults
-        var generator2 = new IncreasingSizeGenerator(modes);
+        var generator2 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator2.reportFaultUids(points);
 
         var faultSubsets = Set.of(
@@ -269,12 +270,12 @@ public class PrunedGeneratorSpaceTest {
         var faults = new FaultsBuilder(points, modes);
 
         // Given - a generator with no pruned faults
-        var generator1 = new IncreasingSizeGenerator(modes);
+        var generator1 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator1.reportFaultUids(points);
         List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
         // Given a generator and prunable faults
-        var generator2 = new IncreasingSizeGenerator(modes);
+        var generator2 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator2.reportFaultUids(points);
 
         Set<Set<Fault>> faultSubsets = Set.of(
@@ -331,13 +332,13 @@ public class PrunedGeneratorSpaceTest {
         var faults = new FaultsBuilder(points, modes);
 
         // Given - a generator with no pruned faults
-        var generator1 = new IncreasingSizeGenerator(modes);
+        var generator1 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator1.reportFaultUids(points);
         generator1.reportPreconditionOfFaultUid(Set.of(), point3);
         List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
         // Given a generator and prunable faults
-        var generator2 = new IncreasingSizeGenerator(modes);
+        var generator2 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator2.reportFaultUids(points);
 
         var preconditions = List.of(

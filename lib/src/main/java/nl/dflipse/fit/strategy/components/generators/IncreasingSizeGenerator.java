@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
+import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
@@ -25,13 +27,13 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
 
     private final DynamicAnalysisStore store;
 
-    public IncreasingSizeGenerator(DynamicAnalysisStore store) {
+    public IncreasingSizeGenerator(DynamicAnalysisStore store, Function<Set<Fault>, PruneDecision> pruneFunction) {
         this.store = store;
-        iterator = new PrunableGenericPowersetTreeIterator(store, true);
+        iterator = new PrunableGenericPowersetTreeIterator(store, pruneFunction, true);
     }
 
-    public IncreasingSizeGenerator(List<FailureMode> modes) {
-        this(new DynamicAnalysisStore(modes));
+    public IncreasingSizeGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {
+        this(new DynamicAnalysisStore(modes), pruneFunction);
     }
 
     @Override
@@ -83,18 +85,7 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
             return;
         }
 
-        if (iterator == null) {
-            throw new IllegalStateException(
-                    "Cannot exlude fault injection point if no normal fault injection points are discovered");
-        }
-
-        boolean isNew = store.addExclusionForFaultUid(condition, exclusion);
-
-        if (!isNew) {
-            return;
-        }
-
-        iterator.pruneQueue();
+        store.addExclusionForFaultUid(condition, exclusion);
     }
 
     @Override
@@ -126,36 +117,31 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
 
     @Override
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
-        boolean isNew = false;
         var allFaults = Fault.allFaults(subset, getFailureModes());
         for (Set<Fault> prunedSet : allFaults) {
-            boolean wasNew = store.pruneFaultSubset(prunedSet);
-            isNew = isNew || wasNew;
+            store.pruneFaultSubset(prunedSet);
         }
+    }
 
-        if (isNew && iterator != null) {
+    @Override
+    public void pruneFaultSubset(Set<Fault> subset) {
+        store.pruneFaultSubset(subset);
+    }
+
+    @Override
+    public void pruneFaultload(Faultload faultload) {
+        store.pruneFaultload(faultload);
+    }
+
+    @Override
+    public void prune() {
+        if (iterator != null) {
             iterator.pruneQueue();
         }
     }
 
     private int getNumerOfPoints() {
         return store.getPoints().size();
-    }
-
-    @Override
-    public void pruneFaultSubset(Set<Fault> subset) {
-        boolean isNew = store.pruneFaultSubset(subset);
-        if (isNew && iterator != null) {
-            iterator.pruneQueue();
-        }
-    }
-
-    @Override
-    public void pruneFaultload(Faultload faultload) {
-        boolean isNew = store.pruneFaultload(faultload);
-        if (isNew && iterator != null) {
-            iterator.pruneQueue();
-        }
     }
 
     @Override

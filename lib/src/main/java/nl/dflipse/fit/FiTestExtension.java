@@ -86,7 +86,7 @@ public class FiTestExtension
 
         strategy = new StrategyRunner(modes);
         strategy
-                .withComponent(new IncreasingSizeGenerator(strategy.getStore()))
+                .withComponent(new IncreasingSizeGenerator(strategy.getStore(), strategy::prune))
                 .withComponent(new ParentChildDetector())
                 .withComponent(new ErrorPropagationDetector())
                 .withComponent(new HappensBeforeNeighbourDetector())

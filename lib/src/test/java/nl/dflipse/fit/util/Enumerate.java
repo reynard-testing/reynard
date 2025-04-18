@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.strategy.generators.Generator;
+import nl.dflipse.fit.strategy.components.generators.Generator;
 
 public class Enumerate {
 

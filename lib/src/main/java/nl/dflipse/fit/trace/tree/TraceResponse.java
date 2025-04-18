@@ -13,8 +13,8 @@ public class TraceResponse {
     @JsonProperty("body")
     public String body;
 
-    @JsonProperty("duration_ms")
-    public int durationMs;
+    @JsonProperty("duration_s")
+    public float durationS;
 
     public boolean isErrenous() {
         return !(status >= 200 && status < 300);
@@ -29,6 +29,6 @@ public class TraceResponse {
 
     @Override
     public String toString() {
-        return "TraceResponse[status="+status+",duration_ms="+durationMs+", body=\""+body+"\"]";
+        return "TraceResponse[status=" + status + ",duration_s=" + durationS + ", body=\"" + body + "\"]";
     }
 }

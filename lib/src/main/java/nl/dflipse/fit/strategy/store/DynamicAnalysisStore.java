@@ -232,31 +232,18 @@ public class DynamicAnalysisStore {
             return true;
         }
 
+        // Prune on uid subsets
+        Set<FaultUid> uids = faultload.stream()
+                .map(Fault::uid)
+                .collect(Collectors.toSet());
+        if (hasFaultUidSubset(uids)) {
+            logger.debug("Pruning node {} due pruned subset", faultload);
+            return true;
+        }
         // Prune on faultload
         if (hasFaultload(faultload)) {
             logger.debug("Pruning node {} due pruned faultload", faultload);
             return true;
-        }
-
-        // Prune on injecting faults on unreachable points
-        var expected = getExpectedBehaviour(faultload);
-        if (expected.isEmpty()) {
-            return false;
-        }
-
-        for (Fault toInject : faultload) {
-            boolean found = false;
-            for (Behaviour point : expected) {
-                if (point.uid().matches(toInject.uid())) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                logger.debug("Pruning node {} due to unreachable point {}", faultload, toInject);
-                return true;
-            }
         }
 
         return false;

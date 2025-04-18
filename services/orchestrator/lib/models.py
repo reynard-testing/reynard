@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class ResponseData:
-    duration_ms: int
+    duration_s: float
     status: int
     body: str
 

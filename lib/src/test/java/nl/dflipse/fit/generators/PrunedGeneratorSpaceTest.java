@@ -11,7 +11,7 @@ import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
+import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 import nl.dflipse.fit.util.Enumerate;

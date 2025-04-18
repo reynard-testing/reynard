@@ -181,7 +181,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			Proxy:              proxy,
 			ResponseWriter:     capture,
 			Request:            r,
-			DurationMs:         0,
+			DurationS:          0,
 			ReponseOverwritten: false,
 			Complete:           false,
 			ConcurrentFaults:   nil,
@@ -224,7 +224,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		proxyState.Complete = true
-		proxyState.DurationMs = uint64(time.Since(startTime).Milliseconds())
+		proxyState.DurationS = time.Since(startTime).Seconds() * 1000
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
 
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))

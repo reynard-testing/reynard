@@ -1,4 +1,4 @@
 Flask[async]==3.1.0
 protobuf==5.29.2
-opentelemetry-proto==1.29.0
 requests==2.32.3
+opentelemetry-distro[otlp]

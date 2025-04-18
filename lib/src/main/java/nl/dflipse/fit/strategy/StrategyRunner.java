@@ -12,6 +12,7 @@ import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackContextProvider;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.PruneContextProvider;
 import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.Pruner;
 import nl.dflipse.fit.strategy.components.Reporter;
@@ -282,7 +283,8 @@ public class StrategyRunner {
         PruneDecision pruneDecision = PruneDecision.KEEP;
 
         for (Pruner pruner : pruners) {
-            var decision = pruner.prune(faultload);
+            PruneContextProvider context = new PruneContextProvider(this, pruner.getClass());
+            PruneDecision decision = pruner.prune(faultload, context);
             switch (decision) {
                 case PRUNE -> {
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);

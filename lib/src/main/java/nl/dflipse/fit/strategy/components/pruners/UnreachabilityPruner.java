@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.strategy.components.PruneContext;
 import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.Pruner;
 
@@ -15,14 +16,14 @@ public class UnreachabilityPruner implements Pruner {
     private final Logger logger = LoggerFactory.getLogger(UnreachabilityPruner.class);
 
     @Override
-    public PruneDecision prune(Faultload faultload) {
+    public PruneDecision prune(Faultload faultload, PruneContext context) {
         // Prune on injecting faults on unreachable points
-        Set<Behaviour> expected = getExpectedBehaviour(faultload);
+        Set<Behaviour> expected = context.getExpectedBehaviours(faultload.faultSet());
         if (expected.isEmpty()) {
             return PruneDecision.KEEP;
         }
 
-        for (Fault toInject : faultload) {
+        for (Fault toInject : faultload.faultSet()) {
             boolean found = false;
             for (Behaviour point : expected) {
                 if (point.uid().matches(toInject.uid())) {

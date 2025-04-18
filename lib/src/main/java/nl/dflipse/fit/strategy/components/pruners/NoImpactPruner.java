@@ -12,6 +12,7 @@ import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.PruneContext;
 import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.Pruner;
 import nl.dflipse.fit.strategy.util.Sets;
@@ -87,7 +88,7 @@ public class NoImpactPruner implements Pruner, FeedbackHandler {
     }
 
     @Override
-    public PruneDecision prune(Faultload faultload) {
+    public PruneDecision prune(Faultload faultload, PruneContext context) {
         for (var impactless : impactlessFaults) {
             if (Sets.isSubsetOf(impactless, faultload.faultSet())) {
                 return PruneDecision.PRUNE_SUBTREE;

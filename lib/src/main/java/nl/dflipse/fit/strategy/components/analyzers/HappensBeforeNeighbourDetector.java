@@ -26,7 +26,7 @@ import nl.dflipse.fit.trace.tree.TraceReport;
  * I.e. if a fault is injected, and another fault disappears,
  * s set of fault causes the disappearance of the fault (the effect)
  */
-public class HappensBeforeNeighbourDetector implements Pruner, FeedbackHandler {
+public class HappensBeforeNeighbourDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(HappensBeforeNeighbourDetector.class);
 
     @Override
@@ -95,12 +95,6 @@ public class HappensBeforeNeighbourDetector implements Pruner, FeedbackHandler {
         }
         logger.info("Found exclusion: {} hides {}", cause, effect);
         context.reportExclusionOfFaultUid(cause, effect);
-    }
-
-    @Override
-    public PruneDecision prune(Faultload faultload) {
-        // TODO: prune on the faultload
-        return PruneDecision.KEEP;
     }
 
 }

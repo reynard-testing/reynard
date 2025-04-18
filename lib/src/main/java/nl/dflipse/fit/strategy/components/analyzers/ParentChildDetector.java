@@ -7,17 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
-import nl.dflipse.fit.strategy.components.PruneDecision;
-import nl.dflipse.fit.strategy.components.Pruner;
-import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.strategy.util.TransativeRelation;
 
-public class ParentChildDetector implements Pruner, FeedbackHandler {
+public class ParentChildDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ParentChildDetector.class);
     private TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
     private final Set<FaultUid> knownPoints = new HashSet<>();
@@ -50,26 +46,6 @@ public class ParentChildDetector implements Pruner, FeedbackHandler {
             knownPoints.add(cause);
             context.reportUpstreamEffect(cause, effects);
         });
-    }
-
-    @Override
-    public PruneDecision prune(Faultload faultload) {
-        // if an http error is injected, and its children are also injected, it is
-        // redundant.
-
-        Set<FaultUid> errorFaults = faultload.getFaultUids();
-
-        boolean isRedundant = Sets.anyPair(errorFaults, (pair) -> {
-            var f1 = pair.first();
-            var f2 = pair.second();
-            return happensBefore.areRelated(f1, f2);
-        });
-
-        if (isRedundant) {
-            return PruneDecision.PRUNE_SUBTREE;
-        } else {
-            return PruneDecision.KEEP;
-        }
     }
 
 }

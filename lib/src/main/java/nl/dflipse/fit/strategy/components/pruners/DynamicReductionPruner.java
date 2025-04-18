@@ -17,19 +17,18 @@ import nl.dflipse.fit.faultload.modes.ErrorFault;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.PruneContext;
 import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.Pruner;
 
 public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(DynamicReductionPruner.class);
 
-    private FeedbackContext ctx;
     private final Map<FaultUid, Set<FaultUid>> causalMap = new HashMap<>();
     private final List<Map<FaultUid, Integer>> behavioursSeen = new ArrayList<>();
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        ctx = context;
 
         // update behaviours seen
         Map<FaultUid, Integer> behaviourMap = new HashMap<>();
@@ -76,7 +75,7 @@ public class DynamicReductionPruner implements Pruner, FeedbackHandler {
     }
 
     @Override
-    public PruneDecision prune(Faultload faultload) {
+    public PruneDecision prune(Faultload faultload, PruneContext ctx) {
         Map<FaultUid, Fault> faultsByFaultUid = faultload.getFaultByFaultUid();
         Set<FaultUid> expectedPoints = ctx.getExpectedPoints(faultload.faultSet());
 

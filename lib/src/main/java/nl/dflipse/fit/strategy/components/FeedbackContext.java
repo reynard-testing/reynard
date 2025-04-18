@@ -8,12 +8,8 @@ import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.modes.FailureMode;
 
-public abstract class FeedbackContext {
-    public abstract List<FailureMode> getFailureModes();
-
-    public abstract List<FaultUid> getFaultInjectionPoints();
+public abstract class FeedbackContext implements PruneContext {
 
     public abstract void reportFaultUid(FaultUid faultInjectionPoint);
 
@@ -38,10 +34,6 @@ public abstract class FeedbackContext {
     public abstract void pruneFaultSubset(Set<Fault> subset);
 
     public abstract void pruneFaultload(Faultload faultload);
-
-    public abstract Set<Behaviour> getExpectedBehaviours(Set<Fault> faultload);
-
-    public abstract Set<FaultUid> getExpectedPoints(Set<Fault> faultload);
 
     public abstract long spaceSize();
 }

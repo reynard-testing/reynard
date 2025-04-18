@@ -38,6 +38,7 @@ import nl.dflipse.fit.strategy.components.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.components.pruners.FailStopPruner;
 import nl.dflipse.fit.strategy.components.pruners.FaultloadSizePruner;
 import nl.dflipse.fit.strategy.components.pruners.NoImpactPruner;
+import nl.dflipse.fit.strategy.components.pruners.UnreachabilityPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.util.TaggedTimer;
@@ -96,6 +97,7 @@ public class FiTestExtension
                 .withComponent(new TimingAnalyzer())
                 .withComponent(new StatusPropagationOracle())
                 .withComponent(new ConcurrencyDetector())
+                .withComponent(new UnreachabilityPruner())
                 .withComponent(new NoImpactPruner(pruneImpactless))
                 .withComponent(new DynamicReductionPruner());
 

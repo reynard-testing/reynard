@@ -27,4 +27,4 @@ COPY . .
 
 ENV OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
 
-CMD [ "opentelemetry-instrument", "flask", "--app", "main.py", "run", "--host=0.0.0.0"]
+CMD [ "opentelemetry-instrument", "gunicorn", "--bind", "0.0.0.0:8000", "main:app" ]

@@ -19,6 +19,7 @@ public class UnreachabilityPruner implements Pruner {
     public PruneDecision prune(Faultload faultload, PruneContext context) {
         // Prune on injecting faults on unreachable points
         Set<Behaviour> expected = context.getExpectedBehaviours(faultload.faultSet());
+
         if (expected.isEmpty()) {
             return PruneDecision.KEEP;
         }

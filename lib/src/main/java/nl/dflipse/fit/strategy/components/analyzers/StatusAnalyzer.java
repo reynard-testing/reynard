@@ -1,8 +1,8 @@
 package nl.dflipse.fit.strategy.components.analyzers;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +29,7 @@ public class StatusAnalyzer implements FeedbackHandler, Reporter {
 
             String downstream = report.faultUid.destination();
             int status = report.response.status;
-            faultStatus.computeIfAbsent(downstream, k -> new HashSet<>()).add(status);
+            faultStatus.computeIfAbsent(downstream, k -> new LinkedHashSet<>()).add(status);
         }
     }
 

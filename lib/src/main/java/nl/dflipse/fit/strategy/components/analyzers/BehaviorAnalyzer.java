@@ -1,7 +1,5 @@
 package nl.dflipse.fit.strategy.components.analyzers;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyReporter;
@@ -21,7 +18,6 @@ import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.store.SubsetStore;
-import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.Simplify;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;

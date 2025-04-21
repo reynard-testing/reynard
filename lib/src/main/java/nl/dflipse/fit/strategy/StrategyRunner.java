@@ -237,6 +237,8 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
+        store.addHistoricResult(result.trace.getInjectedFaults(), result.trace.getBehaviours());
+
         logger.info("Analyzing result of running faultload with traceId=" + result.trackedFaultload.getTraceId());
         if (result.isInitial() && !result.trace.getReportedFaults().isEmpty()) {
             logger.error("The intial happy path should be fault free, but its not! Stopping the test suite.");

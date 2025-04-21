@@ -3,8 +3,8 @@ package nl.dflipse.fit.strategy.store;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -206,7 +206,7 @@ public class ImplicationsStore {
     }
 
     Map<FaultUid, Set<Behaviour>> effects = new HashMap<>();
-    Set<Behaviour> upstreams = new HashSet<>();
+    Set<Behaviour> upstreams = new LinkedHashSet<>();
 
     // 1. assume all upstream effects are performed
     for (var effect : upstream.effects()) {
@@ -215,8 +215,8 @@ public class ImplicationsStore {
       effects.put(pair.first().uid(), pair.second());
     }
 
-    Set<Substitution> exclusionsToApply = new HashSet<>(exclusions);
-    Set<Substitution> inclusionsToApply = new HashSet<>(inclusions);
+    Set<Substitution> exclusionsToApply = new LinkedHashSet<>(exclusions);
+    Set<Substitution> inclusionsToApply = new LinkedHashSet<>(inclusions);
 
     while (!exclusionsToApply.isEmpty() || !inclusionsToApply.isEmpty()) {
       boolean changed = false;
@@ -261,7 +261,7 @@ public class ImplicationsStore {
       }
     }
 
-    Set<Behaviour> effectsSet = new HashSet<>();
+    Set<Behaviour> effectsSet = new LinkedHashSet<>();
     effectsSet.addAll(upstreams);
     for (var entry : effects.entrySet()) {
       effectsSet.addAll(entry.getValue());

@@ -3,7 +3,7 @@ package nl.dflipse.fit.strategy.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,7 +20,7 @@ public class Simplify {
         List<Set<Fault>> faultSets = new ArrayList<>();
         List<Set<FaultUid>> faultUidSets = new ArrayList<>();
 
-        Set<Integer> toSkip = new HashSet<>();
+        Set<Integer> toSkip = new LinkedHashSet<>();
 
         for (int i = 0; i < sets.size(); i++) {
             if (toSkip.contains(i)) {
@@ -32,9 +32,9 @@ public class Simplify {
 
             Map<FaultUid, Set<FailureMode>> represented = new HashMap<>();
             for (var uid : faultUids) {
-                represented.put(uid, new HashSet<>());
+                represented.put(uid, new LinkedHashSet<>());
             }
-            Set<Integer> skipIfFound = new HashSet<>();
+            Set<Integer> skipIfFound = new LinkedHashSet<>();
 
             // if for every element in the subset,
             // all faults of all failure modes are present

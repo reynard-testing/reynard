@@ -1,6 +1,5 @@
 package nl.dflipse.fit.strategy.components.analyzers;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,15 +17,13 @@ import nl.dflipse.fit.trace.tree.TraceReport;
 public class ErrorPropagationDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ErrorPropagationDetector.class);
 
-    private Set<Fault> redundantFaults = new HashSet<>();
-
     // TODO: if the body is the same as the error, and the status code,
     // Do we need to check for the other modes?
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         for (TraceReport report : result.trace.getReports()) {
             // Skip the initial report, we don't care about it
-            if (report.isInitial || report.response == null) {
+            if (report.response == null) {
                 continue;
             }
 
@@ -70,7 +67,6 @@ public class ErrorPropagationDetector implements FeedbackHandler {
         // We can always test the cause, not the effect?
         // Its more of a substitution, if someting counts for the effect
         // The same is true for the cause
-        redundantFaults.add(effect);
         context.reportDownstreamEffect(causes, effect.asBehaviour());
     }
 }

@@ -15,10 +15,13 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
+import nl.dflipse.fit.strategy.StrategyReporter;
 import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
+import nl.dflipse.fit.strategy.util.Simplify;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
 public class IncreasingSizeGenerator extends Generator implements Reporter {
@@ -43,11 +46,11 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
         }
 
         boolean isNew = store.addFaultUid(potentialFault);
-        if (!isNew) {
-            return;
-        }
+        // if (!isNew) {
+        // return;
+        // }
 
-        iterator.add(potentialFault);
+        // iterator.add(potentialFault);
     }
 
     @Override
@@ -206,7 +209,26 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
             i++;
         }
 
+        // Report the visited faultloads
+        Map<String, String> visitedReport = new LinkedHashMap<>();
+        var faultloads = store.getHistoricResults().stream()
+                .map(x -> x.first())
+                .toList();
+
+        for (int visitedIndex = 0; visitedIndex < faultloads.size(); visitedIndex++) {
+            var causes = faultloads.get(visitedIndex);
+            Faultload faultload = new Faultload(causes);
+            visitedReport.put("[" + visitedIndex + "]", faultload.readableString());
+        }
+
+        StrategyReporter.printReport("Visited", visitedReport);
+
         return report;
+    }
+
+    @Override
+    public List<Pair<Set<Fault>, List<Behaviour>>> getHistoricResults() {
+        return store.getHistoricResults();
     }
 
 }

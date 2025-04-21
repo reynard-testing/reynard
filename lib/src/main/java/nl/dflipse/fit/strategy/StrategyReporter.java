@@ -13,7 +13,7 @@ import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.StringFormat;
 
 public class StrategyReporter {
-    private static int maxChars = 48;
+    public static int DEFAULT_WIDTH = 48;
     private Generator generator;
     private StrategyRunner runner;
     private StrategyStatistics statistics;
@@ -41,7 +41,7 @@ public class StrategyReporter {
     }
 
     private void printHeader(String header) {
-        printHeader(header, maxChars);
+        printHeader(header, DEFAULT_WIDTH);
     }
 
     private static int stringLength(String string) {
@@ -126,7 +126,7 @@ public class StrategyReporter {
         long totalGenerated = statistics.getTotalGenerated();
 
         printNewline();
-        printLine(StringFormat.padBoth(" Pruners ", maxChars, "="));
+        printLine(StringFormat.padBoth(" Pruners ", DEFAULT_WIDTH, "="));
 
         Set<String> names = Sets.union(prunerCount.keySet(), FeedbackContextProvider.getContextNames());
 
@@ -155,7 +155,7 @@ public class StrategyReporter {
         int maxValueLength = keyValues.values().stream()
                 .mapToInt(s -> stringLength(s))
                 .max().orElse(0);
-        int maxCharSize = Math.min(maxChars, maxKeyLength + maxValueLength + 4);
+        int maxCharSize = Math.min(DEFAULT_WIDTH, maxKeyLength + maxValueLength + 4);
         printNewline();
 
         if (name.length() > 0) {

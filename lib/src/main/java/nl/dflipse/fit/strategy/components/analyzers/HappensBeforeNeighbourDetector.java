@@ -11,12 +11,9 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
-import nl.dflipse.fit.strategy.components.PruneDecision;
-import nl.dflipse.fit.strategy.components.Pruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.trace.tree.TraceReport;
 

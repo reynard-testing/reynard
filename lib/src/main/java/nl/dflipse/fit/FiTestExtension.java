@@ -69,9 +69,9 @@ public class FiTestExtension
         }
 
         List<FailureMode> modes = List.of(
-                ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE),
-                ErrorFault.fromError(HttpError.BAD_GATEWAY),
                 ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR),
+                ErrorFault.fromError(HttpError.BAD_GATEWAY),
+                ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE),
                 ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
 
         // List<FailureMode> modes =
@@ -90,6 +90,9 @@ public class FiTestExtension
                 .withComponent(new ParentChildDetector())
                 .withComponent(new ErrorPropagationDetector())
                 .withComponent(new HappensBeforeNeighbourDetector())
+                // Note: InjectionPointDetector needs to be the last detector in the chain
+                // Because it can add new cases, which can get prune,
+                // which rely on info of the other detectors
                 .withComponent(new InjectionPointDetector(traversalStrategy, onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())

@@ -17,6 +17,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.components.PruneDecision;
+import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 import nl.dflipse.fit.util.NoOpLogger;
@@ -31,6 +32,7 @@ public class DynamicAnalysisStore {
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
+    private final List<Pair<Set<Fault>, List<Behaviour>>> historicResults = new ArrayList<>();
 
     public DynamicAnalysisStore(List<FailureMode> modes, boolean quiet) {
         this.modes = modes;
@@ -86,6 +88,14 @@ public class DynamicAnalysisStore {
 
         points.add(fid);
         return true;
+    }
+
+    public void addHistoricResult(Set<Fault> faultload, List<Behaviour> behaviours) {
+        this.historicResults.add(new Pair<>(faultload, behaviours));
+    }
+
+    public List<Pair<Set<Fault>, List<Behaviour>>> getHistoricResults() {
+        return this.historicResults;
     }
 
     public boolean addUpstreamEffect(FaultUid fid, Collection<FaultUid> children) {

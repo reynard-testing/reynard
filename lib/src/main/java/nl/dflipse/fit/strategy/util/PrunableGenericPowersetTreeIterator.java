@@ -2,8 +2,8 @@ package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -22,7 +22,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
     private final DynamicAnalysisStore store;
     private final List<TreeNode> toExpand = new ArrayList<>();
     private int maxQueueSize;
-    private final Set<TreeNode> visited = new HashSet<>();
+    private final Set<TreeNode> visited = new LinkedHashSet<>();
     private final Function<Set<Fault>, PruneDecision> pruneFunction;
 
     public record TreeNode(Set<Fault> value, List<FaultUid> expansion) {
@@ -33,7 +33,7 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
             boolean skipEmptySet) {
         this.pruneFunction = pruneFunction;
         this.store = store;
-
+        this.visited.add(new TreeNode(Set.of(), List.of())); // empty
         toExpand.add(new TreeNode(Set.of(), List.copyOf(store.getPoints())));
         maxQueueSize = 1;
 
@@ -65,35 +65,36 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
         return collection;
     }
 
-    private void addOrPrune(TreeNode node) {
+    private Set<TreeNode> addOrPrune(TreeNode node) {
         switch (shouldPrune(node)) {
             case KEEP -> {
                 // Add the node to the queue, it it's not already there
                 if (toExpand.contains(node)) {
                     logger.debug("Node {} already in queue", node);
-                    return;
+                    return Set.of();
                 }
 
-                toExpand.add(node);
+                return Set.of(node);
             }
             case PRUNE_SUBTREE -> {
                 // do nothing
-                return;
+                return Set.of();
             }
             case PRUNE -> {
                 // don't add this exact node, but maybe its children
-                expand(node);
-                return;
+                return expand(node);
             }
         }
 
+        return Set.of();
     }
 
-    public void expand(TreeNode node) {
+    public Set<TreeNode> expand(TreeNode node) {
         if (node == null || node.expansion.isEmpty()) {
-            return;
+            return Set.of();
         }
 
+        Set<TreeNode> newNodes = new LinkedHashSet<>();
         for (int i = 0; i < node.expansion.size(); i++) {
             FaultUid expansionElement = node.expansion.get(i);
             List<FaultUid> newExpansion = node.expansion.subList(i + 1, node.expansion.size());
@@ -106,9 +107,11 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
                         .collect(Collectors.toList());
 
                 var newNode = new TreeNode(newValue, reachableExtensions);
-                addOrPrune(newNode);
+                newNodes.addAll(addOrPrune(newNode));
             }
         }
+
+        return newNodes;
     }
 
     @Override
@@ -118,13 +121,13 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
     }
 
     public void skip() {
-        expand(toExpand.remove(0));
+        toExpand.addAll(expand(toExpand.remove(0)));
     }
 
     @Override
     public Set<Fault> next() {
         TreeNode node = toExpand.remove(0);
-        expand(node);
+        toExpand.addAll(expand(node));
         maxQueueSize = Math.max(maxQueueSize, toExpand.size());
         visited.add(node);
         return node.value;
@@ -137,14 +140,18 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
 
     // Add new element to explore
     public void add(FaultUid extension) {
+        Set<TreeNode> toAdd = new LinkedHashSet<>();
+
         for (Fault additionalElement : expandModes(extension)) {
             Set<Fault> newValue = Set.of(additionalElement);
             List<FaultUid> expansion = store.getPoints().stream()
                     .filter(x -> x != extension)
                     .collect(Collectors.toList());
             var newNode = new TreeNode(newValue, List.copyOf(expansion));
-            addOrPrune(newNode);
+            toAdd.addAll(addOrPrune(newNode));
         }
+
+        toExpand.addAll(toAdd);
     }
 
     // Add new element to explore
@@ -160,12 +167,15 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
                 .toList();
 
         var newNode = new TreeNode(Set.copyOf(fixedFaults), expansionsLeft);
-        addOrPrune(newNode);
+        var toAdd = addOrPrune(newNode);
+        toExpand.addAll(toAdd);
     }
 
     public void pruneQueue() {
         // Remove pruned nodes
+        Set<TreeNode> toAdd = new LinkedHashSet<>();
         Iterator<TreeNode> iterator = toExpand.iterator();
+
         while (iterator.hasNext()) {
             TreeNode node = iterator.next();
             switch (shouldPrune(node)) {
@@ -182,12 +192,14 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
 
                 case PRUNE -> {
                     // remove this node,
-                    expand(node);
+                    toAdd.addAll(expand(node));
                     iterator.remove();
                     continue;
                 }
             }
         }
+
+        toExpand.addAll(toAdd);
     }
 
     public long size(int m) {

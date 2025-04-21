@@ -8,6 +8,7 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.StrategyRunner;
+import nl.dflipse.fit.strategy.util.Pair;
 
 public class PruneContextProvider implements PruneContext {
 
@@ -47,5 +48,10 @@ public class PruneContextProvider implements PruneContext {
     @Override
     public long spaceSize() {
         return runner.getGenerator().spaceSize();
+    }
+
+    @Override
+    public List<Pair<Set<Fault>, List<Behaviour>>> getHistoricResults() {
+        return runner.getGenerator().getHistoricResults();
     }
 }

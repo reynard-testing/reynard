@@ -1,7 +1,7 @@
 package nl.dflipse.fit.faultload;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -79,7 +79,7 @@ public record Fault(
         var head = uids.get(0);
         var tail = uids.subList(1, uids.size());
         Set<Fault> additions = getFaults(head, modes);
-        Set<Set<Fault>> allSets = new HashSet<>();
+        Set<Set<Fault>> allSets = new LinkedHashSet<>();
         for (var addition : additions) {
             Set<Fault> newCurrent = Sets.plus(current, addition);
             allSets.addAll(allFaults(tail, newCurrent, modes));

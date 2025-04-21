@@ -2,7 +2,6 @@ package nl.dflipse.fit.strategy.components.analyzers;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,6 +56,8 @@ public class InjectionPointDetector implements FeedbackHandler {
                 context.reportFaultUid(point);
             }
 
+            // Start exploring beyond the happy path
+            context.exploreFrom(List.of());
             return;
         }
 

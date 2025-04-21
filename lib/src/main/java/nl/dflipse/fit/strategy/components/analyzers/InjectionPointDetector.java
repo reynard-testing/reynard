@@ -45,71 +45,71 @@ public class InjectionPointDetector implements FeedbackHandler {
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        List<FaultUid> traceFaultUids = result.trace.getFaultUids(traversalStrategy);
+        List<FaultUid> pointsInTrace = result.trace.getFaultUids(traversalStrategy);
+
+        for (var point : pointsInTrace) {
+            context.reportFaultUid(point);
+        }
 
         // --- Happy path ---
         if (result.isInitial()) {
-            pointsInHappyPath.addAll(traceFaultUids);
-
-            for (var point : traceFaultUids) {
-                logger.info("Found point: " + point);
-                context.reportFaultUid(point);
-            }
+            // TODO: allow for happy path of conditionals
+            pointsInHappyPath.addAll(pointsInTrace);
 
             // Start exploring beyond the happy path
             context.exploreFrom(List.of());
             return;
         }
 
+        // -- New points in failure paths --
         Set<FaultUid> expectedPoints = context.getExpectedPoints(result.trace.getInjectedFaults());
 
-        // Analyse new paths that were not in the happy path
-        var appeared = Lists.difference(traceFaultUids, List.copyOf(expectedPoints));
-        List<TraceReport> appearedReports = result.trace.getReports(appeared);
-        var nestedAppeared = appearedReports.stream()
-                .filter(f -> !expectedPoints.contains(result.trace.getParent(f.faultUid)))
-                .toList();
+        // Analyse new paths that were not expected
+        // but whose parent is expected
+        // (this excludes nested points)
+        List<FaultUid> appearedPoints = Lists.difference(pointsInTrace, List.copyOf(expectedPoints));
+        List<TraceReport> appearedReports = result.trace.getReports(appearedPoints);
         var rootAppeared = appearedReports.stream()
                 .filter(f -> expectedPoints.contains(result.trace.getParent(f.faultUid)))
                 .toList();
 
-        for (var nested : nestedAppeared) {
-            // TODO: conditionals are currently expected to from the same parent
-            // So how do we ensure we require the causes?
-            // Because currenlty, this will get pruned directly after creation
-            // Maybe the final call should
-            logger.info("Found point: {}", nested.faultUid);
-            context.reportFaultUid(nested.faultUid);
-        }
+        // group by their parent, as there might be multiple appeared points
+        // for the same cause
+        var rootByParent = rootAppeared.stream()
+                .collect(Collectors.groupingBy(result.trace::getParent));
 
         // Report newly found points
-        for (var newPoint : rootAppeared) {
-            TraceReport parent = result.trace.getParent(newPoint);
-            if (!expectedPoints.contains(parent.faultUid)) {
-                continue;
-            }
-
-            List<TraceReport> parentalCauses = result.trace.getChildren(parent);
-            List<Behaviour> directCauses = parentalCauses.stream()
-                    .map(TraceReport::getBehaviour)
-                    .filter(x -> x.isFault())
-                    .collect(Collectors.toList());
-
-            List<Fault> actualCauses = result.trace.getDecendants(parent).stream()
-                    .filter(x -> x.injectedFault != null)
-                    .map(x -> x.injectedFault)
-                    .toList();
-
-            context.reportPreconditionOfFaultUid(directCauses, newPoint.faultUid);
-            boolean wasRetry = handleRetry(result, expectedPoints, newPoint.faultUid, directCauses, actualCauses,
-                    context);
-
-            if (!wasRetry) {
-                logger.info("Found conditional point: {} given {}", newPoint.faultUid, directCauses);
-                logger.info("Exploring new point in combination with {}", actualCauses);
-                context.exploreFrom(actualCauses);
-            }
+        for (var entry : rootByParent.entrySet()) {
+            handleAppeared(result, context, entry.getKey(), entry.getValue(), expectedPoints);
         }
+    }
+
+    private void handleAppeared(FaultloadResult result, FeedbackContext context, TraceReport parent,
+            List<TraceReport> newPoints,
+            Set<FaultUid> expectedPoints) {
+
+        // determine which reports can cause the new point
+        List<TraceReport> parentalCauses = result.trace.getChildren(parent);
+        List<Behaviour> directCauses = parentalCauses.stream()
+                .map(TraceReport::getBehaviour)
+                .filter(x -> x.isFault())
+                .collect(Collectors.toList());
+
+        // determine which reports are the actual causes
+        // (i.e., the ones that are injected)
+        // As we will visit starting at the root causes
+        List<Fault> actualCauses = result.trace.getDecendants(parent).stream()
+                .filter(x -> x.injectedFault != null)
+                .map(x -> x.injectedFault)
+                .toList();
+
+        for (var point : newPoints) {
+            context.reportPreconditionOfFaultUid(directCauses, point.faultUid);
+            logger.info("Found conditional point: {} given {}", point.faultUid, directCauses);
+        }
+
+        logger.info("Exploring new point in combination with {}", actualCauses);
+        context.exploreFrom(actualCauses);
     }
 
     // TODO: fix and seperate

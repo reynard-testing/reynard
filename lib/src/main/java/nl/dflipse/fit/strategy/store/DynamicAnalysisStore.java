@@ -68,7 +68,7 @@ public class DynamicAnalysisStore {
     }
 
     public Map<String, String> getImplicationsReport() {
-        return implicationsStore.getReport();
+        return implicationsStore.getReport(this);
     }
 
     public Set<FaultUid> getNonConditionalFaultUids() {

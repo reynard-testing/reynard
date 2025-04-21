@@ -58,6 +58,12 @@ public class HappensBeforeNeighbourDetector implements FeedbackHandler {
                     .map(r -> r.getBehaviour())
                     .collect(Collectors.toSet());
 
+            // TODO: remove cause, if another cause as an inclusion condition
+            // X includes Y
+            // X does not exclude Z
+            // X,Y excludes Z
+            // -> Y excludes Z
+
             for (FaultUid fault : dissappeared) {
                 handleHappensBefore(causes, fault, context);
             }

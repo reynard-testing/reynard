@@ -1,5 +1,6 @@
 package nl.dflipse.fit.faultload;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -81,5 +82,11 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
         }
 
         return true;
+    }
+
+    public static Set<FaultUid> getFaultUids(Collection<Behaviour> behaviours) {
+        return behaviours.stream()
+                .map(Behaviour::uid)
+                .collect(Collectors.toSet());
     }
 }

@@ -38,6 +38,10 @@ public class DynamicReductionPruner implements Pruner {
                     .filter(f -> f.uid().hasParent() && f.uid().getParent().matches(expectedBehaviour.uid()))
                     .toList();
 
+            if (effects.isEmpty()) {
+                continue;
+            }
+
             // there should exist an earlier run
             for (var historicResult : ctx.getHistoricResults()) {
                 var allEffectsSeen = true;
@@ -68,7 +72,6 @@ public class DynamicReductionPruner implements Pruner {
             }
         }
 
-        logger.info("Found redundant fautload=" + faultload.readableString());
         return PruneDecision.PRUNE;
     }
 

@@ -32,6 +32,8 @@ fi
 # Start containers
 docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
 
+# Wait for containers to be healthy
+sleep 3
 
 # Run tests
 cd ${project_path}

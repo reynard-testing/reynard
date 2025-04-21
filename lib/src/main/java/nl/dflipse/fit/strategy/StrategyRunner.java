@@ -251,9 +251,6 @@ public class StrategyRunner {
 
         // analyze the result
         analyze(result);
-
-        // prune generator based on the result
-        // generator.prune();
     }
 
     public Faultload generate() {

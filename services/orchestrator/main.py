@@ -22,6 +22,7 @@ trace_ids: set[str] = set()
 
 # --- DATA ENDPOINTS ---
 
+
 @app.route('/v1/trace/<trace_id>', methods=['GET'])
 def get_reports_by_trace_id(trace_id):
     reports = report_store.get_by_trace_id(trace_id)
@@ -59,7 +60,6 @@ async def report_span_id():
             f"Trace id ({trace_id}) not registered anymore for uid {uid}", flush=True)
         return "Trace not registered", 404
 
-
     # Convert data to tracereport
     responseData = None
     if response:
@@ -92,6 +92,7 @@ async def report_span_id():
     return "OK", 200
 
 # --- FAULTLOAD (UN)REGISTER ENDPOINTS ---
+
 
 async def with_retry(func: callable, retries: int):
     last_error = None

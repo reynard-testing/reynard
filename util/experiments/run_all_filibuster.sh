@@ -3,7 +3,7 @@ parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}")
 
 export STOP_AFTER=1
-export BUILD_BEFORE=1
+export BUILD_BEFORE=${BUILD_BEFORE:-1}
 
 cd ${project_path}
 trap "exit" INT

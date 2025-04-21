@@ -49,24 +49,24 @@ func getPayloadHash(r *http.Request) string {
 		return ""
 	}
 
-	bodyBytes, err := io.ReadAll(body)
+	requestBodyBytes, err := io.ReadAll(body)
 	if err != nil {
 		log.Printf("Failed to read request body: %v\n", err)
 		return ""
 	}
 	// Reset the body so it can be read again
 	// This is necessary because the proxy will read the body to forward the request
-	r.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
+	r.Body = io.NopCloser(strings.NewReader(string(requestBodyBytes)))
 
 	hash := ""
-	if len(bodyBytes) > 0 {
-		bodyHash := sha256.Sum256(bodyBytes)
-		hash = fmt.Sprintf("%x", bodyHash)
+	if len(requestBodyBytes) > 0 {
+		bodyHash := sha256.Sum256(requestBodyBytes)
+		hash = fmt.Sprintf("%X", bodyHash)
 	}
 
 	// shortHash := hash[:8] // Use only the first 8 bytes of the hash
 	// return fmt.Sprintf("%x", shortHash)
-	return fmt.Sprintf("%x", hash)
+	return hash
 }
 
 var digitCheck = regexp.MustCompile(`^[0-9]+$`)

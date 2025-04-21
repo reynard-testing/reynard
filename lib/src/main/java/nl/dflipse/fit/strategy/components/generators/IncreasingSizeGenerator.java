@@ -15,10 +15,13 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
+import nl.dflipse.fit.strategy.StrategyReporter;
 import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
+import nl.dflipse.fit.strategy.util.Simplify;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 
 public class IncreasingSizeGenerator extends Generator implements Reporter {
@@ -37,17 +40,15 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
     }
 
     @Override
-    public void reportFaultUid(FaultUid potentialFault) {
-        if (potentialFault == null) {
+    public void reportFaultUid(FaultUid point) {
+        if (point == null) {
             return;
         }
 
-        boolean isNew = store.addFaultUid(potentialFault);
-        if (!isNew) {
-            return;
+        boolean isNew = store.addFaultUid(point);
+        if (isNew) {
+            logger.info("Discover new fault injection point {}", point);
         }
-
-        iterator.add(potentialFault);
     }
 
     @Override
@@ -61,21 +62,11 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
             return;
         }
 
-        if (iterator == null) {
-            throw new IllegalStateException(
-                    "Cannot add conditional fault injection point if no normal fault injection points are discovered");
-        }
-
         store.addConditionForFaultUid(condition, fid);
     }
 
     @Override
     public void exploreFrom(Collection<Fault> startingNode) {
-        if (iterator == null) {
-            throw new IllegalStateException(
-                    "Cannot explore from fault injection point if no normal fault injection points are discovered");
-        }
-
         iterator.expandFrom(startingNode);
     }
 
@@ -95,24 +86,13 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
 
     @Override
     public Faultload generate() {
-        // If we have exhausted the mode-faultUid pairings
-        // we need to get the next fault injection space point (subset of fault
-        // injection points)
-        if (iterator == null || !iterator.hasNext()) {
+        var nextFaults = iterator.next();
+
+        if (nextFaults == null) {
             return null;
         }
 
-        // create next faultload
-        var nextFaults = iterator.next();
-        Faultload faultLoad = new Faultload(nextFaults);
-
-        // if we should skip this specific faultload
-        // then we should generate the next one
-        if (store.hasFaultload(faultLoad)) {
-            return generate();
-        }
-
-        return faultLoad;
+        return new Faultload(nextFaults);
     }
 
     @Override
@@ -131,13 +111,6 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
     @Override
     public void pruneFaultload(Faultload faultload) {
         store.pruneFaultload(faultload);
-    }
-
-    @Override
-    public void prune() {
-        if (iterator != null) {
-            iterator.pruneQueue();
-        }
     }
 
     private int getNumerOfPoints() {
@@ -174,15 +147,15 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
     }
 
     public int getMaxQueueSize() {
-        return iterator == null ? 0 : iterator.getMaxQueueSize();
+        return iterator.getMaxQueueSize();
     }
 
     public int getQueuSize() {
-        return iterator == null ? 0 : iterator.getQueuSize();
+        return iterator.getQueuSize();
     }
 
     public long getSpaceLeft() {
-        return iterator == null ? 0 : iterator.size(getFailureModes().size());
+        return iterator.getQueueSpaceSize();
     }
 
     @Override
@@ -206,7 +179,42 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
             i++;
         }
 
+        // Report the visited faultloads
+        var faultloads = store.getHistoricResults().stream()
+                .map(x -> x.first())
+                .toList();
+
+        // Unique visited
+        Map<String, String> simplifiedReport = new LinkedHashMap<>();
+        var simplified = Simplify.simplify(faultloads, getFailureModes());
+        var failureModesCount = getFailureModes().size();
+        int simpleIndex = 1;
+        for (Set<FaultUid> cause : simplified.second()) {
+            int start = simpleIndex;
+            int increase = (int) Math.pow(failureModesCount, cause.size());
+            simpleIndex += increase;
+            String key = "[" + start + " - " + (start + increase - 1) + " (+" + increase + ")" + "]";
+            if (cause.isEmpty()) {
+                simplifiedReport.put(key, "(initial empty set)");
+                continue;
+            }
+
+            simplifiedReport.put(key, cause.toString() + " (all modes)");
+        }
+
+        for (Set<Fault> cause : simplified.first()) {
+            simplifiedReport.put("[" + simpleIndex + "]", cause.toString());
+            simpleIndex++;
+        }
+
+        StrategyReporter.printReport("Visited (simplified)", simplifiedReport);
+
         return report;
+    }
+
+    @Override
+    public List<Pair<Set<Fault>, List<Behaviour>>> getHistoricResults() {
+        return store.getHistoricResults();
     }
 
 }

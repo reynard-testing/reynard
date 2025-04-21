@@ -2,7 +2,7 @@ package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,12 +19,12 @@ import nl.dflipse.fit.trace.tree.TraceReport;
 public class TraceAnalysis {
     private final Logger logger = LoggerFactory.getLogger(TraceAnalysis.class);
 
-    private final Set<FaultUid> faultUids = new HashSet<>();
-    private final Set<Fault> injectedFaults = new HashSet<>();
-    private final Set<Fault> traceFaults = new HashSet<>();
+    private final Set<FaultUid> faultUids = new LinkedHashSet<>();
+    private final Set<Fault> injectedFaults = new LinkedHashSet<>();
+    private final Set<Fault> traceFaults = new LinkedHashSet<>();
     private final List<TraceReport> reports = new ArrayList<>();
     private final Map<FaultUid, TraceReport> reportByPoint = new HashMap<>();
-    private final Set<Behaviour> behaviours = new HashSet<>();
+    private final List<Behaviour> behaviours = new ArrayList<>();
     private TraceReport rootReport;
 
     private boolean hasIncomplete = false;
@@ -125,7 +125,7 @@ public class TraceAnalysis {
         return injectedFaults;
     }
 
-    public Set<Behaviour> getBehaviours() {
+    public List<Behaviour> getBehaviours() {
         return behaviours;
     }
 

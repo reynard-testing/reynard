@@ -257,7 +257,7 @@ public class FilibusterSuiteIT {
         }
     }
 
-    @FiTest(maxTestCases = 500)
+    @FiTest(maxTestCases = 1000)
     public void testMailchimp(TrackedFaultload faultload) throws IOException {
 
         var traceparent = faultload.getTraceParent().toString();

@@ -11,12 +11,9 @@ import org.slf4j.LoggerFactory;
 import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
-import nl.dflipse.fit.strategy.components.PruneDecision;
-import nl.dflipse.fit.strategy.components.Pruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.trace.tree.TraceReport;
 
@@ -60,6 +57,12 @@ public class HappensBeforeNeighbourDetector implements FeedbackHandler {
                     .filter(f -> f.hasFaultBehaviour())
                     .map(r -> r.getBehaviour())
                     .collect(Collectors.toSet());
+
+            // TODO: remove cause, if another cause as an inclusion condition
+            // X includes Y
+            // X does not exclude Z
+            // X,Y excludes Z
+            // -> Y excludes Z
 
             for (FaultUid fault : dissappeared) {
                 handleHappensBefore(causes, fault, context);

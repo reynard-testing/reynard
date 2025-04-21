@@ -1,6 +1,6 @@
 package nl.dflipse.fit.strategy.components.analyzers;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,7 +16,7 @@ import nl.dflipse.fit.strategy.components.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Sets;
 
 public class RedundancyAnalyzer implements FeedbackHandler {
-    private final Set<FaultUid> detectedUids = new HashSet<>();
+    private final Set<FaultUid> detectedUids = new LinkedHashSet<>();
     private FaultloadResult initialResult;
     private final Logger logger = LoggerFactory.getLogger(RedundancyAnalyzer.class);
 

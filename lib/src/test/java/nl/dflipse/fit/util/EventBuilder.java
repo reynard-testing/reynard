@@ -1,14 +1,18 @@
 package nl.dflipse.fit.util;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultInjectionPoint;
 import nl.dflipse.fit.faultload.FaultUid;
+import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.ErrorFault;
 import nl.dflipse.fit.faultload.modes.FailureMode;
+import nl.dflipse.fit.strategy.TrackedFaultload;
 import nl.dflipse.fit.strategy.util.Lists;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.trace.tree.TraceReport;
@@ -80,6 +84,18 @@ public class EventBuilder {
     return null;
   }
 
+  public Set<Fault> getFaults() {
+    Set<Fault> faults = new LinkedHashSet<>();
+    if (report.injectedFault != null) {
+      faults.add(report.injectedFault);
+    }
+
+    for (var child : children) {
+      faults.addAll(child.getFaults());
+    }
+    return faults;
+  }
+
   public EventBuilder withFault(FailureMode mode) {
     Fault fault = new Fault(getFaultUid(), mode);
     this.report.injectedFault = fault;
@@ -133,5 +149,13 @@ public class EventBuilder {
 
   public TraceAnalysis buildTrace() {
     return new TraceAnalysis(buildAll());
+  }
+
+  public Faultload buildFaultload() {
+    return new Faultload(getFaults());
+  }
+
+  public TrackedFaultload buildTrackedFaultload() {
+    return new TrackedFaultload(buildFaultload());
   }
 }

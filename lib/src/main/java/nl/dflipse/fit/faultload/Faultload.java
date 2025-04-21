@@ -1,7 +1,7 @@
 package nl.dflipse.fit.faultload;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,12 +14,10 @@ public record Faultload(Set<Fault> faultSet) {
         return getFaultUids(faultSet);
     }
 
-    public static Set<FaultUid> getFaultUids(Set<Fault> faults) {
-        Set<FaultUid> faultUids = new HashSet<>();
-        for (Fault fault : faults) {
-            faultUids.add(fault.uid());
-        }
-        return faultUids;
+    public static Set<FaultUid> getFaultUids(Collection<Fault> faults) {
+        return faults.stream()
+                .map(Fault::uid)
+                .collect(Collectors.toSet());
     }
 
     public Map<FaultUid, Fault> getFaultByFaultUid() {

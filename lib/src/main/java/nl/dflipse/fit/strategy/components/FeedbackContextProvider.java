@@ -15,6 +15,7 @@ import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.components.generators.Generator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.StringFormat;
 
 public class FeedbackContextProvider extends FeedbackContext {
@@ -177,6 +178,11 @@ public class FeedbackContextProvider extends FeedbackContext {
     @Override
     public Set<FaultUid> getExpectedPoints(Set<Fault> faultload) {
         return runner.getGenerator().getExpectedPoints(faultload);
+    }
+
+    @Override
+    public List<Pair<Set<Fault>, List<Behaviour>>> getHistoricResults() {
+        return runner.getGenerator().getHistoricResults();
     }
 
     @Override

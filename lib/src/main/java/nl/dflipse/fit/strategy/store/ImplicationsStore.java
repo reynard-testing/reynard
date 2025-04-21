@@ -3,11 +3,12 @@ package nl.dflipse.fit.strategy.store;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
+import nl.dflipse.fit.strategy.util.Simplify;
 
 public class ImplicationsStore {
   private static final Logger logger = LoggerFactory.getLogger(ImplicationsStore.class);
@@ -182,67 +184,67 @@ public class ImplicationsStore {
     return false;
   }
 
-  private Pair<Behaviour, Set<Behaviour>> unfold(FaultUid cause, Collection<Fault> pertubations) {
-    // Directly pertubated, prevents any upstream effects
-    Fault faultPertubation = pertubations.stream()
+  private Fault getPertubation(FaultUid cause, Collection<Fault> pertubations) {
+    return pertubations.stream()
         .filter(f -> f.uid().matches(cause))
         .findFirst()
         .orElse(null);
+  }
 
-    if (faultPertubation != null) {
-      Behaviour fault = new Behaviour(cause, faultPertubation.mode());
-      return Pair.of(fault, Set.of());
-    }
-
-    Behaviour causeBehaviour = Behaviour.of(cause);
-    UpstreamEffect upstream = upstreamEffects.stream()
+  private UpstreamEffect getUpstreamEffect(FaultUid cause) {
+    return upstreamEffects.stream()
         .filter(x -> x.cause.matches(cause))
         .findFirst()
         .orElse(null);
+  }
 
-    // leave node
-    if (upstream == null) {
-      return Pair.of(causeBehaviour, Set.of());
-    }
+  private DownstreamEffect getDownstreamEffect(FaultUid cause, Set<Behaviour> upstreams) {
+    return downstreamEffects.stream()
+        .filter(x -> x.effect.uid().matches(cause))
+        .filter(x -> Behaviour.isSubsetOf(x.causes, upstreams))
+        .findFirst()
+        .orElse(null);
+  }
 
+  private Map<Behaviour, Set<Behaviour>> applySubstitutions(Map<Behaviour, Set<Behaviour>> upstream,
+      Collection<Fault> pertubations) {
+    // store effects by fault uid, and seperate set of upstreams
     Map<FaultUid, Set<Behaviour>> effects = new HashMap<>();
-    Set<Behaviour> upstreams = new HashSet<>();
+    Set<Behaviour> upstreams = new LinkedHashSet<>();
 
-    // 1. assume all upstream effects are performed
-    for (var effect : upstream.effects()) {
-      var pair = unfold(effect, pertubations);
-      upstreams.add(pair.first());
-      effects.put(pair.first().uid(), pair.second());
+    for (var entry : upstream.entrySet()) {
+      var cause = entry.getKey();
+      var effect = entry.getValue();
+      upstreams.add(cause);
+      effects.put(cause.uid(), effect);
     }
 
-    Set<Substitution> exclusionsToApply = new HashSet<>(exclusions);
-    Set<Substitution> inclusionsToApply = new HashSet<>(inclusions);
+    Set<Substitution> exclusionsToApply = new LinkedHashSet<>(exclusions);
+    Set<Substitution> inclusionsToApply = new LinkedHashSet<>(inclusions);
 
     while (!exclusionsToApply.isEmpty() || !inclusionsToApply.isEmpty()) {
       boolean changed = false;
 
       // 2.a. apply exclusions
-      for (var subst : exclusionsToApply) {
+      var exclusionsIterator = exclusionsToApply.iterator();
+      while (exclusionsIterator.hasNext()) {
+        var subst = exclusionsIterator.next();
         if (Behaviour.isSubsetOf(subst.causes, upstreams)) {
           // apply substitution
           var effect = subst.effect;
           upstreams.removeIf(u -> u.uid().matches(effect));
           effects.remove(effect);
 
-          exclusionsToApply.remove(subst);
+          exclusionsIterator.remove();
           changed = true;
-          break;
         }
       }
 
-      if (changed) {
-        // first apply exclusions
-        // then apply inclusions
-        continue;
-      }
-
       // 2.b. apply inclusions
-      for (var subst : inclusionsToApply) {
+      var inclusionsIterator = inclusionsToApply.iterator();
+      while (inclusionsIterator.hasNext()) {
+        var subst = inclusionsIterator.next();
+
         if (Behaviour.isSubsetOf(subst.causes, upstreams)) {
           // apply substitution
           var effect = subst.effect;
@@ -250,9 +252,8 @@ public class ImplicationsStore {
           upstreams.add(pair.first());
           effects.put(pair.first().uid(), pair.second());
 
-          inclusionsToApply.remove(subst);
+          inclusionsIterator.remove();
           changed = true;
-          break;
         }
       }
 
@@ -261,39 +262,128 @@ public class ImplicationsStore {
       }
     }
 
-    Set<Behaviour> effectsSet = new HashSet<>();
-    effectsSet.addAll(upstreams);
-    for (var entry : effects.entrySet()) {
-      effectsSet.addAll(entry.getValue());
+    // Convert back to behaviour
+    Map<Behaviour, Set<Behaviour>> result = new HashMap<>();
+    for (var up : upstreams) {
+      result.put(up, effects.getOrDefault(up.uid(), Set.of()));
     }
 
-    // 3. check for downstream effects
-    DownstreamEffect downstream = downstreamEffects.stream()
-        .filter(x -> x.effect.uid().matches(cause))
-        .filter(x -> Behaviour.isSubsetOf(x.causes, upstreams))
-        .findFirst()
-        .orElse(null);
-
-    if (downstream != null) {
-      return Pair.of(downstream.effect(), effectsSet);
-    }
-
-    return Pair.of(causeBehaviour, effectsSet);
+    return result;
   }
 
-  public Map<String, String> getReport() {
+  private Pair<Behaviour, Set<Behaviour>> unfold(FaultUid cause, Collection<Fault> pertubations) {
+    // -- Stage 1 - Unfold --
+    // 1.a. Directly pertubated, prevents any upstream effects
+    Fault pertubation = getPertubation(cause, pertubations);
+    if (pertubation != null) {
+      Behaviour fault = new Behaviour(cause, pertubation.mode());
+      return Pair.of(fault, Set.of());
+    }
+
+    // Find upstream effects
+    Behaviour causeBehaviour = Behaviour.of(cause);
+    UpstreamEffect upstream = getUpstreamEffect(cause);
+
+    // 1.b. No upstream effects, so we are done
+    if (upstream == null) {
+      return Pair.of(causeBehaviour, Set.of());
+    }
+
+    // 1.c. Unfold upstream effects
+    Map<Behaviour, Set<Behaviour>> unfoldedUpstream = new HashMap<>();
+
+    // 1. assume all upstream effects are performed
+    for (var effect : upstream.effects()) {
+      var pair = unfold(effect, pertubations);
+      unfoldedUpstream.put(pair.first(), pair.second());
+    }
+
+    // -- Stage 2 - Apply substitutions --
+    Map<Behaviour, Set<Behaviour>> substitutedUpstream = applySubstitutions(unfoldedUpstream, pertubations);
+    Set<Behaviour> directUpstreams = substitutedUpstream.keySet();
+    Set<Behaviour> transativeUpstreams = new LinkedHashSet<>();
+    for (var entry : substitutedUpstream.entrySet()) {
+      transativeUpstreams.add(entry.getKey());
+      transativeUpstreams.addAll(entry.getValue());
+    }
+
+    // -- Stage 3 - Downstream effects --
+
+    // 3. check for downstream effects
+    DownstreamEffect downstream = getDownstreamEffect(cause, directUpstreams);
+
+    if (downstream != null) {
+      return Pair.of(downstream.effect(), transativeUpstreams);
+    }
+
+    return Pair.of(causeBehaviour, transativeUpstreams);
+  }
+
+  public Map<String, String> getReport(DynamicAnalysisStore store) {
     Map<String, String> report = new LinkedHashMap<>();
 
     if (!upstreamEffects.isEmpty()) {
       report.put("Upstream effects", upstreamEffects.size() + "");
+
+      for (var upstream : upstreamEffects) {
+        report.put(upstream.cause.toString(), upstream.effects().toString());
+      }
     }
 
     if (!inclusions.isEmpty()) {
       report.put("Inclusion effects", inclusions.size() + "");
+
+      Map<FaultUid, List<Substitution>> groupedInclusions = inclusions.stream()
+          .collect(Collectors.groupingBy(Substitution::effect));
+
+      for (var entry : groupedInclusions.entrySet()) {
+        List<Set<Behaviour>> causes = entry.getValue().stream()
+            .map(x -> x.causes)
+            .toList();
+
+        var simplified = Simplify.simplifyBehaviour(causes, store.getModes());
+        var i = 0;
+
+        for (Set<FaultUid> cause : simplified.second()) {
+          String key = "[" + i + "] " + entry.getKey();
+          report.put(key, cause.toString() + " (any failure mode)");
+          i++;
+        }
+
+        for (Set<Behaviour> cause : simplified.first()) {
+          String key = "[" + i + "] " + entry.getKey();
+          report.put(key, cause.toString());
+          i++;
+        }
+      }
     }
 
     if (!exclusions.isEmpty()) {
       report.put("Exclusion effects", exclusions.size() + "");
+
+      Map<FaultUid, List<Substitution>> groupedExclusions = exclusions.stream()
+          .collect(Collectors.groupingBy(Substitution::effect));
+
+      for (var entry : groupedExclusions.entrySet()) {
+        List<Set<Behaviour>> causes = entry.getValue().stream()
+            .map(x -> x.causes)
+            .toList();
+
+        var simplified = Simplify.simplifyBehaviour(causes, store.getModes());
+        var i = 0;
+
+        for (Set<FaultUid> cause : simplified.second()) {
+          String key = "[" + i + "] " + entry.getKey();
+          report.put(key, cause.toString() + " (any failure mode)");
+          i++;
+        }
+
+        for (Set<Behaviour> cause : simplified.first()) {
+          String key = "[" + i + "] " + entry.getKey();
+          report.put(key, cause.toString());
+          i++;
+        }
+      }
     }
 
     if (!downstreamEffects.isEmpty()) {

@@ -1,6 +1,7 @@
 package nl.dflipse.fit.strategy;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -20,6 +21,7 @@ import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.components.generators.Generator;
 import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
+import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyRunner {
@@ -237,6 +239,8 @@ public class StrategyRunner {
     }
 
     public void handleResult(FaultloadResult result) {
+        store.addHistoricResult(result.trace.getInjectedFaults(), result.trace.getBehaviours());
+
         logger.info("Analyzing result of running faultload with traceId=" + result.trackedFaultload.getTraceId());
         if (result.isInitial() && !result.trace.getReportedFaults().isEmpty()) {
             logger.error("The intial happy path should be fault free, but its not! Stopping the test suite.");
@@ -247,9 +251,6 @@ public class StrategyRunner {
 
         // analyze the result
         analyze(result);
-
-        // prune generator based on the result
-        generator.prune();
     }
 
     public Faultload generate() {
@@ -289,27 +290,44 @@ public class StrategyRunner {
 
     public PruneDecision prune(Faultload faultload) {
         PruneDecision pruneDecision = PruneDecision.KEEP;
+        // attributed pruners. A prune_subtree > prune, so we only store
+        // the pruners of the most impactfull class
+        Set<Pruner> attributed = new LinkedHashSet<>();
 
         for (Pruner pruner : pruners) {
             PruneContextProvider context = new PruneContextProvider(this, pruner.getClass());
             PruneDecision decision = pruner.prune(faultload, context);
             switch (decision) {
                 case PRUNE -> {
-                    statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
                     if (pruneDecision == PruneDecision.KEEP) {
                         pruneDecision = PruneDecision.PRUNE;
                     }
-                }
-                case PRUNE_SUBTREE -> {
-                    statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);
-                    new FeedbackContextProvider(this, pruner.getClass())
-                            .pruneFaultSubset(faultload.faultSet());
+                    attributed.add(pruner);
 
-                    pruneDecision = PruneDecision.PRUNE_SUBTREE;
+                }
+                case PRUNE_SUPERSETS -> {
+                    pruneDecision = PruneDecision.PRUNE_SUPERSETS;
+                    attributed.add(pruner);
                 }
                 case KEEP -> {
                 }
             }
+        }
+
+        if (attributed.size() == 1) {
+            Pruner attributedPruner = Sets.getOnlyElement(attributed);
+            String name = attributedPruner.getClass().getSimpleName();
+            logger.debug("Pruner {} uniquely pruned ({}) the faultload {}", name, pruneDecision, faultload);
+            statistics.incrementPruner(name, 1);
+        } else if (!attributed.isEmpty()) {
+            String names = attributed.stream()
+                    .map(Pruner::getClass)
+                    .map(Class::getSimpleName)
+                    .sorted()
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse("Unknown");
+            logger.debug("Pruners {} pruned ({}) the faultload {}", names, pruneDecision, faultload);
+            statistics.incrementPruner(names, 1);
         }
 
         if (pruneDecision != PruneDecision.KEEP) {

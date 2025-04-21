@@ -2,8 +2,7 @@ package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -17,13 +16,19 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 
-public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>> {
+// TODO: rename, its not an iterator anymore
+// TODO: just merge with generator? Its pretty hardwired atm
+public class PrunableGenericPowersetTreeIterator {
     private final Logger logger = LoggerFactory.getLogger(PrunableGenericPowersetTreeIterator.class);
     private final DynamicAnalysisStore store;
-    private final List<TreeNode> toExpand = new ArrayList<>();
-    private int maxQueueSize;
-    private final Set<TreeNode> visited = new HashSet<>();
     private final Function<Set<Fault>, PruneDecision> pruneFunction;
+
+    private final List<TreeNode> toExpand = new ArrayList<>();
+
+    private final Set<TreeNode> visitedNodes = new LinkedHashSet<>();
+    private final Set<Set<Fault>> visitedPoints = new LinkedHashSet<>();
+
+    private final List<Integer> queueSize = new ArrayList<>();
 
     public record TreeNode(Set<Fault> value, List<FaultUid> expansion) {
     }
@@ -34,27 +39,67 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
         this.pruneFunction = pruneFunction;
         this.store = store;
 
+        // Initialize the queue with the empty set
+        // And all points
         toExpand.add(new TreeNode(Set.of(), List.copyOf(store.getPoints())));
-        maxQueueSize = 1;
+        updateQueueSize();
 
         if (skipEmptySet) {
-            this.skip();
+            // Pretend we already visited the empty set
+            this.visitedNodes.add(new TreeNode(Set.of(), List.of()));
+            this.visitedPoints.add(Set.of());
         }
     }
 
-    private PruneDecision shouldPrune(TreeNode node) {
-        if (visited.contains(node)) {
-            logger.debug("Pruning node {}: already visited", node);
+    private void updateQueueSize() {
+        queueSize.add(toExpand.size());
+    }
+
+    private void trackVisited(TreeNode node, PruneDecision decision) {
+        switch (decision) {
+            case KEEP -> {
+                // do nothing
+            }
+            case PRUNE -> {
+                visitedPoints.add(node.value);
+            }
+            case PRUNE_SUPERSETS -> {
+                visitedNodes.add(node);
+                visitedPoints.add(node.value);
+            }
+        }
+    }
+
+    private PruneDecision visitIsRedundant(TreeNode node) {
+        if (visitedNodes.contains(node)) {
+            logger.debug("Completely ignoring already visited node {}", node);
+            return PruneDecision.PRUNE_SUPERSETS;
+        }
+
+        if (visitedPoints.contains(node.value)) {
+            logger.debug("Ignoring and only expanding already visited point {}", node);
             return PruneDecision.PRUNE;
+        }
+
+        return PruneDecision.KEEP;
+    }
+
+    private PruneDecision shouldPrune(TreeNode node) {
+        PruneDecision localDecision = visitIsRedundant(node);
+        if (localDecision != PruneDecision.KEEP) {
+            trackVisited(node, localDecision);
+            return localDecision;
         }
 
         PruneDecision storeDecision = store.isRedundant(node.value);
         if (storeDecision != PruneDecision.KEEP) {
-            logger.debug("Pruning node {}: redundant", node);
+            trackVisited(node, storeDecision);
             return storeDecision;
         }
 
-        return pruneFunction.apply(node.value);
+        PruneDecision punersDecision = pruneFunction.apply(node.value);
+        trackVisited(node, punersDecision);
+        return punersDecision;
     }
 
     private List<Fault> expandModes(FaultUid node) {
@@ -65,132 +110,111 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
         return collection;
     }
 
-    private void addOrPrune(TreeNode node) {
+    private Set<TreeNode> addOrPrune(TreeNode node) {
         switch (shouldPrune(node)) {
             case KEEP -> {
                 // Add the node to the queue, it it's not already there
                 if (toExpand.contains(node)) {
                     logger.debug("Node {} already in queue", node);
-                    return;
+                    return Set.of();
                 }
 
-                toExpand.add(node);
+                return Set.of(node);
             }
-            case PRUNE_SUBTREE -> {
+            case PRUNE_SUPERSETS -> {
                 // do nothing
-                return;
+                return Set.of();
             }
             case PRUNE -> {
                 // don't add this exact node, but maybe its children
-                expand(node);
-                return;
+                return expand(node);
             }
         }
 
+        return Set.of();
     }
 
-    public void expand(TreeNode node) {
+    public Set<TreeNode> expand(TreeNode node) {
+        // Base case: cannot expand this node
         if (node == null || node.expansion.isEmpty()) {
-            return;
+            return Set.of();
         }
 
+        // We expand once for each element in the expansion
+        // i.e. we increase the size of the set by one
+        // and for each element, we take all modes
+        Set<TreeNode> newNodes = new LinkedHashSet<>();
         for (int i = 0; i < node.expansion.size(); i++) {
             FaultUid expansionElement = node.expansion.get(i);
+
+            // This way, we don't expand twice to the same subsets
             List<FaultUid> newExpansion = node.expansion.subList(i + 1, node.expansion.size());
 
+            // Create a new node for each mode
             for (Fault additionalElement : expandModes(expansionElement)) {
                 Set<Fault> newValue = Sets.plus(node.value(), additionalElement);
-                Set<FaultUid> expectedPoints = store.getExpectedPoints(newValue);
-                List<FaultUid> reachableExtensions = newExpansion.stream()
-                        .filter(x -> expectedPoints.contains(x))
-                        .collect(Collectors.toList());
 
-                var newNode = new TreeNode(newValue, reachableExtensions);
-                addOrPrune(newNode);
+                var newNode = new TreeNode(newValue, newExpansion);
+                newNodes.addAll(addOrPrune(newNode));
             }
         }
+
+        return newNodes;
     }
 
-    @Override
-    public boolean hasNext() {
-        boolean hasMore = !toExpand.isEmpty();
-        return hasMore;
-    }
-
-    public void skip() {
-        expand(toExpand.remove(0));
-    }
-
-    @Override
+    // Return the next, non-pruned node
+    // Returns null if there are no more nodes to explore
     public Set<Fault> next() {
-        TreeNode node = toExpand.remove(0);
-        expand(node);
-        maxQueueSize = Math.max(maxQueueSize, toExpand.size());
-        visited.add(node);
-        return node.value;
-    }
+        while (!toExpand.isEmpty()) {
+            TreeNode node = toExpand.remove(0);
+            PruneDecision nodeFate = shouldPrune(node);
 
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
+            visitedPoints.add(node.value);
+            visitedNodes.add(node);
 
-    // Add new element to explore
-    public void add(FaultUid extension) {
-        for (Fault additionalElement : expandModes(extension)) {
-            Set<Fault> newValue = Set.of(additionalElement);
-            List<FaultUid> expansion = store.getPoints().stream()
-                    .filter(x -> x != extension)
-                    .collect(Collectors.toList());
-            var newNode = new TreeNode(newValue, List.copyOf(expansion));
-            addOrPrune(newNode);
+            if (nodeFate == PruneDecision.PRUNE_SUPERSETS) {
+                // skip this node wholely
+                continue;
+            }
+
+            toExpand.addAll(expand(node));
+            updateQueueSize();
+
+            if (nodeFate == PruneDecision.PRUNE) {
+                // We don't want to return this node
+                // but we want to expand it
+                continue;
+            }
+            return node.value;
         }
+
+        return null;
     }
 
-    // Add new element to explore
-    // With fixed
-    public void expandFrom(Collection<Fault> fixedFaults) {
+    // Explore (again) from a given node value
+    // Determines expansions for this node
+    // and adds them to the queue
+    public Set<TreeNode> expandFrom(Collection<Fault> nodeValue) {
         // We cannot expand to extensions already in the condition
-        Set<FaultUid> alreadyExpanded = fixedFaults.stream()
+        Set<FaultUid> alreadyExpanded = nodeValue.stream()
                 .map(f -> f.uid())
                 .collect(Collectors.toSet());
 
+        // Determine the expensions for this node
+        // TODO: account for inf counts
         List<FaultUid> expansionsLeft = store.getPoints().stream()
                 .filter(e -> !alreadyExpanded.contains(e))
                 .toList();
 
-        var newNode = new TreeNode(Set.copyOf(fixedFaults), expansionsLeft);
-        addOrPrune(newNode);
+        var startingNode = new TreeNode(Set.copyOf(nodeValue), expansionsLeft);
+        var toAdd = addOrPrune(startingNode);
+        toExpand.addAll(toAdd);
+        logger.debug("Expanding from {}, added {} new to the queue", startingNode, toAdd.size());
+        return toAdd;
     }
 
-    public void pruneQueue() {
-        // Remove pruned nodes
-        Iterator<TreeNode> iterator = toExpand.iterator();
-        while (iterator.hasNext()) {
-            TreeNode node = iterator.next();
-            switch (shouldPrune(node)) {
-                case KEEP -> {
-                    // do nothing
-                    continue;
-                }
-
-                case PRUNE_SUBTREE -> {
-                    // remove all children (node and expansion)
-                    iterator.remove();
-                    continue;
-                }
-
-                case PRUNE -> {
-                    // remove this node,
-                    expand(node);
-                    iterator.remove();
-                    continue;
-                }
-            }
-        }
-    }
-
-    public long size(int m) {
+    public long getQueueSpaceSize() {
+        int m = store.getModes().size();
         long sum = 0;
         for (var el : toExpand) {
             long contribution = SpaceEstimate.spaceSize(m, el.expansion.size());
@@ -200,12 +224,11 @@ public class PrunableGenericPowersetTreeIterator implements Iterator<Set<Fault>>
         return sum;
     }
 
-    public long size() {
-        return size(1);
-    }
-
     public int getMaxQueueSize() {
-        return maxQueueSize;
+        return queueSize.stream()
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(0);
     }
 
     public int getQueuSize() {

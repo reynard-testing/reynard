@@ -2,7 +2,7 @@ package nl.dflipse.fit.strategy.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -34,35 +34,35 @@ public class Sets {
 
     /** Return A ∪ B */
     public static <T> Set<T> union(Collection<T> A, Collection<T> B) {
-        Set<T> union = new HashSet<>(A);
+        Set<T> union = new LinkedHashSet<>(A);
         union.addAll(B);
         return union;
     }
 
     /** Return A ∩ B */
     public static <T> Set<T> intersection(Collection<T> A, Collection<T> B) {
-        Set<T> intersection = new HashSet<>(A);
+        Set<T> intersection = new LinkedHashSet<>(A);
         intersection.retainAll(B);
         return intersection;
     }
 
     /** Return A - B */
     public static <T> Set<T> difference(Collection<T> A, Collection<T> B) {
-        Set<T> difference = new HashSet<>(A);
+        Set<T> difference = new LinkedHashSet<>(A);
         difference.removeAll(B);
         return difference;
     }
 
     /** Return A / B */
     public static <T> Set<T> minus(Collection<T> A, T x) {
-        Set<T> difference = new HashSet<>(A);
+        Set<T> difference = new LinkedHashSet<>(A);
         difference.remove(x);
         return difference;
     }
 
     /** Return A + B */
     public static <T> Set<T> plus(Collection<T> A, T x) {
-        Set<T> union = new HashSet<>(A);
+        Set<T> union = new LinkedHashSet<>(A);
         union.add(x);
         return union;
     }

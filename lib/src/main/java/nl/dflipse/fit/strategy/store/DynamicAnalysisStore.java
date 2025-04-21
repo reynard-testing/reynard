@@ -17,6 +17,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.components.PruneDecision;
+import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 import nl.dflipse.fit.util.NoOpLogger;
@@ -31,6 +32,7 @@ public class DynamicAnalysisStore {
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
+    private final List<Pair<Set<Fault>, List<Behaviour>>> historicResults = new ArrayList<>();
 
     public DynamicAnalysisStore(List<FailureMode> modes, boolean quiet) {
         this.modes = modes;
@@ -66,7 +68,7 @@ public class DynamicAnalysisStore {
     }
 
     public Map<String, String> getImplicationsReport() {
-        return implicationsStore.getReport();
+        return implicationsStore.getReport(this);
     }
 
     public Set<FaultUid> getNonConditionalFaultUids() {
@@ -86,6 +88,14 @@ public class DynamicAnalysisStore {
 
         points.add(fid);
         return true;
+    }
+
+    public void addHistoricResult(Set<Fault> faultload, List<Behaviour> behaviours) {
+        this.historicResults.add(new Pair<>(faultload, behaviours));
+    }
+
+    public List<Pair<Set<Fault>, List<Behaviour>>> getHistoricResults() {
+        return this.historicResults;
     }
 
     public boolean addUpstreamEffect(FaultUid fid, Collection<FaultUid> children) {
@@ -211,11 +221,11 @@ public class DynamicAnalysisStore {
         return this.redundantFaultloads.contains(faultload);
     }
 
-    public Set<Behaviour> getExpectedBehaviour(Set<Fault> faults) {
+    public Set<Behaviour> getExpectedBehaviour(Collection<Fault> faults) {
         return implicationsStore.getBehaviours(faults);
     }
 
-    public Set<FaultUid> getExpectedPoints(Set<Fault> faults) {
+    public Set<FaultUid> getExpectedPoints(Collection<Fault> faults) {
         return implicationsStore.getBehaviours(faults)
                 .stream()
                 .map(Behaviour::uid)
@@ -230,7 +240,7 @@ public class DynamicAnalysisStore {
         // Prune on subsets
         if (hasFaultSubset(faultload)) {
             logger.debug("Pruning node {} due pruned subset", faultload);
-            return PruneDecision.PRUNE_SUBTREE;
+            return PruneDecision.PRUNE_SUPERSETS;
         }
 
         // Prune on uid subsets
@@ -239,7 +249,7 @@ public class DynamicAnalysisStore {
                 .collect(Collectors.toSet());
         if (hasFaultUidSubset(uids)) {
             logger.debug("Pruning node {} due pruned subset", faultload);
-            return PruneDecision.PRUNE_SUBTREE;
+            return PruneDecision.PRUNE_SUPERSETS;
         }
         // Prune on faultload
         if (hasFaultload(faultload)) {

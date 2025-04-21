@@ -2,6 +2,6 @@ package nl.dflipse.fit.strategy.components;
 
 public enum PruneDecision {
     PRUNE,
-    PRUNE_SUBTREE,
+    PRUNE_SUPERSETS,
     KEEP,
 }

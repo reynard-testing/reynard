@@ -378,4 +378,89 @@ public class ImplicationsStoreTest {
     assertEquals(8, result.size());
     assertEquals(3, faultyBehaviours(result));
   }
+
+  @Test
+  public void testInclusionExclusionEdgeCase() {
+    ImplicationsStore testStore = new ImplicationsStore();
+
+    var nRoot = new EventBuilder()
+        .withPoint("R", "r1");
+
+    var nA = nRoot.createChild()
+        .withPoint("A", "a1");
+
+    var nB = nRoot.createChild()
+        .withPoint("B", "b1");
+
+    var nAprime = nRoot.createChild()
+        .withPoint("A prime", "a1");
+
+    var nBprime = nRoot.createChild()
+        .withPoint("B prime", "b1");
+
+    // Happy path, root calls A and B
+    testStore.addUpstreamEffect(nRoot.getFaultUid(), Set.of(
+        nA.getFaultUid(), nB.getFaultUid()));
+
+    // If A or B is faulty, then A' and B' are called
+    testStore.addInclusionEffect(Set.of(
+        new Behaviour(nA.getFaultUid(), mode1)), nAprime.getFaultUid());
+
+    testStore.addInclusionEffect(Set.of(
+        new Behaviour(nA.getFaultUid(), mode1)), nBprime.getFaultUid());
+
+    testStore.addInclusionEffect(Set.of(
+        new Behaviour(nB.getFaultUid(), mode1)), nAprime.getFaultUid());
+
+    testStore.addInclusionEffect(Set.of(
+        new Behaviour(nB.getFaultUid(), mode1)), nBprime.getFaultUid());
+
+    // If A' is faulty, then B' is not called
+    testStore.addExclusionEffect(Set.of(
+        new Behaviour(nAprime.getFaultUid(), mode1)), nBprime.getFaultUid());
+
+    Set<Behaviour> result = testStore.getBehaviours(Set.of(
+        new Fault(nA.getFaultUid(), mode1),
+        new Fault(nB.getFaultUid(), mode1),
+        new Fault(nAprime.getFaultUid(), mode1)));
+
+    // Expect root, A, B, A' but not B'
+    assertEquals(4, result.size());
+    assertEquals(3, faultyBehaviours(result));
+  }
+
+  @Test
+  public void testTwoInclusions() {
+    ImplicationsStore testStore = new ImplicationsStore();
+
+    var nRoot = new EventBuilder()
+        .withPoint("R", "r1");
+
+    var nA = nRoot.createChild()
+        .withPoint("A", "a1");
+
+    var nAfallback1 = nRoot.createChild()
+        .withPoint("A fallback 1", "x1");
+
+    var nAfallback2 = nRoot.createChild()
+        .withPoint("A fallback 2", "y1");
+
+    // Happy path, root calls A and B
+    testStore.addUpstreamEffect(nRoot.getFaultUid(), Set.of(nA.getFaultUid()));
+
+    // If A is faulty, then X and Y are called
+    testStore.addInclusionEffect(Set.of(
+        new Behaviour(nA.getFaultUid(), mode1)), nAfallback1.getFaultUid());
+
+    testStore.addInclusionEffect(Set.of(
+        new Behaviour(nA.getFaultUid(), mode1)), nAfallback2.getFaultUid());
+
+    Set<Behaviour> result = testStore.getBehaviours(Set.of(
+        new Fault(nA.getFaultUid(), mode1),
+        new Fault(nAfallback2.getFaultUid(), mode1)));
+
+    // Expect root, A, X and Y
+    assertEquals(4, result.size());
+    assertEquals(2, faultyBehaviours(result));
+  }
 }

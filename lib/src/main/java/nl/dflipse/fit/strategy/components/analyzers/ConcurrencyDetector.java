@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.analyzers;
+package nl.dflipse.fit.strategy.components.analyzers;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -6,9 +6,9 @@ import java.util.stream.Collectors;
 
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.FeedbackContext;
-import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.Reporter;
+import nl.dflipse.fit.strategy.components.FeedbackContext;
+import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.util.UndirectedRelation;
 
 public class ConcurrencyDetector implements FeedbackHandler, Reporter {

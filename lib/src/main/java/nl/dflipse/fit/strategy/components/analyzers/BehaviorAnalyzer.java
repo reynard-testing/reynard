@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.analyzers;
+package nl.dflipse.fit.strategy.components.analyzers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,10 +16,10 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.FeedbackContext;
-import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.Reporter;
 import nl.dflipse.fit.strategy.StrategyReporter;
+import nl.dflipse.fit.strategy.components.FeedbackContext;
+import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.store.SubsetStore;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;

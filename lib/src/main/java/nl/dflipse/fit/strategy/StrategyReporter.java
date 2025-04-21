@@ -5,11 +5,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import nl.dflipse.fit.strategy.generators.Generator;
+import nl.dflipse.fit.strategy.components.FeedbackContextProvider;
+import nl.dflipse.fit.strategy.components.Reporter;
+import nl.dflipse.fit.strategy.components.generators.Generator;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.StringFormat;
-import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyReporter {
     private static int maxChars = 48;

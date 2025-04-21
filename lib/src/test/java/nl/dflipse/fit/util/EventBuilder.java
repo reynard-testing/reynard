@@ -39,7 +39,7 @@ public class EventBuilder {
     report.spanId = newSpanId();
     report.traceId = traceId;
     report.response = new TraceResponse();
-    report.response.durationMs = 1;
+    report.response.durationS = 1f;
     report.response.status = 200;
     report.response.body = "OK";
     this.parent = parent;

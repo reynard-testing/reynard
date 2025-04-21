@@ -23,21 +23,22 @@ import nl.dflipse.fit.instrument.FaultController;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.TrackedFaultload;
-import nl.dflipse.fit.strategy.analyzers.BehaviorAnalyzer;
-import nl.dflipse.fit.strategy.analyzers.ConcurrencyDetector;
-import nl.dflipse.fit.strategy.analyzers.ErrorPropagationDetector;
-import nl.dflipse.fit.strategy.analyzers.HappensBeforeNeighbourDetector;
-import nl.dflipse.fit.strategy.analyzers.InjectionPointDetector;
-import nl.dflipse.fit.strategy.analyzers.ParentChildDetector;
-import nl.dflipse.fit.strategy.analyzers.RedundancyAnalyzer;
-import nl.dflipse.fit.strategy.analyzers.StatusAnalyzer;
-import nl.dflipse.fit.strategy.analyzers.StatusPropagationOracle;
-import nl.dflipse.fit.strategy.analyzers.TimingAnalyzer;
-import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
-import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
-import nl.dflipse.fit.strategy.pruners.FailStopPruner;
-import nl.dflipse.fit.strategy.pruners.FaultloadSizePruner;
-import nl.dflipse.fit.strategy.pruners.NoImpactPruner;
+import nl.dflipse.fit.strategy.components.analyzers.BehaviorAnalyzer;
+import nl.dflipse.fit.strategy.components.analyzers.ConcurrencyDetector;
+import nl.dflipse.fit.strategy.components.analyzers.ErrorPropagationDetector;
+import nl.dflipse.fit.strategy.components.analyzers.HappensBeforeNeighbourDetector;
+import nl.dflipse.fit.strategy.components.analyzers.InjectionPointDetector;
+import nl.dflipse.fit.strategy.components.analyzers.ParentChildDetector;
+import nl.dflipse.fit.strategy.components.analyzers.RedundancyAnalyzer;
+import nl.dflipse.fit.strategy.components.analyzers.StatusAnalyzer;
+import nl.dflipse.fit.strategy.components.analyzers.StatusPropagationOracle;
+import nl.dflipse.fit.strategy.components.analyzers.TimingAnalyzer;
+import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
+import nl.dflipse.fit.strategy.components.pruners.DynamicReductionPruner;
+import nl.dflipse.fit.strategy.components.pruners.FailStopPruner;
+import nl.dflipse.fit.strategy.components.pruners.FaultloadSizePruner;
+import nl.dflipse.fit.strategy.components.pruners.NoImpactPruner;
+import nl.dflipse.fit.strategy.components.pruners.UnreachabilityPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.util.TaggedTimer;
@@ -85,7 +86,7 @@ public class FiTestExtension
 
         strategy = new StrategyRunner(modes);
         strategy
-                .withComponent(new IncreasingSizeGenerator(strategy.getStore()))
+                .withComponent(new IncreasingSizeGenerator(strategy.getStore(), strategy::prune))
                 .withComponent(new ParentChildDetector())
                 .withComponent(new ErrorPropagationDetector())
                 .withComponent(new HappensBeforeNeighbourDetector())
@@ -96,6 +97,7 @@ public class FiTestExtension
                 .withComponent(new TimingAnalyzer())
                 .withComponent(new StatusPropagationOracle())
                 .withComponent(new ConcurrencyDetector())
+                .withComponent(new UnreachabilityPruner())
                 .withComponent(new NoImpactPruner(pruneImpactless))
                 .withComponent(new DynamicReductionPruner());
 

@@ -13,10 +13,10 @@ import nl.dflipse.fit.faultload.modes.ErrorFault;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.faultload.modes.HttpError;
 import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.FeedbackContext;
 import nl.dflipse.fit.strategy.TrackedFaultload;
-import nl.dflipse.fit.strategy.pruners.DynamicReductionPruner;
-import nl.dflipse.fit.strategy.pruners.PruneDecision;
+import nl.dflipse.fit.strategy.components.FeedbackContext;
+import nl.dflipse.fit.strategy.components.PruneDecision;
+import nl.dflipse.fit.strategy.components.pruners.DynamicReductionPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.util.EventBuilder;
 
@@ -40,7 +40,7 @@ public class DynamicReductionTest {
         pruner.handleFeedback(result, contextMock);
 
         // The empty faultload is pruned
-        PruneDecision decision = pruner.prune(initialFaultload.getFaultload());
+        PruneDecision decision = pruner.prune(initialFaultload.getFaultload(), contextMock);
         assertEquals(PruneDecision.PRUNE, decision);
     }
 
@@ -82,7 +82,7 @@ public class DynamicReductionTest {
                 Set.of(new Fault(nodeB.getFaultUid(), resultedFault)));
 
         // The empty faultload is pruned
-        PruneDecision decision = pruner.prune(faultloadToPrune);
+        PruneDecision decision = pruner.prune(faultloadToPrune, contextMock);
         assertEquals(PruneDecision.PRUNE, decision);
     }
 }

@@ -7,12 +7,18 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.strategy.generators.Generator;
-import nl.dflipse.fit.strategy.generators.IncreasingSizeGenerator;
-import nl.dflipse.fit.strategy.pruners.PruneDecision;
-import nl.dflipse.fit.strategy.pruners.Pruner;
+import nl.dflipse.fit.strategy.components.FeedbackContext;
+import nl.dflipse.fit.strategy.components.FeedbackContextProvider;
+import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.PruneContextProvider;
+import nl.dflipse.fit.strategy.components.PruneDecision;
+import nl.dflipse.fit.strategy.components.Pruner;
+import nl.dflipse.fit.strategy.components.Reporter;
+import nl.dflipse.fit.strategy.components.generators.Generator;
+import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.util.TaggedTimer;
 
@@ -239,8 +245,11 @@ public class StrategyRunner {
             return;
         }
 
+        // analyze the result
         analyze(result);
-        logger.info("Selecting next faultload");
+
+        // prune generator based on the result
+        generator.prune();
     }
 
     public Faultload generate() {
@@ -274,11 +283,16 @@ public class StrategyRunner {
         result.trackedFaultload.timer.stop("StrategyRunner.analyze");
     }
 
+    public PruneDecision prune(Set<Fault> fs) {
+        return prune(new Faultload(fs));
+    }
+
     public PruneDecision prune(Faultload faultload) {
         PruneDecision pruneDecision = PruneDecision.KEEP;
 
         for (Pruner pruner : pruners) {
-            var decision = pruner.prune(faultload);
+            PruneContextProvider context = new PruneContextProvider(this, pruner.getClass());
+            PruneDecision decision = pruner.prune(faultload, context);
             switch (decision) {
                 case PRUNE -> {
                     statistics.incrementPruner(pruner.getClass().getSimpleName(), 1);

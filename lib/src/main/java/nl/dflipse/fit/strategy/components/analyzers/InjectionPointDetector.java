@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.analyzers;
+package nl.dflipse.fit.strategy.components.analyzers;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,8 +14,8 @@ import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.FeedbackContext;
-import nl.dflipse.fit.strategy.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.FeedbackContext;
+import nl.dflipse.fit.strategy.components.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Lists;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
@@ -111,6 +111,7 @@ public class InjectionPointDetector implements FeedbackHandler {
         }
     }
 
+    // TODO: fix and seperate
     private boolean handleRetry(FaultloadResult result, Set<FaultUid> expectedPoints, FaultUid newFid,
             Collection<Behaviour> condition,
             List<Fault> actualCauses, FeedbackContext context) {

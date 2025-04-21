@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.analyzers;
+package nl.dflipse.fit.strategy.components.analyzers;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,9 +9,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.FeedbackContext;
-import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.Reporter;
+import nl.dflipse.fit.strategy.components.FeedbackContext;
+import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.Reporter;
 
 public class StatusAnalyzer implements FeedbackHandler, Reporter {
     private final Map<String, Set<Integer>> faultStatus = new HashMap<>();

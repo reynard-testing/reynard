@@ -16,6 +16,7 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
+import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 import nl.dflipse.fit.util.NoOpLogger;
@@ -221,45 +222,32 @@ public class DynamicAnalysisStore {
                 .collect(Collectors.toSet());
     }
 
-    public boolean isRedundant(Set<Fault> faultload) {
+    public PruneDecision isRedundant(Set<Fault> faultload) {
         if (faultload == null || faultload.isEmpty()) {
-            return false;
+            return PruneDecision.KEEP;
         }
 
         // Prune on subsets
         if (hasFaultSubset(faultload)) {
             logger.debug("Pruning node {} due pruned subset", faultload);
-            return true;
+            return PruneDecision.PRUNE_SUBTREE;
         }
 
+        // Prune on uid subsets
+        Set<FaultUid> uids = faultload.stream()
+                .map(Fault::uid)
+                .collect(Collectors.toSet());
+        if (hasFaultUidSubset(uids)) {
+            logger.debug("Pruning node {} due pruned subset", faultload);
+            return PruneDecision.PRUNE_SUBTREE;
+        }
         // Prune on faultload
         if (hasFaultload(faultload)) {
             logger.debug("Pruning node {} due pruned faultload", faultload);
-            return true;
+            return PruneDecision.PRUNE;
         }
 
-        // Prune on injecting faults on unreachable points
-        var expected = getExpectedBehaviour(faultload);
-        if (expected.isEmpty()) {
-            return false;
-        }
-
-        for (Fault toInject : faultload) {
-            boolean found = false;
-            for (Behaviour point : expected) {
-                if (point.uid().matches(toInject.uid())) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                logger.debug("Pruning node {} due to unreachable point {}", faultload, toInject);
-                return true;
-            }
-        }
-
-        return false;
+        return PruneDecision.KEEP;
     }
 
     public long estimatePruned(List<FaultUid> allUids) {

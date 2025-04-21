@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.analyzers;
+package nl.dflipse.fit.strategy.components.analyzers;
 
 import java.util.HashSet;
 import java.util.List;
@@ -13,10 +13,10 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.FeedbackContext;
-import nl.dflipse.fit.strategy.FeedbackHandler;
-import nl.dflipse.fit.strategy.pruners.PruneDecision;
-import nl.dflipse.fit.strategy.pruners.Pruner;
+import nl.dflipse.fit.strategy.components.FeedbackContext;
+import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.PruneDecision;
+import nl.dflipse.fit.strategy.components.Pruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.trace.tree.TraceReport;
 
@@ -26,7 +26,7 @@ import nl.dflipse.fit.trace.tree.TraceReport;
  * I.e. if a fault is injected, and another fault disappears,
  * s set of fault causes the disappearance of the fault (the effect)
  */
-public class HappensBeforeNeighbourDetector implements Pruner, FeedbackHandler {
+public class HappensBeforeNeighbourDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(HappensBeforeNeighbourDetector.class);
 
     @Override
@@ -95,12 +95,6 @@ public class HappensBeforeNeighbourDetector implements Pruner, FeedbackHandler {
         }
         logger.info("Found exclusion: {} hides {}", cause, effect);
         context.reportExclusionOfFaultUid(cause, effect);
-    }
-
-    @Override
-    public PruneDecision prune(Faultload faultload) {
-        // TODO: prune on the faultload
-        return PruneDecision.KEEP;
     }
 
 }

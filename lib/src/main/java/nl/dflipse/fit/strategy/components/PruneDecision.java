@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.pruners;
+package nl.dflipse.fit.strategy.components;
 
 public enum PruneDecision {
     PRUNE,

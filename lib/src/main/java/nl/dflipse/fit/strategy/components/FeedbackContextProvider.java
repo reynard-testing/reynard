@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy;
+package nl.dflipse.fit.strategy.components;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,7 +12,8 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.strategy.generators.Generator;
+import nl.dflipse.fit.strategy.StrategyRunner;
+import nl.dflipse.fit.strategy.components.generators.Generator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.StringFormat;
 

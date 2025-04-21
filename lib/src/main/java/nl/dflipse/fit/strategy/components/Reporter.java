@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy;
+package nl.dflipse.fit.strategy.components;
 
 import java.util.Map;
 

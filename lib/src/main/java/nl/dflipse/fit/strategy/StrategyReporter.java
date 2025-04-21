@@ -61,11 +61,11 @@ public class StrategyReporter {
         long totalGenerated = statistics.getTotalGenerated();
         long totalPruned = statistics.getTotalPruned();
         long totalRun = statistics.getTotalRun();
-        long totalSize = statistics.getTotalSize();
+        long faultSpaceSize = statistics.getTotalSize() - 1;
 
-        long fullSpace = totalSize + 1;
+        long fullSpace = faultSpaceSize + 1;
         String prunePercentage = StringFormat.asPercentage(totalPruned, totalGenerated);
-        String generatePercentage = StringFormat.asPercentage(totalGenerated, totalSize);
+        String generatePercentage = StringFormat.asPercentage(totalGenerated, faultSpaceSize);
         String runPercentage = StringFormat.asPercentage(totalRun, fullSpace);
         String reductionPercentage = StringFormat.asPercentage(fullSpace - totalRun, fullSpace);
 

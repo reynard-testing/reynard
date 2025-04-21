@@ -221,11 +221,11 @@ public class DynamicAnalysisStore {
         return this.redundantFaultloads.contains(faultload);
     }
 
-    public Set<Behaviour> getExpectedBehaviour(Set<Fault> faults) {
+    public Set<Behaviour> getExpectedBehaviour(Collection<Fault> faults) {
         return implicationsStore.getBehaviours(faults);
     }
 
-    public Set<FaultUid> getExpectedPoints(Set<Fault> faults) {
+    public Set<FaultUid> getExpectedPoints(Collection<Fault> faults) {
         return implicationsStore.getBehaviours(faults)
                 .stream()
                 .map(Behaviour::uid)

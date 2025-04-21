@@ -308,8 +308,8 @@ public class StrategyRunner {
                     attributed.add(pruner);
 
                 }
-                case PRUNE_SUBTREE -> {
-                    pruneDecision = PruneDecision.PRUNE_SUBTREE;
+                case PRUNE_SUPERSETS -> {
+                    pruneDecision = PruneDecision.PRUNE_SUPERSETS;
                     attributed.add(pruner);
                 }
                 case KEEP -> {

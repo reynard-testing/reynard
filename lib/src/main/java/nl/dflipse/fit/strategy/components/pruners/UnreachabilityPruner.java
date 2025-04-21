@@ -35,7 +35,7 @@ public class UnreachabilityPruner implements Pruner {
 
             if (!found) {
                 logger.debug("Pruning node {} due to unreachable point {}", faultload, toInject);
-                return PruneDecision.PRUNE_SUBTREE;
+                return PruneDecision.PRUNE_SUPERSETS;
             }
         }
 

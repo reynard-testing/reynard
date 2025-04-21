@@ -240,7 +240,7 @@ public class DynamicAnalysisStore {
         // Prune on subsets
         if (hasFaultSubset(faultload)) {
             logger.debug("Pruning node {} due pruned subset", faultload);
-            return PruneDecision.PRUNE_SUBTREE;
+            return PruneDecision.PRUNE_SUPERSETS;
         }
 
         // Prune on uid subsets
@@ -249,7 +249,7 @@ public class DynamicAnalysisStore {
                 .collect(Collectors.toSet());
         if (hasFaultUidSubset(uids)) {
             logger.debug("Pruning node {} due pruned subset", faultload);
-            return PruneDecision.PRUNE_SUBTREE;
+            return PruneDecision.PRUNE_SUPERSETS;
         }
         // Prune on faultload
         if (hasFaultload(faultload)) {

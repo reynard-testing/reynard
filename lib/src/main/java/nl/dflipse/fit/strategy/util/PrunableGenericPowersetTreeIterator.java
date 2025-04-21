@@ -63,7 +63,7 @@ public class PrunableGenericPowersetTreeIterator {
             case PRUNE -> {
                 visitedPoints.add(node.value);
             }
-            case PRUNE_SUBTREE -> {
+            case PRUNE_SUPERSETS -> {
                 visitedNodes.add(node);
                 visitedPoints.add(node.value);
             }
@@ -73,7 +73,7 @@ public class PrunableGenericPowersetTreeIterator {
     private PruneDecision visitIsRedundant(TreeNode node) {
         if (visitedNodes.contains(node)) {
             logger.debug("Completely ignoring already visited node {}", node);
-            return PruneDecision.PRUNE_SUBTREE;
+            return PruneDecision.PRUNE_SUPERSETS;
         }
 
         if (visitedPoints.contains(node.value)) {
@@ -121,7 +121,7 @@ public class PrunableGenericPowersetTreeIterator {
 
                 return Set.of(node);
             }
-            case PRUNE_SUBTREE -> {
+            case PRUNE_SUPERSETS -> {
                 // do nothing
                 return Set.of();
             }
@@ -172,7 +172,7 @@ public class PrunableGenericPowersetTreeIterator {
             visitedPoints.add(node.value);
             visitedNodes.add(node);
 
-            if (nodeFate == PruneDecision.PRUNE_SUBTREE) {
+            if (nodeFate == PruneDecision.PRUNE_SUPERSETS) {
                 // skip this node wholely
                 continue;
             }

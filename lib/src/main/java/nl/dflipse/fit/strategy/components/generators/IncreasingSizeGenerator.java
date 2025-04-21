@@ -218,7 +218,7 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
         for (int visitedIndex = 0; visitedIndex < faultloads.size(); visitedIndex++) {
             var causes = faultloads.get(visitedIndex);
             Faultload faultload = new Faultload(causes);
-            visitedReport.put("[" + visitedIndex + "]", faultload.readableString());
+            visitedReport.put("[" + (visitedIndex + 1) + "]", faultload.readableString());
         }
 
         StrategyReporter.printReport("Visited", visitedReport);

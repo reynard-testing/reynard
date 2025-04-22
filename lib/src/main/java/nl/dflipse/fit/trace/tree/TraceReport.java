@@ -59,7 +59,7 @@ public class TraceReport {
             return injectedFault;
         }
 
-        if (!response.isErrenous()) {
+        if (response == null || !response.isErrenous()) {
             return null;
         }
 

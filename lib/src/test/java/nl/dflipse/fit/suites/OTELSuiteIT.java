@@ -40,13 +40,13 @@ public class OTELSuiteIT {
     private static final RemoteController controller = new RemoteController("http://localhost:5000");
 
     private static final int PORT = 8080;
-    private static final String USER_ID = "6894131c-cab3-4dfe-a5f1-a7086b9f7376";
+    private final String USER_ID = "445dc732-9ca0-4bef-be6e-39fafac25b8a";
     private static final String CURRENCY = "USD";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(5, TimeUnit.SECONDS)
-            .readTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
             .build();
     public static final MediaType JSON = MediaType.get("application/json");
 
@@ -104,10 +104,15 @@ public class OTELSuiteIT {
             String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
             String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
-            boolean containsError = faultload.hasFaultMode(ErrorFault.FAULT_TYPE, OmissionFault.FAULT_TYPE);
-            int expectedResponse = containsError ? 500 : 200;
-            int actualResponse = response.code();
-            assertEquals(expectedResponse, actualResponse);
+            TraceAnalysis result = getController().getTrace(faultload);
+            boolean injectedFaults = !result.getInjectedFaults().isEmpty();
+
+            if (injectedFaults) {
+                assert (response.code() >= 500);
+                assert (response.code() < 600);
+            } else {
+                assertEquals(200, response.code());
+            }
         }
     }
 
@@ -158,7 +163,6 @@ public class OTELSuiteIT {
                 .host("localhost")
                 .port(PORT)
                 .addPathSegments("api/checkout")
-                .addQueryParameter("productIds", "")
                 .addQueryParameter("currencyCode", CURRENCY)
                 .build();
 

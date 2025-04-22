@@ -3,6 +3,7 @@ package nl.dflipse.fit.strategy.store;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +21,7 @@ import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
+import nl.dflipse.fit.trace.tree.TraceReport;
 import nl.dflipse.fit.util.NoOpLogger;
 
 public class DynamicAnalysisStore {
@@ -29,6 +31,7 @@ public class DynamicAnalysisStore {
 
     private final ImplicationsStore implicationsStore = new ImplicationsStore();
 
+    private final Map<FaultUid, TraceReport> happyPath = new LinkedHashMap<>();
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
     private final List<Set<FaultUid>> redundantUidSubsets = new ArrayList<>();
     private final List<Set<Fault>> redundantFaultSubsets = new ArrayList<>();
@@ -69,6 +72,18 @@ public class DynamicAnalysisStore {
 
     public Map<String, String> getImplicationsReport() {
         return implicationsStore.getReport(this);
+    }
+
+    public Map<FaultUid, TraceReport> getHappyPath() {
+        return happyPath;
+    }
+
+    public TraceReport getHappyPath(FaultUid uid) {
+        return happyPath.get(uid);
+    }
+
+    public void addHappyPath(FaultUid uid, TraceReport report) {
+        happyPath.put(uid, report);
     }
 
     public Set<FaultUid> getNonConditionalFaultUids() {

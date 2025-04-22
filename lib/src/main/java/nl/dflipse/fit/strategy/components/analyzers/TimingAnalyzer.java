@@ -16,6 +16,7 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyReporter;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.PruneContext;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
@@ -43,7 +44,7 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
     }
 
     @Override
-    public Map<String, String> report() {
+    public Map<String, String> report(PruneContext context) {
         StrategyReporter.printNewline();
         StrategyReporter.printHeader("Timing per behaviour", 48, "-");
         NumberFormat formatter = new DecimalFormat("#0.0");

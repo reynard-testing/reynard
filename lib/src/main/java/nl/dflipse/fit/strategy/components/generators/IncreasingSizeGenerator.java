@@ -16,6 +16,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.StrategyReporter;
+import nl.dflipse.fit.strategy.components.PruneContext;
 import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
@@ -23,6 +24,7 @@ import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
 import nl.dflipse.fit.strategy.util.Simplify;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
+import nl.dflipse.fit.trace.tree.TraceReport;
 
 public class IncreasingSizeGenerator extends Generator implements Reporter {
     private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
@@ -97,10 +99,7 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
 
     @Override
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
-        var allFaults = Fault.allFaults(subset, getFailureModes());
-        for (Set<Fault> prunedSet : allFaults) {
-            store.pruneFaultSubset(prunedSet);
-        }
+        store.pruneFaultUidSubset(subset);
     }
 
     @Override
@@ -159,7 +158,7 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
     }
 
     @Override
-    public Map<String, String> report() {
+    public Map<String, String> report(PruneContext context) {
         Map<String, String> report = new LinkedHashMap<>();
         report.put("Fault injection points", String.valueOf(getNumerOfPoints()));
         report.put("Modes", String.valueOf(getFailureModes().size()));
@@ -215,6 +214,16 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
     @Override
     public List<Pair<Set<Fault>, List<Behaviour>>> getHistoricResults() {
         return store.getHistoricResults();
+    }
+
+    @Override
+    public Map<FaultUid, TraceReport> getHappyPath() {
+        return store.getHappyPath();
+    }
+
+    @Override
+    public void reportHappyPath(TraceReport report) {
+        store.addHappyPath(report.faultUid, report);
     }
 
 }

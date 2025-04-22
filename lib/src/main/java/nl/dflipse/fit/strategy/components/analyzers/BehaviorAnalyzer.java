@@ -16,6 +16,7 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.StrategyReporter;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.PruneContext;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.store.SubsetStore;
 import nl.dflipse.fit.strategy.util.Sets;
@@ -29,7 +30,6 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     // TODO: equality checks (wrt masks)
     private final Map<Fault, SubsetStore<Fault>> knownFailures = new LinkedHashMap<>();
     private final Map<FaultUid, SubsetStore<Fault>> knownResolutions = new LinkedHashMap<>();
-    private final Map<FaultUid, TraceResponse> happyPath = new LinkedHashMap<>();
     private final Map<FaultUid, Integer> maxArity = new LinkedHashMap<>();
 
     private List<FailureMode> failureModes;
@@ -48,16 +48,11 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
 
             // Set<FaultUid> children = result.trace.getDecendants(injectionPoint);
             Set<FaultUid> children = result.trace.getChildren(injectionPoint);
-            boolean isHappyPath = !report.response.isErrenous();
 
             maxArity.computeIfAbsent(injectionPoint, x -> 0);
             maxArity.put(injectionPoint, Math.max(children.size(), maxArity.get(injectionPoint)));
 
             if (children.isEmpty()) {
-                if (isHappyPath && !happyPath.containsKey(injectionPoint)) {
-                    happyPath.put(injectionPoint, report.response);
-                }
-
                 // We are a leaf node.
                 return;
             }
@@ -83,15 +78,10 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             }
 
             Set<Fault> causes = Sets.union(unexpectedCauses, expectedCauses);
-            isHappyPath = isHappyPath && expectedCauses.isEmpty();
-
-            if (isHappyPath && !happyPath.containsKey(injectionPoint)) {
-                happyPath.put(injectionPoint, report.response);
-            }
 
             boolean hasFailure = report.hasIndirectFaultBehaviour();
             boolean hasAlteredResponse = false;
-            var happyPathResponse = happyPath.get(injectionPoint);
+            var happyPathResponse = context.getHappyPath(injectionPoint);
             if (happyPathResponse != null) {
                 hasAlteredResponse = !happyPathResponse.equals(report.response);
             }
@@ -155,23 +145,9 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     }
 
     @Override
-    public Map<String, String> report() {
+    public Map<String, String> report(PruneContext context) {
         StrategyReporter.printNewline();
         StrategyReporter.printHeader("Behavioral Anlaysis", 48, "=");
-
-        StrategyReporter.printNewline();
-        StrategyReporter.printHeader("Happy Path", 48, "-");
-        for (var entry : happyPath.entrySet()) {
-            var point = entry.getKey();
-            var response = entry.getValue();
-            StrategyReporter.printNewline();
-            StrategyReporter.printKeyValue("Point", point.toString());
-            String bodyLimited = response.body.replace("\n", "");
-            if (response.body.length() > 100) {
-                bodyLimited = response.body.substring(0, 97) + "...";
-            }
-            StrategyReporter.printKeyValue("Response", "[" + response.status + "]" + bodyLimited);
-        }
 
         StrategyReporter.printNewline();
         Map<String, String> maxArityReport = new LinkedHashMap<>();

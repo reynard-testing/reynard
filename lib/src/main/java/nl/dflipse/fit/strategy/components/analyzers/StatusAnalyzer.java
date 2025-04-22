@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.PruneContext;
 import nl.dflipse.fit.strategy.components.Reporter;
 
 public class StatusAnalyzer implements FeedbackHandler, Reporter {
@@ -34,7 +35,7 @@ public class StatusAnalyzer implements FeedbackHandler, Reporter {
     }
 
     @Override
-    public Map<String, String> report() {
+    public Map<String, String> report(PruneContext context) {
         Map<String, String> report = new LinkedHashMap<>();
         for (var entry : faultStatus.entrySet()) {
             String downstream = entry.getKey();

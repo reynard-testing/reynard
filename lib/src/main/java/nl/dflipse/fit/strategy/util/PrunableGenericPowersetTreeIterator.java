@@ -148,7 +148,8 @@ public class PrunableGenericPowersetTreeIterator {
             FaultUid expansionElement = node.expansion.get(i);
 
             // This way, we don't expand twice to the same subsets
-            List<FaultUid> newExpansion = node.expansion.subList(i + 1, node.expansion.size());
+            List<FaultUid> newExpansion = node.expansion
+                    .subList(i + 1, node.expansion.size());
 
             // Create a new node for each mode
             for (Fault additionalElement : expandModes(expansionElement)) {
@@ -165,7 +166,17 @@ public class PrunableGenericPowersetTreeIterator {
     // Return the next, non-pruned node
     // Returns null if there are no more nodes to explore
     public Set<Fault> next() {
+        long counter = 0;
+        int orders = 1;
+
         while (!toExpand.isEmpty()) {
+
+            long order = (long) Math.pow(10, orders);
+            if (counter++ > order) {
+                logger.info("Progress: generated and pruned >" + order + " faultloads");
+                orders++;
+            }
+
             TreeNode node = toExpand.remove(0);
             PruneDecision nodeFate = shouldPrune(node);
 
@@ -196,14 +207,13 @@ public class PrunableGenericPowersetTreeIterator {
     // and adds them to the queue
     public Set<TreeNode> expandFrom(Collection<Fault> nodeValue) {
         // We cannot expand to extensions already in the condition
-        Set<FaultUid> alreadyExpanded = nodeValue.stream()
+        List<FaultUid> alreadyExpanded = nodeValue.stream()
                 .map(f -> f.uid())
-                .collect(Collectors.toSet());
+                .toList();
 
         // Determine the expensions for this node
-        // TODO: account for inf counts
         List<FaultUid> expansionsLeft = store.getPoints().stream()
-                .filter(e -> !alreadyExpanded.contains(e))
+                .filter(e -> !alreadyExpanded.stream().anyMatch(x -> x.matches(e)))
                 .toList();
 
         var startingNode = new TreeNode(Set.copyOf(nodeValue), expansionsLeft);

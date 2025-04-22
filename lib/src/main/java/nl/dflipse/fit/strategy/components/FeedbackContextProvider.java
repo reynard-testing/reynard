@@ -12,11 +12,13 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.faultload.modes.FailureMode;
+import nl.dflipse.fit.strategy.StrategyReporter;
 import nl.dflipse.fit.strategy.StrategyRunner;
 import nl.dflipse.fit.strategy.components.generators.Generator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.StringFormat;
+import nl.dflipse.fit.trace.tree.TraceReport;
 
 public class FeedbackContextProvider extends FeedbackContext {
 
@@ -186,7 +188,19 @@ public class FeedbackContextProvider extends FeedbackContext {
     }
 
     @Override
+    public Map<FaultUid, TraceReport> getHappyPath() {
+        return runner.getGenerator().getHappyPath();
+    }
+
+    @Override
+    public void reportHappyPath(TraceReport report) {
+        localStore.addHappyPath(report.faultUid, report);
+        runner.getGenerator().reportHappyPath(report);
+    }
+
+    @Override
     public long spaceSize() {
         return runner.getGenerator().spaceSize();
     }
+
 }

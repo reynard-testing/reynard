@@ -72,6 +72,7 @@ public class TraceAnalysis {
         } else {
             hasMultipleReports = true;
         }
+
         behaviours.add(report.getBehaviour());
 
         if (report.hasFaultBehaviour()) {

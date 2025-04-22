@@ -26,6 +26,7 @@ import okhttp3.Response;
 @Testcontainers(parallel = true)
 public class MetaSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
+    private static final int PROXY_RETRY_COUNT = 3;
     private static final String PROXY_IMAGE = "fit-proxy:latest";
     private static final String COORDINATOR_IMAGE = "fit-orchestrator:latest";
     private static final String COLLECTOR_ENDPOINT = "http://" + app.jaegerHost + ":4317";
@@ -46,6 +47,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROLLER_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy1")
+                    .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -57,6 +59,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROLLER_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy2")
+                    .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -68,6 +71,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROLLER_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy3")
+                    .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -94,7 +98,9 @@ public class MetaSuiteIT {
         app.stop();
     }
 
-    @FiTest(getTraceInitialDelay = 200, optimizeForRetries = true, optimizeForImpactless = true)
+    // @FiTest(getTraceInitialDelay = 200, optimizeForRetries = true,
+    // optimizeForImpactless = true)
+    @FiTest()
     public void testRegister(TrackedFaultload faultload) throws IOException {
         int port = orchestrator.getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
@@ -117,7 +123,7 @@ public class MetaSuiteIT {
             TraceAnalysis result = getController().getTrace(faultload);
             boolean containsPersistent = result.getInjectedFaults()
                     .stream()
-                    .anyMatch(f -> f.isPersistent());
+                    .anyMatch(f -> f.isPersistent() || f.uid().count() >= PROXY_RETRY_COUNT - 1);
 
             int expectedResponse = containsPersistent ? 500 : 200;
             int actualResponse = response.code();

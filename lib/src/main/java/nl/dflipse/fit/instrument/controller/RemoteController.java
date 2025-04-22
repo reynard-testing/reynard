@@ -82,7 +82,7 @@ public class RemoteController implements FaultController {
         }
 
         faultload.timer.start("getTrace");
-        int maxRetries = 7;
+        int maxRetries = 8;
 
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
@@ -91,15 +91,11 @@ public class RemoteController implements FaultController {
                 faultload.timer.stop("getTrace");
                 return traceData;
             } catch (IOException e) {
-                if (attempt == maxRetries - 1) {
-                    throw e;
-                }
-
                 logger.debug("Retrying getting trace due to: {}", e.getMessage());
             }
 
             try {
-                int backoff = 250 * (int) Math.pow(2, attempt);
+                int backoff = 100 * (int) Math.pow(2, attempt);
                 Thread.sleep(backoff);
             } catch (InterruptedException e) {
                 e.printStackTrace();

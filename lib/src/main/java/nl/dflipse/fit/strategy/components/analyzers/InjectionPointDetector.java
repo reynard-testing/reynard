@@ -1,7 +1,6 @@
 package nl.dflipse.fit.strategy.components.analyzers;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,16 +15,11 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Lists;
-import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.trace.tree.TraceReport;
 
 public class InjectionPointDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(InjectionPointDetector.class);
-    // TODO: move to store
-    // TODO: allow for happy path of conditionals
-    // e.g., if fault has no upstream faults, its the happy path
-    private final List<FaultUid> pointsInHappyPath = new ArrayList<>();
     // Note: this is unsound in general, but can be useful in practice
     private final boolean onlyPersistantOrTransientRetries;
     private final TraversalStrategy traversalStrategy;
@@ -53,9 +47,6 @@ public class InjectionPointDetector implements FeedbackHandler {
 
         // --- Happy path ---
         if (result.isInitial()) {
-            // TODO: allow for happy path of conditionals
-            pointsInHappyPath.addAll(pointsInTrace);
-
             // Start exploring beyond the happy path
             context.exploreFrom(List.of());
             return;
@@ -63,6 +54,7 @@ public class InjectionPointDetector implements FeedbackHandler {
 
         // -- New points in failure paths --
         Set<FaultUid> expectedPoints = context.getExpectedPoints(result.trace.getInjectedFaults());
+        Set<Behaviour> expectedBehaviours = context.getExpectedBehaviours(result.trace.getInjectedFaults());
 
         // Analyse new paths that were not expected
         // but whose parent is expected
@@ -80,13 +72,13 @@ public class InjectionPointDetector implements FeedbackHandler {
 
         // Report newly found points
         for (var entry : rootByParent.entrySet()) {
-            handleAppeared(result, context, entry.getKey(), entry.getValue(), expectedPoints);
+            handleAppeared(result, context, entry.getKey(), entry.getValue(), expectedBehaviours);
         }
     }
 
     private void handleAppeared(FaultloadResult result, FeedbackContext context, TraceReport parent,
             List<TraceReport> newPoints,
-            Set<FaultUid> expectedPoints) {
+            Set<Behaviour> expectedBehaviours) {
 
         // determine which reports can cause the new point
         List<TraceReport> parentalCauses = result.trace.getChildren(parent);
@@ -98,92 +90,82 @@ public class InjectionPointDetector implements FeedbackHandler {
         // determine which reports are the actual causes
         // (i.e., the ones that are injected)
         // As we will visit starting at the root causes
-        List<Fault> actualCauses = result.trace.getDecendants(parent).stream()
-                .filter(x -> x.injectedFault != null)
-                .map(x -> x.injectedFault)
-                .toList();
+        Set<Fault> actualCauses = new LinkedHashSet<>();
+        for (var fault : result.trace.getDecendants(parent)) {
+            if (fault.injectedFault != null) {
+                actualCauses.add(fault.injectedFault);
+            }
+        }
 
         for (var point : newPoints) {
             context.reportPreconditionOfFaultUid(directCauses, point.faultUid);
             logger.info("Found conditional point: {} given {}", point.faultUid, directCauses);
+
+            Fault retriedPoint = getIsRetryOf(point.faultUid, expectedBehaviours, context);
+            if (retriedPoint != null) {
+                Fault persistentFault = handleRetry(retriedPoint, point.faultUid, context);
+                actualCauses.removeIf(x -> x.uid().matches(persistentFault.uid()));
+                actualCauses.add(persistentFault);
+            }
         }
 
         logger.info("Exploring new point in combination with {}", actualCauses);
         context.exploreFrom(actualCauses);
     }
 
-    // TODO: fix and seperate
-    private boolean handleRetry(FaultloadResult result, Set<FaultUid> expectedPoints, FaultUid newFid,
-            Collection<Behaviour> condition,
-            List<Fault> actualCauses, FeedbackContext context) {
+    private Fault getIsRetryOf(FaultUid newFid, Set<Behaviour> expectedBehaviours, FeedbackContext context) {
         if (!onlyPersistantOrTransientRetries) {
-            return false;
+            return null;
         }
 
         // edge case: the happy path should only have one count
         // Otherwise, we cannot be sure which one is the retry, especially
         // in the presence of multiple faults.
-        boolean happyPathOnlyHasOne = pointsInHappyPath.stream()
-                .filter(f -> f.matchesUpToCount(newFid))
+        boolean happyPathOnlyHasOne = context.getHappyPaths().stream()
+                .filter(f -> f.faultUid.matchesUpToCount(newFid))
                 .count() == 1;
 
         if (!happyPathOnlyHasOne) {
-            return false;
+            return null;
         }
 
         // We are a retry of a point that has the same uid,
         // expect for a transient count
         // one less than ours
-        FaultUid retriedFault = expectedPoints.stream()
-                .filter(f -> f.matchesUpToCount(newFid))
-                .filter(f -> f.isTransient())
-                .filter(f -> f.count() == newFid.count() - 1)
+        Behaviour retriedFault = expectedBehaviours.stream()
+                .filter(f -> f.uid().matchesUpToCount(newFid))
+                .filter(f -> f.uid().isTransient())
+                .filter(f -> f.uid().count() == newFid.count() - 1)
                 .findFirst()
                 .orElse(null);
 
         if (retriedFault == null) {
-            return false;
+            return null;
         }
+
+        if (retriedFault.uid().isPersistent()) {
+            // Dont retry a persistent fault
+            return null;
+        }
+
+        return retriedFault.getFault();
+    }
+
+    // TODO: preferably this would be a seperate component
+    // but this is not feasible due the reliance on the exploreFrom
+    private Fault handleRetry(Fault retriedFault, FaultUid retryPoint, FeedbackContext context) {
 
         // only distinguish between transient (once) or always
-        FaultUid persistentFault = newFid.asAnyCount();
+        Fault persistentFault = new Fault(retriedFault.uid().asAnyCount(), retriedFault.mode());
 
-        logger.info("Detected retry: {} -> {}", retriedFault, newFid);
+        logger.info("Detected retry: {} -> {}", retriedFault, retryPoint);
         logger.debug("Turning transient fault into persistent {}", persistentFault);
+
+        // Don't check for the retried fault
+        context.pruneFaultUidSubset(Set.of(retryPoint));
         // do not add the transient and the persistent fault togheter...
-        context.pruneFaultUidSubset(Set.of(retriedFault, persistentFault));
-
-        // ensure we replace the transient fault with the persistent one
-        Set<Fault> relatedCondition = condition.stream()
-                .filter(f -> f.isFault())
-                .filter(f -> !f.uid().matchesUpToCount(persistentFault))
-                .map(f -> f.getFault())
-                .collect(Collectors.toSet());
-
-        // TODO: determine which faults are still reachable when the persistent
-        // fault is injected
-        // As we might have actual causes that are not reachable anymore
-        Set<FaultUid> reachable = Set.of();
-
-        Set<Fault> includeActual = actualCauses.stream()
-                .filter(f -> !f.uid().matchesUpToCount(persistentFault))
-                .filter(f -> !reachable.contains(f.uid()))
-                .collect(Collectors.toSet());
-
-        Set<Fault> exploreFrom = Sets.union(relatedCondition, includeActual);
-
-        if (exploreFrom.isEmpty()) {
-            // explore starting the persistent fault
-            context.reportFaultUid(persistentFault);
-        } else {
-            // explore starting the persistent fault
-            // given the condition
-            // note: we do not care for the causes of the fault, as they might be
-            // nested (if we block all, we also block all children of the fault)
-            context.reportFaultUid(persistentFault);
-            context.exploreFrom(exploreFrom);
-        }
-
-        return true;
+        context.pruneFaultUidSubset(Set.of(retriedFault.uid(), persistentFault.uid()));
+        context.reportFaultUid(persistentFault.uid());
+        return persistentFault;
     }
 }

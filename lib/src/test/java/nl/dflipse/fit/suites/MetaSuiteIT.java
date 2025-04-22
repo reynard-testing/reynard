@@ -47,7 +47,6 @@ public class MetaSuiteIT {
                     .withEnv("CONTROLLER_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy1")
-                    .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -59,7 +58,6 @@ public class MetaSuiteIT {
                     .withEnv("CONTROLLER_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy2")
-                    .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -71,7 +69,6 @@ public class MetaSuiteIT {
                     .withEnv("CONTROLLER_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy3")
-                    .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -81,6 +78,7 @@ public class MetaSuiteIT {
                     .withEnv("OTEL_SERVICE_NAME", "orchestrator")
                     .withEnv("OTEL_TRACES_EXPORTER", "otlp")
                     .withEnv("OTEL_BSP_SCHEDULE_DELAY", "1")
+                    .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT))
             .withExposedPorts(5000);
 
@@ -100,7 +98,7 @@ public class MetaSuiteIT {
 
     // @FiTest(getTraceInitialDelay = 200, optimizeForRetries = true,
     // optimizeForImpactless = true)
-    @FiTest()
+    @FiTest(maxTestCases = 999, optimizeForRetries = true)
     public void testRegister(TrackedFaultload faultload) throws IOException {
         int port = orchestrator.getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";

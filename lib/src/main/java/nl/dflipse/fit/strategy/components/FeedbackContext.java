@@ -8,8 +8,9 @@ import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.trace.tree.TraceReport;
 
-public abstract class FeedbackContext implements PruneContext {
+public abstract class FeedbackContext extends PruneContext {
 
     public abstract void reportFaultUid(FaultUid faultInjectionPoint);
 
@@ -26,6 +27,8 @@ public abstract class FeedbackContext implements PruneContext {
     public abstract void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid);
 
     public abstract void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect);
+
+    public abstract void reportHappyPath(TraceReport report);
 
     public abstract void exploreFrom(Collection<Fault> startingNode);
 

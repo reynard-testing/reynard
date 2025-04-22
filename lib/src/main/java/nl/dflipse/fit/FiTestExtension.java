@@ -27,6 +27,7 @@ import nl.dflipse.fit.strategy.components.analyzers.BehaviorAnalyzer;
 import nl.dflipse.fit.strategy.components.analyzers.ConcurrencyDetector;
 import nl.dflipse.fit.strategy.components.analyzers.ErrorPropagationDetector;
 import nl.dflipse.fit.strategy.components.analyzers.HappensBeforeNeighbourDetector;
+import nl.dflipse.fit.strategy.components.analyzers.HappyPathDetector;
 import nl.dflipse.fit.strategy.components.analyzers.InjectionPointDetector;
 import nl.dflipse.fit.strategy.components.analyzers.ParentChildDetector;
 import nl.dflipse.fit.strategy.components.analyzers.RedundancyAnalyzer;
@@ -87,6 +88,7 @@ public class FiTestExtension
         strategy = new StrategyRunner(modes);
         strategy
                 .withComponent(new IncreasingSizeGenerator(strategy.getStore(), strategy::prune))
+                .withComponent(new HappyPathDetector())
                 .withComponent(new ParentChildDetector())
                 .withComponent(new ErrorPropagationDetector())
                 .withComponent(new HappensBeforeNeighbourDetector())

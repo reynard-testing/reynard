@@ -8,6 +8,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
+import nl.dflipse.fit.strategy.components.PruneContext;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.util.UndirectedRelation;
 
@@ -25,7 +26,7 @@ public class ConcurrencyDetector implements FeedbackHandler, Reporter {
     }
 
     @Override
-    public Map<String, String> report() {
+    public Map<String, String> report(PruneContext context) {
         Map<String, String> report = new LinkedHashMap<>();
 
         for (var relation : relation.getRelations().entrySet()) {

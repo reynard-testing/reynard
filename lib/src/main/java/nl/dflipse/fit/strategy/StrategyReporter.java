@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import nl.dflipse.fit.strategy.components.FeedbackContextProvider;
+import nl.dflipse.fit.strategy.components.PruneContext;
+import nl.dflipse.fit.strategy.components.PruneContextProvider;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.components.generators.Generator;
 import nl.dflipse.fit.strategy.util.Pair;
@@ -168,7 +170,8 @@ public class StrategyReporter {
     }
 
     public void reportOnReporter(Reporter reporter) {
-        Map<String, String> report = reporter.report();
+        PruneContext context = new PruneContextProvider(runner, this.getClass());
+        Map<String, String> report = reporter.report(context);
         if (report == null || report.isEmpty()) {
             return;
         }

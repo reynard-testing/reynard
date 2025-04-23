@@ -133,8 +133,7 @@ public class FilibusterSuiteIT {
         }
     }
 
-    // @FiTest(maxTestCases = 500)
-    @FiTest(maxTestCases = 500, optimizeForRetries = true)
+    @FiTest(maxTestCases = 500)
     public void testCinema3(TrackedFaultload faultload) throws IOException {
 
         var traceparent = faultload.getTraceParent().toString();
@@ -160,6 +159,11 @@ public class FilibusterSuiteIT {
             // assertEquals(200, response.code());
             // }
         }
+    }
+
+    @FiTest(maxTestCases = 500, optimizeForRetries = true)
+    public void testCinema3Retries(TrackedFaultload faultload) throws IOException {
+        testCinema3(faultload);
     }
 
     @FiTest(maxTestCases = 500)
@@ -240,6 +244,11 @@ public class FilibusterSuiteIT {
 
         try (Response response = client.newCall(request).execute()) {
         }
+    }
+
+    @FiTest(maxTestCases = 500, optimizeForRetries = true)
+    public void testCinema8Retries(TrackedFaultload faultload) throws IOException {
+        testCinema8(faultload);
     }
 
     @FiTest(maxTestCases = 500)

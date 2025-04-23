@@ -35,7 +35,6 @@ public class FilibusterSuiteIT {
 
     @FiTest()
     public void testAudible(TrackedFaultload faultload) throws IOException {
-
         var traceparent = faultload.getTraceParent().toString();
         var tracestate = faultload.getTraceState().toString();
 

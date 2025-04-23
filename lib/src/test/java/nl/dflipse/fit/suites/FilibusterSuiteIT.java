@@ -133,7 +133,8 @@ public class FilibusterSuiteIT {
         }
     }
 
-    @FiTest(maxTestCases = 500)
+    // @FiTest(maxTestCases = 500)
+    @FiTest(maxTestCases = 500, optimizeForRetries = true)
     public void testCinema3(TrackedFaultload faultload) throws IOException {
 
         var traceparent = faultload.getTraceParent().toString();

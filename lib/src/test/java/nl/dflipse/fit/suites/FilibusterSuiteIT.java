@@ -35,7 +35,6 @@ public class FilibusterSuiteIT {
 
     @FiTest()
     public void testAudible(TrackedFaultload faultload) throws IOException {
-
         var traceparent = faultload.getTraceParent().toString();
         var tracestate = faultload.getTraceState().toString();
 
@@ -161,6 +160,11 @@ public class FilibusterSuiteIT {
         }
     }
 
+    @FiTest(maxTestCases = 500, optimizeForRetries = true)
+    public void testCinema3Retries(TrackedFaultload faultload) throws IOException {
+        testCinema3(faultload);
+    }
+
     @FiTest(maxTestCases = 500)
     public void testCinema4(TrackedFaultload faultload) throws IOException {
 
@@ -239,6 +243,11 @@ public class FilibusterSuiteIT {
 
         try (Response response = client.newCall(request).execute()) {
         }
+    }
+
+    @FiTest(maxTestCases = 500, optimizeForRetries = true)
+    public void testCinema8Retries(TrackedFaultload faultload) throws IOException {
+        testCinema8(faultload);
     }
 
     @FiTest(maxTestCases = 500)

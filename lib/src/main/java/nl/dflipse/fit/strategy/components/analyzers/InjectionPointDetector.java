@@ -15,6 +15,7 @@ import nl.dflipse.fit.strategy.FaultloadResult;
 import nl.dflipse.fit.strategy.components.FeedbackContext;
 import nl.dflipse.fit.strategy.components.FeedbackHandler;
 import nl.dflipse.fit.strategy.util.Lists;
+import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 import nl.dflipse.fit.trace.tree.TraceReport;
 
@@ -104,8 +105,12 @@ public class InjectionPointDetector implements FeedbackHandler {
             Fault retriedPoint = getIsRetryOf(point.faultUid, expectedBehaviours, context);
             if (retriedPoint != null) {
                 Fault persistentFault = handleRetry(retriedPoint, point.faultUid, context);
-                actualCauses.removeIf(x -> x.uid().matches(persistentFault.uid()));
-                actualCauses.add(persistentFault);
+
+                // Replace the retried point with the persistent fault
+                // in the actual causes
+                actualCauses = Sets.replaceIf(actualCauses,
+                        x -> x.uid().matches(persistentFault.uid()),
+                        persistentFault);
             }
         }
 

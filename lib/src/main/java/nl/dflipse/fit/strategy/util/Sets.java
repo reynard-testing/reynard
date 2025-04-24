@@ -103,6 +103,18 @@ public class Sets {
         return false;
     }
 
+    public static <T> Set<T> replaceIf(Collection<T> A, Predicate<T> predicate, T replacement) {
+        Set<T> result = new LinkedHashSet<>();
+        for (T a : A) {
+            if (predicate.test(a)) {
+                result.add(replacement);
+            } else {
+                result.add(a);
+            }
+        }
+        return result;
+    }
+
     public static <T> T getOnlyElement(Collection<T> A) {
         if (A.size() == 1) {
             return A.iterator().next();

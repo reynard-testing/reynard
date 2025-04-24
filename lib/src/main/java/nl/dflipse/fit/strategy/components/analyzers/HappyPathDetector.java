@@ -33,7 +33,7 @@ public class HappyPathDetector implements FeedbackHandler, Reporter {
 
             List<TraceReport> children = result.trace.getChildren(report);
             boolean isHappyPath = children.stream()
-                    .allMatch(r -> r.hasFaultBehaviour());
+                    .allMatch(r -> !r.hasFaultBehaviour());
 
             if (isHappyPath) {
                 context.reportHappyPath(report);

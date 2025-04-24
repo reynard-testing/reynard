@@ -1,4 +1,4 @@
-package nl.dflipse.fit.testutil;
+package nl.dflipse.fit.util;
 
 import org.slf4j.Logger;
 import org.slf4j.Marker;

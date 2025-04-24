@@ -6,7 +6,7 @@ import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
 import nl.dflipse.fit.trace.TraceParent;
 import nl.dflipse.fit.trace.TraceState;
-import nl.dflipse.fit.testutil.TaggedTimer;
+import nl.dflipse.fit.util.TaggedTimer;
 
 public class TrackedFaultload {
     private final Faultload faultload;

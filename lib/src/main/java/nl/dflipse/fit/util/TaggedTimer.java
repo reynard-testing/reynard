@@ -1,4 +1,4 @@
-package nl.dflipse.fit.testutil;
+package nl.dflipse.fit.util;
 
 import java.util.LinkedHashMap;
 import java.util.List;

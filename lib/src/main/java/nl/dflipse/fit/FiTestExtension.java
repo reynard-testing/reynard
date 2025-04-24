@@ -42,7 +42,7 @@ import nl.dflipse.fit.strategy.components.pruners.NoImpactPruner;
 import nl.dflipse.fit.strategy.components.pruners.UnreachabilityPruner;
 import nl.dflipse.fit.strategy.util.TraceAnalysis;
 import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
-import nl.dflipse.fit.testutil.TaggedTimer;
+import nl.dflipse.fit.util.TaggedTimer;
 
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {

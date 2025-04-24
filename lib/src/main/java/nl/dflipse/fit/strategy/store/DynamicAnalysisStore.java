@@ -22,7 +22,7 @@ import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 import nl.dflipse.fit.trace.tree.TraceReport;
-import nl.dflipse.fit.testutil.NoOpLogger;
+import nl.dflipse.fit.util.NoOpLogger;
 
 public class DynamicAnalysisStore {
     private final Logger logger;

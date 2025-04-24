@@ -22,7 +22,7 @@ import nl.dflipse.fit.strategy.components.generators.Generator;
 import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.testutil.TaggedTimer;
+import nl.dflipse.fit.util.TaggedTimer;
 
 public class StrategyRunner {
     private DynamicAnalysisStore store;

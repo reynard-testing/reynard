@@ -42,7 +42,8 @@ public class ErrorPropagationDetector implements FeedbackHandler {
 
             boolean isUnexpectedError = childCauses.isEmpty();
             if (isUnexpectedError) {
-                logger.warn("Unexpected error {}: " + report.response.status);
+                logger.warn("Unexpected response without cause! {}", report.response);
+                logger.warn("There is a high likelyhood that this is caused by some bug!");
                 continue;
             }
 

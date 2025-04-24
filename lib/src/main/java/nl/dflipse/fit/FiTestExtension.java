@@ -110,6 +110,10 @@ public class FiTestExtension
             strategy.withMaxTestCases(annotation.maxTestCases());
         }
 
+        if (annotation.maxTimeS() > 0) {
+            strategy.withMaxTimeS(annotation.maxTimeS());
+        }
+
         if (maxFaultloadSize > 0) {
             strategy.withComponent(new FaultloadSizePruner(maxFaultloadSize));
         }
@@ -157,7 +161,9 @@ public class FiTestExtension
     }
 
     private TestTemplateInvocationContext createInvocationContext(StrategyRunner strategy, FaultController controller) {
+        timer.start("nextFaultload");
         TrackedFaultload faultload = strategy.nextFaultload();
+        timer.stop("nextFaultload");
 
         if (faultload == null) {
             return null;

@@ -104,6 +104,16 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			return
 		}
 
+		// Get and parse the "tracestate" header
+		tracestate := r.Header.Get(OTEL_STATE_HEADER)
+		state := tracing.ParseTraceState(tracestate)
+
+		// Ensure non-conical form is kept
+		r.Header.Del(OTEL_PARENT_HEADER)
+		r.Header[OTEL_PARENT_HEADER] = []string{traceparent}
+		r.Header.Del(OTEL_STATE_HEADER)
+		r.Header[OTEL_STATE_HEADER] = []string{tracestate}
+
 		// Determine if registered as an interesting trace
 		faults, ok := control.RegisteredFaults.Get(parentSpan.TraceID)
 		if !ok {
@@ -113,9 +123,6 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			return
 		}
 
-		// Get and parse the "tracestate" header
-		tracestate := r.Header.Get(OTEL_STATE_HEADER)
-		state := tracing.ParseTraceState(tracestate)
 		traceId := parentSpan.TraceID
 		// TODO (optional): export to collector, so that jeager understands whats going on
 		currentSpan := parentSpan.GenerateNew()

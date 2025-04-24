@@ -6,7 +6,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,11 +60,11 @@ public class PrunableGenericPowersetTreeIterator {
                 // do nothing
             }
             case PRUNE -> {
-                visitedPoints.add(node.value);
+                // do nothing
             }
+
             case PRUNE_SUPERSETS -> {
-                visitedNodes.add(node);
-                visitedPoints.add(node.value);
+                store.pruneFaultSubset(node.value);
             }
         }
     }
@@ -76,24 +75,28 @@ public class PrunableGenericPowersetTreeIterator {
             return PruneDecision.PRUNE_SUPERSETS;
         }
 
+        visitedNodes.add(node);
+
         if (visitedPoints.contains(node.value)) {
             logger.debug("Ignoring and only expanding already visited point {}", node);
             return PruneDecision.PRUNE;
         }
 
+        visitedPoints.add(node.value);
+
         return PruneDecision.KEEP;
     }
 
-    private PruneDecision shouldPrune(TreeNode node) {
-        PruneDecision localDecision = visitIsRedundant(node);
-        if (localDecision != PruneDecision.KEEP) {
-            trackVisited(node, localDecision);
-            return localDecision;
+    private PruneDecision shouldPrune(TreeNode node, boolean onAddition) {
+        if (onAddition) {
+            PruneDecision localDecision = visitIsRedundant(node);
+            if (localDecision != PruneDecision.KEEP) {
+                return localDecision;
+            }
         }
 
         PruneDecision storeDecision = store.isRedundant(node.value);
         if (storeDecision != PruneDecision.KEEP) {
-            trackVisited(node, storeDecision);
             return storeDecision;
         }
 
@@ -111,7 +114,7 @@ public class PrunableGenericPowersetTreeIterator {
     }
 
     private Set<TreeNode> addOrPrune(TreeNode node) {
-        switch (shouldPrune(node)) {
+        switch (shouldPrune(node, true)) {
             case KEEP -> {
                 // Add the node to the queue, it it's not already there
                 if (toExpand.contains(node)) {
@@ -178,7 +181,7 @@ public class PrunableGenericPowersetTreeIterator {
             }
 
             TreeNode node = toExpand.remove(0);
-            PruneDecision nodeFate = shouldPrune(node);
+            PruneDecision nodeFate = shouldPrune(node, false);
 
             visitedPoints.add(node.value);
             visitedNodes.add(node);

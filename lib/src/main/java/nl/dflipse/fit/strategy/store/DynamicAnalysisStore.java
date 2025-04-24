@@ -252,8 +252,8 @@ public class DynamicAnalysisStore {
     }
 
     public PruneDecision isRedundant(Set<Fault> faultload) {
-        if (faultload == null || faultload.isEmpty()) {
-            return PruneDecision.KEEP;
+        if (faultload == null) {
+            return PruneDecision.PRUNE;
         }
 
         // Prune on subsets

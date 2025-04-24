@@ -45,6 +45,7 @@ public class PrunedGeneratorSpaceTest {
         var points = FaultInjectionPoints.getPoints(12);
         var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
+        generator.exploreFrom(Set.of());
 
         var ignored = points.get(4);
 
@@ -52,6 +53,7 @@ public class PrunedGeneratorSpaceTest {
             if (fault == ignored) {
                 continue;
             }
+
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
@@ -76,7 +78,9 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 2);
+        generator.exploreFrom(Set.of());
+
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), ignoredSet.size());
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }
@@ -98,6 +102,8 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
+        generator.exploreFrom(Set.of());
+
         long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 4);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
@@ -115,6 +121,8 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultSubset(Set.of(
                     new Fault(points.get(0), mode)));
         }
+
+        generator.exploreFrom(Set.of());
 
         long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 2);
         long actual = Enumerate.getGeneratedCount(generator);
@@ -134,6 +142,8 @@ public class PrunedGeneratorSpaceTest {
             var mode = modes.get(i);
             generator.pruneFaultSubset(Set.of(new Fault(points.get(1), mode)));
         }
+
+        generator.exploreFrom(Set.of());
 
         int expected = 71;
         long actual = Enumerate.getGeneratedCount(generator);
@@ -162,6 +172,8 @@ public class PrunedGeneratorSpaceTest {
             }
         }
 
+        generator.exploreFrom(Set.of());
+
         int expected = 63;
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
@@ -189,6 +201,7 @@ public class PrunedGeneratorSpaceTest {
             }
         }
 
+        generator.exploreFrom(Set.of());
         int expected = 4095;
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
@@ -205,6 +218,7 @@ public class PrunedGeneratorSpaceTest {
         // Given - a generator with no pruned faults
         var generator1 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator1.reportFaultUids(points);
+        generator1.exploreFrom(Set.of());
         List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
         // Given a generator and prunable faults
@@ -234,6 +248,7 @@ public class PrunedGeneratorSpaceTest {
             generator2.pruneFaultUidSubset(uidSubset);
         }
 
+        generator2.exploreFrom(Set.of());
         Set<Faultload> allFaultloads2 = Enumerate.getGeneratedSet(generator2);
 
         // Then - for all faultloads in the full enumeration
@@ -334,7 +349,8 @@ public class PrunedGeneratorSpaceTest {
         // Given - a generator with no pruned faults
         var generator1 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator1.reportFaultUids(points);
-        generator1.reportPreconditionOfFaultUid(Set.of(), point3);
+        generator1.reportFaultUid(point3);
+        generator1.exploreFrom(Set.of());
         List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
         // Given a generator and prunable faults
@@ -345,6 +361,7 @@ public class PrunedGeneratorSpaceTest {
                 Set.of(faults.get(0, 0)),
                 Set.of(faults.get(2, 0)));
 
+        generator2.exploreFrom(Set.of());
         for (var precondition : preconditions) {
             generator2.reportPreconditionOfFaultUid(Behaviour.of(precondition), point3);
             generator2.exploreFrom(precondition);

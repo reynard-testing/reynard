@@ -8,10 +8,12 @@ import nl.dflipse.fit.faultload.FaultUid;
 
 public class FaultInjectionPoints {
 
+    private static FaultInjectionPoint root = new FaultInjectionPoint("", "", "", 0);
+
     public static FaultUid getPoint(int x) {
         String countStr = "" + x;
         FaultInjectionPoint p = new FaultInjectionPoint(countStr, countStr, countStr, x);
-        return new FaultUid(List.of(p));
+        return new FaultUid(List.of(root, p));
     }
 
     public static List<FaultUid> getPoints(int n) {

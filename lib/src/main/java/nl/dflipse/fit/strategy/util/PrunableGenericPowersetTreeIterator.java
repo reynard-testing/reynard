@@ -45,8 +45,7 @@ public class PrunableGenericPowersetTreeIterator {
 
         if (skipEmptySet) {
             // Pretend we already visited the empty set
-            this.visitedNodes.add(new TreeNode(Set.of(), List.of()));
-            this.visitedPoints.add(Set.of());
+            this.store.pruneFaultload(Set.of());
         }
     }
 

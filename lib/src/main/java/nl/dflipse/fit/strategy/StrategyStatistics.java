@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.util.TaggedTimer;
+import nl.dflipse.fit.testutil.TaggedTimer;
 
 public class StrategyStatistics {
     private Map<String, Long> generatorCount = new LinkedHashMap<>();

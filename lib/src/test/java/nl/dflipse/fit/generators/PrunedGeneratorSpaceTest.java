@@ -15,10 +15,10 @@ import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
-import nl.dflipse.fit.util.Enumerate;
-import nl.dflipse.fit.util.FailureModes;
-import nl.dflipse.fit.util.FaultInjectionPoints;
-import nl.dflipse.fit.util.FaultsBuilder;
+import nl.dflipse.fit.testutil.Enumerate;
+import nl.dflipse.fit.testutil.FailureModes;
+import nl.dflipse.fit.testutil.FaultInjectionPoints;
+import nl.dflipse.fit.testutil.FaultsBuilder;
 
 public class PrunedGeneratorSpaceTest {
 

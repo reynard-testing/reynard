@@ -1,4 +1,4 @@
-package nl.dflipse.fit.util;
+package nl.dflipse.fit.testutil;
 
 public class ShapeBuilder {
     private final String traceId;

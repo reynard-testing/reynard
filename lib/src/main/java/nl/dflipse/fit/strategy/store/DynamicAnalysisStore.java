@@ -22,7 +22,7 @@ import nl.dflipse.fit.strategy.util.Pair;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 import nl.dflipse.fit.trace.tree.TraceReport;
-import nl.dflipse.fit.util.NoOpLogger;
+import nl.dflipse.fit.testutil.NoOpLogger;
 
 public class DynamicAnalysisStore {
     private final Logger logger;
@@ -218,13 +218,17 @@ public class DynamicAnalysisStore {
     }
 
     public boolean pruneFaultload(Faultload faultload) {
+        return pruneFaultSubset(faultload.faultSet());
+    }
+
+    public boolean pruneFaultload(Set<Fault> faultload) {
         // If the faultload is already in the list of redundant faultloads
         // Then we can ignore this faultload
         if (hasFaultload(faultload)) {
             return false;
         }
 
-        this.redundantFaultloads.add(faultload.faultSet());
+        this.redundantFaultloads.add(faultload);
         return true;
     }
 

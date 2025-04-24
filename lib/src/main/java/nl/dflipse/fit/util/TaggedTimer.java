@@ -1,4 +1,4 @@
-package nl.dflipse.fit.util;
+package nl.dflipse.fit.testutil;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,7 +65,7 @@ public class TaggedTimer {
         }
 
         public void stop() {
-            if (state == TimerState.RUNNING ) {
+            if (state == TimerState.RUNNING) {
                 end = System.currentTimeMillis();
                 state = TimerState.STOPPED;
             }

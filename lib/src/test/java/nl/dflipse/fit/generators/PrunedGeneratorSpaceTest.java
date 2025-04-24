@@ -2,8 +2,12 @@ package nl.dflipse.fit.generators;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -391,5 +395,58 @@ public class PrunedGeneratorSpaceTest {
                 }
             }
         }
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testNewFound() {
+        var modes = FailureModes.getModes(2);
+        var points = FaultInjectionPoints.getPoints(4);
+        var point5 = FaultInjectionPoints.getPoint(5);
+
+        var pruneCounter = new AtomicInteger(0);
+        Function<Set<Fault>, PruneDecision> pruneFunction = x -> {
+            pruneCounter.incrementAndGet();
+            return PruneDecision.KEEP;
+        };
+
+        var generator1 = new IncreasingSizeGenerator(modes, pruneFunction);
+        generator1.reportFaultUids(points);
+        generator1.reportFaultUid(point5);
+        generator1.exploreFrom(Set.of());
+
+        long complete = Enumerate.getGeneratedCount(generator1);
+        long maxQueue1 = generator1.getMaxQueueSize();
+        long pruneCount1 = pruneCounter.get();
+        pruneCounter.set(0);
+
+        var generator2 = new IncreasingSizeGenerator(modes, pruneFunction);
+        generator2.reportFaultUids(points);
+        generator2.exploreFrom(Set.of());
+        generator2.reportFaultUid(point5);
+        generator2.exploreFrom(Set.of());
+
+        long laterDiscovery = Enumerate.getGeneratedCount(generator2);
+        long maxQueue2 = generator2.getMaxQueueSize();
+        long pruneCount2 = pruneCounter.get();
+        pruneCounter.set(0);
+        assertEquals(complete, laterDiscovery);
+        assertTrue(maxQueue1 < maxQueue2);
+
+        var generator3 = new IncreasingSizeGenerator(modes, pruneFunction);
+        generator3.reportFaultUids(points);
+        generator3.exploreFrom(Set.of());
+        generator3.reportFaultUid(point5);
+
+        for (var mode : modes) {
+            generator3.exploreFrom(Set.of(new Fault(point5, mode)));
+        }
+
+        long differentExploration = Enumerate.getGeneratedCount(generator3);
+        long maxQueue3 = generator3.getMaxQueueSize();
+        long pruneCount3 = pruneCounter.get();
+        pruneCounter.set(0);
+        assertEquals(complete, differentExploration);
+
     }
 }

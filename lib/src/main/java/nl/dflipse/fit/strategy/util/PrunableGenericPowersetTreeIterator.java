@@ -45,7 +45,7 @@ public class PrunableGenericPowersetTreeIterator {
 
         if (skipEmptySet) {
             // Pretend we already visited the empty set
-            this.store.pruneFaultload(Set.of());
+            this.visitedPoints.add(Set.of());
         }
     }
 
@@ -53,55 +53,41 @@ public class PrunableGenericPowersetTreeIterator {
         queueSize.add(toExpand.size());
     }
 
-    private void trackVisited(TreeNode node, PruneDecision decision) {
-        switch (decision) {
-            case KEEP -> {
-                // do nothing
-            }
-            case PRUNE -> {
-                // do nothing
-            }
-
-            case PRUNE_SUPERSETS -> {
-                store.pruneFaultSubset(node.value);
-            }
-        }
-    }
-
     private PruneDecision visitIsRedundant(TreeNode node) {
-        if (visitedNodes.contains(node)) {
-            logger.debug("Completely ignoring already visited node {}", node);
-            return PruneDecision.PRUNE_SUPERSETS;
-        }
-
-        visitedNodes.add(node);
-
         if (visitedPoints.contains(node.value)) {
             logger.debug("Ignoring and only expanding already visited point {}", node);
             return PruneDecision.PRUNE;
         }
 
-        visitedPoints.add(node.value);
-
         return PruneDecision.KEEP;
     }
 
-    private PruneDecision shouldPrune(TreeNode node, boolean onAddition) {
-        if (onAddition) {
-            PruneDecision localDecision = visitIsRedundant(node);
-            if (localDecision != PruneDecision.KEEP) {
-                return localDecision;
+    private PruneDecision max(PruneDecision... decisions) {
+        PruneDecision max = PruneDecision.KEEP;
+        for (var decision : decisions) {
+            if (decision == PruneDecision.PRUNE_SUPERSETS) {
+                return PruneDecision.PRUNE_SUPERSETS;
+            }
+
+            if (decision == PruneDecision.PRUNE) {
+                max = PruneDecision.PRUNE;
             }
         }
 
+        return max;
+    }
+
+    private PruneDecision shouldPrune(TreeNode node) {
+        PruneDecision localDecision = visitIsRedundant(node);
         PruneDecision storeDecision = store.isRedundant(node.value);
-        if (storeDecision != PruneDecision.KEEP) {
-            return storeDecision;
+        if (storeDecision == PruneDecision.PRUNE_SUPERSETS) {
+            return PruneDecision.PRUNE_SUPERSETS;
         }
 
         PruneDecision punersDecision = pruneFunction.apply(node.value);
-        trackVisited(node, punersDecision);
-        return punersDecision;
+
+        PruneDecision decision = max(localDecision, storeDecision, punersDecision);
+        return decision;
     }
 
     private List<Fault> expandModes(FaultUid node) {
@@ -110,30 +96,6 @@ public class PrunableGenericPowersetTreeIterator {
             collection.add(new Fault(node, mode));
         }
         return collection;
-    }
-
-    private Set<TreeNode> addOrPrune(TreeNode node) {
-        switch (shouldPrune(node, true)) {
-            case KEEP -> {
-                // Add the node to the queue, it it's not already there
-                if (toExpand.contains(node)) {
-                    logger.debug("Node {} already in queue", node);
-                    return Set.of();
-                }
-
-                return Set.of(node);
-            }
-            case PRUNE_SUPERSETS -> {
-                // do nothing
-                return Set.of();
-            }
-            case PRUNE -> {
-                // don't add this exact node, but maybe its children
-                return expand(node);
-            }
-        }
-
-        return Set.of();
     }
 
     public Set<TreeNode> expand(TreeNode node) {
@@ -158,11 +120,46 @@ public class PrunableGenericPowersetTreeIterator {
                 Set<Fault> newValue = Sets.plus(node.value(), additionalElement);
 
                 var newNode = new TreeNode(newValue, newExpansion);
-                newNodes.addAll(addOrPrune(newNode));
+                newNodes.add(newNode);
             }
         }
 
         return newNodes;
+    }
+
+    private boolean addToQueue(TreeNode node) {
+        // We don't want to add already visited nodes
+        if (visitedNodes.contains(node)) {
+            return false;
+        }
+
+        visitedNodes.add(node);
+
+        int firstIndex = -1;
+        int nodeSize = node.value.size();
+        for (int i = 0; i < toExpand.size(); i++) {
+            int otherNodeSize = toExpand.get(i).value.size();
+            if (nodeSize < otherNodeSize) {
+                firstIndex = i;
+                break;
+            }
+        }
+
+        if (firstIndex == -1) {
+            toExpand.add(node);
+            logger.debug("Adding {} to end of the queue", node);
+        } else {
+            toExpand.add(firstIndex, node);
+            logger.debug("Adding {} to queue at index {}", node, firstIndex);
+        }
+
+        return true;
+    }
+
+    private void addToQueue(Collection<TreeNode> nodes) {
+        for (var node : nodes) {
+            addToQueue(node);
+        }
     }
 
     // Return the next, non-pruned node
@@ -180,17 +177,15 @@ public class PrunableGenericPowersetTreeIterator {
             }
 
             TreeNode node = toExpand.remove(0);
-            PruneDecision nodeFate = shouldPrune(node, false);
-
+            PruneDecision nodeFate = shouldPrune(node);
             visitedPoints.add(node.value);
-            visitedNodes.add(node);
 
             if (nodeFate == PruneDecision.PRUNE_SUPERSETS) {
                 // skip this node wholely
                 continue;
             }
 
-            toExpand.addAll(expand(node));
+            addToQueue(expand(node));
             updateQueueSize();
 
             if (nodeFate == PruneDecision.PRUNE) {
@@ -207,7 +202,7 @@ public class PrunableGenericPowersetTreeIterator {
     // Explore (again) from a given node value
     // Determines expansions for this node
     // and adds them to the queue
-    public Set<TreeNode> expandFrom(Collection<Fault> nodeValue) {
+    public boolean expandFrom(Collection<Fault> nodeValue) {
         // We cannot expand to extensions already in the condition
         List<FaultUid> alreadyExpanded = nodeValue.stream()
                 .map(f -> f.uid())
@@ -219,10 +214,13 @@ public class PrunableGenericPowersetTreeIterator {
                 .toList();
 
         var startingNode = new TreeNode(Set.copyOf(nodeValue), expansionsLeft);
-        var toAdd = addOrPrune(startingNode);
-        toExpand.addAll(toAdd);
-        logger.debug("Expanding from {}, added {} new to the queue", startingNode, toAdd.size());
-        return toAdd;
+        boolean isNew = addToQueue(startingNode);
+
+        if (isNew) {
+            logger.debug("Expanding from {}", startingNode);
+        }
+
+        return isNew;
     }
 
     public long getQueueSpaceSize() {

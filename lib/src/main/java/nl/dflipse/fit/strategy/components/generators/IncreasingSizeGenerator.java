@@ -54,36 +54,36 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
     }
 
     @Override
-    public void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect) {
-        store.addUpstreamEffect(cause, effect);
+    public boolean reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect) {
+        return store.addUpstreamEffect(cause, effect);
     }
 
     @Override
-    public void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
+    public boolean reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         if (fid == null) {
-            return;
+            return true;
         }
 
-        store.addConditionForFaultUid(condition, fid);
+        return store.addConditionForFaultUid(condition, fid);
     }
 
     @Override
-    public void exploreFrom(Collection<Fault> startingNode) {
-        iterator.expandFrom(startingNode);
+    public boolean exploreFrom(Collection<Fault> startingNode) {
+        return iterator.expandFrom(startingNode);
     }
 
     @Override
-    public void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid exclusion) {
+    public boolean reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid exclusion) {
         if (exclusion == null) {
-            return;
+            return true;
         }
 
-        store.addExclusionForFaultUid(condition, exclusion);
+        return store.addExclusionForFaultUid(condition, exclusion);
     }
 
     @Override
-    public void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
-        store.addDownstreamEffect(condition, effect);
+    public boolean reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
+        return store.addDownstreamEffect(condition, effect);
     }
 
     @Override

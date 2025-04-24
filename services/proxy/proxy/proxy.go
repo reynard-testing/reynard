@@ -119,7 +119,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		traceId := parentSpan.TraceID
 		// TODO (optional): export to collector, so that jeager understands whats going on
 		currentSpan := parentSpan.GenerateNew()
-		r.Header.Set(OTEL_PARENT_HEADER, currentSpan.String())
+		r.Header[OTEL_PARENT_HEADER] = []string{currentSpan.String()}
 
 		// only forward the request if the "fit" flag is set in the tracestate
 		shouldInspect := state.GetWithDefault(FIT_FLAG, "0") == "1"
@@ -147,7 +147,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		if isInitial {
 			log.Printf("Initial request.\n")
 			state.Delete(FIT_IS_INITIAL_KEY)
-			r.Header.Set(OTEL_STATE_HEADER, state.String())
+			r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 		}
 
 		// -- Determine FID --
@@ -160,7 +160,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// --
 
 		state.Set(FIT_PARENT_KEY, currentSpan.ParentID)
-		r.Header.Set(OTEL_STATE_HEADER, state.String())
+		r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
 			TraceId:        traceId,

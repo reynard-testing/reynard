@@ -48,7 +48,7 @@ public class InjectionPointDetector implements FeedbackHandler {
 
         // --- Happy path ---
         if (result.isInitial()) {
-            // Start exploring beyond the happy path
+            // Start exploring all known combinations in the happy path
             context.exploreFrom(List.of());
             return;
         }

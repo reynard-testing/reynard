@@ -3,6 +3,7 @@ package nl.dflipse.fit.strategy.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Lists {
@@ -12,7 +13,7 @@ public class Lists {
                 .collect(Collectors.toList());
     }
 
-    public static <T> List<T> add(List<T> A, T e) {
+    public static <T> List<T> plus(List<T> A, T e) {
         var list = new ArrayList<>(A);
         list.add(e);
         return list;
@@ -23,5 +24,17 @@ public class Lists {
         List<T> difference = new ArrayList<>(A);
         difference.removeAll(B);
         return difference;
+    }
+
+    public static <T> int addAfter(List<T> list, T element, Predicate<T> predicate) {
+        for (int i = 0; i < list.size(); i++) {
+            if (predicate.test(list.get(i))) {
+                list.add(i, element);
+                return i;
+            }
+        }
+
+        list.add(element);
+        return -1;
     }
 }

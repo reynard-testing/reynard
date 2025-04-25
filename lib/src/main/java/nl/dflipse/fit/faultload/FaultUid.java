@@ -32,7 +32,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         var head = getPoint();
         var tail = getTail();
 
-        return new FaultUid(Lists.add(tail, head.asAnyPayload()));
+        return new FaultUid(Lists.plus(tail, head.asAnyPayload()));
     }
 
     /** Whether all points are without persistent faults */
@@ -82,7 +82,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         var head = getPoint();
         var tail = getTail();
 
-        return new FaultUid(Lists.add(tail, head.asAnyCount()));
+        return new FaultUid(Lists.plus(tail, head.asAnyCount()));
     }
 
     public boolean isTransient() {

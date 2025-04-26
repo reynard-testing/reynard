@@ -11,11 +11,14 @@ type PartialInjectionPoint struct {
 	Payload     string `json:"payload"`
 }
 
+type InjectionPointClock map[string]int
+
 type InjectionPoint struct {
-	Destination string `json:"destination"`
-	Signature   string `json:"signature"`
-	Payload     string `json:"payload"`
-	Count       int    `json:"count"`
+	Destination string              `json:"destination"`
+	Signature   string              `json:"signature"`
+	Payload     string              `json:"payload"`
+	VectorClock InjectionPointClock `json:"vector_clock"`
+	Count       int                 `json:"count"`
 }
 type FaultUid struct {
 	Stack []InjectionPoint `json:"stack"`
@@ -58,6 +61,18 @@ func (fid FaultUid) String() string {
 	return strings.Join(ip_strings, ">")
 }
 
+func (clock InjectionPointClock) String() string {
+	if len(clock) == 0 {
+		return ""
+	}
+
+	vcs := make([]string, len(clock))
+	for p, c := range clock {
+		vcs = append(vcs, fmt.Sprintf("%s:%d", p, c))
+	}
+	return fmt.Sprintf("{%s}", strings.Join(vcs, ","))
+}
+
 func (f InjectionPoint) String() string {
 	payloadStr := ""
 	if f.Payload != "*" && f.Payload != "" {
@@ -70,7 +85,10 @@ func (f InjectionPoint) String() string {
 	} else {
 		countStr = fmt.Sprintf("#%d", f.Count)
 	}
-	return fmt.Sprintf("%s:%s%s%s", f.Destination, f.Signature, payloadStr, countStr)
+
+	vcStr := f.VectorClock.String()
+
+	return fmt.Sprintf("%s:%s%s%s%s", f.Destination, f.Signature, payloadStr, vcStr, countStr)
 }
 
 func (f PartialInjectionPoint) String() string {
@@ -92,7 +110,7 @@ type FaultMode struct {
 	Args []string `json:"args"`
 }
 
-func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, count int) FaultUid {
+func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, vc InjectionPointClock, count int) FaultUid {
 	fid := make([]InjectionPoint, len(parent.Stack)+1)
 	// Copy the existing stack
 	copy(fid, parent.Stack)
@@ -101,6 +119,7 @@ func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, count int) Fa
 		Destination: partial.Destination,
 		Signature:   partial.Signature,
 		Payload:     partial.Payload,
+		VectorClock: vc,
 		Count:       count,
 	}
 

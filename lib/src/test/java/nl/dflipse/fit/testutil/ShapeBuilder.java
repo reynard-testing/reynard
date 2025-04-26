@@ -1,5 +1,7 @@
 package nl.dflipse.fit.testutil;
 
+import java.util.Map;
+
 public class ShapeBuilder {
     private final String traceId;
     private int serviceCounter = 0;
@@ -15,7 +17,7 @@ public class ShapeBuilder {
 
     public EventBuilder leafNode(EventBuilder parent) {
         EventBuilder builder = new EventBuilder(parent)
-                .withPoint(newService(), "sig", 0)
+                .withPoint(newService(), "sig", Map.of(), 0)
                 .withResponse(200, "OK");
 
         return builder;

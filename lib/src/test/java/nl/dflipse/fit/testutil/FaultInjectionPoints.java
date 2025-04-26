@@ -2,17 +2,18 @@ package nl.dflipse.fit.testutil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import nl.dflipse.fit.faultload.FaultInjectionPoint;
 import nl.dflipse.fit.faultload.FaultUid;
 
 public class FaultInjectionPoints {
 
-    private static FaultInjectionPoint root = new FaultInjectionPoint("", "", "", 0);
+    private static FaultInjectionPoint root = new FaultInjectionPoint("", "", "", Map.of(), 0);
 
     public static FaultUid getPoint(int x) {
         String countStr = "" + x;
-        FaultInjectionPoint p = new FaultInjectionPoint(countStr, countStr, countStr, x);
+        FaultInjectionPoint p = new FaultInjectionPoint(countStr, countStr, countStr, Map.of(), x);
         return new FaultUid(List.of(root, p));
     }
 

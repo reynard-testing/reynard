@@ -1,4 +1,5 @@
 import asyncio
+from calendar import c
 import os
 
 import requests
@@ -6,8 +7,10 @@ import requests
 # import trace
 from flask import Flask, request
 
-from lib.models import TraceReport, ResponseData, FaultUid, InjectionPoint
+from lib.models import TraceReport, ResponseData, FaultUid, InjectionPoint, PartialInjectionPoint
 from lib.report_store import ReportStore
+
+from frozendict import frozendict
 
 app = Flask(__name__)
 
@@ -30,6 +33,33 @@ def get_reports_by_trace_id(trace_id):
 
 
 # --- PROXY ENDPOINTS ---
+
+def get_completed_events(parent_report: TraceReport) -> dict[str, int]:
+    reports = report_store.get_by_trace_id(parent_report.trace_id)
+    completed_events: dict[str, int] = {}
+
+    for report in reports:
+        if report == parent_report:
+            continue
+
+        if report.response is None:
+            continue
+
+        report_parent_stack = report.uid.stack[:-1]
+        if report_parent_stack != parent_report.uid.stack:
+            continue
+
+        report_point = report.uid.stack[-1]
+        report_partial = report_point.as_partial()
+        report_key = report_partial.to_str()
+
+        current_count = completed_events.get(report_key, 0)
+        completed_events[report_key] = max(
+            current_count, report_point.count)
+
+    return completed_events
+
+
 @app.route('/v1/proxy/get-parent-uid', methods=['POST'])
 async def get_fault_uid():
     data = request.get_json()
@@ -40,7 +70,9 @@ async def get_fault_uid():
     if report is None:
         return [], 404
 
-    return {"stack": report.uid.stack}, 200
+    completed_events = get_completed_events(report)
+
+    return {"stack": report.uid.stack, 'completed_events': completed_events}, 200
 
 
 @app.route('/v1/proxy/report', methods=['POST'])
@@ -65,7 +97,13 @@ async def report_span_id():
     if response:
         responseData = ResponseData(**response)
 
-    stack = tuple([InjectionPoint(**fip) for fip in uid.get('stack', [])])
+    stack = tuple([InjectionPoint(
+        destination=fip['destination'],
+        signature=fip['signature'],
+        payload=fip['payload'],
+        vector_clock=frozendict(fip['vector_clock']),
+        count=fip['count'],
+    ) for fip in uid.get('stack', [])])
     fault_uid = FaultUid(stack=stack)
 
     span_report = TraceReport(

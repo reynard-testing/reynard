@@ -2,6 +2,7 @@ package nl.dflipse.fit.stores;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -138,7 +139,7 @@ public class ImplicationsStoreTest {
 
     // retry 2 on F
     nodeF_retry2 = nodeA.createChild()
-        .withPoint("F", "f1", 2);
+        .withPoint("F", "f1", Map.of(), 2);
     f3 = nodeF_retry2.getBehaviour();
     nodeG_F_retry2 = nodeF_retry2.createChild()
         .withPoint("G", "g1");
@@ -462,5 +463,81 @@ public class ImplicationsStoreTest {
     // Expect root, A, X and Y
     assertEquals(4, result.size());
     assertEquals(2, faultyBehaviours(result));
+  }
+
+  @Test
+  public void testContradiction() {
+    ImplicationsStore testStore = new ImplicationsStore();
+
+    var nRoot = new EventBuilder()
+        .withPoint("R", "r1");
+    var r = nRoot.getFaultUid();
+
+    var nA = nRoot.createChild()
+        .withPoint("A", "a1");
+    var a = nA.getFaultUid();
+
+    var nB = nRoot.createChild()
+        .withPoint("B", "b1");
+    var b = nB.getFaultUid();
+
+    var nC = nRoot.createChild()
+        .withPoint("C", "c1");
+    var c = nC.getFaultUid();
+
+    var nD = nRoot.createChild()
+        .withPoint("D", "d1");
+    var d = nD.getFaultUid();
+
+    // Happy path, root calls A and B
+    testStore.addUpstreamEffect(r, Set.of(a, b, d));
+
+    // Fallback for A is C
+    testStore.addInclusionEffect(Set.of(new Behaviour(a, mode1)), c);
+    // fallback for B is C
+    testStore.addInclusionEffect(Set.of(new Behaviour(b, mode1)), c);
+
+    // if A&C fail, then no b or d
+    testStore.addExclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c, mode1)), b);
+
+    testStore.addExclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c, mode1)), d);
+
+    // if B&C fail, then no d
+    testStore.addExclusionEffect(Set.of(new Behaviour(b, mode1), new Behaviour(c, mode1)), d);
+
+    // If A and B fail
+    Set<Behaviour> res1 = testStore.getBehaviours(Set.of(
+        new Fault(a, mode1),
+        new Fault(b, mode1)));
+
+    // Expect all of them (C is only called once in reality)
+    assertEquals(5, res1.size());
+    assertEquals(2, faultyBehaviours(res1));
+
+    // if A and C fail, then no B or D
+    Set<Behaviour> res2 = testStore.getBehaviours(Set.of(
+        new Fault(a, mode1),
+        new Fault(c, mode1)));
+
+    assertEquals(3, res2.size());
+    assertEquals(2, faultyBehaviours(res2));
+
+    // if B and C fail, then no D
+    Set<Behaviour> res3 = testStore.getBehaviours(Set.of(
+        new Fault(b, mode1),
+        new Fault(c, mode1)));
+
+    assertEquals(4, res3.size());
+    assertEquals(2, faultyBehaviours(res3));
+
+    // if A, B and C fail, then no D
+    Set<Behaviour> res4 = testStore.getBehaviours(Set.of(
+        new Fault(a, mode1),
+        new Fault(b, mode1),
+        new Fault(c, mode1)));
+
+    // This fails, because these are different C's, but they have the same id
+    assertEquals(4, res4.size());
+    assertEquals(2, faultyBehaviours(res4));
   }
 }

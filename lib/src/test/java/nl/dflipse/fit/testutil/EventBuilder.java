@@ -1,8 +1,10 @@
 package nl.dflipse.fit.testutil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import nl.dflipse.fit.faultload.Behaviour;
@@ -10,6 +12,7 @@ import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.FaultInjectionPoint;
 import nl.dflipse.fit.faultload.FaultUid;
 import nl.dflipse.fit.faultload.Faultload;
+import nl.dflipse.fit.faultload.PartialFaultInjectionPoint;
 import nl.dflipse.fit.faultload.modes.ErrorFault;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.TrackedFaultload;
@@ -49,13 +52,19 @@ public class EventBuilder {
     this.parent = parent;
   }
 
+  public EventBuilder withPoint(String service, String signature, Map<String, Integer> vc,
+      int count) {
+    point = new FaultInjectionPoint(service, signature, "", vc, count);
+    return this;
+  }
+
   public EventBuilder withPoint(String service, String signature, int count) {
-    point = new FaultInjectionPoint(service, signature, "", count);
+    point = new FaultInjectionPoint(service, signature, "", Map.of(), count);
     return this;
   }
 
   public EventBuilder withPoint(String service, String signature) {
-    return withPoint(service, signature, 0);
+    return withPoint(service, signature, Map.of(), 0);
   }
 
   public EventBuilder withResponse(int status, String body) {
@@ -125,7 +134,7 @@ public class EventBuilder {
 
   public FaultUid getFaultUid() {
     if (point == null) {
-      point = new FaultInjectionPoint("unknown", "unknown", "", 0);
+      point = new FaultInjectionPoint("unknown", "unknown", "", Map.of(), 0);
     }
     if (report.faultUid == null) {
       report.faultUid = new FaultUid(getStack());

@@ -475,8 +475,8 @@ public class PrunedGeneratorSpaceTest {
         pruneCounter.set(0);
         assertEquals(complete, differentExploration);
         assertTrue(maxQueue1 == maxQueue3);
-        assertTrue(pruneCount1 < pruneCount2);
-        assertTrue(pruneCount3 < pruneCount2);
+        assertTrue(pruneCount1 == pruneCount2);
+        assertTrue(pruneCount3 == pruneCount2);
 
     }
 }

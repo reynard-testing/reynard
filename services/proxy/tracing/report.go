@@ -21,6 +21,10 @@ type UidRequest struct {
 	TraceId        string `json:"trace_id"`
 	ReportParentId string `json:"parent_span_id"`
 }
+type UidResponse struct {
+	Stack           []faultload.InjectionPoint    `json:"stack"`
+	CompletedEvents faultload.InjectionPointClock `json:"completed_events"`
+}
 
 type RequestReport struct {
 	TraceId       string                `json:"trace_id"`
@@ -82,7 +86,7 @@ func ReportSpanUID(report RequestReport) bool {
 	return success
 }
 
-func attemptGetUid(req UidRequest) *faultload.FaultUid {
+func attemptGetUid(req UidRequest) *UidResponse {
 	queryUrl := fmt.Sprintf("http://%s/v1/proxy/get-parent-uid", queryHost)
 
 	jsonBodyBytes, err := json.Marshal(req)
@@ -105,7 +109,7 @@ func attemptGetUid(req UidRequest) *faultload.FaultUid {
 		return nil
 	}
 
-	var response faultload.FaultUid
+	var response UidResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		log.Printf("Failed to decode response: %v\n", err)
 		return nil
@@ -114,11 +118,11 @@ func attemptGetUid(req UidRequest) *faultload.FaultUid {
 	return &response
 }
 
-func GetUid(traceId, parentId string, isInitial bool) faultload.FaultUid {
+func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, faultload.InjectionPointClock) {
 	if isInitial {
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
-		}
+		}, faultload.InjectionPointClock{}
 	}
 
 	req := UidRequest{
@@ -137,8 +141,10 @@ func GetUid(traceId, parentId string, isInitial bool) faultload.FaultUid {
 		log.Printf("Failed to get UID from orchestrator after retry.\n")
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
-		}
+		}, faultload.InjectionPointClock{}
 	} else {
-		return *res
+		return faultload.FaultUid{
+			Stack: res.Stack,
+		}, res.CompletedEvents
 	}
 }

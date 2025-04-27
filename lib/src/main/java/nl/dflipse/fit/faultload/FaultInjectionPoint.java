@@ -1,5 +1,6 @@
 package nl.dflipse.fit.faultload;
 
+import java.util.Collections;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,6 +11,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize
 public record FaultInjectionPoint(String destination, String signature, String payload,
         @JsonProperty("vector_clock") Map<String, Integer> vectorClock, int count) {
+
+    public FaultInjectionPoint {
+        // Ensure map is immutable
+        vectorClock = Collections.unmodifiableMap(vectorClock);
+    }
 
     private static String ANY_WILDCARD = "*";
 
@@ -29,12 +35,16 @@ public record FaultInjectionPoint(String destination, String signature, String p
     public String toString() {
         String payloadStr = (payload.equals("*") || payload.equals("")) ? "" : "(" + payload + ")";
         String countStr = count < 0 ? "#∞" : ("#" + count);
+
+        // {key1:value1,key2:value2, ...}
         String vcStr = "";
         if (vectorClock != null && !vectorClock.isEmpty()) {
             vcStr = "{" + vectorClock.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
                     .map(e -> e.getKey().toString() + ":" + e.getValue())
                     .reduce((a, b) -> a + "," + b).orElse("") + "}";
         }
+
         return destination + ":" + signature + payloadStr + vcStr + countStr;
     }
 
@@ -73,27 +83,14 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     private boolean matches(Map<String, Integer> a, Map<String, Integer> b) {
         if (a == null || b == null) {
-            return false;
+            return true;
         }
 
         if (a.size() != b.size()) {
             return false;
         }
 
-        for (var entry : a.entrySet()) {
-            var key = entry.getKey();
-            var value = entry.getValue();
-
-            if (!b.containsKey(key)) {
-                return false;
-            }
-
-            if (!matches(value, b.get(key))) {
-                return false;
-            }
-        }
-
-        return true;
+        return a.equals(b);
     }
 
     public boolean matches(FaultInjectionPoint other) {

@@ -47,10 +47,25 @@ func (f1 FaultUid) Matches(f2 FaultUid) bool {
 	return true
 }
 
+func (vc1 InjectionPointClock) Matches(vc2 InjectionPointClock) bool {
+	if len(vc1) != len(vc2) {
+		return false
+	}
+
+	for k, v := range vc1 {
+		if v2, ok := vc2[k]; !ok || !intMatches(v, v2) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (f1 InjectionPoint) Matches(f2 InjectionPoint) bool {
 	return stringMatches(f1.Destination, f2.Destination) &&
 		stringMatches(f1.Signature, f2.Signature) &&
 		stringMatches(f1.Payload, f2.Payload) &&
+		f1.VectorClock.Matches(f2.VectorClock) &&
 		intMatches(f1.Count, f2.Count)
 }
 

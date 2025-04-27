@@ -40,6 +40,8 @@ public class StrategyRunner {
     private boolean withPayloadMasking = false;
     private boolean withBodyHashing = false;
     private boolean withLogHeader = false;
+    private boolean withVectorClocks = false;
+
     private int withGetDelayMs = 0;
     private long maxTimeS = 0;
     private long testCasesLeft = -1;
@@ -63,6 +65,11 @@ public class StrategyRunner {
 
     public StrategyRunner withLogHeader() {
         withLogHeader = true;
+        return this;
+    }
+
+    public StrategyRunner withVectorClocks() {
+        withVectorClocks = true;
         return this;
     }
 
@@ -183,6 +190,10 @@ public class StrategyRunner {
 
         if (withLogHeader) {
             tracked.withHeaderLog();
+        }
+
+        if (withVectorClocks) {
+            tracked.withVectorClocks();
         }
 
         if (withGetDelayMs > 0) {

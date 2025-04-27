@@ -19,6 +19,8 @@ public @interface FiTest {
 
     boolean logHeaders() default false;
 
+    boolean withVectorClocks() default true;
+
     boolean failStop() default true;
 
     boolean optimizeForRetries() default false;
@@ -26,6 +28,7 @@ public @interface FiTest {
     boolean optimizeForImpactless() default false;
 
     long maxTestCases() default 0;
+
     long maxTimeS() default 0;
 
     int maxFaultloadSize() default 0;

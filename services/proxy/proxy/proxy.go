@@ -25,6 +25,7 @@ const (
 	FIT_FLAG                = "fit"
 	FIT_MASK_PAYLOAD_FLAG   = "mask"
 	FIT_HASH_BODY_FLAG      = "hashbody"
+	FIT_VECTOR_CLOCK        = "use-vc"
 	FIT_HEADER_LOGGING_FLAG = "headerlog"
 
 	OTEL_PARENT_HEADER = "traceparent"
@@ -157,10 +158,16 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 		}
 
+		// determine if vector clocks should be used
+		shouldUseVectorClock := state.GetWithDefault(FIT_VECTOR_CLOCK, "0") == "1"
+		if shouldUseVectorClock {
+			log.Printf("Using Vector Clocks.\n")
+		}
+
 		// -- Determine FID --
 		reportParentId := state.GetWithDefault(FIT_PARENT_KEY, "0")
 		log.Printf("Report parent ID: %s\n", reportParentId)
-		parentStack, completedEvents := tracing.GetUid(traceId, reportParentId, isInitial)
+		parentStack, completedEvents := tracing.GetUid(traceId, reportParentId, shouldUseVectorClock, isInitial)
 
 		partialPoint := tracing.PartialPointFromRequest(r, destination, shouldMaskPayload)
 

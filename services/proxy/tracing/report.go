@@ -118,7 +118,7 @@ func attemptGetUid(req UidRequest) *UidResponse {
 	return &response
 }
 
-func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, faultload.InjectionPointClock) {
+func GetUid(traceId, parentId string, isInitial, useVc bool) (faultload.FaultUid, faultload.InjectionPointClock) {
 	if isInitial {
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
@@ -142,9 +142,15 @@ func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, fault
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
 		}, faultload.InjectionPointClock{}
-	} else {
+	}
+
+	if !useVc {
 		return faultload.FaultUid{
 			Stack: res.Stack,
-		}, res.CompletedEvents
+		}, faultload.InjectionPointClock{}
 	}
+
+	return faultload.FaultUid{
+		Stack: res.Stack,
+	}, res.CompletedEvents
 }

@@ -46,6 +46,11 @@ public class TrackedFaultload {
         return this;
     }
 
+    public TrackedFaultload withVectorClocks() {
+        traceState.set("use-vc", "1");
+        return this;
+    }
+
     public TrackedFaultload withGetDelay(int ms) {
         this.getDelayMs = ms;
         return this;

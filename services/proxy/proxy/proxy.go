@@ -187,10 +187,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			IsInitial:      isInitial,
 		}
 
-		capture := &ResponseCapture{
-			ResponseWriter: w,
-			Status:         http.StatusOK,
-		}
+		capture := NewResponseCapture(w)
 
 		var proxyState ProxyState = ProxyState{
 			InjectedFault:      nil,
@@ -242,11 +239,15 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		proxyState.Complete = true
 		proxyState.DurationS = time.Since(startTime).Seconds() * 1000
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
-
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
+
+		// Send the response back to the client
+		capture.Flush()
 
 		if len(proxyState.ConcurrentFaults) > 0 {
 			log.Printf("Concurrent faults: %s\n", proxyState.ConcurrentFaults)
 		}
+
+		log.Printf("Response sent.\n")
 	})
 }

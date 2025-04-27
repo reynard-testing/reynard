@@ -134,8 +134,8 @@ public class FiTestExtension
             strategy.withLogHeader();
         }
 
-        if (annotation.withVectorClocks()) {
-            strategy.withVectorClocks();
+        if (annotation.withCallStack()) {
+            strategy.withCallStack();
         }
 
         if (annotation.getTraceInitialDelay() > 0) {

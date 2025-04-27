@@ -101,7 +101,7 @@ async def report_span_id():
         destination=fip['destination'],
         signature=fip['signature'],
         payload=fip['payload'],
-        vector_clock=frozendict(fip['vector_clock']),
+        call_stack=frozendict(fip['call_stack']),
         count=fip['count'],
     ) for fip in uid.get('stack', [])])
     fault_uid = FaultUid(stack=stack)

@@ -22,8 +22,8 @@ type UidRequest struct {
 	ReportParentId string `json:"parent_span_id"`
 }
 type UidResponse struct {
-	Stack           []faultload.InjectionPoint    `json:"stack"`
-	CompletedEvents faultload.InjectionPointClock `json:"completed_events"`
+	Stack           []faultload.InjectionPoint        `json:"stack"`
+	CompletedEvents faultload.InjectionPointCallStack `json:"completed_events"`
 }
 
 type RequestReport struct {
@@ -118,11 +118,11 @@ func attemptGetUid(req UidRequest) *UidResponse {
 	return &response
 }
 
-func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, faultload.InjectionPointClock) {
+func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, faultload.InjectionPointCallStack) {
 	if isInitial {
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
-		}, faultload.InjectionPointClock{}
+		}, faultload.InjectionPointCallStack{}
 	}
 
 	req := UidRequest{
@@ -141,7 +141,7 @@ func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, fault
 		log.Printf("Failed to get UID from orchestrator after retry.\n")
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
-		}, faultload.InjectionPointClock{}
+		}, faultload.InjectionPointCallStack{}
 	}
 
 	return faultload.FaultUid{

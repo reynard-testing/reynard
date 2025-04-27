@@ -25,7 +25,7 @@ class InjectionPoint:
     destination: str
     signature: str
     payload: str
-    vector_clock: frozendict[str, int]
+    call_stack: frozendict[str, int]
     count: int
 
     def as_partial(self) -> PartialInjectionPoint:

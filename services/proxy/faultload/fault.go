@@ -12,14 +12,14 @@ type PartialInjectionPoint struct {
 	Payload     string `json:"payload"`
 }
 
-type InjectionPointClock map[string]int
+type InjectionPointCallStack map[string]int
 
 type InjectionPoint struct {
-	Destination string              `json:"destination"`
-	Signature   string              `json:"signature"`
-	Payload     string              `json:"payload"`
-	VectorClock InjectionPointClock `json:"vector_clock"`
-	Count       int                 `json:"count"`
+	Destination string                  `json:"destination"`
+	Signature   string                  `json:"signature"`
+	Payload     string                  `json:"payload"`
+	CallStack   InjectionPointCallStack `json:"call_stack"`
+	Count       int                     `json:"count"`
 }
 type FaultUid struct {
 	Stack []InjectionPoint `json:"stack"`
@@ -47,13 +47,13 @@ func (f1 FaultUid) Matches(f2 FaultUid) bool {
 	return true
 }
 
-func (vc1 InjectionPointClock) Matches(vc2 InjectionPointClock) bool {
-	if len(vc1) != len(vc2) {
+func (cs1 InjectionPointCallStack) Matches(cs2 InjectionPointCallStack) bool {
+	if len(cs1) != len(cs2) {
 		return false
 	}
 
-	for k, v := range vc1 {
-		if v2, ok := vc2[k]; !ok || !intMatches(v, v2) {
+	for k, v := range cs1 {
+		if v2, ok := cs2[k]; !ok || !intMatches(v, v2) {
 			return false
 		}
 	}
@@ -65,7 +65,7 @@ func (f1 InjectionPoint) Matches(f2 InjectionPoint) bool {
 	return stringMatches(f1.Destination, f2.Destination) &&
 		stringMatches(f1.Signature, f2.Signature) &&
 		stringMatches(f1.Payload, f2.Payload) &&
-		f1.VectorClock.Matches(f2.VectorClock) &&
+		f1.CallStack.Matches(f2.CallStack) &&
 		intMatches(f1.Count, f2.Count)
 }
 
@@ -77,34 +77,34 @@ func (fid FaultUid) String() string {
 	return strings.Join(ip_strings, ">")
 }
 
-func (clock InjectionPointClock) String() string {
-	if len(clock) == 0 {
+func (cs InjectionPointCallStack) String() string {
+	if len(cs) == 0 {
 		return ""
 	}
 
-	vcs := make([]string, len(clock))
+	csStrings := make([]string, len(cs))
 
 	// Sort the keys to ensure consistent ordering
-	keys := make([]string, 0, len(clock))
-	for p := range clock {
+	keys := make([]string, 0, len(cs))
+	for p := range cs {
 		keys = append(keys, p)
 	}
 	sort.Strings(keys)
 
 	// Create the string representation
 	for _, p := range keys {
-		vcs = append(vcs, fmt.Sprintf("%s:%d", p, clock[p]))
+		csStrings = append(csStrings, fmt.Sprintf("%s:%d", p, cs[p]))
 	}
-	return fmt.Sprintf("{%s}", strings.Join(vcs, ","))
+	return fmt.Sprintf("{%s}", strings.Join(csStrings, ","))
 }
 
-func (clock InjectionPointClock) Del(point PartialInjectionPoint) {
-	if len(clock) == 0 {
+func (ips InjectionPointCallStack) Del(point PartialInjectionPoint) {
+	if len(ips) == 0 {
 		return
 	}
 
 	key := point.String()
-	delete(clock, key)
+	delete(ips, key)
 }
 
 func (f InjectionPoint) String() string {
@@ -120,9 +120,9 @@ func (f InjectionPoint) String() string {
 		countStr = fmt.Sprintf("#%d", f.Count)
 	}
 
-	vcStr := f.VectorClock.String()
+	csStr := f.CallStack.String()
 
-	return fmt.Sprintf("%s:%s%s%s%s", f.Destination, f.Signature, payloadStr, vcStr, countStr)
+	return fmt.Sprintf("%s:%s%s%s%s", f.Destination, f.Signature, payloadStr, csStr, countStr)
 }
 
 func (f PartialInjectionPoint) String() string {
@@ -144,7 +144,7 @@ type FaultMode struct {
 	Args []string `json:"args"`
 }
 
-func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, vc InjectionPointClock, count int) FaultUid {
+func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, ips InjectionPointCallStack, count int) FaultUid {
 	fid := make([]InjectionPoint, len(parent.Stack)+1)
 	// Copy the existing stack
 	copy(fid, parent.Stack)
@@ -154,7 +154,7 @@ func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, vc InjectionP
 		Destination: partial.Destination,
 		Signature:   partial.Signature,
 		Payload:     partial.Payload,
-		VectorClock: vc,
+		CallStack:   ips,
 		Count:       count,
 	}
 

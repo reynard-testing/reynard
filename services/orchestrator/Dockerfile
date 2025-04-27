@@ -14,5 +14,5 @@ RUN opentelemetry-bootstrap -a install
 
 COPY . .
 
-CMD [ "opentelemetry-instrument", "python", "main.py"]
-# CMD [ "opentelemetry-instrument", "flask", "--app", "main.py", "run", "--host=0.0.0.0"]
+# CMD [ "opentelemetry-instrument", "python", "main.py"]
+CMD [ "opentelemetry-instrument", "flask", "--app", "main.py", "run", "--host=0.0.0.0"]

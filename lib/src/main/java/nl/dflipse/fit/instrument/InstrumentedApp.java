@@ -9,16 +9,12 @@ import org.testcontainers.containers.Network;
 import nl.dflipse.fit.instrument.controller.RemoteController;
 import nl.dflipse.fit.instrument.services.InstrumentedService;
 import nl.dflipse.fit.instrument.services.Jaeger;
-import nl.dflipse.fit.instrument.services.OTELCollectorService;
 import nl.dflipse.fit.instrument.services.OrchestratorService;
 
 public class InstrumentedApp extends RemoteController {
     public Network network;
     private final List<InstrumentedService> proxies = new ArrayList<>();
     private final List<GenericContainer<?>> services = new ArrayList<>();
-
-    public String collectorHost = "otel-collector";
-    public OTELCollectorService collector;
 
     public String orchestratorHost = "orchestrator";
     public int orchestratorPort = 5000;
@@ -38,12 +34,6 @@ public class InstrumentedApp extends RemoteController {
                 .withNetworkAliases(orchestratorHost)
                 .withExposedPorts(orchestratorPort);
         this.services.add(orchestrator);
-
-        this.collector = new OTELCollectorService()
-                .withNetwork(network)
-                .withNetworkAliases(collectorHost)
-                .dependsOn(orchestrator);
-        this.services.add(collector);
     }
 
     public InstrumentedApp withJaeger() {
@@ -51,8 +41,6 @@ public class InstrumentedApp extends RemoteController {
                 .withNetwork(network)
                 .withNetworkAliases(jaegerHost)
                 .withExposedPorts(jaegerPort);
-        this.collector.dependsOn(jaeger)
-                .withJeager();
         this.services.add(jaeger);
         return this;
     }

@@ -165,16 +165,19 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		reportParentId := state.GetWithDefault(FIT_PARENT_KEY, "0")
 		log.Printf("Report parent ID: %s\n", reportParentId)
 
-		parentStack, vectorClock := tracing.GetUid(traceId, reportParentId, isInitial, shouldUseVectorClock)
+		parentStack, vectorClock := tracing.GetUid(traceId, reportParentId, isInitial)
 		log.Printf("Parent Stack: %s\n", parentStack)
 
 		partialPoint := tracing.PartialPointFromRequest(r, destination, shouldMaskPayload)
 		// do not include the current span in the vector clock
-		vectorClock.Del(partialPoint)
 		if shouldUseVectorClock {
+			vectorClock.Del(partialPoint)
 			log.Printf("Using Vector Clocks.\n")
 			log.Printf("Vector clock: %s\n", vectorClock.String())
+		} else {
+			vectorClock = faultload.InjectionPointClock{}
 		}
+
 		invocationCount := tracing.GetCountForTrace(traceId, parentStack, partialPoint, vectorClock)
 		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, vectorClock, invocationCount)
 		// --
@@ -194,14 +197,14 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// Only directly forward the response if vector clocks are not used
 		// Because for VC we want to ensure we have reports on all previous spans
 		directlyForward := !shouldUseVectorClock
-		capture := NewResponseCapture(w, !directlyForward)
+		capture := NewResponseCapture(w, directlyForward)
 
 		var proxyState ProxyState = ProxyState{
 			InjectedFault:      nil,
 			Proxy:              proxy,
 			ResponseWriter:     capture,
 			Request:            r,
-			DurationS:          0,
+			DurationMs:         0,
 			ReponseOverwritten: false,
 			Complete:           false,
 			ConcurrentFaults:   nil,
@@ -244,7 +247,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		proxyState.Complete = true
-		proxyState.DurationS = time.Since(startTime).Seconds() * 1000
+		proxyState.DurationMs = time.Since(startTime).Seconds() * 1000
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 

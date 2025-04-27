@@ -36,7 +36,7 @@ public class MetaSuiteIT {
             .connectTimeout(5, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.MINUTES)
             .build();
-    private final static TrackedFaultload meta = new TrackedFaultload();
+    private final static TrackedFaultload metaFaultload = new TrackedFaultload();
 
     @Container
     private static final InstrumentedService proxy1 = app.instrument("proxy1", 8050,
@@ -74,6 +74,8 @@ public class MetaSuiteIT {
     @Container
     private static final InstrumentedService orchestrator = app.instrument("coordinator", 5000,
             new GenericContainer<>(COORDINATOR_IMAGE)
+                    // Note: using FLASK_DEBUG=1 will stop the OTEL instrumentation from working, so
+                    // don't use that
                     .withEnv("PROXY_LIST", "proxy1:8050,proxy2:8050,proxy3:8050")
                     .withEnv("OTEL_SERVICE_NAME", "orchestrator")
                     .withEnv("OTEL_TRACES_EXPORTER", "otlp")
@@ -103,7 +105,7 @@ public class MetaSuiteIT {
         int port = orchestrator.getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
 
-        String jsonBody = meta.serializeJson();
+        String jsonBody = metaFaultload.serializeJson();
         RequestBody body = RequestBody.create(jsonBody, JSON);
 
         Request request = new Request.Builder()

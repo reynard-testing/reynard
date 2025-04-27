@@ -29,7 +29,7 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
             var behaviour = report.getBehaviour();
-            var timing = report.response.durationS;
+            float timing = report.response.durationMs;
 
             if (timing <= 0 || report.injectedFault != null) {
                 return;

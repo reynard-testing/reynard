@@ -4,7 +4,7 @@ from frozendict import frozendict
 
 @dataclass(frozen=True)
 class ResponseData:
-    duration_s: float
+    duration_ms: float
     status: int
     body: str
 

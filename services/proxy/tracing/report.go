@@ -12,9 +12,9 @@ import (
 )
 
 type ResponseData struct {
-	Status    int     `json:"status"`
-	Body      string  `json:"body"`
-	DurationS float64 `json:"duration_s"`
+	Status     int     `json:"status"`
+	Body       string  `json:"body"`
+	DurationMs float64 `json:"duration_ms"`
 }
 
 type UidRequest struct {
@@ -118,7 +118,7 @@ func attemptGetUid(req UidRequest) *UidResponse {
 	return &response
 }
 
-func GetUid(traceId, parentId string, isInitial, useVc bool) (faultload.FaultUid, faultload.InjectionPointClock) {
+func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, faultload.InjectionPointClock) {
 	if isInitial {
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
@@ -141,12 +141,6 @@ func GetUid(traceId, parentId string, isInitial, useVc bool) (faultload.FaultUid
 		log.Printf("Failed to get UID from orchestrator after retry.\n")
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
-		}, faultload.InjectionPointClock{}
-	}
-
-	if !useVc {
-		return faultload.FaultUid{
-			Stack: res.Stack,
 		}, faultload.InjectionPointClock{}
 	}
 

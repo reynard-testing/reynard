@@ -24,9 +24,14 @@ package proxy
 
 func toGrpcError(statusCode int) int {
 
-	if statusCode == 429 || statusCode == 500 || statusCode == 502 || statusCode == 503 {
+	if statusCode == 429 || statusCode == 503 {
 		return 14
 	}
+
+	if statusCode == 502 {
+		return 13
+	}
+
 	if statusCode == 408 || statusCode == 504 {
 		return 4
 	}
@@ -39,9 +44,14 @@ func toHttpError(statusCode int) int {
 		return 503
 	}
 
+	if statusCode == 13 {
+		return 502
+	}
+
 	if statusCode == 4 {
 		return 504
 	}
 
+	// 2 & others
 	return 500
 }

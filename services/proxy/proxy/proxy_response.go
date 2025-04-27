@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -13,21 +14,29 @@ import (
 
 type ResponseCapture struct {
 	http.ResponseWriter
-	Status      int
-	BodyBuffer  bytes.Buffer // Buffer to capture the body
-	HeaderMap   http.Header
-	wroteHeader bool
+	Status          int
+	BodyBuffer      bytes.Buffer
+	ResponseBuffer  bytes.Buffer
+	HeaderMap       http.Header
+	wroteHeader     bool
+	DirectlyForward bool
 }
 
-func NewResponseCapture(w http.ResponseWriter) *ResponseCapture {
+func NewResponseCapture(w http.ResponseWriter, directlyForward bool) *ResponseCapture {
 	return &ResponseCapture{
-		ResponseWriter: w,
-		Status:         http.StatusOK,
-		HeaderMap:      make(http.Header),
+		ResponseWriter:  w,
+		Status:          http.StatusOK,
+		HeaderMap:       make(http.Header),
+		DirectlyForward: directlyForward,
 	}
 }
 
 func (rc *ResponseCapture) Header() http.Header {
+	if rc.DirectlyForward {
+		// If we are directly forwarding, we need to use the original header
+		return rc.ResponseWriter.Header()
+	}
+
 	return rc.HeaderMap
 }
 
@@ -43,14 +52,28 @@ func (rc *ResponseCapture) Write(b []byte) (int, error) {
 	if !rc.wroteHeader {
 		rc.WriteHeader(http.StatusOK)
 	}
+
+	if rc.DirectlyForward {
+		rc.BodyBuffer.Write(b)
+		return rc.ResponseWriter.Write(b)
+	}
+
 	return rc.BodyBuffer.Write(b)
 }
 
-func (rc *ResponseCapture) Flush() error {
+func (rc *ResponseCapture) Flush(logHeaders bool) error {
+	if rc.DirectlyForward {
+		// Already flushed, no need to do it again
+		return nil
+	}
+
 	// Copy headers
 	for k, vv := range rc.HeaderMap {
 		for _, v := range vv {
 			rc.ResponseWriter.Header().Add(k, v)
+			if logHeaders {
+				log.Printf("Writing Header \"%s\": %s\n", k, v)
+			}
 		}
 	}
 
@@ -58,7 +81,8 @@ func (rc *ResponseCapture) Flush() error {
 	rc.ResponseWriter.WriteHeader(rc.Status)
 
 	// Write the full body
-	_, err := io.Copy(rc.ResponseWriter, &rc.BodyBuffer)
+	written, err := io.Copy(rc.ResponseWriter, &rc.BodyBuffer)
+	log.Printf("Wrote %d bytes to response\n", written)
 	return err
 }
 
@@ -87,11 +111,12 @@ func (rc *ResponseCapture) GetResponseData(hashBody bool) tracing.ResponseData {
 			status = toHttpError(statusCode)
 		}
 	} else {
-		body = rc.BodyBuffer.String()
+		bodyBytes := rc.BodyBuffer.Bytes()
+		body = string(bodyBytes)
 	}
 
 	if hashBody && len(body) > 0 {
-		bodyHash := sha256.Sum256(rc.BodyBuffer.Bytes())
+		bodyHash := sha256.Sum256([]byte(body))
 		body = fmt.Sprintf("%X", bodyHash)
 	}
 

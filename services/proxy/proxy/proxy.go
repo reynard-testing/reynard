@@ -160,19 +160,23 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		// determine if vector clocks should be used
 		shouldUseVectorClock := state.GetWithDefault(FIT_VECTOR_CLOCK, "0") == "1"
-		if shouldUseVectorClock {
-			log.Printf("Using Vector Clocks.\n")
-		}
 
 		// -- Determine FID --
 		reportParentId := state.GetWithDefault(FIT_PARENT_KEY, "0")
 		log.Printf("Report parent ID: %s\n", reportParentId)
-		parentStack, completedEvents := tracing.GetUid(traceId, reportParentId, shouldUseVectorClock, isInitial)
+
+		parentStack, vectorClock := tracing.GetUid(traceId, reportParentId, isInitial, shouldUseVectorClock)
+		log.Printf("Parent Stack: %s\n", parentStack)
 
 		partialPoint := tracing.PartialPointFromRequest(r, destination, shouldMaskPayload)
-
-		invocationCount := tracing.GetCountForTrace(traceId, parentStack, partialPoint, completedEvents)
-		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, completedEvents, invocationCount)
+		// do not include the current span in the vector clock
+		vectorClock.Del(partialPoint)
+		if shouldUseVectorClock {
+			log.Printf("Using Vector Clocks.\n")
+			log.Printf("Vector clock: %s\n", vectorClock.String())
+		}
+		invocationCount := tracing.GetCountForTrace(traceId, parentStack, partialPoint, vectorClock)
+		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, vectorClock, invocationCount)
 		// --
 
 		state.Set(FIT_PARENT_KEY, currentSpan.ParentID)
@@ -187,7 +191,10 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			IsInitial:      isInitial,
 		}
 
-		capture := NewResponseCapture(w)
+		// Only directly forward the response if vector clocks are not used
+		// Because for VC we want to ensure we have reports on all previous spans
+		directlyForward := !shouldUseVectorClock
+		capture := NewResponseCapture(w, !directlyForward)
 
 		var proxyState ProxyState = ProxyState{
 			InjectedFault:      nil,
@@ -241,8 +248,12 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 
-		// Send the response back to the client
-		capture.Flush()
+		if !capture.DirectlyForward {
+			err := capture.Flush(shouldLogHeader)
+			if err != nil {
+				log.Printf("Error flushing response: %v\n", err)
+			}
+		}
 
 		if len(proxyState.ConcurrentFaults) > 0 {
 			log.Printf("Concurrent faults: %s\n", proxyState.ConcurrentFaults)

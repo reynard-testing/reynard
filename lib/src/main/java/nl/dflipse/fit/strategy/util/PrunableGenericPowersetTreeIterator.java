@@ -207,7 +207,7 @@ public class PrunableGenericPowersetTreeIterator {
     // Returns null if there are no more nodes to explore
     public Set<Fault> next() {
         long ops = 0;
-        int orders = 1;
+        int orders = 2;
 
         while (true) {
             // 1. Get a new node to visit from the node queue

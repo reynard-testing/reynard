@@ -2,6 +2,7 @@ package faultload
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -67,10 +68,28 @@ func (clock InjectionPointClock) String() string {
 	}
 
 	vcs := make([]string, len(clock))
-	for p, c := range clock {
-		vcs = append(vcs, fmt.Sprintf("%s:%d", p, c))
+
+	// Sort the keys to ensure consistent ordering
+	keys := make([]string, 0, len(clock))
+	for p := range clock {
+		keys = append(keys, p)
+	}
+	sort.Strings(keys)
+
+	// Create the string representation
+	for _, p := range keys {
+		vcs = append(vcs, fmt.Sprintf("%s:%d", p, clock[p]))
 	}
 	return fmt.Sprintf("{%s}", strings.Join(vcs, ","))
+}
+
+func (clock InjectionPointClock) Del(point PartialInjectionPoint) {
+	if len(clock) == 0 {
+		return
+	}
+
+	key := point.String()
+	delete(clock, key)
 }
 
 func (f InjectionPoint) String() string {
@@ -114,6 +133,7 @@ func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, vc InjectionP
 	fid := make([]InjectionPoint, len(parent.Stack)+1)
 	// Copy the existing stack
 	copy(fid, parent.Stack)
+
 	// Add the new injection point
 	fid[len(parent.Stack)] = InjectionPoint{
 		Destination: partial.Destination,

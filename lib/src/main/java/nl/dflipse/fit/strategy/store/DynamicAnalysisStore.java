@@ -218,13 +218,17 @@ public class DynamicAnalysisStore {
     }
 
     public boolean pruneFaultload(Faultload faultload) {
+        return pruneFaultSubset(faultload.faultSet());
+    }
+
+    public boolean pruneFaultload(Set<Fault> faultload) {
         // If the faultload is already in the list of redundant faultloads
         // Then we can ignore this faultload
         if (hasFaultload(faultload)) {
             return false;
         }
 
-        this.redundantFaultloads.add(faultload.faultSet());
+        this.redundantFaultloads.add(faultload);
         return true;
     }
 
@@ -248,8 +252,8 @@ public class DynamicAnalysisStore {
     }
 
     public PruneDecision isRedundant(Set<Fault> faultload) {
-        if (faultload == null || faultload.isEmpty()) {
-            return PruneDecision.KEEP;
+        if (faultload == null) {
+            return PruneDecision.PRUNE;
         }
 
         // Prune on subsets

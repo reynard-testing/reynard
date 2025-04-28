@@ -12,8 +12,8 @@ import nl.dflipse.fit.faultload.Behaviour;
 import nl.dflipse.fit.faultload.Fault;
 import nl.dflipse.fit.faultload.modes.FailureMode;
 import nl.dflipse.fit.strategy.store.ImplicationsStore;
-import nl.dflipse.fit.util.EventBuilder;
-import nl.dflipse.fit.util.FailureModes;
+import nl.dflipse.fit.testutil.EventBuilder;
+import nl.dflipse.fit.testutil.FailureModes;
 
 public class ImplicationsStoreTest {
   private FailureMode mode1 = FailureModes.getMode(0);

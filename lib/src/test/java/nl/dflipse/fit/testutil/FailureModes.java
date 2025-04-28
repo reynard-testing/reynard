@@ -1,4 +1,4 @@
-package nl.dflipse.fit.util;
+package nl.dflipse.fit.testutil;
 
 import java.util.ArrayList;
 import java.util.List;

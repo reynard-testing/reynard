@@ -57,32 +57,32 @@ public class FeedbackContextProvider extends FeedbackContext {
     }
 
     @Override
-    public void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect) {
+    public boolean reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect) {
         localStore.addUpstreamEffect(cause, effect);
-        runner.getGenerator().reportUpstreamEffect(cause, effect);
+        return runner.getGenerator().reportUpstreamEffect(cause, effect);
     }
 
     @Override
-    public void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
+    public boolean reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
         localStore.addDownstreamEffect(condition, effect);
-        runner.getGenerator().reportDownstreamEffect(condition, effect);
+        return runner.getGenerator().reportDownstreamEffect(condition, effect);
     }
 
     @Override
-    public void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
+    public boolean reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         localStore.addConditionForFaultUid(condition, fid);
-        runner.getGenerator().reportPreconditionOfFaultUid(condition, fid);
+        return runner.getGenerator().reportPreconditionOfFaultUid(condition, fid);
     }
 
     @Override
-    public void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
+    public boolean reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
         localStore.addExclusionForFaultUid(condition, fid);
-        runner.getGenerator().reportExclusionOfFaultUid(condition, fid);
+        return runner.getGenerator().reportExclusionOfFaultUid(condition, fid);
     }
 
     @Override
-    public void exploreFrom(Collection<Fault> startingNode) {
-        runner.getGenerator().exploreFrom(startingNode);
+    public boolean exploreFrom(Collection<Fault> startingNode) {
+        return runner.getGenerator().exploreFrom(startingNode);
     }
 
     @Override

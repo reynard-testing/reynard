@@ -65,7 +65,7 @@ public class TaggedTimer {
         }
 
         public void stop() {
-            if (state == TimerState.RUNNING ) {
+            if (state == TimerState.RUNNING) {
                 end = System.currentTimeMillis();
                 state = TimerState.STOPPED;
             }

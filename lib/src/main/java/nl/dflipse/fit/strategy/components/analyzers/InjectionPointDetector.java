@@ -99,8 +99,10 @@ public class InjectionPointDetector implements FeedbackHandler {
         }
 
         for (var point : newPoints) {
-            context.reportPreconditionOfFaultUid(directCauses, point.faultUid);
-            logger.info("Found conditional point: {} given {}", point.faultUid, directCauses);
+            boolean isNew = context.reportPreconditionOfFaultUid(directCauses, point.faultUid);
+            if (isNew) {
+                logger.info("Found conditional point: {} given {}", point.faultUid, directCauses);
+            }
 
             Fault retriedPoint = getIsRetryOf(point.faultUid, expectedBehaviours, context);
             if (retriedPoint != null) {
@@ -114,8 +116,11 @@ public class InjectionPointDetector implements FeedbackHandler {
             }
         }
 
-        logger.info("Exploring new point in combination with {}", actualCauses);
-        context.exploreFrom(actualCauses);
+        boolean isNew = context.exploreFrom(actualCauses);
+        if (isNew) {
+            logger.info("Exploring new point in combination with {}", actualCauses);
+            return;
+        }
     }
 
     private Fault getIsRetryOf(FaultUid newFid, Set<Behaviour> expectedBehaviours, FeedbackContext context) {

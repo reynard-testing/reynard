@@ -2,8 +2,12 @@ package nl.dflipse.fit.generators;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -15,10 +19,10 @@ import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
 import nl.dflipse.fit.strategy.util.Sets;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
-import nl.dflipse.fit.util.Enumerate;
-import nl.dflipse.fit.util.FailureModes;
-import nl.dflipse.fit.util.FaultInjectionPoints;
-import nl.dflipse.fit.util.FaultsBuilder;
+import nl.dflipse.fit.testutil.Enumerate;
+import nl.dflipse.fit.testutil.FailureModes;
+import nl.dflipse.fit.testutil.FaultInjectionPoints;
+import nl.dflipse.fit.testutil.FaultsBuilder;
 
 public class PrunedGeneratorSpaceTest {
 
@@ -45,6 +49,7 @@ public class PrunedGeneratorSpaceTest {
         var points = FaultInjectionPoints.getPoints(12);
         var generator = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator.reportFaultUids(points);
+        generator.exploreFrom(Set.of());
 
         var ignored = points.get(4);
 
@@ -52,6 +57,7 @@ public class PrunedGeneratorSpaceTest {
             if (fault == ignored) {
                 continue;
             }
+
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
@@ -76,7 +82,9 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
-        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 2);
+        generator.exploreFrom(Set.of());
+
+        long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), ignoredSet.size());
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
     }
@@ -98,6 +106,8 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultUidSubset(Set.of(fault));
         }
 
+        generator.exploreFrom(Set.of());
+
         long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 4);
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
@@ -115,6 +125,8 @@ public class PrunedGeneratorSpaceTest {
             generator.pruneFaultSubset(Set.of(
                     new Fault(points.get(0), mode)));
         }
+
+        generator.exploreFrom(Set.of());
 
         long expected = SpaceEstimate.nonEmptySpaceSize(modes.size(), 2);
         long actual = Enumerate.getGeneratedCount(generator);
@@ -134,6 +146,8 @@ public class PrunedGeneratorSpaceTest {
             var mode = modes.get(i);
             generator.pruneFaultSubset(Set.of(new Fault(points.get(1), mode)));
         }
+
+        generator.exploreFrom(Set.of());
 
         int expected = 71;
         long actual = Enumerate.getGeneratedCount(generator);
@@ -162,6 +176,8 @@ public class PrunedGeneratorSpaceTest {
             }
         }
 
+        generator.exploreFrom(Set.of());
+
         int expected = 63;
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
@@ -189,6 +205,7 @@ public class PrunedGeneratorSpaceTest {
             }
         }
 
+        generator.exploreFrom(Set.of());
         int expected = 4095;
         long actual = Enumerate.getGeneratedCount(generator);
         assertEquals(expected, actual);
@@ -205,6 +222,7 @@ public class PrunedGeneratorSpaceTest {
         // Given - a generator with no pruned faults
         var generator1 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator1.reportFaultUids(points);
+        generator1.exploreFrom(Set.of());
         List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
         // Given a generator and prunable faults
@@ -234,6 +252,7 @@ public class PrunedGeneratorSpaceTest {
             generator2.pruneFaultUidSubset(uidSubset);
         }
 
+        generator2.exploreFrom(Set.of());
         Set<Faultload> allFaultloads2 = Enumerate.getGeneratedSet(generator2);
 
         // Then - for all faultloads in the full enumeration
@@ -334,7 +353,8 @@ public class PrunedGeneratorSpaceTest {
         // Given - a generator with no pruned faults
         var generator1 = new IncreasingSizeGenerator(modes, x -> PruneDecision.KEEP);
         generator1.reportFaultUids(points);
-        generator1.reportPreconditionOfFaultUid(Set.of(), point3);
+        generator1.reportFaultUid(point3);
+        generator1.exploreFrom(Set.of());
         List<Faultload> allFaultloads = Enumerate.getGenerated(generator1);
 
         // Given a generator and prunable faults
@@ -345,6 +365,7 @@ public class PrunedGeneratorSpaceTest {
                 Set.of(faults.get(0, 0)),
                 Set.of(faults.get(2, 0)));
 
+        generator2.exploreFrom(Set.of());
         for (var precondition : preconditions) {
             generator2.reportPreconditionOfFaultUid(Behaviour.of(precondition), point3);
             generator2.exploreFrom(precondition);
@@ -374,5 +395,58 @@ public class PrunedGeneratorSpaceTest {
                 }
             }
         }
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testNewFound() {
+        var modes = FailureModes.getModes(2);
+        var points = FaultInjectionPoints.getPoints(4);
+        var point5 = FaultInjectionPoints.getPoint(5);
+
+        var pruneCounter = new AtomicInteger(0);
+        Function<Set<Fault>, PruneDecision> pruneFunction = x -> {
+            pruneCounter.incrementAndGet();
+            return PruneDecision.KEEP;
+        };
+
+        var generator1 = new IncreasingSizeGenerator(modes, pruneFunction);
+        generator1.reportFaultUids(points);
+        generator1.reportFaultUid(point5);
+        generator1.exploreFrom(Set.of());
+
+        long complete = Enumerate.getGeneratedCount(generator1);
+        long maxQueue1 = generator1.getMaxQueueSize();
+        long pruneCount1 = pruneCounter.get();
+        pruneCounter.set(0);
+
+        var generator2 = new IncreasingSizeGenerator(modes, pruneFunction);
+        generator2.reportFaultUids(points);
+        generator2.exploreFrom(Set.of());
+        generator2.reportFaultUid(point5);
+        generator2.exploreFrom(Set.of());
+
+        long laterDiscovery = Enumerate.getGeneratedCount(generator2);
+        long maxQueue2 = generator2.getMaxQueueSize();
+        long pruneCount2 = pruneCounter.get();
+        pruneCounter.set(0);
+        assertEquals(complete, laterDiscovery);
+        assertTrue(maxQueue1 < maxQueue2);
+
+        var generator3 = new IncreasingSizeGenerator(modes, pruneFunction);
+        generator3.reportFaultUids(points);
+        generator3.exploreFrom(Set.of());
+        generator3.reportFaultUid(point5);
+
+        for (var mode : modes) {
+            generator3.exploreFrom(Set.of(new Fault(point5, mode)));
+        }
+
+        long differentExploration = Enumerate.getGeneratedCount(generator3);
+        long maxQueue3 = generator3.getMaxQueueSize();
+        long pruneCount3 = pruneCounter.get();
+        pruneCounter.set(0);
+        assertEquals(complete, differentExploration);
+
     }
 }

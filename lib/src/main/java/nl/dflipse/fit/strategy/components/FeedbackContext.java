@@ -20,17 +20,17 @@ public abstract class FeedbackContext extends PruneContext {
         }
     }
 
-    public abstract void reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect);
+    public abstract boolean reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect);
 
-    public abstract void reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid result);
+    public abstract boolean reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid result);
 
-    public abstract void reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid);
+    public abstract boolean reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid fid);
 
-    public abstract void reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect);
+    public abstract boolean reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect);
 
     public abstract void reportHappyPath(TraceReport report);
 
-    public abstract void exploreFrom(Collection<Fault> startingNode);
+    public abstract boolean exploreFrom(Collection<Fault> startingNode);
 
     public abstract void pruneFaultUidSubset(Set<FaultUid> subset);
 

@@ -436,6 +436,7 @@ public class PrunedGeneratorSpaceTest {
             return PruneDecision.KEEP;
         };
 
+        // -- Generator 1 -- All points are kown up front
         var generator1 = new IncreasingSizeGenerator(modes, pruneFunction);
         generator1.reportFaultUids(points);
         generator1.reportFaultUid(point5);
@@ -446,6 +447,7 @@ public class PrunedGeneratorSpaceTest {
         long pruneCount1 = pruneCounter.get();
         pruneCounter.set(0);
 
+        // -- Generator 2 -- All points except one are known up front
         var generator2 = new IncreasingSizeGenerator(modes, pruneFunction);
         generator2.reportFaultUids(points);
         generator2.exploreFrom(Set.of());
@@ -460,6 +462,8 @@ public class PrunedGeneratorSpaceTest {
         assertTrue(maxQueue1 < maxQueue2);
         // assertEquals(complete, pruneCount2);
 
+        // -- Generator 2 -- All points except one are known up front, but we explore
+        // directly from the point
         var generator3 = new IncreasingSizeGenerator(modes, pruneFunction);
         generator3.reportFaultUids(points);
         generator3.exploreFrom(Set.of());
@@ -477,6 +481,5 @@ public class PrunedGeneratorSpaceTest {
         assertTrue(maxQueue1 == maxQueue3);
         assertTrue(pruneCount1 == pruneCount2);
         assertTrue(pruneCount3 == pruneCount2);
-
     }
 }

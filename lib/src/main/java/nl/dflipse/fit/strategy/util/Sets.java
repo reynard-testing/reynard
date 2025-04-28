@@ -28,10 +28,6 @@ public class Sets {
         return A.stream().anyMatch(x -> !B.contains(x)) && isSupersetOf(A, B);
     }
 
-    public static <T> boolean areEqual(Collection<T> set1, Collection<T> set2) {
-        return set1.containsAll(set2) && set2.containsAll(set1);
-    }
-
     /** Return A ∪ B */
     public static <T> Set<T> union(Collection<T> A, Collection<T> B) {
         Set<T> union = new LinkedHashSet<>(A);
@@ -113,6 +109,19 @@ public class Sets {
             }
         }
         return result;
+    }
+
+    public static <T> boolean areEqual(Collection<T> list1, Collection<T> list2) {
+        if (list1.size() != list2.size()) {
+            return false;
+        }
+
+        for (var item : list1) {
+            if (!list2.contains(item)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static <T> T getOnlyElement(Collection<T> A) {

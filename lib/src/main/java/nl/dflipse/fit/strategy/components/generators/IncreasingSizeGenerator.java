@@ -21,20 +21,20 @@ import nl.dflipse.fit.strategy.components.PruneDecision;
 import nl.dflipse.fit.strategy.components.Reporter;
 import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
 import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.strategy.util.PrunableGenericPowersetTreeIterator;
+import nl.dflipse.fit.strategy.util.DynamicPowersetTree;
 import nl.dflipse.fit.strategy.util.Simplify;
 import nl.dflipse.fit.strategy.util.SpaceEstimate;
 import nl.dflipse.fit.trace.tree.TraceReport;
 
 public class IncreasingSizeGenerator extends Generator implements Reporter {
     private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
-    private final PrunableGenericPowersetTreeIterator iterator;
+    private final DynamicPowersetTree iterator;
 
     private final DynamicAnalysisStore store;
 
     public IncreasingSizeGenerator(DynamicAnalysisStore store, Function<Set<Fault>, PruneDecision> pruneFunction) {
         this.store = store;
-        iterator = new PrunableGenericPowersetTreeIterator(store, pruneFunction, true);
+        iterator = new DynamicPowersetTree(store, pruneFunction, true);
     }
 
     public IncreasingSizeGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {

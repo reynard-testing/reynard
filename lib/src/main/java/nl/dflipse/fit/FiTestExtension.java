@@ -47,7 +47,7 @@ import nl.dflipse.fit.util.TaggedTimer;
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
     private StrategyRunner strategy;
-    private final TaggedTimer timer = new TaggedTimer();
+    private final TaggedTimer totalTimer = new TaggedTimer();
     private static final Logger logger = LoggerFactory.getLogger(FiTestExtension.class);
 
     @Override
@@ -59,7 +59,7 @@ public class FiTestExtension
 
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
-        timer.start("Total test time");
+        totalTimer.start("Total test time");
         // Retrieve the annotation and its parameters
         var annotation = context.getTestMethod()
                 .orElseThrow()
@@ -165,9 +165,11 @@ public class FiTestExtension
     }
 
     private TestTemplateInvocationContext createInvocationContext(StrategyRunner strategy, FaultController controller) {
-        timer.start("nextFaultload");
+        TaggedTimer strategyTimer = new TaggedTimer();
+        strategyTimer.start("nextFaultload");
         TrackedFaultload faultload = strategy.nextFaultload();
-        timer.stop("nextFaultload");
+        strategyTimer.stop("nextFaultload");
+        strategy.registerTime(strategyTimer);
 
         if (faultload == null) {
             return null;
@@ -191,8 +193,8 @@ public class FiTestExtension
     }
 
     public void afterAll() {
-        timer.stop("Total test time");
-        strategy.registerTime(timer);
+        totalTimer.stop("Total test time");
+        strategy.registerTime(totalTimer);
         strategy.statistics.setSize(strategy.getGenerator().spaceSize());
         strategy.statistics.report();
     }

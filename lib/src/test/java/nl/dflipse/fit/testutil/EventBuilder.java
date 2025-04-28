@@ -52,9 +52,9 @@ public class EventBuilder {
     this.parent = parent;
   }
 
-  public EventBuilder withPoint(String service, String signature, Map<String, Integer> vc,
+  public EventBuilder withPoint(String service, String signature, Map<String, Integer> cs,
       int count) {
-    point = new FaultInjectionPoint(service, signature, "", vc, count);
+    point = new FaultInjectionPoint(service, signature, "", cs, count);
     return this;
   }
 

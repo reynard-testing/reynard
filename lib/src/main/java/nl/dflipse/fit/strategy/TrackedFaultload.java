@@ -46,8 +46,8 @@ public class TrackedFaultload {
         return this;
     }
 
-    public TrackedFaultload withVectorClocks() {
-        traceState.set("use-vc", "1");
+    public TrackedFaultload withCallStack() {
+        traceState.set("use-cs", "1");
         return this;
     }
 

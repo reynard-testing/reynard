@@ -18,16 +18,21 @@ public class Simplify {
 
     public static Pair<List<Set<Fault>>, List<Set<FaultUid>>> simplify(List<Set<Fault>> sets,
             Collection<FailureMode> failureModes) {
+        // Convert Fault sets to Behaviour sets
         List<Set<Behaviour>> behaviourSets = sets.stream()
                 .map(x -> Behaviour.of(x))
                 .toList();
+
+        // Simplify Behaviour sets
         var simplified = simplifyBehaviour(behaviourSets, failureModes);
 
+        // Convert back to Fault sets
         List<Set<Fault>> faultSets = simplified.first().stream()
                 .map(x -> x.stream()
                         .map(Behaviour::getFault)
                         .collect(Collectors.toSet()))
                 .toList();
+
         return Pair.of(faultSets, simplified.second());
     }
 

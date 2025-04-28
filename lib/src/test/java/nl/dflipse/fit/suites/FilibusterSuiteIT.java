@@ -60,7 +60,7 @@ public class FilibusterSuiteIT {
         }
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, optimizeForImpactless = false)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
     public void testNetflix(TrackedFaultload faultload) throws IOException {
 
         var traceparent = faultload.getTraceParent().toString();

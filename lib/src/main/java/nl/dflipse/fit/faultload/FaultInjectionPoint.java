@@ -1,5 +1,6 @@
 package nl.dflipse.fit.faultload;
 
+import java.util.Collections;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -9,7 +10,12 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonSerialize
 @JsonDeserialize
 public record FaultInjectionPoint(String destination, String signature, String payload,
-        @JsonProperty("vector_clock") Map<String, Integer> vectorClock, int count) {
+        @JsonProperty("call_stack") Map<String, Integer> callStack, int count) {
+
+    public FaultInjectionPoint {
+        // Ensure map is immutable
+        callStack = Collections.unmodifiableMap(callStack);
+    }
 
     private static String ANY_WILDCARD = "*";
 
@@ -29,13 +35,17 @@ public record FaultInjectionPoint(String destination, String signature, String p
     public String toString() {
         String payloadStr = (payload.equals("*") || payload.equals("")) ? "" : "(" + payload + ")";
         String countStr = count < 0 ? "#∞" : ("#" + count);
-        String vcStr = "";
-        if (vectorClock != null && !vectorClock.isEmpty()) {
-            vcStr = "{" + vectorClock.entrySet().stream()
+
+        // {key1:value1,key2:value2, ...}
+        String csStr = "";
+        if (callStack != null && !callStack.isEmpty()) {
+            csStr = "{" + callStack.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
                     .map(e -> e.getKey().toString() + ":" + e.getValue())
                     .reduce((a, b) -> a + "," + b).orElse("") + "}";
         }
-        return destination + ":" + signature + payloadStr + vcStr + countStr;
+
+        return destination + ":" + signature + payloadStr + csStr + countStr;
     }
 
     public String toSimplifiedString() {
@@ -44,11 +54,11 @@ public record FaultInjectionPoint(String destination, String signature, String p
     }
 
     public FaultInjectionPoint asAnyPayload() {
-        return new FaultInjectionPoint(destination, signature, "*", vectorClock, count);
+        return new FaultInjectionPoint(destination, signature, "*", callStack, count);
     }
 
     public FaultInjectionPoint asAnyCount() {
-        return new FaultInjectionPoint(destination, signature, payload, vectorClock, -1);
+        return new FaultInjectionPoint(destination, signature, payload, callStack, -1);
     }
 
     public PartialFaultInjectionPoint asPartial() {
@@ -73,27 +83,14 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     private boolean matches(Map<String, Integer> a, Map<String, Integer> b) {
         if (a == null || b == null) {
-            return false;
+            return true;
         }
 
         if (a.size() != b.size()) {
             return false;
         }
 
-        for (var entry : a.entrySet()) {
-            var key = entry.getKey();
-            var value = entry.getValue();
-
-            if (!b.containsKey(key)) {
-                return false;
-            }
-
-            if (!matches(value, b.get(key))) {
-                return false;
-            }
-        }
-
-        return true;
+        return a.equals(b);
     }
 
     public boolean matches(FaultInjectionPoint other) {
@@ -104,7 +101,7 @@ public record FaultInjectionPoint(String destination, String signature, String p
     public boolean matchesUpToCount(FaultInjectionPoint other) {
         return matches(destination, other.destination) &&
                 matches(signature, other.signature) &&
-                matches(vectorClock, other.vectorClock) &&
+                matches(callStack, other.callStack) &&
                 matches(payload, other.payload);
     }
 }

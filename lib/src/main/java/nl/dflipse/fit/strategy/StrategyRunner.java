@@ -323,8 +323,14 @@ public class StrategyRunner {
         Set<Pruner> attributed = new LinkedHashSet<>();
 
         for (Pruner pruner : pruners) {
+            TaggedTimer pruneTimer = new TaggedTimer();
+            String name = pruner.getClass().getSimpleName();
+            String tag = name + ".prune<Pruner>";
+            pruneTimer.start(tag);
             PruneContextProvider context = new PruneContextProvider(this, pruner.getClass());
             PruneDecision decision = pruner.prune(faultload, context);
+            pruneTimer.stop(tag);
+            statistics.registerTime(pruneTimer);
             switch (decision) {
                 case PRUNE -> {
                     if (pruneDecision == PruneDecision.KEEP) {

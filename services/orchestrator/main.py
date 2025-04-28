@@ -149,8 +149,6 @@ async def register_faultload_at_proxy(proxy: str, payload):
             f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}", flush=True)
         raise Exception(
             f"Failed to register faultload at proxy {proxy}: {response.status_code} {response.text}")
-    else:
-        print(f"Registered faultload at proxy {proxy}", flush=True)
 
 
 @app.route("/v1/faultload/register", methods=['POST'])
@@ -159,7 +157,6 @@ async def register_faultload():
     trace_id = payload.get('trace_id')
     trace_ids.add(trace_id)
 
-    print(f"Registering at: {proxy_list}", flush=True)
     tasks = [with_retry(lambda proxy=proxy: register_faultload_at_proxy(
         proxy, payload), proxy_retry_count) for proxy in proxy_list]
     await asyncio.gather(*tasks)

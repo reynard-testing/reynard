@@ -555,12 +555,16 @@ public class ImplicationsStoreTest {
     var a = nA.getFaultUid();
 
     var nC1 = nRoot.createChild()
-        .withPoint("C", "c1", Map.of("A", 1), 0);
+        .withPoint("C", "c1", Map.of("A", 1));
     var c1 = nC1.getFaultUid();
 
-    var nB = nRoot.createChild()
-        .withPoint("B", "b1");
-    var b = nB.getFaultUid();
+    var nBafterA = nRoot.createChild()
+        .withPoint("B", "b1", Map.of("A", 1));
+    var b_a = nBafterA.getFaultUid();
+
+    var nBafterC = nRoot.createChild()
+        .withPoint("B", "b1", Map.of("A", 1, "C", 1));
+    var b_ac = nBafterC.getFaultUid();
 
     var nC2 = nRoot.createChild()
         .withPoint("C", "c1", Map.of("A", 1, "B", 1), 0);
@@ -571,29 +575,33 @@ public class ImplicationsStoreTest {
     var d = nD.getFaultUid();
 
     // Happy path, root calls A and B
-    testStore.addUpstreamEffect(r, Set.of(a, b, d));
+    testStore.addUpstreamEffect(r, Set.of(a, b_a, d));
 
-    // Fallback for A is C1
+    // Fallback for A is C1, causing B to be called in a different manner
     testStore.addInclusionEffect(Set.of(new Behaviour(a, mode1)), c1);
+    testStore.addExclusionEffect(Set.of(new Behaviour(a, mode1)), b_a);
+    testStore.addInclusionEffect(Set.of(new Behaviour(a, mode1)), b_ac);
+
     // fallback for B is C2
-    testStore.addInclusionEffect(Set.of(new Behaviour(b, mode1)), c2);
+    testStore.addInclusionEffect(Set.of(new Behaviour(b_a, mode1)), c2);
+    testStore.addInclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c2, null), new Behaviour(b_ac, mode1)),
+        c2);
 
     // if A&C1 fail, then no b or d
-    testStore.addExclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c1, mode1)), b);
+    testStore.addExclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c1, mode1)), b_ac);
 
     testStore.addExclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c1, mode1)), d);
 
-    testStore.addExclusionEffect(Set.of(new Behaviour(c1, null)), c2);
-
     // if B&C2 fail, then no d
-    testStore.addExclusionEffect(Set.of(new Behaviour(b, mode1), new Behaviour(c2, mode1)), d);
+    testStore.addExclusionEffect(Set.of(new Behaviour(b_a, mode1), new Behaviour(c2, mode1)), d);
+    testStore.addExclusionEffect(Set.of(new Behaviour(b_ac, mode1), new Behaviour(c2, mode1)), d);
 
     // If A and B fail
     Set<Behaviour> res1 = testStore.getBehaviours(Set.of(
         new Fault(a, mode1),
-        new Fault(b, mode1)));
+        new Fault(b_ac, mode1)));
 
-    // Expect all of them (C is only called once in reality)
+    // Expect A, C1, B after C1, D
     assertEquals(5, res1.size());
     assertEquals(2, faultyBehaviours(res1));
 
@@ -607,20 +615,32 @@ public class ImplicationsStoreTest {
 
     // if B and C fail, then no D
     Set<Behaviour> res3 = testStore.getBehaviours(Set.of(
-        new Fault(b, mode1),
+        new Fault(b_a, mode1),
         new Fault(c2, mode1)));
 
     assertEquals(4, res3.size());
     assertEquals(2, faultyBehaviours(res3));
 
-    // if A, B and C1 fail, then no D
+    // if A, B and C1 doesnt fail, then no C2
     Set<Behaviour> res4 = testStore.getBehaviours(Set.of(
         new Fault(a, mode1),
-        new Fault(b, mode1),
+        new Fault(b_ac, mode1),
         new Fault(c2, mode1)));
 
-    // We expect to see, A, C1, B, C2,
+    // We expect to see, A, C1, B, D
+    // But not C2, because it is excluded
     assertEquals(5, res4.size());
-    assertEquals(3, faultyBehaviours(res4));
+    assertEquals(2, faultyBehaviours(res4));
+
+    // if A, and C1 fail, then no B or D
+    var f5 = Set.of(
+        new Fault(a, mode1),
+        new Fault(b_ac, mode1),
+        new Fault(c1, mode1));
+    Set<Behaviour> res5 = testStore.getBehaviours(f5);
+
+    // We expect to see, A, C1
+    assertEquals(3, res5.size());
+    assertEquals(2, faultyBehaviours(res5));
   }
 }

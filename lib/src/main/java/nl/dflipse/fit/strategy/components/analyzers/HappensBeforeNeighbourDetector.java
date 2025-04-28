@@ -54,6 +54,7 @@ public class HappensBeforeNeighbourDetector implements FeedbackHandler {
             }
 
             Set<Behaviour> causes = result.trace.getChildren(report).stream()
+                    // TODO: check is this is correct
                     .filter(f -> f.hasFaultBehaviour())
                     .map(r -> r.getBehaviour())
                     .collect(Collectors.toSet());

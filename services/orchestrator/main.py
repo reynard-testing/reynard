@@ -1,10 +1,6 @@
 import asyncio
-from calendar import c
 import os
-
 import requests
-
-# import trace
 from flask import Flask, request
 
 from lib.models import TraceReport, ResponseData, FaultUid, InjectionPoint

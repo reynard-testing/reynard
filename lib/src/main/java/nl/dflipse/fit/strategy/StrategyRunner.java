@@ -42,6 +42,7 @@ public class StrategyRunner {
     private boolean withLogHeader = false;
     private int withGetDelayMs = 0;
     private long maxTimeS = 0;
+    private long caseCount = 0;
     private long testCasesLeft = -1;
     private long startTime = 0;
 
@@ -216,12 +217,20 @@ public class StrategyRunner {
             // Generate new faultloads
             Faultload generated = generate();
             generateCount++;
+            caseCount++;
 
             // Generator is exhausted
             if (generated == null) {
                 break;
             }
 
+            if (caseCount % 100 == 0) {
+                // Prune the full generator queue every 100 cases
+                // This is a bit expensive, but it helps to keep the queue small
+                generator.prune();
+            }
+
+            // TODO: generator also prunes, so this is maybe not needed
             PruneDecision decision = prune(generated);
 
             if (decision == PruneDecision.KEEP) {

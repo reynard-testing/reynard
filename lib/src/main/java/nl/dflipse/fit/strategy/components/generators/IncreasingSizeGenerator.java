@@ -145,6 +145,11 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
         return store;
     }
 
+    @Override
+    public void prune() {
+        iterator.pruneQueue();
+    }
+
     public int getMaxQueueSize() {
         return iterator.getMaxQueueSize();
     }

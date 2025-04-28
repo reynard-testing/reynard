@@ -112,7 +112,7 @@ public class EventBuilder {
     if (parent == null) {
       return List.of(point);
     }
-    return Lists.add(parent.getStack(), point);
+    return Lists.plus(parent.getStack(), point);
   }
 
   public Behaviour getBehaviour() {

@@ -69,23 +69,18 @@ public class PrunableGenericPowersetTreeIterator {
         queueSize.add(toExpand.size());
     }
 
-    private PruneDecision isRedundantVisit(TreeNode node) {
+    private PruneDecision shouldPrune(TreeNode node) {
         if (node.value.isEmpty()) {
             return PruneDecision.PRUNE;
         }
 
-        return PruneDecision.KEEP;
-    }
-
-    private PruneDecision shouldPrune(TreeNode node) {
-        PruneDecision localDecision = isRedundantVisit(node);
         PruneDecision storeDecision = store.isRedundant(node.valueSet());
         if (storeDecision == PruneDecision.PRUNE_SUPERSETS) {
             return PruneDecision.PRUNE_SUPERSETS;
         }
 
         PruneDecision punersDecision = pruneFunction.apply(node.valueSet());
-        return PruneDecision.max(localDecision, storeDecision, punersDecision);
+        return PruneDecision.max(storeDecision, punersDecision);
     }
 
     private void pruneExpansions(TreeNode node) {
@@ -113,15 +108,24 @@ public class PrunableGenericPowersetTreeIterator {
                 .map(f -> new TreeNode(Lists.plus(exp.node.value, f)))
                 .toList();
 
-        if (exp.expansion.size() == 1) {
+        List<FaultUid> expansionsLeft = exp.expansion.subList(1, exp.expansion.size());
+        if (expansionsLeft.isEmpty()) {
             // We are done expanding this node
             return Pair.of(newNodes, List.of());
         }
 
-        List<FaultUid> expansionsLeft = exp.expansion.subList(1, exp.expansion.size());
+        List<FaultUid> consistentExpansions = expansionsLeft.stream()
+                .filter(e -> !expansionElement.matches(e))
+                .toList();
+
+        if (consistentExpansions.isEmpty()) {
+            // We are done expanding this node
+            return Pair.of(newNodes, List.of(new ExpansionNode(exp.node, expansionsLeft)));
+        }
+
         List<ExpansionNode> newExpansions = Lists.plus(
                 newNodes.stream()
-                        .map(n -> new ExpansionNode(n, expansionsLeft))
+                        .map(n -> new ExpansionNode(n, consistentExpansions))
                         .toList(),
                 new ExpansionNode(exp.node, expansionsLeft));
 
@@ -140,29 +144,15 @@ public class PrunableGenericPowersetTreeIterator {
             return false;
         }
 
-        visitedNodes.add(node);
-        switch (shouldPrune(node)) {
-            case PRUNE -> {
-                return false;
-            }
+        int insertionIndex = Lists.addAfter(toVisit, node, n -> n.value.size() > node.value.size());
 
-            case PRUNE_SUPERSETS -> {
-                pruneExpansions(node);
-                return false;
-            }
-
-            default -> {
-                int insertionIndex = Lists.addAfter(toVisit, node, n -> n.value.size() > node.value.size());
-
-                if (insertionIndex == -1) {
-                    logger.debug("Adding {} to end of the queue", node);
-                } else {
-                    logger.debug("Adding {} to queue at index {}", node, insertionIndex);
-                }
-
-                return true;
-            }
+        if (insertionIndex == -1) {
+            logger.debug("Adding {} to end of the queue", node);
+        } else {
+            logger.debug("Adding {} to queue at index {}", node, insertionIndex);
         }
+
+        return true;
     }
 
     private void addExpensions(Collection<ExpansionNode> expansions) {
@@ -179,12 +169,6 @@ public class PrunableGenericPowersetTreeIterator {
 
         if (visitedExpansions.contains(exp) || toExpand.contains(exp)) {
             logger.debug("Ignoring expansion {}", exp);
-            return false;
-        }
-
-        if (shouldPrune(exp.node) == PruneDecision.PRUNE_SUPERSETS) {
-            logger.debug("Ignoring expansion of {}", exp);
-            visitedExpansions.add(exp);
             return false;
         }
 
@@ -223,7 +207,7 @@ public class PrunableGenericPowersetTreeIterator {
     // Returns null if there are no more nodes to explore
     public Set<Fault> next() {
         long ops = 0;
-        int orders = 1;
+        int orders = 2;
 
         while (true) {
             // 1. Get a new node to visit from the node queue

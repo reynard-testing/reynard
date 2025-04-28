@@ -40,9 +40,10 @@ public class StrategyRunner {
     private boolean withPayloadMasking = false;
     private boolean withBodyHashing = false;
     private boolean withLogHeader = false;
+    private boolean withCallStack = false;
+
     private int withGetDelayMs = 0;
     private long maxTimeS = 0;
-    private long caseCount = 0;
     private long testCasesLeft = -1;
     private long startTime = 0;
 
@@ -64,6 +65,11 @@ public class StrategyRunner {
 
     public StrategyRunner withLogHeader() {
         withLogHeader = true;
+        return this;
+    }
+
+    public StrategyRunner withCallStack() {
+        withCallStack = true;
         return this;
     }
 
@@ -186,6 +192,10 @@ public class StrategyRunner {
             tracked.withHeaderLog();
         }
 
+        if (withCallStack) {
+            tracked.withCallStack();
+        }
+
         if (withGetDelayMs > 0) {
             boolean isInitial = tracked.getFaultload().faultSet().isEmpty();
             // Wait longer on the initial run, to ensure we got everyting
@@ -217,17 +227,10 @@ public class StrategyRunner {
             // Generate new faultloads
             Faultload generated = generate();
             generateCount++;
-            caseCount++;
 
             // Generator is exhausted
             if (generated == null) {
                 break;
-            }
-
-            if (caseCount % 100 == 0) {
-                // Prune the full generator queue every 100 cases
-                // This is a bit expensive, but it helps to keep the queue small
-                generator.prune();
             }
 
             // TODO: generator also prunes, so this is maybe not needed

@@ -10,8 +10,8 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="nl.dflipse" level="DEBUG" />
-        <!-- <Logger name="nl.dflipse" level="INFO" /> -->
+        <!-- <Logger name="nl.dflipse" level="DEBUG" /> -->
+        <Logger name="nl.dflipse" level="INFO" />
         <Root level="WARN">
             <AppenderRef ref="CONSOLE" />
         </Root>

@@ -83,7 +83,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             boolean hasAlteredResponse = false;
             var happyPathResponse = context.getHappyPath(injectionPoint);
             if (happyPathResponse != null) {
-                hasAlteredResponse = !happyPathResponse.equals(report.response);
+                hasAlteredResponse = !happyPathResponse.response.equals(report.response);
             }
             boolean hasImpact = hasFailure || hasAlteredResponse;
 

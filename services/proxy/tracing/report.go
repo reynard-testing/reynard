@@ -12,14 +12,18 @@ import (
 )
 
 type ResponseData struct {
-	Status    int     `json:"status"`
-	Body      string  `json:"body"`
-	DurationS float64 `json:"duration_s"`
+	Status     int     `json:"status"`
+	Body       string  `json:"body"`
+	DurationMs float64 `json:"duration_ms"`
 }
 
 type UidRequest struct {
 	TraceId        string `json:"trace_id"`
 	ReportParentId string `json:"parent_span_id"`
+}
+type UidResponse struct {
+	Stack           []faultload.InjectionPoint        `json:"stack"`
+	CompletedEvents faultload.InjectionPointCallStack `json:"completed_events"`
 }
 
 type RequestReport struct {
@@ -82,7 +86,7 @@ func ReportSpanUID(report RequestReport) bool {
 	return success
 }
 
-func attemptGetUid(req UidRequest) *faultload.FaultUid {
+func attemptGetUid(req UidRequest) *UidResponse {
 	queryUrl := fmt.Sprintf("http://%s/v1/proxy/get-parent-uid", queryHost)
 
 	jsonBodyBytes, err := json.Marshal(req)
@@ -105,7 +109,7 @@ func attemptGetUid(req UidRequest) *faultload.FaultUid {
 		return nil
 	}
 
-	var response faultload.FaultUid
+	var response UidResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		log.Printf("Failed to decode response: %v\n", err)
 		return nil
@@ -114,11 +118,11 @@ func attemptGetUid(req UidRequest) *faultload.FaultUid {
 	return &response
 }
 
-func GetUid(traceId, parentId string, isInitial bool) faultload.FaultUid {
+func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, faultload.InjectionPointCallStack) {
 	if isInitial {
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
-		}
+		}, faultload.InjectionPointCallStack{}
 	}
 
 	req := UidRequest{
@@ -137,8 +141,10 @@ func GetUid(traceId, parentId string, isInitial bool) faultload.FaultUid {
 		log.Printf("Failed to get UID from orchestrator after retry.\n")
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
-		}
-	} else {
-		return *res
+		}, faultload.InjectionPointCallStack{}
 	}
+
+	return faultload.FaultUid{
+		Stack: res.Stack,
+	}, res.CompletedEvents
 }

@@ -16,7 +16,7 @@ type ProxyState struct {
 	Request            *http.Request
 	ReponseOverwritten bool
 	Complete           bool
-	DurationS          float64
+	DurationMs         float64
 }
 
 func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) tracing.RequestReport {
@@ -25,7 +25,7 @@ func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) tr
 	if s.Complete {
 		responseData := s.ResponseWriter.GetResponseData(hashBody)
 		response = &responseData
-		response.DurationS = s.DurationS
+		response.DurationMs = s.DurationMs
 	}
 
 	return tracing.RequestReport{

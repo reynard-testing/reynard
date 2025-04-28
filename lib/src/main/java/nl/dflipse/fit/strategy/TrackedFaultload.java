@@ -46,6 +46,11 @@ public class TrackedFaultload {
         return this;
     }
 
+    public TrackedFaultload withCallStack() {
+        traceState.set("use-cs", "1");
+        return this;
+    }
+
     public TrackedFaultload withGetDelay(int ms) {
         this.getDelayMs = ms;
         return this;

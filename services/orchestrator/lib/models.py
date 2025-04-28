@@ -1,11 +1,23 @@
 from dataclasses import dataclass
+from frozendict import frozendict
 
 
 @dataclass(frozen=True)
 class ResponseData:
-    duration_s: float
+    duration_ms: float
     status: int
     body: str
+
+
+@dataclass(frozen=True)
+class PartialInjectionPoint:
+    destination: str
+    signature: str
+    payload: str
+
+    def to_str(self) -> str:
+        payload_str = "" if not self.payload or self.payload == "*" else f"({self.payload})"
+        return f"{self.destination}:{self.signature}{payload_str}"
 
 
 @dataclass(frozen=True)
@@ -13,7 +25,15 @@ class InjectionPoint:
     destination: str
     signature: str
     payload: str
+    call_stack: frozendict[str, int]
     count: int
+
+    def as_partial(self) -> PartialInjectionPoint:
+        return PartialInjectionPoint(
+            destination=self.destination,
+            signature=self.signature,
+            payload=self.payload,
+        )
 
 
 @dataclass(frozen=True)

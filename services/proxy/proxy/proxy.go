@@ -25,6 +25,7 @@ const (
 	FIT_FLAG                = "fit"
 	FIT_MASK_PAYLOAD_FLAG   = "mask"
 	FIT_HASH_BODY_FLAG      = "hashbody"
+	FIT_USE_CALL_STACK      = "use-cs"
 	FIT_HEADER_LOGGING_FLAG = "headerlog"
 
 	OTEL_PARENT_HEADER = "traceparent"
@@ -157,13 +158,28 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 		}
 
+		// determine if call stacks should be used
+		shouldUseCallStack := state.GetWithDefault(FIT_USE_CALL_STACK, "0") == "1"
+
 		// -- Determine FID --
 		reportParentId := state.GetWithDefault(FIT_PARENT_KEY, "0")
 		log.Printf("Report parent ID: %s\n", reportParentId)
+
+		parentStack, callStack := tracing.GetUid(traceId, reportParentId, isInitial)
+		log.Printf("Parent Stack: %s\n", parentStack)
+
 		partialPoint := tracing.PartialPointFromRequest(r, destination, shouldMaskPayload)
-		parentStack := tracing.GetUid(traceId, reportParentId, isInitial)
-		invocationCount := tracing.GetCountForTrace(traceId, parentStack, partialPoint)
-		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, invocationCount)
+		// do not include the current span in the call stack
+		if shouldUseCallStack {
+			callStack.Del(partialPoint)
+			log.Printf("Using call stack.\n")
+			log.Printf("Call stack: %s\n", callStack.String())
+		} else {
+			callStack = faultload.InjectionPointCallStack{}
+		}
+
+		invocationCount := tracing.GetCountForTrace(traceId, parentStack, partialPoint, callStack)
+		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, callStack, invocationCount)
 		// --
 
 		state.Set(FIT_PARENT_KEY, currentSpan.ParentID)
@@ -178,17 +194,17 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			IsInitial:      isInitial,
 		}
 
-		capture := &ResponseCapture{
-			ResponseWriter: w,
-			Status:         http.StatusOK,
-		}
+		// Only directly forward the response if call stacks are not used
+		// Because for call stacks we want to ensure we have reports on all previous spans
+		directlyForward := !shouldUseCallStack
+		capture := NewResponseCapture(w, directlyForward)
 
 		var proxyState ProxyState = ProxyState{
 			InjectedFault:      nil,
 			Proxy:              proxy,
 			ResponseWriter:     capture,
 			Request:            r,
-			DurationS:          0,
+			DurationMs:         0,
 			ReponseOverwritten: false,
 			Complete:           false,
 			ConcurrentFaults:   nil,
@@ -231,13 +247,21 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		proxyState.Complete = true
-		proxyState.DurationS = time.Since(startTime).Seconds() * 1000
+		proxyState.DurationMs = time.Since(startTime).Seconds() * 1000
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
-
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
+
+		if !capture.DirectlyForward {
+			err := capture.Flush(shouldLogHeader)
+			if err != nil {
+				log.Printf("Error flushing response: %v\n", err)
+			}
+		}
 
 		if len(proxyState.ConcurrentFaults) > 0 {
 			log.Printf("Concurrent faults: %s\n", proxyState.ConcurrentFaults)
 		}
+
+		log.Printf("Response sent.\n")
 	})
 }

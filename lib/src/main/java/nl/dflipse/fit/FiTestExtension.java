@@ -134,8 +134,12 @@ public class FiTestExtension
             strategy.withLogHeader();
         }
 
-        if (annotation.getTraceInitialDelay() > 0) {
-            strategy.withGetDelay(annotation.getTraceInitialDelay());
+        if (annotation.withCallStack()) {
+            strategy.withCallStack();
+        }
+
+        if (annotation.initialGetTraceDelay() > 0) {
+            strategy.withGetDelay(annotation.initialGetTraceDelay());
         }
 
         Class<?> testClass = context.getRequiredTestClass();

@@ -13,8 +13,9 @@ type TraceInvocationCounter struct {
 
 var traceInvocationCounter = TraceInvocationCounter{m: make(map[string]map[string]int)}
 
-func getKey(stack faultload.FaultUid, partial faultload.PartialInjectionPoint) string {
-	return stack.String() + ">" + partial.String()
+func getKey(stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips faultload.InjectionPointCallStack) string {
+	key := stack.String() + ">" + partial.String() + ips.String()
+	return key
 }
 
 func (t *TraceInvocationCounter) GetCount(trace, key string) int {
@@ -44,8 +45,8 @@ func (t *TraceInvocationCounter) Clear(trace string) {
 	delete(t.m, trace)
 }
 
-func GetCountForTrace(trace string, stack faultload.FaultUid, partial faultload.PartialInjectionPoint) int {
-	return traceInvocationCounter.GetCount(trace, getKey(stack, partial))
+func GetCountForTrace(trace string, stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips faultload.InjectionPointCallStack) int {
+	return traceInvocationCounter.GetCount(trace, getKey(stack, partial, ips))
 }
 
 func ClearTraceCount(trace string) {

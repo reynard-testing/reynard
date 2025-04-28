@@ -19,6 +19,8 @@ public @interface FiTest {
 
     boolean logHeaders() default false;
 
+    boolean withCallStack() default false;
+
     boolean failStop() default true;
 
     boolean optimizeForRetries() default false;
@@ -26,9 +28,10 @@ public @interface FiTest {
     boolean optimizeForImpactless() default false;
 
     long maxTestCases() default 0;
+
     long maxTimeS() default 0;
 
     int maxFaultloadSize() default 0;
 
-    int getTraceInitialDelay() default 0;
+    int initialGetTraceDelay() default 0;
 }

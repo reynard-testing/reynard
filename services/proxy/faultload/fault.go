@@ -2,6 +2,7 @@ package faultload
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -11,11 +12,14 @@ type PartialInjectionPoint struct {
 	Payload     string `json:"payload"`
 }
 
+type InjectionPointCallStack map[string]int
+
 type InjectionPoint struct {
-	Destination string `json:"destination"`
-	Signature   string `json:"signature"`
-	Payload     string `json:"payload"`
-	Count       int    `json:"count"`
+	Destination string                  `json:"destination"`
+	Signature   string                  `json:"signature"`
+	Payload     string                  `json:"payload"`
+	CallStack   InjectionPointCallStack `json:"call_stack"`
+	Count       int                     `json:"count"`
 }
 type FaultUid struct {
 	Stack []InjectionPoint `json:"stack"`
@@ -43,10 +47,25 @@ func (f1 FaultUid) Matches(f2 FaultUid) bool {
 	return true
 }
 
+func (cs1 InjectionPointCallStack) Matches(cs2 InjectionPointCallStack) bool {
+	if len(cs1) != len(cs2) {
+		return false
+	}
+
+	for k, v := range cs1 {
+		if v2, ok := cs2[k]; !ok || !intMatches(v, v2) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (f1 InjectionPoint) Matches(f2 InjectionPoint) bool {
 	return stringMatches(f1.Destination, f2.Destination) &&
 		stringMatches(f1.Signature, f2.Signature) &&
 		stringMatches(f1.Payload, f2.Payload) &&
+		f1.CallStack.Matches(f2.CallStack) &&
 		intMatches(f1.Count, f2.Count)
 }
 
@@ -56,6 +75,36 @@ func (fid FaultUid) String() string {
 		ip_strings[i] = ip.String()
 	}
 	return strings.Join(ip_strings, ">")
+}
+
+func (cs InjectionPointCallStack) String() string {
+	if len(cs) == 0 {
+		return ""
+	}
+
+	csStrings := make([]string, len(cs))
+
+	// Sort the keys to ensure consistent ordering
+	keys := make([]string, 0, len(cs))
+	for p := range cs {
+		keys = append(keys, p)
+	}
+	sort.Strings(keys)
+
+	// Create the string representation
+	for _, p := range keys {
+		csStrings = append(csStrings, fmt.Sprintf("%s:%d", p, cs[p]))
+	}
+	return fmt.Sprintf("{%s}", strings.Join(csStrings, ","))
+}
+
+func (ips InjectionPointCallStack) Del(point PartialInjectionPoint) {
+	if len(ips) == 0 {
+		return
+	}
+
+	key := point.String()
+	delete(ips, key)
 }
 
 func (f InjectionPoint) String() string {
@@ -70,7 +119,10 @@ func (f InjectionPoint) String() string {
 	} else {
 		countStr = fmt.Sprintf("#%d", f.Count)
 	}
-	return fmt.Sprintf("%s:%s%s%s", f.Destination, f.Signature, payloadStr, countStr)
+
+	csStr := f.CallStack.String()
+
+	return fmt.Sprintf("%s:%s%s%s%s", f.Destination, f.Signature, payloadStr, csStr, countStr)
 }
 
 func (f PartialInjectionPoint) String() string {
@@ -92,15 +144,17 @@ type FaultMode struct {
 	Args []string `json:"args"`
 }
 
-func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, count int) FaultUid {
+func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, ips InjectionPointCallStack, count int) FaultUid {
 	fid := make([]InjectionPoint, len(parent.Stack)+1)
 	// Copy the existing stack
 	copy(fid, parent.Stack)
+
 	// Add the new injection point
 	fid[len(parent.Stack)] = InjectionPoint{
 		Destination: partial.Destination,
 		Signature:   partial.Signature,
 		Payload:     partial.Payload,
+		CallStack:   ips,
 		Count:       count,
 	}
 

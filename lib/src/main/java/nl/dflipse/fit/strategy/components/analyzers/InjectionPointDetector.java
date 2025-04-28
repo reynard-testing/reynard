@@ -116,6 +116,11 @@ public class InjectionPointDetector implements FeedbackHandler {
             }
         }
 
+        // Note: it would be more efficient if the expension at this stage would be
+        // [new] :: existing
+        // Due to how the search tree is structured (leftmost has less subtrees)
+        // However, this is currently not possible
+        // (impact is just more redundant explore node visits)
         boolean isNew = context.exploreFrom(actualCauses);
         if (isNew) {
             logger.info("Exploring new point in combination with {}", actualCauses);

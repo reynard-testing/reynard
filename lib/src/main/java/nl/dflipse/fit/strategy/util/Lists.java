@@ -19,6 +19,13 @@ public class Lists {
         return list;
     }
 
+    public static <T> List<T> plus(T e, List<T> A) {
+        var list = new ArrayList<T>();
+        list.add(e);
+        list.addAll(A);
+        return list;
+    }
+
     /** Return A - B */
     public static <T> List<T> difference(Collection<T> A, Collection<T> B) {
         List<T> difference = new ArrayList<>(A);
@@ -27,6 +34,19 @@ public class Lists {
     }
 
     public static <T> int addAfter(List<T> list, T element, Predicate<T> predicate) {
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (predicate.test(list.get(i))) {
+                int insertionIndex = i + 1;
+                list.add(insertionIndex, element);
+                return insertionIndex;
+            }
+        }
+
+        list.add(element);
+        return -1;
+    }
+
+    public static <T> int addBefore(List<T> list, T element, Predicate<T> predicate) {
         for (int i = 0; i < list.size(); i++) {
             if (predicate.test(list.get(i))) {
                 list.add(i, element);

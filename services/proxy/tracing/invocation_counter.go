@@ -1,7 +1,6 @@
 package tracing
 
 import (
-	"log"
 	"sync"
 
 	"dflipse.nl/fit-proxy/faultload"
@@ -16,7 +15,6 @@ var traceInvocationCounter = TraceInvocationCounter{m: make(map[string]map[strin
 
 func getKey(stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips faultload.InjectionPointCallStack) string {
 	key := stack.String() + ">" + partial.String() + ips.String()
-	log.Printf("Key: %s\n", key)
 	return key
 }
 

@@ -19,7 +19,7 @@ public @interface FiTest {
 
     boolean logHeaders() default false;
 
-    boolean withCallStack() default true;
+    boolean withCallStack() default false;
 
     boolean failStop() default true;
 
@@ -33,5 +33,5 @@ public @interface FiTest {
 
     int maxFaultloadSize() default 0;
 
-    int getTraceInitialDelay() default 0;
+    int initialGetTraceDelay() default 0;
 }

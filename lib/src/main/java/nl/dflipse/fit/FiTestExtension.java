@@ -161,9 +161,11 @@ public class FiTestExtension
     }
 
     private TestTemplateInvocationContext createInvocationContext(StrategyRunner strategy, FaultController controller) {
-        timer.start("nextFaultload");
+        TaggedTimer strategyTimer = new TaggedTimer();
+        strategyTimer.start("nextFaultload");
         TrackedFaultload faultload = strategy.nextFaultload();
-        timer.stop("nextFaultload");
+        strategyTimer.stop("nextFaultload");
+        strategy.registerTime(strategyTimer);
 
         if (faultload == null) {
             return null;

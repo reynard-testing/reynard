@@ -19,7 +19,7 @@ public @interface FiTest {
 
     boolean logHeaders() default false;
 
-    boolean withCallStack() default true;
+    boolean withCallStack() default false;
 
     boolean failStop() default true;
 

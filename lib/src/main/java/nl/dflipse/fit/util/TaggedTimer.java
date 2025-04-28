@@ -60,35 +60,20 @@ public class TaggedTimer {
         }
 
         public void start() {
-            switch (state) {
-                case INIT:
-                    start = System.currentTimeMillis();
-                    state = TimerState.RUNNING;
-                    break;
-
-                default:
-                    throw new IllegalStateException("Timer already started");
-            }
+            start = System.currentTimeMillis();
+            state = TimerState.RUNNING;
         }
 
         public void stop() {
-            switch (state) {
-                case INIT:
-                    throw new IllegalStateException("Timer not started");
-
-                case RUNNING:
-                    end = System.currentTimeMillis();
-                    state = TimerState.STOPPED;
-                    break;
-
-                case STOPPED:
-                    throw new IllegalStateException("Timer already stopped");
+            if (state == TimerState.RUNNING ) {
+                end = System.currentTimeMillis();
+                state = TimerState.STOPPED;
             }
         }
 
         public long durationMs() {
             if (state != TimerState.STOPPED) {
-                return -1;
+                return System.currentTimeMillis() - start;
             }
 
             return end - start;

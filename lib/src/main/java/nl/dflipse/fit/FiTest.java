@@ -26,6 +26,7 @@ public @interface FiTest {
     boolean optimizeForImpactless() default false;
 
     long maxTestCases() default 0;
+    long maxTimeS() default 0;
 
     int maxFaultloadSize() default 0;
 

@@ -104,6 +104,16 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			return
 		}
 
+		// Get and parse the "tracestate" header
+		tracestate := r.Header.Get(OTEL_STATE_HEADER)
+		state := tracing.ParseTraceState(tracestate)
+
+		// Ensure non-conical form is kept
+		r.Header.Del(OTEL_PARENT_HEADER)
+		r.Header[OTEL_PARENT_HEADER] = []string{traceparent}
+		r.Header.Del(OTEL_STATE_HEADER)
+		r.Header[OTEL_STATE_HEADER] = []string{tracestate}
+
 		// Determine if registered as an interesting trace
 		faults, ok := control.RegisteredFaults.Get(parentSpan.TraceID)
 		if !ok {
@@ -113,13 +123,10 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			return
 		}
 
-		// Get and parse the "tracestate" header
-		tracestate := r.Header.Get(OTEL_STATE_HEADER)
-		state := tracing.ParseTraceState(tracestate)
 		traceId := parentSpan.TraceID
 		// TODO (optional): export to collector, so that jeager understands whats going on
 		currentSpan := parentSpan.GenerateNew()
-		r.Header.Set(OTEL_PARENT_HEADER, currentSpan.String())
+		r.Header[OTEL_PARENT_HEADER] = []string{currentSpan.String()}
 
 		// only forward the request if the "fit" flag is set in the tracestate
 		shouldInspect := state.GetWithDefault(FIT_FLAG, "0") == "1"
@@ -147,7 +154,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		if isInitial {
 			log.Printf("Initial request.\n")
 			state.Delete(FIT_IS_INITIAL_KEY)
-			r.Header.Set(OTEL_STATE_HEADER, state.String())
+			r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 		}
 
 		// -- Determine FID --
@@ -160,7 +167,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// --
 
 		state.Set(FIT_PARENT_KEY, currentSpan.ParentID)
-		r.Header.Set(OTEL_STATE_HEADER, state.String())
+		r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
 			TraceId:        traceId,

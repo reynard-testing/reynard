@@ -41,7 +41,9 @@ public class StrategyRunner {
     private boolean withBodyHashing = false;
     private boolean withLogHeader = false;
     private int withGetDelayMs = 0;
+    private long maxTimeS = 0;
     private long testCasesLeft = -1;
+    private long startTime = 0;
 
     private final Logger logger = LoggerFactory.getLogger(StrategyRunner.class);
 
@@ -71,6 +73,12 @@ public class StrategyRunner {
 
     public StrategyRunner withMaxTestCases(long max) {
         testCasesLeft = max;
+        return this;
+    }
+
+    public StrategyRunner withMaxTimeS(long timeout) {
+        maxTimeS = timeout;
+        startTime = System.currentTimeMillis();
         return this;
     }
 
@@ -140,6 +148,14 @@ public class StrategyRunner {
             return null;
         } else if (testCasesLeft > 0) {
             testCasesLeft--;
+        }
+
+        if (maxTimeS > 0) {
+            long secs = (long) (System.currentTimeMillis() - startTime) / 1000;
+            if (secs > maxTimeS) {
+                logger.warn("Reached time limit, stopping!");
+                return null;
+            }
         }
 
         Faultload faultload = generateAndPruneTillNext();

@@ -37,6 +37,7 @@ public class DynamicPowersetTree {
             return Set.copyOf(value);
         }
 
+        // For equality, the list is a set
         @Override
         public final boolean equals(Object o) {
             if (o == this) {
@@ -50,6 +51,8 @@ public class DynamicPowersetTree {
             return false;
         }
 
+        // In the hashcode, we use the set representation
+        // So in a hashset, our equality check still works
         @Override
         public final int hashCode() {
             return Objects.hash(Set.copyOf(value));
@@ -58,6 +61,8 @@ public class DynamicPowersetTree {
     }
 
     public record ExpansionNode(TreeNode node, List<FaultUid> expansion) {
+        
+        // For equality, the list is a set
         @Override
         public final boolean equals(Object o) {
             if (o == this) {
@@ -70,6 +75,8 @@ public class DynamicPowersetTree {
             return false;
         }
 
+        // In the hashcode, we use the set representation
+        // So in a hashset, our equality check still works
         @Override
         public final int hashCode() {
             return Objects.hash(node, Set.copyOf(expansion));

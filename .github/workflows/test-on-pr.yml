@@ -1,0 +1,23 @@
+name: Test on Pull Request to Main
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-unit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 11 for x64
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          architecture: x64
+          cache: maven
+      - name: Run the Maven verify phase
+        run: mvn --batch-mode --update-snapshots verify

@@ -60,7 +60,7 @@ public record Fault(
         return true;
     }
 
-    public static Set<Fault> getFaults(FaultUid point, Collection<FailureMode> modes) {
+    public static Set<Fault> allFaults(FaultUid point, Collection<FailureMode> modes) {
         return modes.stream()
                 .map(mode -> new Fault(point, mode))
                 .collect(Collectors.toSet());
@@ -78,7 +78,7 @@ public record Fault(
 
         var head = uids.get(0);
         var tail = uids.subList(1, uids.size());
-        Set<Fault> additions = getFaults(head, modes);
+        Set<Fault> additions = allFaults(head, modes);
         Set<Set<Fault>> allSets = new LinkedHashSet<>();
         for (var addition : additions) {
             Set<Fault> newCurrent = Sets.plus(current, addition);

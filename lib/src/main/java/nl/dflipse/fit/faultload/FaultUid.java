@@ -1,5 +1,6 @@
 package nl.dflipse.fit.faultload;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -164,5 +165,19 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         }
 
         return matches(stack, other.stack, true);
+    }
+
+    public static boolean contains(Collection<FaultUid> collection, FaultUid uid) {
+        if (collection == null || uid == null) {
+            return false;
+        }
+
+        for (FaultUid other : collection) {
+            if (other.matches(uid)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

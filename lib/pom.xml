@@ -4,8 +4,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.github.delanoflipse</groupId>
-    <artifactId>fit</artifactId>
+    <groupId>io.github.delanoflipse.fit</groupId>
+    <artifactId>parent</artifactId>
     <version>0.0.2</version>
   </parent>
 

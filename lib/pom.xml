@@ -6,12 +6,12 @@
   <parent>
     <groupId>io.github.delanoflipse.fit</groupId>
     <artifactId>project</artifactId>
-    <version>0.0.2</version>
+    <version>${revision}</version>
   </parent>
 
   <artifactId>suite</artifactId>
   <name>Distributed Fault Injection Library</name>
-  <version>0.1.0</version>
+  <version>${revision}</version>
   <packaging>jar</packaging>
 
   <!-- <url>http://maven.apache.org</url> -->

@@ -50,7 +50,6 @@ jobs:
           java-version: "17"
           distribution: "temurin"
           architecture: x64
-          cache: maven
           server-id: central
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD

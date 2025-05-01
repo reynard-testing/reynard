@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.testutil;
+package io.github.delanoflipse.fit.suite.testutil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,19 +7,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.delanoflipse.fit.faultload.Behaviour;
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.FaultInjectionPoint;
-import io.github.delanoflipse.fit.faultload.FaultUid;
-import io.github.delanoflipse.fit.faultload.Faultload;
-import io.github.delanoflipse.fit.faultload.PartialFaultInjectionPoint;
-import io.github.delanoflipse.fit.faultload.modes.ErrorFault;
-import io.github.delanoflipse.fit.faultload.modes.FailureMode;
-import io.github.delanoflipse.fit.strategy.TrackedFaultload;
-import io.github.delanoflipse.fit.strategy.util.Lists;
-import io.github.delanoflipse.fit.strategy.util.TraceAnalysis;
-import io.github.delanoflipse.fit.trace.tree.TraceReport;
-import io.github.delanoflipse.fit.trace.tree.TraceResponse;
+import io.github.delanoflipse.fit.suite.faultload.Behaviour;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.Faultload;
+import io.github.delanoflipse.fit.suite.faultload.PartialFaultInjectionPoint;
+import io.github.delanoflipse.fit.suite.faultload.modes.ErrorFault;
+import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.suite.strategy.util.Lists;
+import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
+import io.github.delanoflipse.fit.suite.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.suite.trace.tree.TraceResponse;
 
 public class EventBuilder {
   TraceReport report = new TraceReport();

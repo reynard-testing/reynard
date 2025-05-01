@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.trace;
+package io.github.delanoflipse.fit.suite.trace;
 
 public class TraceParent {
     public String version;

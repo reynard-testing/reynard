@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suites;
+package io.github.delanoflipse.fit.suite.suites;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -13,19 +13,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-import io.github.delanoflipse.fit.FiTest;
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.FaultUid;
-import io.github.delanoflipse.fit.faultload.Faultload;
-import io.github.delanoflipse.fit.faultload.modes.ErrorFault;
-import io.github.delanoflipse.fit.faultload.modes.FailureMode;
-import io.github.delanoflipse.fit.faultload.modes.HttpError;
-import io.github.delanoflipse.fit.faultload.modes.OmissionFault;
-import io.github.delanoflipse.fit.instrument.FaultController;
-import io.github.delanoflipse.fit.instrument.controller.RemoteController;
-import io.github.delanoflipse.fit.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.strategy.TrackedFaultload;
-import io.github.delanoflipse.fit.strategy.util.TraceAnalysis;
+import io.github.delanoflipse.fit.suite.FiTest;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.Faultload;
+import io.github.delanoflipse.fit.suite.faultload.modes.ErrorFault;
+import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.suite.faultload.modes.HttpError;
+import io.github.delanoflipse.fit.suite.faultload.modes.OmissionFault;
+import io.github.delanoflipse.fit.suite.instrument.FaultController;
+import io.github.delanoflipse.fit.suite.instrument.controller.RemoteController;
+import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;

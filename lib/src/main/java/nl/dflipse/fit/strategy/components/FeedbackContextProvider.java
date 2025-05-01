@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.components;
+package io.github.delanoflipse.fit.suite.strategy.components;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,18 +7,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.delanoflipse.fit.faultload.Behaviour;
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.FaultUid;
-import io.github.delanoflipse.fit.faultload.Faultload;
-import io.github.delanoflipse.fit.faultload.modes.FailureMode;
-import io.github.delanoflipse.fit.strategy.StrategyReporter;
-import io.github.delanoflipse.fit.strategy.StrategyRunner;
-import io.github.delanoflipse.fit.strategy.components.generators.Generator;
-import io.github.delanoflipse.fit.strategy.store.DynamicAnalysisStore;
-import io.github.delanoflipse.fit.strategy.util.Pair;
-import io.github.delanoflipse.fit.strategy.util.StringFormat;
-import io.github.delanoflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.suite.faultload.Behaviour;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.Faultload;
+import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.suite.strategy.StrategyReporter;
+import io.github.delanoflipse.fit.suite.strategy.StrategyRunner;
+import io.github.delanoflipse.fit.suite.strategy.components.generators.Generator;
+import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
+import io.github.delanoflipse.fit.suite.strategy.util.Pair;
+import io.github.delanoflipse.fit.suite.strategy.util.StringFormat;
+import io.github.delanoflipse.fit.suite.trace.tree.TraceReport;
 
 public class FeedbackContextProvider extends FeedbackContext {
 

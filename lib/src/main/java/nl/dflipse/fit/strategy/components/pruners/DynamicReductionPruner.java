@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.components.pruners;
+package io.github.delanoflipse.fit.suite.strategy.components.pruners;
 
 import java.util.List;
 import java.util.Set;
@@ -6,12 +6,12 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.delanoflipse.fit.faultload.Behaviour;
-import io.github.delanoflipse.fit.faultload.FaultUid;
-import io.github.delanoflipse.fit.faultload.Faultload;
-import io.github.delanoflipse.fit.strategy.components.PruneContext;
-import io.github.delanoflipse.fit.strategy.components.PruneDecision;
-import io.github.delanoflipse.fit.strategy.components.Pruner;
+import io.github.delanoflipse.fit.suite.faultload.Behaviour;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.Faultload;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.suite.strategy.components.Pruner;
 
 public class DynamicReductionPruner implements Pruner {
     private final Logger logger = LoggerFactory.getLogger(DynamicReductionPruner.class);

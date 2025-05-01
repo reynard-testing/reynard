@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.delanoflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 
 public class SetsTest {
     @Test

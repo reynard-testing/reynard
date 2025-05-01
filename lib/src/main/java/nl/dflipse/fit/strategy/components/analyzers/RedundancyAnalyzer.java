@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.components.analyzers;
+package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -8,12 +8,12 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.FaultUid;
-import io.github.delanoflipse.fit.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
-import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
-import io.github.delanoflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 
 public class RedundancyAnalyzer implements FeedbackHandler {
     private final Set<FaultUid> detectedUids = new LinkedHashSet<>();

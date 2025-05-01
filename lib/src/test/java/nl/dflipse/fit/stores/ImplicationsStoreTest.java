@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.stores;
+package io.github.delanoflipse.fit.suite.stores;
 
 import static org.junit.Assert.assertEquals;
 
@@ -10,13 +10,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import io.github.delanoflipse.fit.faultload.Behaviour;
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.FaultUid;
-import io.github.delanoflipse.fit.faultload.modes.FailureMode;
-import io.github.delanoflipse.fit.strategy.store.ImplicationsStore;
-import io.github.delanoflipse.fit.testutil.EventBuilder;
-import io.github.delanoflipse.fit.testutil.FailureModes;
+import io.github.delanoflipse.fit.suite.faultload.Behaviour;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsStore;
+import io.github.delanoflipse.fit.suite.testutil.EventBuilder;
+import io.github.delanoflipse.fit.suite.testutil.FailureModes;
 
 public class ImplicationsStoreTest {
   private FailureMode mode1 = FailureModes.getMode(0);

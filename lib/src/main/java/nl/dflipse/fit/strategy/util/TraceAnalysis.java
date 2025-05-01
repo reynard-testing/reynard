@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.util;
+package io.github.delanoflipse.fit.suite.strategy.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,10 +11,10 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.delanoflipse.fit.faultload.Behaviour;
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.FaultUid;
-import io.github.delanoflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.suite.faultload.Behaviour;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.trace.tree.TraceReport;
 
 public class TraceAnalysis {
     private final Logger logger = LoggerFactory.getLogger(TraceAnalysis.class);

@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.testutil;
+package io.github.delanoflipse.fit.suite.testutil;
 
 import java.util.Map;
 

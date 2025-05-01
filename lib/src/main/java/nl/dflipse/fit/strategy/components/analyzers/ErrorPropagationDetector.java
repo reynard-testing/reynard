@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.components.analyzers;
+package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
 import java.util.List;
 import java.util.Set;
@@ -7,12 +7,12 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.delanoflipse.fit.faultload.Behaviour;
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
-import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
-import io.github.delanoflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.suite.faultload.Behaviour;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.suite.trace.tree.TraceReport;
 
 public class ErrorPropagationDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ErrorPropagationDetector.class);

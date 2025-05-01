@@ -1,10 +1,10 @@
-package io.github.delanoflipse.fit.strategy.util;
+package io.github.delanoflipse.fit.suite.strategy.util;
 
 import java.util.List;
 import java.util.Set;
 
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 
 public class SpaceEstimate {
 

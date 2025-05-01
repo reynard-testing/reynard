@@ -1,18 +1,18 @@
-package io.github.delanoflipse.fit.strategy;
+package io.github.delanoflipse.fit.suite.strategy;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.delanoflipse.fit.strategy.components.FeedbackContextProvider;
-import io.github.delanoflipse.fit.strategy.components.PruneContext;
-import io.github.delanoflipse.fit.strategy.components.PruneContextProvider;
-import io.github.delanoflipse.fit.strategy.components.Reporter;
-import io.github.delanoflipse.fit.strategy.components.generators.Generator;
-import io.github.delanoflipse.fit.strategy.util.Pair;
-import io.github.delanoflipse.fit.strategy.util.Sets;
-import io.github.delanoflipse.fit.strategy.util.StringFormat;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContextProvider;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneContextProvider;
+import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
+import io.github.delanoflipse.fit.suite.strategy.components.generators.Generator;
+import io.github.delanoflipse.fit.suite.strategy.util.Pair;
+import io.github.delanoflipse.fit.suite.strategy.util.Sets;
+import io.github.delanoflipse.fit.suite.strategy.util.StringFormat;
 
 public class StrategyReporter {
     public static int DEFAULT_WIDTH = 48;

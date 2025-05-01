@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy;
+package io.github.delanoflipse.fit.suite.strategy;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -8,21 +8,21 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.Faultload;
-import io.github.delanoflipse.fit.faultload.modes.FailureMode;
-import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
-import io.github.delanoflipse.fit.strategy.components.FeedbackContextProvider;
-import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
-import io.github.delanoflipse.fit.strategy.components.PruneContextProvider;
-import io.github.delanoflipse.fit.strategy.components.PruneDecision;
-import io.github.delanoflipse.fit.strategy.components.Pruner;
-import io.github.delanoflipse.fit.strategy.components.Reporter;
-import io.github.delanoflipse.fit.strategy.components.generators.Generator;
-import io.github.delanoflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
-import io.github.delanoflipse.fit.strategy.store.DynamicAnalysisStore;
-import io.github.delanoflipse.fit.strategy.util.Sets;
-import io.github.delanoflipse.fit.util.TaggedTimer;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.Faultload;
+import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContextProvider;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneContextProvider;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.suite.strategy.components.Pruner;
+import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
+import io.github.delanoflipse.fit.suite.strategy.components.generators.Generator;
+import io.github.delanoflipse.fit.suite.strategy.components.generators.IncreasingSizeGenerator;
+import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
+import io.github.delanoflipse.fit.suite.strategy.util.Sets;
+import io.github.delanoflipse.fit.suite.util.TaggedTimer;
 
 public class StrategyRunner {
     private DynamicAnalysisStore store;

@@ -1,11 +1,11 @@
-package io.github.delanoflipse.fit.testutil;
+package io.github.delanoflipse.fit.suite.testutil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.delanoflipse.fit.faultload.FaultInjectionPoint;
-import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 
 public class FaultInjectionPoints {
 

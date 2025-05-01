@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.util;
+package io.github.delanoflipse.fit.suite.util;
 
 import org.slf4j.Logger;
 import org.slf4j.Marker;

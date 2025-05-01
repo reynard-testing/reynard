@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.components.analyzers;
+package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -9,20 +9,20 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.FaultUid;
-import io.github.delanoflipse.fit.faultload.modes.FailureMode;
-import io.github.delanoflipse.fit.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.strategy.StrategyReporter;
-import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
-import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
-import io.github.delanoflipse.fit.strategy.components.PruneContext;
-import io.github.delanoflipse.fit.strategy.components.Reporter;
-import io.github.delanoflipse.fit.strategy.store.SubsetStore;
-import io.github.delanoflipse.fit.strategy.util.Sets;
-import io.github.delanoflipse.fit.strategy.util.Simplify;
-import io.github.delanoflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
-import io.github.delanoflipse.fit.trace.tree.TraceResponse;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.suite.strategy.StrategyReporter;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
+import io.github.delanoflipse.fit.suite.strategy.store.SubsetStore;
+import io.github.delanoflipse.fit.suite.strategy.util.Sets;
+import io.github.delanoflipse.fit.suite.strategy.util.Simplify;
+import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.trace.tree.TraceResponse;
 
 public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(BehaviorAnalyzer.class);

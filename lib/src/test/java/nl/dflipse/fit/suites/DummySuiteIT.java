@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suites;
+package io.github.delanoflipse.fit.suite.suites;
 
 import static org.junit.Assert.assertTrue;
 
@@ -6,8 +6,8 @@ import org.junit.Test;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
-import io.github.delanoflipse.fit.instrument.FaultController;
-import io.github.delanoflipse.fit.instrument.InstrumentedApp;
+import io.github.delanoflipse.fit.suite.instrument.FaultController;
+import io.github.delanoflipse.fit.suite.instrument.InstrumentedApp;
 
 public class DummySuiteIT {
     public static InstrumentedApp app;

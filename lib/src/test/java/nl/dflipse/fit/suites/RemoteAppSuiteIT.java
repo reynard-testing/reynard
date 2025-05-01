@@ -1,15 +1,15 @@
-package io.github.delanoflipse.fit.suites;
+package io.github.delanoflipse.fit.suite.suites;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
-import io.github.delanoflipse.fit.FiTest;
-import io.github.delanoflipse.fit.faultload.modes.ErrorFault;
-import io.github.delanoflipse.fit.faultload.modes.OmissionFault;
-import io.github.delanoflipse.fit.instrument.FaultController;
-import io.github.delanoflipse.fit.instrument.controller.RemoteController;
-import io.github.delanoflipse.fit.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.suite.FiTest;
+import io.github.delanoflipse.fit.suite.faultload.modes.ErrorFault;
+import io.github.delanoflipse.fit.suite.faultload.modes.OmissionFault;
+import io.github.delanoflipse.fit.suite.instrument.FaultController;
+import io.github.delanoflipse.fit.suite.instrument.controller.RemoteController;
+import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;

@@ -1,11 +1,11 @@
-package io.github.delanoflipse.fit.models;
+package io.github.delanoflipse.fit.suite.models;
 
 import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import io.github.delanoflipse.fit.faultload.FaultInjectionPoint;
-import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 
 import java.util.Arrays;
 import java.util.Collection;

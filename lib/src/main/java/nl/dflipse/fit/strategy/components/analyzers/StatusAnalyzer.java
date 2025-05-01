@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.components.analyzers;
+package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.delanoflipse.fit.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
-import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
-import io.github.delanoflipse.fit.strategy.components.PruneContext;
-import io.github.delanoflipse.fit.strategy.components.Reporter;
+import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
 
 public class StatusAnalyzer implements FeedbackHandler, Reporter {
     private final Map<String, Set<Integer>> faultStatus = new HashMap<>();

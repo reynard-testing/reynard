@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.faultload;
+package io.github.delanoflipse.fit.suite.faultload;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

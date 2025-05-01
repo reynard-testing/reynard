@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.faultload.modes;
+package io.github.delanoflipse.fit.suite.faultload.modes;
 
 import java.util.List;
 

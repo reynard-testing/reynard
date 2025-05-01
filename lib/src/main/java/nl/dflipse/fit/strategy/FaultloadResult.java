@@ -1,10 +1,10 @@
-package io.github.delanoflipse.fit.strategy;
+package io.github.delanoflipse.fit.suite.strategy;
 
 import java.util.Set;
 
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.strategy.util.Sets;
-import io.github.delanoflipse.fit.strategy.util.TraceAnalysis;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.strategy.util.Sets;
+import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 
 public class FaultloadResult {
     public TrackedFaultload trackedFaultload;

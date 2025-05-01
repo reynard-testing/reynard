@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.store;
+package io.github.delanoflipse.fit.suite.strategy.store;
 
 import java.util.ArrayList;
 import java.util.List;

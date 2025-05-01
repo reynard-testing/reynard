@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.faultload;
+package io.github.delanoflipse.fit.suite.faultload;
 
 import java.util.ArrayList;
 import java.util.Collection;

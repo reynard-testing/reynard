@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.components;
+package io.github.delanoflipse.fit.suite.strategy.components;
 
 public enum PruneDecision {
     PRUNE,

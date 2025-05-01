@@ -5,7 +5,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
 
-import io.github.delanoflipse.fit.strategy.util.Combinatorics;
+import io.github.delanoflipse.fit.suite.strategy.util.Combinatorics;
 
 public class CombinatoricsTest {
     @Test

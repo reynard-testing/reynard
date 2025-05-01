@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.strategy.util;
+package io.github.delanoflipse.fit.suite.strategy.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,10 +11,10 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.delanoflipse.fit.faultload.Fault;
-import io.github.delanoflipse.fit.faultload.FaultUid;
-import io.github.delanoflipse.fit.strategy.components.PruneDecision;
-import io.github.delanoflipse.fit.strategy.store.DynamicAnalysisStore;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
 
 // TODO: just merge with generator? Its pretty hardwired atm
 public class DynamicPowersetTree {

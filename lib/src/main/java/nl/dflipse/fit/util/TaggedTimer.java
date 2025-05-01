@@ -1,10 +1,10 @@
-package io.github.delanoflipse.fit.util;
+package io.github.delanoflipse.fit.suite.util;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.github.delanoflipse.fit.strategy.util.Pair;
+import io.github.delanoflipse.fit.suite.strategy.util.Pair;
 
 public class TaggedTimer {
     private final Map<String, Timer> timers = new LinkedHashMap<>();

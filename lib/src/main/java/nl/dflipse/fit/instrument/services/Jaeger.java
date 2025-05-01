@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.instrument.services;
+package io.github.delanoflipse.fit.suite.instrument.services;
 
 import java.util.Map;
 

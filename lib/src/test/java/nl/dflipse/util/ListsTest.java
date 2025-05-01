@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.delanoflipse.fit.strategy.util.Lists;
+import io.github.delanoflipse.fit.suite.strategy.util.Lists;
 
 public class ListsTest {
     @Test

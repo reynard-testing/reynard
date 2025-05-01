@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suites;
+package io.github.delanoflipse.fit.suite.suites;
 
 import java.io.IOException;
 
@@ -10,13 +10,13 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import io.github.delanoflipse.fit.FiTest;
-import io.github.delanoflipse.fit.faultload.modes.ErrorFault;
-import io.github.delanoflipse.fit.faultload.modes.OmissionFault;
-import io.github.delanoflipse.fit.instrument.FaultController;
-import io.github.delanoflipse.fit.instrument.InstrumentedApp;
-import io.github.delanoflipse.fit.instrument.services.InstrumentedService;
-import io.github.delanoflipse.fit.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.suite.FiTest;
+import io.github.delanoflipse.fit.suite.faultload.modes.ErrorFault;
+import io.github.delanoflipse.fit.suite.faultload.modes.OmissionFault;
+import io.github.delanoflipse.fit.suite.instrument.FaultController;
+import io.github.delanoflipse.fit.suite.instrument.InstrumentedApp;
+import io.github.delanoflipse.fit.suite.instrument.services.InstrumentedService;
+import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;

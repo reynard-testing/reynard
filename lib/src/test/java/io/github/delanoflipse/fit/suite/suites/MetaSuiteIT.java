@@ -27,8 +27,8 @@ import okhttp3.Response;
 public class MetaSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final int PROXY_RETRY_COUNT = 3;
-    private static final String PROXY_IMAGE = "dflipse/ds-fit-proxy:latest";
-    private static final String CONTROLLER_IMAGE = "dflipse/ds-fit-controller:latest";
+    private static final String PROXY_IMAGE = getEnv("PROXY_MAGE", "dflipse/ds-fit-proxy:latest");
+    private static final String CONTROLLER_IMAGE = getEnv("CONTROLLER_IMAGE", "dflipse/ds-fit-controller:latest");
     private static final String COLLECTOR_ENDPOINT = "http://" + app.jaegerHost + ":4317";
     public static final MediaType JSON = MediaType.get("application/json");
 
@@ -37,6 +37,14 @@ public class MetaSuiteIT {
             .readTimeout(10, TimeUnit.MINUTES)
             .build();
     private final static TrackedFaultload metaFaultload = new TrackedFaultload();
+
+    private static String getEnv(String key, String def) {
+        String env = System.getenv(key);
+        if (env == null || env.equals("")) {
+            return def;
+        }
+        return env;
+    }
 
     @Container
     private static final InstrumentedService proxy1 = app.instrument("proxy1", 8050,

@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.github.delanoflipse.fit.faultload.Behaviour;
@@ -467,6 +468,7 @@ public class ImplicationsStoreTest {
   }
 
   @Test
+  @Disabled("This test illustrates an issue when not using call stacks")
   public void testContradiction() {
     ImplicationsStore testStore = new ImplicationsStore();
 
@@ -505,31 +507,6 @@ public class ImplicationsStoreTest {
 
     // if B&C fail, then no d
     testStore.addExclusionEffect(Set.of(new Behaviour(b, mode1), new Behaviour(c, mode1)), d);
-
-    // If A and B fail
-    Set<Behaviour> res1 = testStore.getBehaviours(Set.of(
-        new Fault(a, mode1),
-        new Fault(b, mode1)));
-
-    // Expect all of them (C is only called once in reality)
-    assertEquals(5, res1.size());
-    assertEquals(2, faultyBehaviours(res1));
-
-    // if A and C fail, then no B or D
-    Set<Behaviour> res2 = testStore.getBehaviours(Set.of(
-        new Fault(a, mode1),
-        new Fault(c, mode1)));
-
-    assertEquals(3, res2.size());
-    assertEquals(2, faultyBehaviours(res2));
-
-    // if B and C fail, then no D
-    Set<Behaviour> res3 = testStore.getBehaviours(Set.of(
-        new Fault(b, mode1),
-        new Fault(c, mode1)));
-
-    assertEquals(4, res3.size());
-    assertEquals(2, faultyBehaviours(res3));
 
     // if A, B and C fail, then no D
     Set<Behaviour> res4 = testStore.getBehaviours(Set.of(

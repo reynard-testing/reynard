@@ -3,14 +3,13 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>nl.dflipse.fit</groupId>
-  <artifactId>parent</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <groupId>io.github.delanoflipse.fit</groupId>
+  <artifactId>project</artifactId>
+  <version>0.0.2</version>
   <packaging>pom</packaging>
-  <name>Fault Injection Testing Suite</name>
-  <description>Provides the tools to run fault injection tests using Testcontainers.</description>
-  <!-- FIXME change it to the project's website -->
-  <!-- <url>http://www.example.com</url> -->
+  <name>Distributed Systems Fault Injection Testing Suite</name>
+  <description>Provides the tools to run fault injection tests.</description>
+  <url>https://github.com/delanoflipse/ds-fit-suite/</url>
   <inceptionYear>2025</inceptionYear>
 
   <modules>
@@ -18,20 +17,45 @@
   </modules>
 
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>17</java.version>
     <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <testcontainers.version>1.20.4</testcontainers.version>
     <slf4j.version>1.7.32</slf4j.version>
     <log4j.version>2.24.3</log4j.version>
   </properties>
 
+  <developers>
+    <developer>
+      <name>Delano Flipse</name>
+      <email>delanoflipse@gmail.com</email>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git://github.com/delanoflipse/ds-fit-suite.git</connection>
+    <developerConnection>scm:git:ssh://github.com/delanoflipse/ds-fit-suite.git</developerConnection>
+    <url>http://github.com/delanoflipse/ds-fit-suite/tree/main</url>
+  </scm>
+
+  <!-- <distributionManagement>
+    <repository>
+      <id>central</id>
+      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement> -->
+
   <build>
     <pluginManagement>
       <!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
-        <!-- clean lifecycle, see
-        https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
           <version>3.4.0</version>
@@ -41,7 +65,6 @@
         <plugin>
           <artifactId>maven-resources-plugin</artifactId>
           <version>3.3.1</version>
-
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -55,14 +78,18 @@
           <artifactId>maven-install-plugin</artifactId>
           <version>3.1.2</version>
         </plugin>
-        <plugin>
+        <!-- <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
           <version>3.1.2</version>
-        </plugin>
+        </plugin> -->
         <!-- site lifecycle, see
         https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
         <plugin>
           <artifactId>maven-site-plugin</artifactId>
+          <version>3.12.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-release-plugin</artifactId>
           <version>3.12.1</version>
         </plugin>
         <plugin>
@@ -72,4 +99,73 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <profile>
+      <id>deployment</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.11.1</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.3.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.7</version>
+            <configuration>
+              <!-- Prevent gpg from using pinentry programs -->
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.7.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>true</autoPublish>
+              <waitUntil>uploaded</waitUntil>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

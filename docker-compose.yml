@@ -7,7 +7,7 @@ services:
       - COLLECTOR_OTLP_ENABLED=true
 
   orchestrator:
-    image: fit-orchestrator:latest
+    image: dflipse/ds-fit-controller:latest
     ports:
       - "5050:5000"
     environment:
@@ -17,7 +17,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137
 
   proxy1:
-    image: fit-proxy:latest
+    image: dflipse/ds-fit-proxy:latest
     environment:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://localhost:8090
@@ -28,7 +28,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137
 
   proxy2:
-    image: fit-proxy:latest
+    image: dflipse/ds-fit-proxy:latest
     environment:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://localhost:8090
@@ -38,7 +38,7 @@ services:
       - OTEL_SERVICE_NAME=proxy2
       - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137
   proxy3:
-    image: fit-proxy:latest
+    image: dflipse/ds-fit-proxy:latest
     environment:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://localhost:8090

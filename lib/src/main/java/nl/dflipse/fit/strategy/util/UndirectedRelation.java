@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.util;
+package io.github.delanoflipse.fit.strategy.util;
 
 import java.util.HashMap;
 import java.util.HashSet;

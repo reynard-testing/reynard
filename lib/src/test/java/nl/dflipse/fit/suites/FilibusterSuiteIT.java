@@ -1,15 +1,15 @@
-package nl.dflipse.fit.suites;
+package io.github.delanoflipse.fit.suites;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
-import nl.dflipse.fit.FiTest;
-import nl.dflipse.fit.instrument.FaultController;
-import nl.dflipse.fit.instrument.controller.RemoteController;
-import nl.dflipse.fit.strategy.TrackedFaultload;
-import nl.dflipse.fit.strategy.util.TraceAnalysis;
+import io.github.delanoflipse.fit.FiTest;
+import io.github.delanoflipse.fit.instrument.FaultController;
+import io.github.delanoflipse.fit.instrument.controller.RemoteController;
+import io.github.delanoflipse.fit.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.strategy.util.TraceAnalysis;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

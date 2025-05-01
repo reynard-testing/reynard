@@ -1,13 +1,13 @@
-package nl.dflipse.fit.strategy;
+package io.github.delanoflipse.fit.strategy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
 
 public class TrackedFaultloadSerializer {
   private final static ObjectMapper mapper = new ObjectMapper();

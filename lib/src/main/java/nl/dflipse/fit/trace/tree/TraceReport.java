@@ -1,15 +1,15 @@
-package nl.dflipse.fit.trace.tree;
+package io.github.delanoflipse.fit.trace.tree;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.modes.ErrorFault;
-import nl.dflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.modes.ErrorFault;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 

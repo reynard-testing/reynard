@@ -1,10 +1,10 @@
-package nl.dflipse.fit.testutil;
+package io.github.delanoflipse.fit.testutil;
 
 import java.util.List;
 
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
 
 public class FaultsBuilder {
     private final List<FaultUid> fids;

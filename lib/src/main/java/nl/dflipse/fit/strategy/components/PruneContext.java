@@ -1,15 +1,15 @@
-package nl.dflipse.fit.strategy.components;
+package io.github.delanoflipse.fit.strategy.components;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.strategy.util.Pair;
+import io.github.delanoflipse.fit.trace.tree.TraceReport;
 
 public abstract class PruneContext {
     public abstract List<Pair<Set<Fault>, List<Behaviour>>> getHistoricResults();

@@ -1,4 +1,4 @@
-package nl.dflipse.fit.instrument;
+package io.github.delanoflipse.fit.instrument;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,10 +6,10 @@ import java.util.List;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-import nl.dflipse.fit.instrument.controller.RemoteController;
-import nl.dflipse.fit.instrument.services.InstrumentedService;
-import nl.dflipse.fit.instrument.services.Jaeger;
-import nl.dflipse.fit.instrument.services.OrchestratorService;
+import io.github.delanoflipse.fit.instrument.controller.RemoteController;
+import io.github.delanoflipse.fit.instrument.services.InstrumentedService;
+import io.github.delanoflipse.fit.instrument.services.Jaeger;
+import io.github.delanoflipse.fit.instrument.services.OrchestratorService;
 
 public class InstrumentedApp extends RemoteController {
     public Network network;

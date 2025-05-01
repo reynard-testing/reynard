@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.components.analyzers;
+package io.github.delanoflipse.fit.strategy.components.analyzers;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -11,14 +11,14 @@ import java.util.stream.DoubleStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.StrategyReporter;
-import nl.dflipse.fit.strategy.components.FeedbackContext;
-import nl.dflipse.fit.strategy.components.FeedbackHandler;
-import nl.dflipse.fit.strategy.components.PruneContext;
-import nl.dflipse.fit.strategy.components.Reporter;
-import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.strategy.StrategyReporter;
+import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.strategy.components.Reporter;
+import io.github.delanoflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
 
 public class TimingAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(TimingAnalyzer.class);

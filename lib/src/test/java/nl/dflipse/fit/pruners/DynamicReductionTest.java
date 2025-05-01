@@ -1,4 +1,4 @@
-package nl.dflipse.fit.pruners;
+package io.github.delanoflipse.fit.pruners;
 
 import java.util.List;
 import java.util.Set;
@@ -9,16 +9,16 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.modes.ErrorFault;
-import nl.dflipse.fit.faultload.modes.HttpError;
-import nl.dflipse.fit.strategy.components.FeedbackContext;
-import nl.dflipse.fit.strategy.components.PruneDecision;
-import nl.dflipse.fit.strategy.components.pruners.DynamicReductionPruner;
-import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.strategy.util.TraceAnalysis;
-import nl.dflipse.fit.testutil.EventBuilder;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.faultload.modes.ErrorFault;
+import io.github.delanoflipse.fit.faultload.modes.HttpError;
+import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.strategy.components.pruners.DynamicReductionPruner;
+import io.github.delanoflipse.fit.strategy.util.Pair;
+import io.github.delanoflipse.fit.strategy.util.TraceAnalysis;
+import io.github.delanoflipse.fit.testutil.EventBuilder;
 
 public class DynamicReductionTest {
 

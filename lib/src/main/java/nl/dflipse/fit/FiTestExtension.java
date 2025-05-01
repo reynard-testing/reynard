@@ -1,4 +1,4 @@
-package nl.dflipse.fit;
+package io.github.delanoflipse.fit;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -16,33 +16,33 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.modes.ErrorFault;
-import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.faultload.modes.HttpError;
-import nl.dflipse.fit.instrument.FaultController;
-import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.StrategyRunner;
-import nl.dflipse.fit.strategy.TrackedFaultload;
-import nl.dflipse.fit.strategy.components.analyzers.BehaviorAnalyzer;
-import nl.dflipse.fit.strategy.components.analyzers.ConcurrencyDetector;
-import nl.dflipse.fit.strategy.components.analyzers.ErrorPropagationDetector;
-import nl.dflipse.fit.strategy.components.analyzers.HappensBeforeNeighbourDetector;
-import nl.dflipse.fit.strategy.components.analyzers.HappyPathDetector;
-import nl.dflipse.fit.strategy.components.analyzers.InjectionPointDetector;
-import nl.dflipse.fit.strategy.components.analyzers.ParentChildDetector;
-import nl.dflipse.fit.strategy.components.analyzers.RedundancyAnalyzer;
-import nl.dflipse.fit.strategy.components.analyzers.StatusAnalyzer;
-import nl.dflipse.fit.strategy.components.analyzers.StatusPropagationOracle;
-import nl.dflipse.fit.strategy.components.analyzers.TimingAnalyzer;
-import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
-import nl.dflipse.fit.strategy.components.pruners.DynamicReductionPruner;
-import nl.dflipse.fit.strategy.components.pruners.FailStopPruner;
-import nl.dflipse.fit.strategy.components.pruners.FaultloadSizePruner;
-import nl.dflipse.fit.strategy.components.pruners.NoImpactPruner;
-import nl.dflipse.fit.strategy.components.pruners.UnreachabilityPruner;
-import nl.dflipse.fit.strategy.util.TraceAnalysis;
-import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
-import nl.dflipse.fit.util.TaggedTimer;
+import io.github.delanoflipse.fit.faultload.modes.ErrorFault;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.faultload.modes.HttpError;
+import io.github.delanoflipse.fit.instrument.FaultController;
+import io.github.delanoflipse.fit.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.strategy.StrategyRunner;
+import io.github.delanoflipse.fit.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.strategy.components.analyzers.BehaviorAnalyzer;
+import io.github.delanoflipse.fit.strategy.components.analyzers.ConcurrencyDetector;
+import io.github.delanoflipse.fit.strategy.components.analyzers.ErrorPropagationDetector;
+import io.github.delanoflipse.fit.strategy.components.analyzers.HappensBeforeNeighbourDetector;
+import io.github.delanoflipse.fit.strategy.components.analyzers.HappyPathDetector;
+import io.github.delanoflipse.fit.strategy.components.analyzers.InjectionPointDetector;
+import io.github.delanoflipse.fit.strategy.components.analyzers.ParentChildDetector;
+import io.github.delanoflipse.fit.strategy.components.analyzers.RedundancyAnalyzer;
+import io.github.delanoflipse.fit.strategy.components.analyzers.StatusAnalyzer;
+import io.github.delanoflipse.fit.strategy.components.analyzers.StatusPropagationOracle;
+import io.github.delanoflipse.fit.strategy.components.analyzers.TimingAnalyzer;
+import io.github.delanoflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
+import io.github.delanoflipse.fit.strategy.components.pruners.DynamicReductionPruner;
+import io.github.delanoflipse.fit.strategy.components.pruners.FailStopPruner;
+import io.github.delanoflipse.fit.strategy.components.pruners.FaultloadSizePruner;
+import io.github.delanoflipse.fit.strategy.components.pruners.NoImpactPruner;
+import io.github.delanoflipse.fit.strategy.components.pruners.UnreachabilityPruner;
+import io.github.delanoflipse.fit.strategy.util.TraceAnalysis;
+import io.github.delanoflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.util.TaggedTimer;
 
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {

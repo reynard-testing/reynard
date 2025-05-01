@@ -1,4 +1,4 @@
-package nl.dflipse.util;
+package io.github.delanoflipse.util;
 
 import static org.junit.Assert.assertTrue;
 
@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import nl.dflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.strategy.util.Sets;
 
 public class SetsTest {
     @Test

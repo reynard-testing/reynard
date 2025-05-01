@@ -1,16 +1,16 @@
-package nl.dflipse.fit.strategy.components.analyzers;
+package io.github.delanoflipse.fit.strategy.components.analyzers;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.components.FeedbackContext;
-import nl.dflipse.fit.strategy.components.FeedbackHandler;
-import nl.dflipse.fit.strategy.components.PruneContext;
-import nl.dflipse.fit.strategy.components.Reporter;
-import nl.dflipse.fit.strategy.util.UndirectedRelation;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.strategy.components.Reporter;
+import io.github.delanoflipse.fit.strategy.util.UndirectedRelation;
 
 public class ConcurrencyDetector implements FeedbackHandler, Reporter {
     UndirectedRelation<FaultUid> relation = new UndirectedRelation<>();

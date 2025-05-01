@@ -1,4 +1,4 @@
-package nl.dflipse.fit.trace;
+package io.github.delanoflipse.fit.trace;
 
 import java.util.ArrayList;
 import java.util.HashMap;

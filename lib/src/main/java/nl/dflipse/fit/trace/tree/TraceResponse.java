@@ -1,4 +1,4 @@
-package nl.dflipse.fit.trace.tree;
+package io.github.delanoflipse.fit.trace.tree;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

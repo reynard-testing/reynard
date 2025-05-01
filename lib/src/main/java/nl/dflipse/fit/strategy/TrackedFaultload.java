@@ -1,12 +1,12 @@
-package nl.dflipse.fit.strategy;
+package io.github.delanoflipse.fit.strategy;
 
 import java.util.Set;
 
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.trace.TraceParent;
-import nl.dflipse.fit.trace.TraceState;
-import nl.dflipse.fit.util.TaggedTimer;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.trace.TraceParent;
+import io.github.delanoflipse.fit.trace.TraceState;
+import io.github.delanoflipse.fit.util.TaggedTimer;
 
 public class TrackedFaultload {
     private final Faultload faultload;

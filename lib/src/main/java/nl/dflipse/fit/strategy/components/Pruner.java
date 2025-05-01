@@ -1,6 +1,6 @@
-package nl.dflipse.fit.strategy.components;
+package io.github.delanoflipse.fit.strategy.components;
 
-import nl.dflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.faultload.Faultload;
 
 public interface Pruner {
     public PruneDecision prune(Faultload faultload, PruneContext context);

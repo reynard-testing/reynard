@@ -1,4 +1,4 @@
-package nl.dflipse.fit.suites;
+package io.github.delanoflipse.fit.suites;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -13,19 +13,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-import nl.dflipse.fit.FiTest;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.modes.ErrorFault;
-import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.faultload.modes.HttpError;
-import nl.dflipse.fit.faultload.modes.OmissionFault;
-import nl.dflipse.fit.instrument.FaultController;
-import nl.dflipse.fit.instrument.controller.RemoteController;
-import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.TrackedFaultload;
-import nl.dflipse.fit.strategy.util.TraceAnalysis;
+import io.github.delanoflipse.fit.FiTest;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.faultload.modes.ErrorFault;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.faultload.modes.HttpError;
+import io.github.delanoflipse.fit.faultload.modes.OmissionFault;
+import io.github.delanoflipse.fit.instrument.FaultController;
+import io.github.delanoflipse.fit.instrument.controller.RemoteController;
+import io.github.delanoflipse.fit.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.strategy.util.TraceAnalysis;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;

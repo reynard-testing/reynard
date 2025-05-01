@@ -1,4 +1,4 @@
-package nl.dflipse.fit.instrument.controller;
+package io.github.delanoflipse.fit.instrument.controller;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nl.dflipse.fit.instrument.FaultController;
-import nl.dflipse.fit.strategy.TrackedFaultload;
-import nl.dflipse.fit.strategy.util.TraceAnalysis;
+import io.github.delanoflipse.fit.instrument.FaultController;
+import io.github.delanoflipse.fit.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.strategy.util.TraceAnalysis;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

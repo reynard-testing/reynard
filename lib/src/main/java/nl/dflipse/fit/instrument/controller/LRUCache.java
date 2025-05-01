@@ -1,4 +1,4 @@
-package nl.dflipse.fit.instrument.controller;
+package io.github.delanoflipse.fit.instrument.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;

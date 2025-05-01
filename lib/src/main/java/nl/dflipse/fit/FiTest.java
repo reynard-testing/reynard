@@ -1,4 +1,4 @@
-package nl.dflipse.fit;
+package io.github.delanoflipse.fit;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

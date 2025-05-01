@@ -1,11 +1,11 @@
-package nl.dflipse.fit;
+package io.github.delanoflipse.fit;
 
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
 
-import nl.dflipse.fit.strategy.util.Combinatorics;
+import io.github.delanoflipse.fit.strategy.util.Combinatorics;
 
 public class CombinatoricsTest {
     @Test

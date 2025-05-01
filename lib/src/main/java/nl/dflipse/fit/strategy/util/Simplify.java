@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.util;
+package io.github.delanoflipse.fit.strategy.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
 
 public class Simplify {
 

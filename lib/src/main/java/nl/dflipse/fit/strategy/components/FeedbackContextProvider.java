@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.components;
+package io.github.delanoflipse.fit.strategy.components;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,18 +7,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.strategy.StrategyReporter;
-import nl.dflipse.fit.strategy.StrategyRunner;
-import nl.dflipse.fit.strategy.components.generators.Generator;
-import nl.dflipse.fit.strategy.store.DynamicAnalysisStore;
-import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.strategy.util.StringFormat;
-import nl.dflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.strategy.StrategyReporter;
+import io.github.delanoflipse.fit.strategy.StrategyRunner;
+import io.github.delanoflipse.fit.strategy.components.generators.Generator;
+import io.github.delanoflipse.fit.strategy.store.DynamicAnalysisStore;
+import io.github.delanoflipse.fit.strategy.util.Pair;
+import io.github.delanoflipse.fit.strategy.util.StringFormat;
+import io.github.delanoflipse.fit.trace.tree.TraceReport;
 
 public class FeedbackContextProvider extends FeedbackContext {
 

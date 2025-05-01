@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.store;
+package io.github.delanoflipse.fit.strategy.store;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
 
 public class ConditionalStore {
     private final Map<FaultUid, SubsetStore<Fault>> conditionsByUid = new HashMap<>();

@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.util;
+package io.github.delanoflipse.fit.strategy.util;
 
 public class StringFormat {
     public static String padRight(String s, int n) {

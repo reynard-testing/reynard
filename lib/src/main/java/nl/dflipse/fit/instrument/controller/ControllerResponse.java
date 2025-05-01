@@ -1,11 +1,11 @@
-package nl.dflipse.fit.instrument.controller;
+package io.github.delanoflipse.fit.instrument.controller;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import nl.dflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.trace.tree.TraceReport;
 
 @JsonDeserialize
 public class ControllerResponse {

@@ -3,14 +3,13 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>nl.dflipse.fit</groupId>
+  <groupId>io.github.delanoflipse.fit</groupId>
   <artifactId>parent</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.0.1</version>
   <packaging>pom</packaging>
-  <name>Fault Injection Testing Suite</name>
-  <description>Provides the tools to run fault injection tests using Testcontainers.</description>
-  <!-- FIXME change it to the project's website -->
-  <!-- <url>http://www.example.com</url> -->
+  <name>Distributed Systems Fault Injection Testing Suite</name>
+  <description>Provides the tools to run fault injection tests.</description>
+  <url>https://github.com/delanoflipse/ds-fit-suite/</url>
   <inceptionYear>2025</inceptionYear>
 
   <modules>
@@ -25,6 +24,26 @@
     <slf4j.version>1.7.32</slf4j.version>
     <log4j.version>2.24.3</log4j.version>
   </properties>
+
+  <developers>
+    <developer>
+      <name>Delano Flipse</name>
+      <email>delanoflipse@gmail.com</email>
+    </developer>
+  </developers>
+  
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git://github.com/delanoflipse/ds-fit-suite.git</connection>
+    <developerConnection>scm:git:ssh://github.com/delanoflipse/ds-fit-suite.git</developerConnection>
+    <url>http://github.com/delanoflipse/ds-fit-suite/tree/main</url>
+  </scm>
 
   <build>
     <pluginManagement>

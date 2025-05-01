@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.util;
+package io.github.delanoflipse.fit.strategy.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,10 +11,10 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.trace.tree.TraceReport;
 
 public class TraceAnalysis {
     private final Logger logger = LoggerFactory.getLogger(TraceAnalysis.class);

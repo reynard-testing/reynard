@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.store;
+package io.github.delanoflipse.fit.strategy.store;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,17 +12,17 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.strategy.components.PruneDecision;
-import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.strategy.util.SpaceEstimate;
-import nl.dflipse.fit.trace.tree.TraceReport;
-import nl.dflipse.fit.util.NoOpLogger;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.strategy.util.Pair;
+import io.github.delanoflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.strategy.util.SpaceEstimate;
+import io.github.delanoflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.util.NoOpLogger;
 
 public class DynamicAnalysisStore {
     private final Logger logger;

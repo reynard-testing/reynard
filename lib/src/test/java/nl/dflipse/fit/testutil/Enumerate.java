@@ -1,12 +1,12 @@
-package nl.dflipse.fit.testutil;
+package io.github.delanoflipse.fit.testutil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.strategy.components.generators.Generator;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.strategy.components.generators.Generator;
 
 public class Enumerate {
 

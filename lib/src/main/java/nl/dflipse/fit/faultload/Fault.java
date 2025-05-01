@@ -1,4 +1,4 @@
-package nl.dflipse.fit.faultload;
+package io.github.delanoflipse.fit.faultload;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -10,8 +10,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.strategy.util.Sets;
 
 @JsonSerialize
 @JsonDeserialize

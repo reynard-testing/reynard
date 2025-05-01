@@ -1,14 +1,14 @@
-package nl.dflipse.fit.strategy.components;
+package io.github.delanoflipse.fit.strategy.components;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.trace.tree.TraceReport;
 
 public abstract class FeedbackContext extends PruneContext {
 

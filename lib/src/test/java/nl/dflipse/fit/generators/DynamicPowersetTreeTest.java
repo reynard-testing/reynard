@@ -1,4 +1,4 @@
-package nl.dflipse.fit.generators;
+package io.github.delanoflipse.fit.generators;
 
 import static org.junit.Assert.assertTrue;
 
@@ -7,12 +7,12 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.strategy.util.DynamicPowersetTree;
-import nl.dflipse.fit.testutil.FailureModes;
-import nl.dflipse.fit.testutil.FaultInjectionPoints;
-import nl.dflipse.fit.testutil.FaultsBuilder;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.strategy.util.DynamicPowersetTree;
+import io.github.delanoflipse.fit.testutil.FailureModes;
+import io.github.delanoflipse.fit.testutil.FaultInjectionPoints;
+import io.github.delanoflipse.fit.testutil.FaultsBuilder;
 
 public class DynamicPowersetTreeTest {
     List<FailureMode> modes = FailureModes.getModes(3);

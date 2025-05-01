@@ -1,12 +1,12 @@
-package nl.dflipse.fit.strategy.components.pruners;
+package io.github.delanoflipse.fit.strategy.components.pruners;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.strategy.components.PruneContext;
-import nl.dflipse.fit.strategy.components.PruneDecision;
-import nl.dflipse.fit.strategy.components.Pruner;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.strategy.components.Pruner;
 
 public class FaultloadSizePruner implements Pruner {
     private final Logger logger = LoggerFactory.getLogger(FaultloadSizePruner.class);

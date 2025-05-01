@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.store;
+package io.github.delanoflipse.fit.strategy.store;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.strategy.util.Simplify;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.strategy.util.Pair;
+import io.github.delanoflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.strategy.util.Simplify;
 
 public class ImplicationsStore {
   private static final Logger logger = LoggerFactory.getLogger(ImplicationsStore.class);

@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy.components.analyzers;
+package io.github.delanoflipse.fit.strategy.components.analyzers;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -9,20 +9,20 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.modes.FailureMode;
-import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.StrategyReporter;
-import nl.dflipse.fit.strategy.components.FeedbackContext;
-import nl.dflipse.fit.strategy.components.FeedbackHandler;
-import nl.dflipse.fit.strategy.components.PruneContext;
-import nl.dflipse.fit.strategy.components.Reporter;
-import nl.dflipse.fit.strategy.store.SubsetStore;
-import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.strategy.util.Simplify;
-import nl.dflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
-import nl.dflipse.fit.trace.tree.TraceResponse;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.strategy.StrategyReporter;
+import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.strategy.components.Reporter;
+import io.github.delanoflipse.fit.strategy.store.SubsetStore;
+import io.github.delanoflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.strategy.util.Simplify;
+import io.github.delanoflipse.fit.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.trace.tree.TraceResponse;
 
 public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(BehaviorAnalyzer.class);

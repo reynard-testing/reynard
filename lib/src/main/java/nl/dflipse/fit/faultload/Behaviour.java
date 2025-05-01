@@ -1,11 +1,11 @@
-package nl.dflipse.fit.faultload;
+package io.github.delanoflipse.fit.faultload;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import nl.dflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
 
 public record Behaviour(FaultUid uid, FailureMode mode) {
 

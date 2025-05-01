@@ -1,13 +1,13 @@
-package nl.dflipse.fit.strategy.components.analyzers;
+package io.github.delanoflipse.fit.strategy.components.analyzers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.components.FeedbackContext;
-import nl.dflipse.fit.strategy.components.FeedbackHandler;
-import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.trace.tree.TraceReport;
 
 public class StatusPropagationOracle implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(StatusPropagationOracle.class);

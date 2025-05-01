@@ -1,4 +1,4 @@
-package nl.dflipse.util;
+package io.github.delanoflipse.util;
 
 import static org.junit.Assert.assertEquals;
 
@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import nl.dflipse.fit.strategy.util.Lists;
+import io.github.delanoflipse.fit.strategy.util.Lists;
 
 public class ListsTest {
     @Test

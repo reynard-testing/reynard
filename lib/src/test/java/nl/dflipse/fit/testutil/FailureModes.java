@@ -1,9 +1,9 @@
-package nl.dflipse.fit.testutil;
+package io.github.delanoflipse.fit.testutil;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.dflipse.fit.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.faultload.modes.FailureMode;
 
 public class FailureModes {
     public static FailureMode getMode(int i) {

@@ -1,4 +1,4 @@
-package nl.dflipse.fit.strategy;
+package io.github.delanoflipse.fit.strategy;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.util.TaggedTimer;
+import io.github.delanoflipse.fit.strategy.util.Pair;
+import io.github.delanoflipse.fit.util.TaggedTimer;
 
 public class StrategyStatistics {
     private Map<String, Long> generatorCount = new LinkedHashMap<>();

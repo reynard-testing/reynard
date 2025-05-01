@@ -1,11 +1,11 @@
-package nl.dflipse.fit.faultload;
+package io.github.delanoflipse.fit.faultload;
 
 import java.util.List;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import nl.dflipse.fit.strategy.util.Lists;
+import io.github.delanoflipse.fit.strategy.util.Lists;
 
 @JsonSerialize
 @JsonDeserialize

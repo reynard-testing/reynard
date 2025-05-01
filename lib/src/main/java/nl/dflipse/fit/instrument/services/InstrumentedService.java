@@ -1,11 +1,11 @@
-package nl.dflipse.fit.instrument.services;
+package io.github.delanoflipse.fit.instrument.services;
 
 import java.util.List;
 import java.util.Random;
 
 import org.testcontainers.containers.GenericContainer;
 
-import nl.dflipse.fit.instrument.InstrumentedApp;
+import io.github.delanoflipse.fit.instrument.InstrumentedApp;
 
 public class InstrumentedService extends GenericContainer<InstrumentedService> {
     private static final String IMAGE_NAME = "fit-proxy:latest";

@@ -1,12 +1,12 @@
-package nl.dflipse.fit.strategy.components.pruners;
+package io.github.delanoflipse.fit.strategy.components.pruners;
 
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.components.FeedbackContext;
-import nl.dflipse.fit.strategy.components.FeedbackHandler;
-import nl.dflipse.fit.strategy.components.PruneContext;
-import nl.dflipse.fit.strategy.components.PruneDecision;
-import nl.dflipse.fit.strategy.components.Pruner;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.strategy.components.Pruner;
 
 public class FailStopPruner implements Pruner, FeedbackHandler {
     private boolean failed = false;

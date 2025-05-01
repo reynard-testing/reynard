@@ -1,4 +1,4 @@
-package nl.dflipse.fit.trace;
+package io.github.delanoflipse.fit.trace;
 
 public class TraceParent {
     public String version;

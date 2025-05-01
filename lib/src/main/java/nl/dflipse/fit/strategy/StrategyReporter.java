@@ -1,18 +1,18 @@
-package nl.dflipse.fit.strategy;
+package io.github.delanoflipse.fit.strategy;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import nl.dflipse.fit.strategy.components.FeedbackContextProvider;
-import nl.dflipse.fit.strategy.components.PruneContext;
-import nl.dflipse.fit.strategy.components.PruneContextProvider;
-import nl.dflipse.fit.strategy.components.Reporter;
-import nl.dflipse.fit.strategy.components.generators.Generator;
-import nl.dflipse.fit.strategy.util.Pair;
-import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.strategy.util.StringFormat;
+import io.github.delanoflipse.fit.strategy.components.FeedbackContextProvider;
+import io.github.delanoflipse.fit.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.strategy.components.PruneContextProvider;
+import io.github.delanoflipse.fit.strategy.components.Reporter;
+import io.github.delanoflipse.fit.strategy.components.generators.Generator;
+import io.github.delanoflipse.fit.strategy.util.Pair;
+import io.github.delanoflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.strategy.util.StringFormat;
 
 public class StrategyReporter {
     public static int DEFAULT_WIDTH = 48;

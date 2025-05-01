@@ -1,4 +1,4 @@
-package nl.dflipse.fit.generators;
+package io.github.delanoflipse.fit.generators;
 
 import java.util.List;
 import java.util.Set;
@@ -12,18 +12,18 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import nl.dflipse.fit.faultload.Behaviour;
-import nl.dflipse.fit.faultload.Fault;
-import nl.dflipse.fit.faultload.FaultUid;
-import nl.dflipse.fit.faultload.Faultload;
-import nl.dflipse.fit.strategy.components.PruneDecision;
-import nl.dflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
-import nl.dflipse.fit.strategy.util.Sets;
-import nl.dflipse.fit.strategy.util.SpaceEstimate;
-import nl.dflipse.fit.testutil.Enumerate;
-import nl.dflipse.fit.testutil.FailureModes;
-import nl.dflipse.fit.testutil.FaultInjectionPoints;
-import nl.dflipse.fit.testutil.FaultsBuilder;
+import io.github.delanoflipse.fit.faultload.Behaviour;
+import io.github.delanoflipse.fit.faultload.Fault;
+import io.github.delanoflipse.fit.faultload.FaultUid;
+import io.github.delanoflipse.fit.faultload.Faultload;
+import io.github.delanoflipse.fit.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.strategy.components.generators.IncreasingSizeGenerator;
+import io.github.delanoflipse.fit.strategy.util.Sets;
+import io.github.delanoflipse.fit.strategy.util.SpaceEstimate;
+import io.github.delanoflipse.fit.testutil.Enumerate;
+import io.github.delanoflipse.fit.testutil.FailureModes;
+import io.github.delanoflipse.fit.testutil.FaultInjectionPoints;
+import io.github.delanoflipse.fit.testutil.FaultsBuilder;
 
 public class PrunedGeneratorSpaceTest {
 

@@ -1,15 +1,15 @@
-package nl.dflipse.fit.strategy.components.analyzers;
+package io.github.delanoflipse.fit.strategy.components.analyzers;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.dflipse.fit.strategy.FaultloadResult;
-import nl.dflipse.fit.strategy.components.FeedbackContext;
-import nl.dflipse.fit.strategy.components.FeedbackHandler;
-import nl.dflipse.fit.strategy.components.PruneContext;
-import nl.dflipse.fit.strategy.components.Reporter;
-import nl.dflipse.fit.trace.tree.TraceReport;
+import io.github.delanoflipse.fit.strategy.FaultloadResult;
+import io.github.delanoflipse.fit.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.strategy.components.Reporter;
+import io.github.delanoflipse.fit.trace.tree.TraceReport;
 
 public class HappyPathDetector implements FeedbackHandler, Reporter {
 

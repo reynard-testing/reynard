@@ -429,6 +429,7 @@ public class PrunedGeneratorSpaceTest {
         var modes = FailureModes.getModes(2);
         var points = FaultInjectionPoints.getPoints(4);
         var point5 = FaultInjectionPoints.getPoint(5);
+        // spacesize = 3^5-1 = 242
 
         var pruneCounter = new AtomicInteger(0);
         Function<Set<Fault>, PruneDecision> pruneFunction = x -> {
@@ -462,7 +463,7 @@ public class PrunedGeneratorSpaceTest {
         assertTrue(maxQueue1 < maxQueue2);
         // assertEquals(complete, pruneCount2);
 
-        // -- Generator 2 -- All points except one are known up front, but we explore
+        // -- Generator 3 -- All points except one are known up front, but we explore
         // directly from the point
         var generator3 = new IncreasingSizeGenerator(modes, pruneFunction);
         generator3.reportFaultUids(points);

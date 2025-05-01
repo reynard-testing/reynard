@@ -61,7 +61,7 @@ public class DynamicPowersetTree {
     }
 
     public record ExpansionNode(TreeNode node, List<FaultUid> expansion) {
-        
+
         // For equality, the list is a set
         @Override
         public final boolean equals(Object o) {
@@ -130,11 +130,17 @@ public class DynamicPowersetTree {
     }
 
     private void pruneExpansions(TreeNode node) {
-        List<ExpansionNode> pruned = toExpand.stream()
+        List<ExpansionNode> prunedToVisit = toExpand.stream()
                 .filter(e -> Sets.isSubsetOf(node.value, e.node.value))
                 .toList();
-        toExpand.removeAll(pruned);
-        prunedExpansions.addAll(pruned);
+        toExpand.removeAll(prunedToVisit);
+        prunedExpansions.addAll(prunedToVisit);
+
+        List<ExpansionNode> prunedVisited = visitedExpansions.stream()
+                .filter(e -> Sets.isSubsetOf(node.value, e.node.value))
+                .toList();
+        visitedExpansions.removeAll(prunedVisited);
+        prunedExpansions.addAll(prunedVisited);
     }
 
     // expand(n, nil) = ({}, {})
@@ -156,7 +162,7 @@ public class DynamicPowersetTree {
         FaultUid expansionElement = exp.expansion.get(0);
 
         // and for each element, we take all modes
-        List<TreeNode> newNodes = Fault.getFaults(expansionElement, store.getModes()).stream()
+        List<TreeNode> newNodes = Fault.allFaults(expansionElement, store.getModes()).stream()
                 .map(f -> new TreeNode(Lists.plus(exp.node.value, f)))
                 .toList();
 

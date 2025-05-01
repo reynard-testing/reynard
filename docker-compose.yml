@@ -6,13 +6,13 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
 
-  orchestrator:
+  controller:
     image: dflipse/ds-fit-controller:latest
     ports:
       - "5050:5000"
     environment:
       - PROXY_LIST=proxy1:8050,proxy2:8050,proxy3:8050
-      - OTEL_SERVICE_NAME=orchestrator
+      - OTEL_SERVICE_NAME=controller
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137
 
@@ -21,8 +21,8 @@ services:
     environment:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://localhost:8090
-      - ORCHESTRATOR_HOST=orchestrator:5000
-      - CONTROLLER_PORT=8050
+      - CONTROLLER_HOST=controller:5000
+      - CONTROL_PORT=8050
       - USE_OTEL=true
       - OTEL_SERVICE_NAME=proxy1
       - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137
@@ -32,8 +32,8 @@ services:
     environment:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://localhost:8090
-      - ORCHESTRATOR_HOST=orchestrator:5000
-      - CONTROLLER_PORT=8050
+      - CONTROLLER_HOST=controller:5000
+      - CONTROL_PORT=8050
       - USE_OTEL=true
       - OTEL_SERVICE_NAME=proxy2
       - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137
@@ -42,8 +42,8 @@ services:
     environment:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://localhost:8090
-      - ORCHESTRATOR_HOST=orchestrator:5000
-      - CONTROLLER_PORT=8050
+      - CONTROLLER_HOST=controller:5000
+      - CONTROL_PORT=8050
       - USE_OTEL=true
       - OTEL_SERVICE_NAME=proxy3
       - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4137

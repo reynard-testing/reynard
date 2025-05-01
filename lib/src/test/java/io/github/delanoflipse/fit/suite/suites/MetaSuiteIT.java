@@ -27,8 +27,8 @@ import okhttp3.Response;
 public class MetaSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final int PROXY_RETRY_COUNT = 3;
-    private static final String PROXY_IMAGE = "dflipse/ds-fit-proxy:latest";
-    private static final String COORDINATOR_IMAGE = "dflipse/ds-fit-controller:latest";
+    private static final String PROXY_IMAGE = getEnv("PROXY_MAGE", "dflipse/ds-fit-proxy:latest");
+    private static final String CONTROLLER_IMAGE = getEnv("CONTROLLER_IMAGE", "dflipse/ds-fit-controller:latest");
     private static final String COLLECTOR_ENDPOINT = "http://" + app.jaegerHost + ":4317";
     public static final MediaType JSON = MediaType.get("application/json");
 
@@ -38,13 +38,21 @@ public class MetaSuiteIT {
             .build();
     private final static TrackedFaultload metaFaultload = new TrackedFaultload();
 
+    private static String getEnv(String key, String def) {
+        String env = System.getenv(key);
+        if (env == null || env.equals("")) {
+            return def;
+        }
+        return env;
+    }
+
     @Container
     private static final InstrumentedService proxy1 = app.instrument("proxy1", 8050,
             new GenericContainer<>(PROXY_IMAGE)
                     .withEnv("PROXY_HOST", "0.0.0.0:8080")
                     .withEnv("PROXY_TARGET", "http://0.0.0.0:8090")
-                    .withEnv("ORCHESTRATOR_HOST", "coordinator:5000")
-                    .withEnv("CONTROLLER_PORT", "8050")
+                    .withEnv("CONTROLLER_HOST", "controller:5000")
+                    .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy1")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
@@ -54,8 +62,8 @@ public class MetaSuiteIT {
             new GenericContainer<>(PROXY_IMAGE)
                     .withEnv("PROXY_HOST", "0.0.0.0:8080")
                     .withEnv("PROXY_TARGET", "http://0.0.0.0:8090")
-                    .withEnv("ORCHESTRATOR_HOST", "coordinator:5000")
-                    .withEnv("CONTROLLER_PORT", "8050")
+                    .withEnv("CONTROLLER_HOST", "controller:5000")
+                    .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy2")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
@@ -65,19 +73,19 @@ public class MetaSuiteIT {
             new GenericContainer<>(PROXY_IMAGE)
                     .withEnv("PROXY_HOST", "0.0.0.0:8080")
                     .withEnv("PROXY_TARGET", "http://0.0.0.0:8090")
-                    .withEnv("ORCHESTRATOR_HOST", "coordinator:5000")
-                    .withEnv("CONTROLLER_PORT", "8050")
+                    .withEnv("CONTROLLER_HOST", "controller:5000")
+                    .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy3")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
-    private static final InstrumentedService orchestrator = app.instrument("coordinator", 5000,
-            new GenericContainer<>(COORDINATOR_IMAGE)
+    private static final InstrumentedService controller = app.instrument("controller", 5000,
+            new GenericContainer<>(CONTROLLER_IMAGE)
                     // Note: using FLASK_DEBUG=1 will stop the OTEL instrumentation from working, so
                     // don't use that
                     .withEnv("PROXY_LIST", "proxy1:8050,proxy2:8050,proxy3:8050")
-                    .withEnv("OTEL_SERVICE_NAME", "orchestrator")
+                    .withEnv("OTEL_SERVICE_NAME", "controller")
                     .withEnv("OTEL_TRACES_EXPORTER", "otlp")
                     .withEnv("OTEL_BSP_SCHEDULE_DELAY", "1")
                     .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
@@ -100,7 +108,7 @@ public class MetaSuiteIT {
 
     @FiTest(maxTestCases = 999, optimizeForRetries = true, withCallStack = false)
     public void testRegister(TrackedFaultload faultload) throws IOException {
-        int port = orchestrator.getMappedPort(5000);
+        int port = controller.getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
 
         String jsonBody = metaFaultload.serializeJson();
@@ -113,7 +121,7 @@ public class MetaSuiteIT {
                 .addHeader("tracestate", faultload.getTraceState().toString())
                 .build();
 
-        String inspectUrl = app.orchestratorInspectUrl + "/v1/trace/" + faultload.getTraceId();
+        String inspectUrl = app.controllerInspectUrl + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/"
                 + faultload.getTraceId();
 

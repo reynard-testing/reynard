@@ -2,10 +2,10 @@ package io.github.delanoflipse.fit.suite.instrument.services;
 
 import org.testcontainers.containers.GenericContainer;
 
-public class OrchestratorService extends GenericContainer<OrchestratorService> {
+public class ControllerService extends GenericContainer<ControllerService> {
     private static final String IMAGE = "dflipse/ds-fit-controller:latest";
 
-    public OrchestratorService() {
+    public ControllerService() {
         super(IMAGE);
 
         // .withNetwork(network)

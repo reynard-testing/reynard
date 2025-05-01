@@ -1,14 +1,14 @@
 include .env
 
-.PHONY: test build-orchestrator build-proxy build-all run-test install
+.PHONY: test build-controller build-proxy build-all run-test install
 
-build-orchestrator:
-	cd ./services/orchestrator; docker build -t fit-orchestrator:latest .
+build-controller:
+	cd ./services/controller; docker build -t fit-controller:latest .
 
 build-proxy:
 	cd ./services/proxy; docker build -t fit-proxy:latest .
 
-build-all: build-orchestrator build-proxy
+build-all: build-controller build-proxy
 
 run-test:
 	cd ./lib; mvn test

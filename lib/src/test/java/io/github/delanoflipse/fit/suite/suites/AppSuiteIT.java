@@ -87,7 +87,7 @@ public class AppSuiteIT {
                 .addHeader("tracestate", faultload.getTraceState().toString())
                 .build();
 
-        String inspectUrl = app.orchestratorInspectUrl + "/v1/trace/" + faultload.getTraceId();
+        String inspectUrl = app.controllerInspectUrl + "/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/"
                 + faultload.getTraceId();
 

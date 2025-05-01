@@ -50,7 +50,7 @@ func GetProxyConfig() ProxyConfig {
 func GetControlConfig(proxyConfig ProxyConfig) ControlConfig {
 	UseTelemetry := os.Getenv("USE_OTEL") == "true"
 
-	if controllerPort := os.Getenv("CONTROLLER_PORT"); controllerPort != "" {
+	if controllerPort := os.Getenv("CONTROL_PORT"); controllerPort != "" {
 		if controllerPortInt, err := strconv.Atoi(controllerPort); err == nil {
 			return ControlConfig{
 				UseTelemetry: UseTelemetry,

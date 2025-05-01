@@ -206,6 +206,6 @@ async def clear_all():
 if __name__ == '__main__':
     print("Registered proxies: ", proxy_list, flush=True)
     print("Debug?: ", debug_flag_set, flush=True)
-    print("Starting orchestrator", flush=True)
+    print("Starting controller", flush=True)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(app.run(host='0.0.0.0', port=5000))

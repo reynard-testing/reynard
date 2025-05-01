@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit;
+package io.github.delanoflipse.fit.suite;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

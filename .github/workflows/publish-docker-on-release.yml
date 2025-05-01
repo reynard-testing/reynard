@@ -1,8 +1,7 @@
 name: Publish images on merge
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [created]
 
 jobs:
   build-proxy:

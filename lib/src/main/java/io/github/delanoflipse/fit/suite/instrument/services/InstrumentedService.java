@@ -8,7 +8,7 @@ import org.testcontainers.containers.GenericContainer;
 import io.github.delanoflipse.fit.suite.instrument.InstrumentedApp;
 
 public class InstrumentedService extends GenericContainer<InstrumentedService> {
-    private static final String IMAGE_NAME = "fit-proxy:latest";
+    private static final String IMAGE_NAME = "dflipse/ds-fit-proxy:latest";
     private final GenericContainer<?> service;
     private final String hostname;
     private final String serviceHostname;

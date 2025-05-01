@@ -30,8 +30,8 @@ ADDITIONAL_ENV = [
 
 IMAGES = {
     'jaeger': 'jaegertracing/jaeger:latest',
-    'orchestrator': 'fit-orchestrator:latest',
-    'proxy': 'fit-proxy:latest',
+    'orchestrator': 'dflipse/ds-fit-controller:latest',
+    'proxy': 'dflipse/ds-fit-proxy:latest',
 }
 
 

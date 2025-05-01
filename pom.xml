@@ -3,8 +3,8 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>io.github.delanoflipse.fit</groupId>
-  <artifactId>parent</artifactId>
+  <groupId>io.github.delanoflipse</groupId>
+  <artifactId>fit</artifactId>
   <version>0.0.1</version>
   <packaging>pom</packaging>
   <name>Distributed Systems Fault Injection Testing Suite</name>
@@ -17,9 +17,9 @@
   </modules>
 
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>17</java.version>
     <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <testcontainers.version>1.20.4</testcontainers.version>
     <slf4j.version>1.7.32</slf4j.version>
     <log4j.version>2.24.3</log4j.version>

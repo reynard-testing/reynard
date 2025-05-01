@@ -34,7 +34,6 @@ IMAGES = {
     'proxy': 'dflipse/ds-fit-proxy:latest',
 }
 
-
 class ServiceBuilder:
     def __init__(self):
         self.service = {}

@@ -30,7 +30,7 @@ ADDITIONAL_ENV = [
 
 IMAGES = {
     'jaeger': 'jaegertracing/jaeger:latest',
-    'orchestrator': 'dflipse/ds-fit-controller:latest',
+    'controller': 'dflipse/ds-fit-controller:latest',
     'proxy': 'dflipse/ds-fit-proxy:latest',
 }
 
@@ -87,11 +87,11 @@ class Converter:
 
         self.service_names = {
             'jaeger': 'jaeger',
-            'orchestrator': 'orchestrator',
+            'controller': 'controller',
         }
         self.public_ports = {
             'jaeger': 16686,
-            'orchestrator': 6050,
+            'controller': 6050,
         }
         self.controller_port = 8050
         self.data = data
@@ -106,8 +106,8 @@ class Converter:
     def convert_service(self, service_name: str, service_def: dict):
         proxy_service = ServiceBuilder() \
             .with_image(IMAGES['proxy']) \
-            .with_environment('ORCHESTRATOR_HOST', self.service_names['orchestrator'] + ":5000") \
-            .with_environment('CONTROLLER_PORT', self.controller_port) \
+            .with_environment('CONTROLLER_HOST', self.service_names['controller'] + ":5000") \
+            .with_environment('CONTROL_PORT', self.controller_port) \
             .with_environment('SERVICE_NAME', service_name)
 
         hostname = service_def.get('hostname', service_name)
@@ -166,18 +166,18 @@ class Converter:
         service_name = self.service_names['jaeger']
         self.add_service(service_name, service)
 
-    def add_orchestrator(self):
+    def add_controller(self):
         service = ServiceBuilder() \
-            .with_image(IMAGES['orchestrator']) \
-            .with_ports(self.public_ports['orchestrator'], 5000) \
+            .with_image(IMAGES['controller']) \
+            .with_ports(self.public_ports['controller'], 5000) \
             .with_environment('PROXY_LIST', ",".join(self.proxy_list)) \
             .build()
-        service_name = self.service_names['orchestrator']
+        service_name = self.service_names['controller']
         self.add_service(service_name, service)
 
     def add_extra_services(self):
         self.add_jaeger()
-        self.add_orchestrator()
+        self.add_controller()
 
     def convert(self):
         services = self.data['services']

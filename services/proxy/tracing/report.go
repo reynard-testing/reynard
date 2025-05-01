@@ -45,7 +45,7 @@ type RequestMetadata struct {
 	IsInitial      bool
 }
 
-var queryHost string = os.Getenv("ORCHESTRATOR_HOST")
+var queryHost string = os.Getenv("CONTROLLER_HOST")
 
 func attemptReport(report RequestReport) bool {
 
@@ -98,14 +98,14 @@ func attemptGetUid(req UidRequest) *UidResponse {
 	resp, err := http.Post(queryUrl, "application/json", bytes.NewBuffer(jsonBodyBytes))
 
 	if err != nil {
-		log.Printf("Failed to reach orchestrator to get UID: %v\n", err)
+		log.Printf("Failed to reach controller to get UID: %v\n", err)
 		return nil
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		log.Printf("Failed to get UID from orchestrator: %v\n", resp)
+		log.Printf("Failed to get UID from controller: %v\n", resp)
 		return nil
 	}
 
@@ -138,7 +138,7 @@ func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, fault
 	}
 
 	if res == nil {
-		log.Printf("Failed to get UID from orchestrator after retry.\n")
+		log.Printf("Failed to get UID from controller after retry.\n")
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
 		}, faultload.InjectionPointCallStack{}

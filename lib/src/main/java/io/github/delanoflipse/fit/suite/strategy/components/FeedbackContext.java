@@ -33,6 +33,8 @@ public abstract class FeedbackContext extends PruneContext {
 
     public abstract boolean exploreFrom(Collection<Fault> startingNode);
 
+    public abstract boolean exploreFrom(Collection<Fault> startingNode, Collection<FaultUid> combinations);
+
     public abstract void pruneFaultUidSubset(Set<FaultUid> subset);
 
     public abstract void pruneFaultSubset(Set<Fault> subset);

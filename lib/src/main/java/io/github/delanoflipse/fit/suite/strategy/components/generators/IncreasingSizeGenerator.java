@@ -10,7 +10,6 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.delanoflipse.fit.suite.faultload.Behaviour;
 import io.github.delanoflipse.fit.suite.faultload.Fault;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.Faultload;
@@ -20,134 +19,20 @@ import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
 import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
 import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
-import io.github.delanoflipse.fit.suite.strategy.util.Pair;
 import io.github.delanoflipse.fit.suite.strategy.util.DynamicPowersetTree;
 import io.github.delanoflipse.fit.suite.strategy.util.Simplify;
-import io.github.delanoflipse.fit.suite.strategy.util.SpaceEstimate;
-import io.github.delanoflipse.fit.suite.trace.tree.TraceReport;
 
-public class IncreasingSizeGenerator extends Generator implements Reporter {
+public class IncreasingSizeGenerator extends StoreBasedGenerator implements Reporter {
     private final Logger logger = LoggerFactory.getLogger(IncreasingSizeGenerator.class);
     private final DynamicPowersetTree iterator;
 
-    private final DynamicAnalysisStore store;
-
     public IncreasingSizeGenerator(DynamicAnalysisStore store, Function<Set<Fault>, PruneDecision> pruneFunction) {
-        this.store = store;
+        super(store);
         iterator = new DynamicPowersetTree(store, pruneFunction, true);
     }
 
     public IncreasingSizeGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {
         this(new DynamicAnalysisStore(modes), pruneFunction);
-    }
-
-    @Override
-    public void reportFaultUid(FaultUid point) {
-        if (point == null) {
-            return;
-        }
-
-        boolean isNew = store.addFaultUid(point);
-        if (isNew) {
-            logger.info("Discover new fault injection point {}", point);
-        }
-    }
-
-    @Override
-    public boolean reportUpstreamEffect(FaultUid cause, Collection<FaultUid> effect) {
-        return store.addUpstreamEffect(cause, effect);
-    }
-
-    @Override
-    public boolean reportPreconditionOfFaultUid(Collection<Behaviour> condition, FaultUid fid) {
-        if (fid == null) {
-            return true;
-        }
-
-        return store.addConditionForFaultUid(condition, fid);
-    }
-
-    @Override
-    public boolean exploreFrom(Collection<Fault> startingNode) {
-        return iterator.expandFrom(startingNode);
-    }
-
-    @Override
-    public boolean reportExclusionOfFaultUid(Collection<Behaviour> condition, FaultUid exclusion) {
-        if (exclusion == null) {
-            return true;
-        }
-
-        return store.addExclusionForFaultUid(condition, exclusion);
-    }
-
-    @Override
-    public boolean reportDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
-        return store.addDownstreamEffect(condition, effect);
-    }
-
-    @Override
-    public Faultload generate() {
-        var nextFaults = iterator.next();
-
-        if (nextFaults == null) {
-            return null;
-        }
-
-        return new Faultload(nextFaults);
-    }
-
-    @Override
-    public void pruneFaultUidSubset(Set<FaultUid> subset) {
-        store.pruneFaultUidSubset(subset);
-    }
-
-    @Override
-    public void pruneFaultSubset(Set<Fault> subset) {
-        store.pruneFaultSubset(subset);
-    }
-
-    @Override
-    public void pruneFaultload(Faultload faultload) {
-        store.pruneFaultload(faultload);
-    }
-
-    private int getNumerOfPoints() {
-        return store.getPoints().size();
-    }
-
-    @Override
-    public long spaceSize() {
-        return SpaceEstimate.spaceSize(getFailureModes().size(), getNumerOfPoints());
-    }
-
-    @Override
-    public List<FailureMode> getFailureModes() {
-        return store.getModes();
-    }
-
-    @Override
-    public List<FaultUid> getFaultInjectionPoints() {
-        return store.getPoints();
-    }
-
-    @Override
-    public Set<FaultUid> getExpectedPoints(Set<Fault> faultload) {
-        return store.getExpectedPoints(faultload);
-    }
-
-    @Override
-    public Set<Behaviour> getExpectedBehaviours(Set<Fault> faultload) {
-        return store.getExpectedBehaviour(faultload);
-    }
-
-    public DynamicAnalysisStore getStore() {
-        return store;
-    }
-
-    @Override
-    public void prune() {
-        iterator.pruneQueue();
     }
 
     public int getMaxQueueSize() {
@@ -217,18 +102,29 @@ public class IncreasingSizeGenerator extends Generator implements Reporter {
     }
 
     @Override
-    public List<Pair<Set<Fault>, List<Behaviour>>> getHistoricResults() {
-        return store.getHistoricResults();
+    public boolean exploreFrom(Collection<Fault> startingNode) {
+        return iterator.expandFrom(startingNode);
     }
 
     @Override
-    public Map<FaultUid, TraceReport> getHappyPath() {
-        return store.getHappyPath();
+    public Faultload generate() {
+        var nextFaults = iterator.next();
+
+        if (nextFaults == null) {
+            return null;
+        }
+
+        return new Faultload(nextFaults);
     }
 
     @Override
-    public void reportHappyPath(TraceReport report) {
-        store.addHappyPath(report.faultUid, report);
+    public void prune() {
+        iterator.pruneQueue();
+    }
+
+    @Override
+    public boolean exploreFrom(Collection<Fault> startingNode, Collection<FaultUid> combinations) {
+        return iterator.expandFrom(startingNode);
     }
 
 }

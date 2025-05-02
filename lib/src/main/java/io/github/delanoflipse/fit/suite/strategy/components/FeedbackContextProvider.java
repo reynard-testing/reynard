@@ -86,6 +86,11 @@ public class FeedbackContextProvider extends FeedbackContext {
     }
 
     @Override
+    public boolean exploreFrom(Collection<Fault> startingNode, Collection<FaultUid> combinations) {
+        return runner.getGenerator().exploreFrom(startingNode, combinations);
+    }
+
+    @Override
     public void pruneFaultUidSubset(Set<FaultUid> subset) {
         localStore.pruneFaultUidSubset(subset);
         runner.getGenerator().pruneFaultUidSubset(subset);

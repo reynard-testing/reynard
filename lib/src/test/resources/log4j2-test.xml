@@ -10,8 +10,8 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="io.github.delanoflipse" level="DEBUG" />
-        <!-- <Logger name="io.github.delanoflipse" level="INFO" /> -->
+        <!-- <Logger name="io.github.delanoflipse" level="DEBUG" /> -->
+        <Logger name="io.github.delanoflipse" level="INFO" />
         <Root level="WARN">
             <AppenderRef ref="CONSOLE" />
         </Root>

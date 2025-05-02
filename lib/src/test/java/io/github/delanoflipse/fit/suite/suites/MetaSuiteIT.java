@@ -82,6 +82,7 @@ public class MetaSuiteIT {
                     .withEnv("OTEL_TRACES_EXPORTER", "otlp")
                     .withEnv("OTEL_BSP_SCHEDULE_DELAY", "1")
                     .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
+                    .withEnv("OTEL_SDK_DISABLED", "false")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT))
             .withExposedPorts(5000);
 

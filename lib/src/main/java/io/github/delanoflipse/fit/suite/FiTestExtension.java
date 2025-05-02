@@ -39,7 +39,6 @@ import io.github.delanoflipse.fit.suite.strategy.components.pruners.DynamicReduc
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.FailStopPruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.FaultloadSizePruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.NoImpactPruner;
-import io.github.delanoflipse.fit.suite.strategy.components.pruners.RetryPruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.UnreachabilityPruner;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
@@ -94,13 +93,13 @@ public class FiTestExtension
                 .withComponent(new HappyPathDetector())
                 .withComponent(new ParentChildDetector())
                 .withComponent(new HappensBeforeNeighbourDetector())
-                .withComponent(new ConditionalPointDetector())
                 .withComponent(new ErrorPropagationDetector())
                 // Note: InjectionPointDetector needs to be the last detector in the chain
                 // Because it can add new cases, which can get prune,
                 // which rely on info of the other detectors
                 // .withComponent(new InjectionPointDetector(traversalStrategy,
                 // onlyPersistantOrTransientRetries))
+                .withComponent(new ConditionalPointDetector(onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
                 .withComponent(new BehaviorAnalyzer())
@@ -125,10 +124,6 @@ public class FiTestExtension
 
         if (annotation.failStop()) {
             strategy.withComponent(new FailStopPruner());
-        }
-
-        if (annotation.optimizeForRetries()) {
-            strategy.withComponent(new RetryPruner());
         }
 
         if (annotation.maskPayload()) {

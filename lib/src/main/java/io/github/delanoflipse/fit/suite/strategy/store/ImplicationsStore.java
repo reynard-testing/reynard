@@ -155,6 +155,12 @@ public class ImplicationsStore {
   }
 
   public Set<Behaviour> getBehaviours(Collection<Fault> pertubations) {
+    var root = getRootCause();
+
+    if (root == null) {
+      return Set.of();
+    }
+
     var pair = unfold(getRootCause(), pertubations);
     return Sets.plus(pair.second(), pair.first());
   }

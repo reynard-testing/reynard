@@ -1,27 +1,34 @@
 package io.github.delanoflipse.fit.suite.instrument.services;
 
 import java.util.List;
-import java.util.Random;
 
 import org.testcontainers.containers.GenericContainer;
 
 import io.github.delanoflipse.fit.suite.instrument.InstrumentedApp;
+import io.github.delanoflipse.fit.suite.strategy.util.Env;
 
 public class InstrumentedService extends GenericContainer<InstrumentedService> {
-    private static final String IMAGE_NAME = "dflipse/ds-fit-proxy:latest";
+    public static final String IMAGE;
     private final GenericContainer<?> service;
     private final String hostname;
     private final String serviceHostname;
     private final int port;
     private final int controlPort;
-
-    private static final Random random = new Random();
     private final int randomId;
 
-    public InstrumentedService(GenericContainer<?> service, String hostname, int port, InstrumentedApp app) {
-        super(IMAGE_NAME);
+    static {
+        boolean useHosted = Env.getEnv("USE_REMOTE", "0").equals("1");
+        if (useHosted) {
+            IMAGE = Env.getEnv("PROXY_MAGE", "dflipse/ds-fit-proxy:latest");
+        } else {
+            IMAGE = "fit-proxy:latest";
+        }
+    }
 
-        this.randomId = random.nextInt() % 10000;
+    public InstrumentedService(GenericContainer<?> service, String hostname, int port, InstrumentedApp app) {
+        super(IMAGE);
+
+        this.randomId = InstrumentedApp.getRandomId();
         this.hostname = hostname;
         this.serviceHostname = hostname + "-instrumented";
         this.port = port;

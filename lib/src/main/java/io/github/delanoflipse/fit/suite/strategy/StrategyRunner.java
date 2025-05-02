@@ -18,6 +18,7 @@ import io.github.delanoflipse.fit.suite.strategy.components.PruneContextProvider
 import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
 import io.github.delanoflipse.fit.suite.strategy.components.Pruner;
 import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
+import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicExplorationGenerator;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.Generator;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.IncreasingSizeGenerator;
 import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
@@ -251,6 +252,10 @@ public class StrategyRunner {
         }
 
         if (generator instanceof IncreasingSizeGenerator gen) {
+            logger.info("Generator queue size: {}", gen.getQueuSize());
+        }
+
+        if (generator instanceof DynamicExplorationGenerator gen) {
             logger.info("Generator queue size: {}", gen.getQueuSize());
         }
 

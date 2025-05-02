@@ -15,4 +15,5 @@ RUN opentelemetry-bootstrap -a install
 COPY . .
 
 # CMD [ "opentelemetry-instrument", "python", "main.py"]
+ENV OTEL_SDK_DISABLED=true
 CMD [ "opentelemetry-instrument", "flask", "--app", "main.py", "run", "--host=0.0.0.0"]

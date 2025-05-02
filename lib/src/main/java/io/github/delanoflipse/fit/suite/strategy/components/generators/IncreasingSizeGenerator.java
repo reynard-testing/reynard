@@ -122,9 +122,4 @@ public class IncreasingSizeGenerator extends StoreBasedGenerator implements Repo
         iterator.pruneQueue();
     }
 
-    @Override
-    public boolean exploreFrom(Collection<Fault> startingNode, Collection<FaultUid> combinations) {
-        return iterator.expandFrom(startingNode);
-    }
-
 }

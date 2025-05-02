@@ -25,20 +25,21 @@ import io.github.delanoflipse.fit.suite.strategy.StrategyRunner;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.BehaviorAnalyzer;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.ConcurrencyDetector;
+import io.github.delanoflipse.fit.suite.strategy.components.analyzers.ConditionalPointDetector;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.ErrorPropagationDetector;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.HappensBeforeNeighbourDetector;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.HappyPathDetector;
-import io.github.delanoflipse.fit.suite.strategy.components.analyzers.InjectionPointDetector;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.ParentChildDetector;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.RedundancyAnalyzer;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.StatusAnalyzer;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.StatusPropagationOracle;
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.TimingAnalyzer;
-import io.github.delanoflipse.fit.suite.strategy.components.generators.IncreasingSizeGenerator;
+import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicExplorationGenerator;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.DynamicReductionPruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.FailStopPruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.FaultloadSizePruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.NoImpactPruner;
+import io.github.delanoflipse.fit.suite.strategy.components.pruners.RetryPruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.UnreachabilityPruner;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
@@ -87,15 +88,19 @@ public class FiTestExtension
 
         strategy = new StrategyRunner(modes);
         strategy
-                .withComponent(new IncreasingSizeGenerator(strategy.getStore(), strategy::prune))
+                // .withComponent(new IncreasingSizeGenerator(strategy.getStore(),
+                // strategy::prune))
+                .withComponent(new DynamicExplorationGenerator(strategy.getStore(), strategy::prune, traversalStrategy))
                 .withComponent(new HappyPathDetector())
                 .withComponent(new ParentChildDetector())
-                .withComponent(new ErrorPropagationDetector())
                 .withComponent(new HappensBeforeNeighbourDetector())
+                .withComponent(new ConditionalPointDetector())
+                .withComponent(new ErrorPropagationDetector())
                 // Note: InjectionPointDetector needs to be the last detector in the chain
                 // Because it can add new cases, which can get prune,
                 // which rely on info of the other detectors
-                .withComponent(new InjectionPointDetector(traversalStrategy, onlyPersistantOrTransientRetries))
+                // .withComponent(new InjectionPointDetector(traversalStrategy,
+                // onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
                 .withComponent(new BehaviorAnalyzer())
@@ -120,6 +125,10 @@ public class FiTestExtension
 
         if (annotation.failStop()) {
             strategy.withComponent(new FailStopPruner());
+        }
+
+        if (annotation.optimizeForRetries()) {
+            strategy.withComponent(new RetryPruner());
         }
 
         if (annotation.maskPayload()) {

@@ -42,6 +42,9 @@ public class StrategyRunner {
     private boolean withBodyHashing = false;
     private boolean withLogHeader = false;
     private boolean withCallStack = false;
+    private boolean withStopOnError = false;
+
+    private boolean stopDueToError = false;
 
     private int withGetDelayMs = 0;
     private long maxTimeS = 0;
@@ -71,6 +74,11 @@ public class StrategyRunner {
 
     public StrategyRunner withCallStack() {
         withCallStack = true;
+        return this;
+    }
+
+    public StrategyRunner withStopOnError() {
+        withStopOnError = true;
         return this;
     }
 
@@ -147,6 +155,11 @@ public class StrategyRunner {
             intialRun = false;
             logger.info("Starting with initial empty faultload!");
             return new Faultload(Set.of());
+        }
+
+        if (stopDueToError) {
+            intialRun = false;
+            return null;
         }
 
         // Queue is empty, no more faultloads to run
@@ -275,10 +288,17 @@ public class StrategyRunner {
         store.addHistoricResult(result.trace.getInjectedFaults(), result.trace.getBehaviours());
 
         logger.info("Analyzing result of running faultload with traceId=" + result.trackedFaultload.getTraceId());
+
+        if (!result.passed && withStopOnError) {
+            logger.error("Test case failed, stopping the test suite.");
+            stopDueToError = true;
+            return;
+        }
+
         if (result.isInitial() && !result.trace.getReportedFaults().isEmpty()) {
             logger.error("The intial happy path should be fault free, but its not! Stopping the test suite.");
             logger.error("Found {}", result.trace.getReportedFaults());
-            testCasesLeft = 0;
+            stopDueToError = true;
             return;
         }
 

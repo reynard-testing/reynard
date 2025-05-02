@@ -36,7 +36,6 @@ import io.github.delanoflipse.fit.suite.strategy.components.analyzers.StatusProp
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.TimingAnalyzer;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicExplorationGenerator;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.DynamicReductionPruner;
-import io.github.delanoflipse.fit.suite.strategy.components.pruners.FailStopPruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.FaultloadSizePruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.NoImpactPruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.UnreachabilityPruner;
@@ -123,7 +122,7 @@ public class FiTestExtension
         }
 
         if (annotation.failStop()) {
-            strategy.withComponent(new FailStopPruner());
+            strategy.withStopOnError();
         }
 
         if (annotation.maskPayload()) {

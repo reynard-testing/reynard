@@ -31,6 +31,27 @@ public record FaultInjectionPoint(String destination, String signature, String p
         return payload.equals(ANY_WILDCARD);
     }
 
+    // Builder patterns
+    public FaultInjectionPoint withDestination(String destination) {
+        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+    }
+
+    public FaultInjectionPoint withSignature(String signature) {
+        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+    }
+
+    public FaultInjectionPoint withPayload(String payload) {
+        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+    }
+
+    public FaultInjectionPoint withCallStack(Map<String, Integer> callStack) {
+        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+    }
+
+    public FaultInjectionPoint withCount(int count) {
+        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+    }
+
     @Override
     public String toString() {
         String payloadStr = (payload.equals("*") || payload.equals("")) ? "" : "(" + payload + ")";

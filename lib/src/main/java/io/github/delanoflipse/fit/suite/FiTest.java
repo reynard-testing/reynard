@@ -34,4 +34,6 @@ public @interface FiTest {
     int maxFaultloadSize() default 0;
 
     int initialGetTraceDelay() default 0;
+
+    Class<?>[] additionalComponents() default {};
 }

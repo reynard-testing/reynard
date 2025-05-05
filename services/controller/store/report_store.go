@@ -52,25 +52,43 @@ func (rs *ReportStore) RemoveByTraceId(TraceId faultload.TraceID) {
 	}
 }
 
+func remove(s []trace.TraceReport, i int) []trace.TraceReport {
+	// swap the element with the last element
+	// and then remove the last element
+	// this is more efficient than using append
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
+}
+
 func (rs *ReportStore) RemoveByTraceIdAndSpanId(TraceId faultload.TraceID, SpanId faultload.SpanID) {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
 
-	// check if the traceId exists
-	_, exists := rs.reportsByTraceId[TraceId]
-	if !exists {
-		return
-	}
-
 	// Remove the report from the reports slice
-	for i, report := range rs.reports {
-		if report.TraceId == TraceId && report.SpanId == SpanId {
-			rs.reports = append(rs.reports[:i], rs.reports[i+1:]...)
+	for i := 0; i < len(rs.reports); i++ {
+		if rs.reports[i].TraceId == TraceId && rs.reports[i].SpanId == SpanId {
+			rs.reports = remove(rs.reports, i)
 			break
 		}
 	}
 
-	// Remove the report from the reportsBySpanId ma
+	// Remove the report from the reportsByTraceId map
+	if byTraceId, ok := rs.reportsByTraceId[TraceId]; ok {
+		for i := 0; i < len(byTraceId); i++ {
+			if byTraceId[i].SpanId == SpanId {
+				byTraceId = remove(byTraceId, i)
+				break
+			}
+		}
+
+		if len(byTraceId) == 0 {
+			delete(rs.reportsByTraceId, TraceId)
+		} else {
+			rs.reportsByTraceId[TraceId] = byTraceId
+		}
+	}
+
+	// Remove the report from the reportsByTraceIdBySpanId map
 	if faultMap, ok := rs.reportsByTraceIdBySpanId[TraceId]; ok {
 		delete(faultMap, SpanId)
 		if len(faultMap) == 0 {
@@ -81,9 +99,6 @@ func (rs *ReportStore) RemoveByTraceIdAndSpanId(TraceId faultload.TraceID, SpanI
 }
 
 func (rs *ReportStore) Add(report trace.TraceReport) trace.TraceReport {
-	// Remove it it already exists
-	rs.RemoveByTraceIdAndSpanId(report.TraceId, report.SpanId)
-
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
 	rs.reports = append(rs.reports, report)

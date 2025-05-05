@@ -100,6 +100,7 @@ public class MetaSuiteIT {
             new GenericContainer<>(CONTROLLER_IMAGE)
                     .withEnv("PROXY_LIST", "proxy1:8050,proxy2:8050,proxy3:8050")
                     .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
+                    .withEnv("PROXY_TIMEOUT", "0")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "controller-real")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT))

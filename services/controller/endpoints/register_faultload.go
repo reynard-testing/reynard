@@ -21,6 +21,7 @@ import (
 var (
 	ProxyList       = strings.Split(os.Getenv("PROXY_LIST"), ",")
 	ProxyRetryCount = util.GetIntEnvOrDefault("PROXY_RETRY_COUNT", 3)
+	ProxyTimeout    = time.Duration(util.GetIntEnvOrDefault("PROXY_TIMEOUT", 100)) * time.Millisecond
 	client          = http.Client{
 		Transport: otelhttp.NewTransport(http.DefaultTransport),
 	}
@@ -94,7 +95,7 @@ func RegisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 
 		go func(proxy string) {
 			defer wg.Done()
-			err := retry(ProxyRetryCount, time.Second, func() error {
+			err := retry(ProxyRetryCount, ProxyTimeout, func() error {
 				return RegisterFaultload(proxy, ctx, faultload)
 			})
 			if err != nil {
@@ -171,7 +172,7 @@ func UnregisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 
 		go func(proxy string) {
 			defer wg.Done()
-			err := retry(ProxyRetryCount, time.Second, func() error {
+			err := retry(ProxyRetryCount, ProxyTimeout, func() error {
 				return UnregisterFaultload(proxy, ctx, &requestData)
 			})
 			if err != nil {

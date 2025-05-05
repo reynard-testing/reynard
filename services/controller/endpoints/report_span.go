@@ -25,6 +25,7 @@ func ReportSpanId(w http.ResponseWriter, r *http.Request) {
 
 	if store.Reports.HasSpanIdForTraceId(data.TraceId, data.SpanId) {
 		log.Printf("Updating reported span %s for trace id %s\n", data.SpanId, data.TraceId)
+		store.Reports.RemoveByTraceIdAndSpanId(data.TraceId, data.SpanId)
 		store.Reports.Add(data)
 	} else {
 		log.Printf("Adding reported span %s for trace id %s\n", data.SpanId, data.TraceId)

@@ -4,8 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	"dflipse.nl/fit-proxy/tracing"
-	"dflipse.nl/fit-proxy/util"
+	"dflipse.nl/ds-fit/shared/util"
 )
 
 type ProxyConfig struct {
@@ -36,7 +35,7 @@ func GetProxyConfig() ProxyConfig {
 	if destination == "" {
 		proxyTargetAddr := util.AsHostAndPortFromUrl(proxyTarget)
 		proxyTargetHost, _ := util.AsHostAndPort(proxyTargetAddr)
-		destination = tracing.GetHostIdentifier(proxyTargetHost)
+		destination = util.GetHostIdentifier(proxyTargetHost)
 	}
 
 	return ProxyConfig{

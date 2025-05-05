@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"time"
 
-	"dflipse.nl/fit-proxy/config"
-	"dflipse.nl/fit-proxy/faultload"
-	"dflipse.nl/fit-proxy/tracing"
-	"dflipse.nl/fit-proxy/util"
+	"dflipse.nl/ds-fit/proxy/config"
+	"dflipse.nl/ds-fit/proxy/tracing"
+	"dflipse.nl/ds-fit/shared/faultload"
+	"dflipse.nl/ds-fit/shared/util"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 

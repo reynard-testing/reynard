@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"time"
 
-	"dflipse.nl/fit-proxy/config"
-	"dflipse.nl/fit-proxy/control"
-	"dflipse.nl/fit-proxy/faultload"
-	"dflipse.nl/fit-proxy/tracing"
+	"dflipse.nl/ds-fit/proxy/config"
+	"dflipse.nl/ds-fit/proxy/control"
+	"dflipse.nl/ds-fit/proxy/tracing"
+	"dflipse.nl/ds-fit/shared/faultload"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -168,7 +168,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		parentStack, callStack := tracing.GetUid(traceId, reportParentId, isInitial)
 		log.Printf("Parent Stack: %s\n", parentStack)
 
-		partialPoint := tracing.PartialPointFromRequest(r, destination, shouldMaskPayload)
+		partialPoint := faultload.PartialPointFromRequest(r, destination, shouldMaskPayload)
 		// do not include the current span in the call stack
 		if shouldUseCallStack {
 			callStack.Del(partialPoint)

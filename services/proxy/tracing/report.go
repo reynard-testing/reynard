@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"dflipse.nl/fit-proxy/faultload"
+	"dflipse.nl/ds-fit/shared/faultload"
 )
 
 type ResponseData struct {

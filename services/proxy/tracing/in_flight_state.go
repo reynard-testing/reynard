@@ -3,7 +3,7 @@ package tracing
 import (
 	"sync"
 
-	"dflipse.nl/fit-proxy/faultload"
+	"dflipse.nl/ds-fit/shared/faultload"
 )
 
 // Keep track of all in flight requests, on a per trace id basis

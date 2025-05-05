@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"dflipse.nl/fit-proxy/config"
-	"dflipse.nl/fit-proxy/control"
-	"dflipse.nl/fit-proxy/proxy"
+	"dflipse.nl/ds-fit/proxy/config"
+	"dflipse.nl/ds-fit/proxy/control"
+	"dflipse.nl/ds-fit/proxy/proxy"
 )
 
 func main() {

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"dflipse.nl/fit-proxy/tracing"
+	"dflipse.nl/ds-fit/proxy/tracing"
 )
 
 type ResponseCapture struct {

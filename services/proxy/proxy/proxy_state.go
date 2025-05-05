@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"dflipse.nl/fit-proxy/faultload"
-	"dflipse.nl/fit-proxy/tracing"
+	"dflipse.nl/ds-fit/proxy/tracing"
+	"dflipse.nl/ds-fit/shared/faultload"
 )
 
 type ProxyState struct {

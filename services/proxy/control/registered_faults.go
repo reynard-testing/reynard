@@ -3,7 +3,7 @@ package control
 import (
 	"sync"
 
-	"dflipse.nl/fit-proxy/faultload"
+	"dflipse.nl/ds-fit/shared/faultload"
 )
 
 type FaultRegister struct {

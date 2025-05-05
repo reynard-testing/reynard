@@ -162,7 +162,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		shouldUseCallStack := state.GetWithDefault(FIT_USE_CALL_STACK, "0") == "1"
 
 		// -- Determine FID --
-		reportParentId := state.GetWithDefault(FIT_PARENT_KEY, "0")
+		reportParentId := faultload.SpanID(state.GetWithDefault(FIT_PARENT_KEY, "0"))
 		log.Printf("Report parent ID: %s\n", reportParentId)
 
 		parentStack, callStack := tracing.GetUid(traceId, reportParentId, isInitial)
@@ -182,7 +182,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, callStack, invocationCount)
 		// --
 
-		state.Set(FIT_PARENT_KEY, currentSpan.ParentID)
+		state.Set(FIT_PARENT_KEY, string(currentSpan.ParentID))
 		r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{

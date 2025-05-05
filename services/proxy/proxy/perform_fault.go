@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"dflipse.nl/ds-fit/proxy/faultload"
+	"dflipse.nl/ds-fit/shared/faultload"
 )
 
 func performHttpError(f faultload.Fault, s *ProxyState, omit bool) {

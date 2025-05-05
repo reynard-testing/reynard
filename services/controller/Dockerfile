@@ -9,12 +9,12 @@ RUN go mod download
 COPY . .
 
 # Build the project binary
-RUN go build -o fit-proxy proxy/main.go
+RUN go build -o fit-controller controller/main.go
 
 # Final minimal image
 FROM debian:bullseye-slim
 
 WORKDIR /app
-COPY --from=builder /go/src/dflipse.nl/ds-fit/fit-proxy fit-proxy
+COPY --from=builder /go/src/dflipse.nl/ds-fit/fit-controller fit-controller
 
-ENTRYPOINT ["/app/fit-proxy"]
+ENTRYPOINT ["/app/fit-controller"]

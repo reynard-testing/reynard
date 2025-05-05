@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"dflipse.nl/ds-fit/controller/endpoints"
 	"dflipse.nl/ds-fit/proxy/config"
 	"dflipse.nl/ds-fit/proxy/tracing"
 	"dflipse.nl/ds-fit/shared/faultload"
@@ -124,14 +125,10 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "OK")
 }
 
-type UnregisterFaultloadRequest struct {
-	TraceId string `json:"trace_id"`
-}
-
 // Handle the /v1/faultload/unregister endpoint
 func unregisterFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the newFaultload from the request body
-	var requestData UnregisterFaultloadRequest
+	var requestData endpoints.UnregisterFaultloadRequest
 	err := json.NewDecoder(r.Body).Decode(&requestData)
 
 	if err != nil {

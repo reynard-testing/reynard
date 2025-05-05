@@ -7,14 +7,16 @@ import (
 	"log"
 	"strconv"
 	"strings"
+
+	"dflipse.nl/ds-fit/shared/faultload"
 )
 
 type TraceStateData map[string]string
 
 type TraceParentData struct {
 	Version    string
-	TraceID    string
-	ParentID   string
+	TraceID    faultload.TraceID
+	ParentID   faultload.SpanID
 	TraceFlags string
 }
 
@@ -111,7 +113,7 @@ func isValid(s []byte) bool {
 	return false
 }
 
-func NewSpanID() string {
+func NewSpanID() faultload.SpanID {
 	sid := make([]byte, 8)
 	for {
 		if _, err := rand.Read(sid); err != nil {
@@ -122,7 +124,7 @@ func NewSpanID() string {
 		}
 	}
 
-	return hex.EncodeToString(sid[:])
+	return faultload.SpanID(hex.EncodeToString(sid[:]))
 }
 
 func ParseTraceParent(traceparent string) *TraceParentData {
@@ -138,8 +140,8 @@ func ParseTraceParent(traceparent string) *TraceParentData {
 
 	return &TraceParentData{
 		Version:    parts[0],
-		TraceID:    parts[1],
-		ParentID:   parts[2],
+		TraceID:    faultload.TraceID(parts[1]),
+		ParentID:   faultload.SpanID(parts[2]),
 		TraceFlags: parts[3],
 	}
 }

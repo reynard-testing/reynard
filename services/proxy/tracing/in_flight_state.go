@@ -10,12 +10,12 @@ import (
 // This is used to determine which requests are concurrent to each other.
 type InFlightTracker struct {
 	sync.RWMutex
-	m map[string]map[*faultload.FaultUid][]*faultload.FaultUid
+	m map[faultload.TraceID]map[*faultload.FaultUid][]*faultload.FaultUid
 }
 
-var inFlightTracker = InFlightTracker{m: make(map[string]map[*faultload.FaultUid][]*faultload.FaultUid)}
+var inFlightTracker = InFlightTracker{m: make(map[faultload.TraceID]map[*faultload.FaultUid][]*faultload.FaultUid)}
 
-func (tracker *InFlightTracker) Track(traceId string, uid *faultload.FaultUid) {
+func (tracker *InFlightTracker) Track(traceId faultload.TraceID, uid *faultload.FaultUid) {
 	tracker.Lock()
 	defer tracker.Unlock()
 
@@ -40,7 +40,7 @@ func (tracker *InFlightTracker) Track(traceId string, uid *faultload.FaultUid) {
 	}
 }
 
-func (tracker *InFlightTracker) GetTrackedAndClear(traceId string, uid *faultload.FaultUid) []*faultload.FaultUid {
+func (tracker *InFlightTracker) GetTrackedAndClear(traceId faultload.TraceID, uid *faultload.FaultUid) []*faultload.FaultUid {
 	tracker.Lock()
 	defer tracker.Unlock()
 
@@ -56,21 +56,21 @@ func (tracker *InFlightTracker) GetTrackedAndClear(traceId string, uid *faultloa
 	return []*faultload.FaultUid{}
 }
 
-func (tracker *InFlightTracker) ClearTracked(traceId string) {
+func (tracker *InFlightTracker) ClearTracked(traceId faultload.TraceID) {
 	tracker.Lock()
 	defer tracker.Unlock()
 
 	delete(tracker.m, traceId)
 }
 
-func TrackFault(traceId string, uid *faultload.FaultUid) {
+func TrackFault(traceId faultload.TraceID, uid *faultload.FaultUid) {
 	inFlightTracker.Track(traceId, uid)
 }
 
-func GetTrackedAndClear(traceId string, uid *faultload.FaultUid) []*faultload.FaultUid {
+func GetTrackedAndClear(traceId faultload.TraceID, uid *faultload.FaultUid) []*faultload.FaultUid {
 	return inFlightTracker.GetTrackedAndClear(traceId, uid)
 }
 
-func ClearTracked(traceId string) {
+func ClearTracked(traceId faultload.TraceID) {
 	inFlightTracker.ClearTracked(traceId)
 }

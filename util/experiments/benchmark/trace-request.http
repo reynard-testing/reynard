@@ -1,0 +1,3 @@
+GET http://localhost:8081/
+traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01
+tracestate: fit=1,init=1

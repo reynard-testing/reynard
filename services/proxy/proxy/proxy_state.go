@@ -6,6 +6,7 @@ import (
 
 	"dflipse.nl/ds-fit/proxy/tracing"
 	"dflipse.nl/ds-fit/shared/faultload"
+	"dflipse.nl/ds-fit/shared/trace"
 )
 
 type ProxyState struct {
@@ -19,8 +20,8 @@ type ProxyState struct {
 	DurationMs         float64
 }
 
-func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) tracing.RequestReport {
-	var response *tracing.ResponseData = nil
+func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) trace.TraceReport {
+	var response *trace.ResponseData = nil
 
 	if s.Complete {
 		responseData := s.ResponseWriter.GetResponseData(hashBody)
@@ -28,7 +29,7 @@ func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) tr
 		response.DurationMs = s.DurationMs
 	}
 
-	return tracing.RequestReport{
+	return trace.TraceReport{
 		TraceId:       metadata.TraceId,
 		SpanId:        metadata.SpanId,
 		FaultUid:      metadata.FaultUid,

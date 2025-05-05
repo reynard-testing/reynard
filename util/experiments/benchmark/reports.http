@@ -1,0 +1,2 @@
+GET http://localhost:5050/v1/trace/efcbf3a8ae78f65a35bf05ddcc8419e8
+Content-Type: application/json

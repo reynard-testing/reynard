@@ -6,9 +6,12 @@ import (
 	"net/http"
 )
 
+type SpanID string
+type TraceID string
+
 type Faultload struct {
 	Faults  []Fault `json:"faults"`
-	TraceId string  `json:"trace_id"`
+	TraceId TraceID `json:"trace_id"`
 }
 
 func ParseRequest(r *http.Request) (*Faultload, error) {

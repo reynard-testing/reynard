@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"dflipse.nl/ds-fit/proxy/tracing"
+	"dflipse.nl/ds-fit/shared/trace"
 )
 
 type ResponseCapture struct {
@@ -106,7 +106,7 @@ func (n *NoOpResponseWriter) Write([]byte) (int, error) {
 
 func (n *NoOpResponseWriter) WriteHeader(statusCode int) {}
 
-func (rc *ResponseCapture) GetResponseData(hashBody bool) tracing.ResponseData {
+func (rc *ResponseCapture) GetResponseData(hashBody bool) trace.ResponseData {
 	body := ""
 	status := rc.Status
 
@@ -128,7 +128,7 @@ func (rc *ResponseCapture) GetResponseData(hashBody bool) tracing.ResponseData {
 		body = fmt.Sprintf("%X", bodyHash)
 	}
 
-	return tracing.ResponseData{
+	return trace.ResponseData{
 		Status: status,
 		Body:   body,
 	}

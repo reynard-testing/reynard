@@ -19,7 +19,7 @@ public class TaggedTimer {
 
     public void stop(String tag) {
         if (!timers.containsKey(tag)) {
-            throw new IllegalStateException("Timer with tag " + tag + " not started");
+            return;
         }
 
         timers.get(tag).stop();

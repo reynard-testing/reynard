@@ -19,20 +19,14 @@ def get_args():
 
 ADDITIONAL_ENV = [
     ["FLASK_DEBUG", None],
-    # netflix
-    # ["NETFLIX_FAULTS", None],
-    # ["CHECK_TIMEOUTS", None],
-    # audible
-    # ["BAD_METADATA", None],
-    # mailchimp
-    # ["DB_READ_ONLY", None],
 ]
 
 IMAGES = {
     'jaeger': 'jaegertracing/jaeger:latest',
-    'controller': 'dflipse/ds-fit-controller:latest',
-    'proxy': 'dflipse/ds-fit-proxy:latest',
+    'controller': '${CONTROLLER_IMAGE:-dflipse/ds-fit-controller:latest}',
+    'proxy': '${PROXY_IMAGE:-dflipse/ds-fit-proxy:latest}',
 }
+
 
 class ServiceBuilder:
     def __init__(self):
@@ -171,6 +165,7 @@ class Converter:
             .with_image(IMAGES['controller']) \
             .with_ports(self.public_ports['controller'], 5000) \
             .with_environment('PROXY_LIST', ",".join(self.proxy_list)) \
+            .with_environment('FLASK_DEBUG', None) \
             .build()
         service_name = self.service_names['controller']
         self.add_service(service_name, service)
@@ -195,6 +190,16 @@ if __name__ == '__main__':
     filibuster_project = None
     if args.filibuster:
         filibuster_project = args.yaml_file.split('/')[-2]
+
+    if filibuster_project is not None:
+        if filibuster_project == 'netflix':
+            ADDITIONAL_ENV.append(["NETFLIX_FAULTS", None])
+            ADDITIONAL_ENV.append(["CHECK_TIMEOUTS", None])
+        if filibuster_project == 'audible':
+            ADDITIONAL_ENV.append(["BAD_METADATA", None])
+        if filibuster_project == 'mailchimp':
+            ADDITIONAL_ENV.append(["DB_READ_ONLY", None])
+
     converter = Converter(data, filibuster_project)
     converter.convert()
 

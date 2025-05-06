@@ -11,21 +11,13 @@ import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
-import io.github.delanoflipse.fit.suite.strategy.util.TransativeRelation;
 
 public class ParentChildDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ParentChildDetector.class);
-    private TransativeRelation<FaultUid> happensBefore = new TransativeRelation<>();
     private final Set<FaultUid> knownPoints = new HashSet<>();
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        for (var pair : result.trace.getParentsAndChildren()) {
-            var parent = pair.first();
-            var child = pair.second();
-            happensBefore.addRelation(parent, child);
-        }
-
         // --- Report upstream causes and effects ---
         result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
             FaultUid cause = report.faultUid;

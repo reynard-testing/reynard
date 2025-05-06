@@ -29,14 +29,17 @@ if [ ! -d "${corpus_path}" ]; then
   exit 1
 fi
 
+PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
+CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
+
 # Build images
 cd ${corpus_path}
 if [ -n "${BUILD_BEFORE}" ]; then
-    docker compose -f docker-compose.fit.yml build
+    PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml build
 fi
 
 # Start containers
-docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
+PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
 
 # Wait for containers to be healthy
 sleep 3
@@ -49,6 +52,6 @@ mvn clean test -Dtest=FilibusterSuiteIT#test${test_name} | tee ${output_file}
 
 if [ -n "${STOP_AFTER}" ]; then
     cd ${corpus_path}
-    docker compose -f docker-compose.fit.yml down
+    PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml down
     exit 0
 fi

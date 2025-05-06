@@ -2,6 +2,7 @@ package io.github.delanoflipse.fit.suite.instrument;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -16,13 +17,13 @@ public class InstrumentedApp extends RemoteController {
     private final List<InstrumentedService> proxies = new ArrayList<>();
     private final List<GenericContainer<?>> services = new ArrayList<>();
 
-    public String controllerHost = "controller";
+    public String controllerHost = "fit-controller";
     public int controllerPort = 5000;
     public ControllerService controller;
     public String controllerInspectUrl;
 
     public Jaeger jaeger = null;
-    public String jaegerHost = "jaeger";
+    public String jaegerHost = "fit-jaeger";
     public int jaegerPort = 16686;
 
     @SuppressWarnings("resource")
@@ -31,14 +32,25 @@ public class InstrumentedApp extends RemoteController {
 
         this.controller = new ControllerService()
                 .withNetwork(network)
+                .withCreateContainerCmdModifier(cmd -> cmd.withName(controllerHost + "-" + getRandomId()))
+                .withEnv("OTEL_SDK_DISABLED", "true")
                 .withNetworkAliases(controllerHost)
                 .withExposedPorts(controllerPort);
         this.services.add(controller);
     }
 
+    private static final Random random = new Random();
+
+    public static int getRandomId() {
+        // 4 digit random number
+        // 0-9999
+        return random.nextInt() % (9999 + 1);
+    }
+
     public InstrumentedApp withJaeger() {
         jaeger = new Jaeger()
                 .withNetwork(network)
+                .withCreateContainerCmdModifier(cmd -> cmd.withName(jaegerHost + "-" + getRandomId()))
                 .withNetworkAliases(jaegerHost)
                 .withExposedPorts(jaegerPort);
         this.services.add(jaeger);

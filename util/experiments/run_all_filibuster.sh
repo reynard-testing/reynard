@@ -13,11 +13,13 @@ if [ -z "${SKIP_CINEMA}" ]; then
     ./run_full_filibuster.sh cinema-1 $1
     ./run_full_filibuster.sh cinema-2 $1
     ./run_full_filibuster.sh cinema-3 $1
+    OPT_RETRIES=1 ./run_full_filibuster.sh cinema-3 $1
     ./run_full_filibuster.sh cinema-4 $1
     ./run_full_filibuster.sh cinema-5 $1
     ./run_full_filibuster.sh cinema-6 $1
     ./run_full_filibuster.sh cinema-7 $1
     ./run_full_filibuster.sh cinema-8 $1
+    OPT_RETRIES=1 ./run_full_filibuster.sh cinema-8 $1
 fi
 
 if [ -z "${SKIP_INDUSTRY}" ]; then

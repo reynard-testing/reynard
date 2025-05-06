@@ -145,6 +145,19 @@ public class FiTestExtension
             strategy.withGetDelay(annotation.initialGetTraceDelay());
         }
 
+        if (annotation.additionalComponents().length > 0) {
+            for (Class<?> componentClass : annotation.additionalComponents()) {
+                try {
+                    var constructor = componentClass.getDeclaredConstructor();
+                    var instance = constructor.newInstance();
+                    strategy.withComponent(instance);
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException
+                        | NoSuchMethodException e) {
+                    throw new RuntimeException("Failed to instantiate additional component: " + componentClass, e);
+                }
+            }
+        }
+
         Class<?> testClass = context.getRequiredTestClass();
         FaultController controller;
 

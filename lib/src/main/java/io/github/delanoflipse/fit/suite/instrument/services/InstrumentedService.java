@@ -1,9 +1,11 @@
 package io.github.delanoflipse.fit.suite.instrument.services;
 
 import java.util.List;
+import java.util.Map;
 
 import org.testcontainers.containers.GenericContainer;
 
+import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
 import io.github.delanoflipse.fit.suite.instrument.InstrumentedApp;
 import io.github.delanoflipse.fit.suite.strategy.util.Env;
 
@@ -49,6 +51,14 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
         service.setNetwork(app.network);
         service.setNetworkAliases(List.of(this.serviceHostname));
         service.withCreateContainerCmdModifier(cmd -> cmd.withName(hostname + "-original-" + randomId));
+    }
+
+    public FaultInjectionPoint getPoint(String signature, String payload, Map<String, Integer> callStack, int count) {
+        return new FaultInjectionPoint(hostname, signature, payload, callStack, count);
+    }
+
+    public FaultInjectionPoint getPoint() {
+        return new FaultInjectionPoint(hostname, "*", "*", Map.of(), 0);
     }
 
     public InstrumentedService withHttp2() {

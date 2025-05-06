@@ -1,21 +1,38 @@
 package io.github.delanoflipse.fit.suite.suites;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import io.github.delanoflipse.fit.suite.FiTest;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
+import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
+import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.faultload.Faultload;
+import io.github.delanoflipse.fit.suite.faultload.modes.ErrorFault;
+import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.suite.faultload.modes.HttpError;
 import io.github.delanoflipse.fit.suite.instrument.FaultController;
 import io.github.delanoflipse.fit.suite.instrument.InstrumentedApp;
 import io.github.delanoflipse.fit.suite.instrument.services.ControllerService;
 import io.github.delanoflipse.fit.suite.instrument.services.InstrumentedService;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.suite.strategy.components.Pruner;
+import io.github.delanoflipse.fit.suite.strategy.util.Env;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -27,7 +44,7 @@ import okhttp3.Response;
 @Testcontainers(parallel = true)
 public class MetaSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
-    private static final int PROXY_RETRY_COUNT = 3;
+    private static final int PROXY_RETRY_COUNT;
     private static final String PROXY_IMAGE = InstrumentedService.IMAGE;
     private static final String CONTROLLER_IMAGE = ControllerService.IMAGE;
     private static final String COLLECTOR_ENDPOINT = "http://" + app.jaegerHost + ":4317";
@@ -38,6 +55,12 @@ public class MetaSuiteIT {
             .readTimeout(10, TimeUnit.MINUTES)
             .build();
     private final static TrackedFaultload metaFaultload = new TrackedFaultload();
+    private final static String jsonBody = metaFaultload.serializeJson();
+    private final static RequestBody body = RequestBody.create(jsonBody, JSON);
+
+    static {
+        PROXY_RETRY_COUNT = Integer.parseInt(Env.getEnv("PROXY_RETRY_COUNT", "3"));
+    }
 
     @Container
     private static final InstrumentedService proxy1 = app.instrument("proxy1", 8050,
@@ -100,13 +123,60 @@ public class MetaSuiteIT {
         app.stop();
     }
 
+    @Test
+    public void testShouldRetry() throws IOException {
+        int port = controller.getMappedPort(5000);
+        String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
+
+        // First call from the controller to proxy1
+        FaultUid uid = new FaultUid(List.of(controller.getPoint(), proxy1.getPoint()));
+        FailureMode mode = ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE);
+        Faultload faultload = new Faultload(Set.of(new Fault(uid, mode)));
+        TrackedFaultload tracked = new TrackedFaultload(faultload);
+        String inspectUrl = app.controllerInspectUrl + "/v1/trace/" + tracked.getTraceId();
+
+        Request request = new Request.Builder()
+                .url(queryUrl)
+                .post(body)
+                .addHeader("traceparent", tracked.getTraceParent().toString())
+                .addHeader("tracestate", tracked.getTraceState().toString())
+                .build();
+
+        app.registerFaultload(tracked);
+
+        try (Response response = client.newCall(request).execute()) {
+            TraceAnalysis result = getController().getTrace(tracked);
+            boolean hasRetry = result.getFaultUids()
+                    .stream()
+                    .anyMatch(f -> f.matches(uid.asAnyCount()) && f.count() == 1);
+            assertEquals(200, response.code());
+            assertTrue(hasRetry);
+        }
+    }
+
+    static public class Proxy3Ignorer implements Pruner {
+        @Override
+        public PruneDecision prune(Faultload faultload, PruneContext context) {
+            for (FaultUid uid : faultload.getFaultUids()) {
+                if (uid.getPoint().destination().equals("proxy3")) {
+                    return PruneDecision.PRUNE_SUPERSETS;
+                }
+            }
+            return PruneDecision.KEEP;
+        }
+
+    }
+
+    @FiTest(maxTestCases = 999, optimizeForRetries = true, withCallStack = false, additionalComponents = {
+            Proxy3Ignorer.class })
+    public void testRegisterWithCustomPruner(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
     @FiTest(maxTestCases = 999, optimizeForRetries = true, withCallStack = false)
     public void testRegister(TrackedFaultload faultload) throws IOException {
         int port = controller.getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
-
-        String jsonBody = metaFaultload.serializeJson();
-        RequestBody body = RequestBody.create(jsonBody, JSON);
 
         Request request = new Request.Builder()
                 .url(queryUrl)

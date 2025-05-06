@@ -209,14 +209,20 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         report.put("Redundant fault points", String.valueOf(store.getRedundantUidSubsets().size()));
         report.put("Redundant fault subsets", String.valueOf(store.getRedundantFaultSubsets().size()));
         report.put("Max queue size", String.valueOf(getMaxQueueSize()));
-        int queueSize = getQueuSize();
-        if (queueSize > 0) {
+        int qs = getQueuSize();
+        if (qs > 0) {
             report.put("Queue size (left)", String.valueOf(getQueuSize()));
         }
 
         int i = 0;
         for (var point : getFaultInjectionPoints()) {
             report.put("FID(" + i + ")", point.toString());
+            i++;
+        }
+
+        i = 0;
+        for (var point : getSimplifiedFaultInjectionPoints()) {
+            report.put("FID [simplified] (" + i + ")", point.toString());
             i++;
         }
 

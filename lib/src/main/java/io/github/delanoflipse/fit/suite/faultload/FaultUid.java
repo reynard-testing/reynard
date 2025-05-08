@@ -86,11 +86,12 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(Lists.plus(tail, head.asAnyCount()));
     }
 
-    public FaultUid asAnyCallStack() {
-        var head = getPoint();
-        var tail = getTail();
+    public FaultUid withoutCallStack() {
+        List<FaultInjectionPoint> without = stack.stream()
+                .map(x -> x.asAnyCallStack())
+                .toList();
 
-        return new FaultUid(Lists.plus(tail, head.asAnyCallStack()));
+        return new FaultUid(without);
     }
 
     public boolean isTransient() {

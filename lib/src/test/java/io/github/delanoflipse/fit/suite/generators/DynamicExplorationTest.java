@@ -25,6 +25,7 @@ public class DynamicExplorationTest {
     private FaultloadResult toResult(Faultload f, ImplicationsStore store) {
         var root = store.getRootCause();
         List<TraceReport> reports = new ArrayList<>();
+
         for (var behav : store.getBehaviours(f.faultSet())) {
             TraceReport report = asReport(behav, f);
             if (behav.uid().matches(root)) {
@@ -70,6 +71,7 @@ public class DynamicExplorationTest {
             if (next == null) {
                 break;
             }
+
             visited.add(next);
             FaultloadResult nextResult = toResult(next, store);
             generator.handleFeedback(nextResult, generator);
@@ -79,8 +81,8 @@ public class DynamicExplorationTest {
     }
 
     @Test
-    public void testHappyPath() {
-        var modes = FailureModes.getModes(2);
+    public void testHappyPathOnly() {
+        var modes = FailureModes.getModes(1);
 
         var a = new EventBuilder("A");
         var b = a.createChild("B");
@@ -93,6 +95,81 @@ public class DynamicExplorationTest {
 
         DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
         var result = playout(generator, store);
-        assertEquals((int) Math.pow(1 + modes.size(), 3), result.size());
+
+        // We explore the full space, because the generator visits the redundant
+        // cases too. ({B,D} -> we can reach C!)
+        assertEquals(8, result.size());
+    }
+
+    @Test
+    public void testWithExclusion() {
+        var modes = FailureModes.getModes(1);
+
+        var a = new EventBuilder("A");
+        var b = a.createChild("B");
+        var c = a.createChild("C");
+        var d = c.createChild("D");
+
+        ImplicationsStore store = new ImplicationsStore();
+        store.addDownstreamRequests(a.uid(), List.of(b.uid(), c.uid()));
+        store.addDownstreamRequests(c.uid(), List.of(d.uid()));
+        // B excludes C
+        store.addExclusionEffect(Set.of(b.behaviour().asMode(modes.get(0))), c.uid());
+
+        DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
+        var result = playout(generator, store);
+
+        // We omit visiting B,C,D
+        // because at C,D we only inject C
+        assertEquals(7, result.size());
+    }
+
+    @Test
+    public void testWithInclusion() {
+        var modes = FailureModes.getModes(1);
+
+        var a = new EventBuilder("A");
+        var b = a.createChild("B");
+        var c = a.createChild("C");
+        var d = c.createChild("D");
+        var e = c.createChild("E");
+
+        ImplicationsStore store = new ImplicationsStore();
+        store.addDownstreamRequests(a.uid(), List.of(b.uid(), c.uid()));
+        store.addDownstreamRequests(c.uid(), List.of(d.uid()));
+        // D includes E
+        store.addInclusionEffect(Set.of(d.behaviour().asMode(modes.get(0))), e.uid());
+
+        DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
+        var result = playout(generator, store);
+
+        // We visit the full B,C,D space => 2^3=8
+        // And all {D,E} nodes 2^2=4
+        assertEquals(12, result.size());
+    }
+
+    @Test
+    public void testWithExclusionAndInclusion() {
+        var modes = FailureModes.getModes(1);
+
+        var a = new EventBuilder("A");
+        var b = a.createChild("B");
+        var c = a.createChild("C");
+        var d = c.createChild("D");
+        var e = c.createChild("E");
+
+        ImplicationsStore store = new ImplicationsStore();
+        store.addDownstreamRequests(a.uid(), List.of(b.uid(), c.uid()));
+        store.addDownstreamRequests(c.uid(), List.of(d.uid()));
+        // B excludes C
+        store.addExclusionEffect(Set.of(b.behaviour().asMode(modes.get(0))), c.uid());
+        // D includes E
+        store.addInclusionEffect(Set.of(d.behaviour().asMode(modes.get(0))), e.uid());
+
+        DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
+        var result = playout(generator, store);
+
+        // We omit B,C,D,E and B,C,D
+        assertEquals(10, result.size());
     }
 }

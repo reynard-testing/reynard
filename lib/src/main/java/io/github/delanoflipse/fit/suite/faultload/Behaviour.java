@@ -56,6 +56,10 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
         return isSubsetOf(a, b) && isSubsetOf(b, a);
     }
 
+    public Behaviour asMode(FailureMode newMode) {
+        return new Behaviour(uid, newMode);
+    }
+
     // if a <= b
     public static boolean isSubsetOf(Set<Behaviour> subset, Set<Behaviour> superset) {
         if (subset == null || superset == null) {

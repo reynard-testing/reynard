@@ -18,14 +18,12 @@ import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContextProvi
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContextProvider;
 import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
-import io.github.delanoflipse.fit.suite.strategy.components.generators.Generator;
 import io.github.delanoflipse.fit.suite.strategy.util.Pair;
 import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 import io.github.delanoflipse.fit.suite.strategy.util.StringFormat;
 
 public class StrategyReporter {
     public static int DEFAULT_WIDTH = 48;
-    private Generator generator;
     private StrategyRunner runner;
     private StrategyStatistics statistics;
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -34,8 +32,6 @@ public class StrategyReporter {
     public StrategyReporter(StrategyRunner runner) {
         this.runner = runner;
         this.statistics = runner.statistics;
-        this.generator = runner.getGenerator();
-
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
@@ -57,19 +53,6 @@ public class StrategyReporter {
 
     private void printHeader(String header) {
         printHeader(header, DEFAULT_WIDTH);
-    }
-
-    private static int stringLength(String string) {
-        return Arrays.stream(string.split("\n"))
-                .mapToInt(String::length)
-                .max()
-                .orElse(0);
-    }
-
-    private static int getMaxLength(Set<String> set) {
-        return set.stream()
-                .mapToInt(s -> stringLength(s))
-                .max().orElse(0);
     }
 
     public Object reportSearchSpace() {

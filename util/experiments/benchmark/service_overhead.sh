@@ -13,18 +13,18 @@ mkdir -p ${result_path}
 trap "exit" INT
 
 test_duration=${TEST_DURATION:-30s}
-max_connections=${MAX_CONNECTIONS:-100}
+max_connections=${MAX_CONNECTIONS:-20}
 threads=${THREADS:-4}
 
 cd ${parent_path}
 docker compose up -d --force-recreate --remove-orphans
 sleep 5
 
-# sleep 5
-# wrk -t${threads} -c${max_connections} -d${test_duration} --latency -H "Connection: close" http://localhost:8080/ 2>&1 | tee ${result_path}/wrk${result_tag}.service.log
+sleep 5
+wrk -t${threads} -c${max_connections} -d${test_duration} --latency -H "Connection: close" http://localhost:8080/ 2>&1 | tee ${result_path}/wrk${result_tag}.service.log
 
-# sleep 5
-# wrk -t${threads} -c${max_connections} -d${test_duration} --latency -H "Connection: close" http://localhost:8081/ 2>&1 | tee ${result_path}/wrk${result_tag}.proxy.log
+sleep 5
+wrk -t${threads} -c${max_connections} -d${test_duration} --latency -H "Connection: close" http://localhost:8081/ 2>&1 | tee ${result_path}/wrk${result_tag}.proxy.log
 
 
 # --- No faults to inject ---

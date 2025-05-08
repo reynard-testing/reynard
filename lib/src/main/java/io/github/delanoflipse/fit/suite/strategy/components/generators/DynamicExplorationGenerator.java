@@ -214,13 +214,13 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             report.put("Queue size (left)", String.valueOf(getQueuSize()));
         }
 
-        int i = 0;
+        int i = 1;
         for (var point : getFaultInjectionPoints()) {
             report.put("FID(" + i + ")", point.toString());
             i++;
         }
 
-        i = 0;
+        i = 1;
         for (var point : getSimplifiedFaultInjectionPoints()) {
             report.put("FID [simplified] (" + i + ")", point.toString());
             i++;

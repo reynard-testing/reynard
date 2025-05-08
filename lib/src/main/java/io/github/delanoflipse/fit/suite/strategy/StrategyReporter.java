@@ -94,6 +94,24 @@ public class StrategyReporter {
                 .toList();
     }
 
+    private Object nsConversions(long ns) {
+        Map<String, Object> conv = new LinkedHashMap<>();
+        conv.put("ns", ns);
+        conv.put("us", ns / 1_000.0);
+        conv.put("ms", ns / 1_000_000.0);
+        conv.put("s", ns / 1_000_000_000.0);
+        return conv;
+    }
+
+    private Object nsConversions(double ns) {
+        Map<String, Object> conv = new LinkedHashMap<>();
+        conv.put("ns", ns);
+        conv.put("us", ns / 1_000.0);
+        conv.put("ms", ns / 1_000_000.0);
+        conv.put("s", ns / 1_000_000_000.0);
+        return conv;
+    }
+
     public Object reportTimingStats() {
         Map<String, Object> stats = new LinkedHashMap<>();
         Map<String, Object> details = new LinkedHashMap<>();
@@ -114,10 +132,10 @@ public class StrategyReporter {
                     .mapToLong(x -> x)
                     .min()
                     .orElse(0);
-            statsReport.put("average", average);
-            statsReport.put("min", min);
-            statsReport.put("max", max);
             statsReport.put("count", values.size());
+            statsReport.put("average", nsConversions(average));
+            statsReport.put("min", nsConversions(min));
+            statsReport.put("max", nsConversions(max));
             stats.put(tag, statsReport);
         }
 

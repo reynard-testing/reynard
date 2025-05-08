@@ -34,6 +34,9 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
     private final List<TreeNode> toVisit = new ArrayList<>();
     private final Set<TreeNode> visitedNodes = new LinkedHashSet<>();
+    private final Map<TreeNode, List<TreeNode>> expansionTree = new LinkedHashMap<>();
+    private int nodeCounter = 0;
+    private final Map<TreeNode, Integer> nodeIndex = new LinkedHashMap<>();
     private final List<Integer> queueSize = new ArrayList<>();
     private final TraversalStrategy traversalStrategy;
     private final Function<Set<Fault>, PruneDecision> pruneFunction;
@@ -43,6 +46,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         super(store);
         this.pruneFunction = pruneFunction;
         this.traversalStrategy = traversalStrategy;
+
+        nodeIndex.put(new TreeNode(Set.of()), 0);
     }
 
     public DynamicExplorationGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {
@@ -86,7 +91,11 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             var point = expansion.get(i);
             for (Fault newFault : Fault.allFaults(point, getFailureModes())) {
                 TreeNode newNode = new TreeNode(Sets.plus(node.value, newFault));
-                addNode(newNode);
+                boolean expanded = addNode(newNode);
+                if (expanded) {
+                    expansionTree.putIfAbsent(node, new ArrayList<>());
+                    expansionTree.get(node).add(newNode);
+                }
             }
         }
     }
@@ -122,6 +131,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
                 case KEEP -> {
                     logger.info("Found a candidate after {} attempt(s)", ops);
+                    nodeCounter++;
+                    nodeIndex.put(node, nodeCounter);
                     return new Faultload(node.value);
                 }
             }
@@ -206,6 +217,46 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         return toVisit.size();
     }
 
+    private Object buildTreeReport(TreeNode node, TreeNode parent) {
+        if (!nodeIndex.containsKey(node)) {
+            return null;
+        }
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("index", nodeIndex.get(node));
+
+        if (parent == null) {
+            report.put("node", node.value.toString());
+        } else {
+            Fault addition = Sets.getOnlyElement(Sets.difference(node.value, parent.value));
+            report.put("node", addition.toString());
+        }
+
+        if (nodeIndex.containsKey(node)) {
+            report.put("index", nodeIndex.get(node));
+        }
+
+        List<TreeNode> children = expansionTree.get(node);
+        if (children == null || children.isEmpty()) {
+            return report;
+        }
+
+        List<Object> childReports = new ArrayList<>();
+        for (var child : children) {
+            var childReport = buildTreeReport(child, node);
+            if (childReport == null) {
+                continue;
+            }
+            childReports.add(childReport);
+        }
+
+        if (childReports.isEmpty()) {
+            return report;
+        }
+
+        report.put("children", childReports);
+        return report;
+    }
+
     @Override
     public Object report(PruneContext context) {
         Map<String, Object> stats = new LinkedHashMap<>();
@@ -274,6 +325,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("stats", stats);
+        report.put("tree", buildTreeReport(new TreeNode(Set.of()), null));
         report.put("details", details);
         return report;
     }

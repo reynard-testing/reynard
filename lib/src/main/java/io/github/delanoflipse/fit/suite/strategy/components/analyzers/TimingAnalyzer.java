@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import io.github.delanoflipse.fit.suite.faultload.Behaviour;
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.suite.strategy.StrategyReporter;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;

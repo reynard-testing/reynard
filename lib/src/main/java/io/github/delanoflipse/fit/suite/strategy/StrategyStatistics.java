@@ -44,7 +44,7 @@ public class StrategyStatistics {
     }
 
     public void registerTime(TaggedTimer timer) {
-        for (var entry : timer.getTimings()) {
+        for (var entry : timer.getTimingsNs()) {
             timings.add(entry);
             tags.add(entry.first());
         }

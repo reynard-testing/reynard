@@ -30,7 +30,7 @@ public class TaggedTimer {
             throw new IllegalStateException("Timer with tag " + tag + " not started");
         }
 
-        return timers.get(tag).durationMs();
+        return timers.get(tag).durationNs();
     }
 
     public double durationSeconds(String tag) {
@@ -38,13 +38,13 @@ public class TaggedTimer {
             throw new IllegalStateException("Timer with tag " + tag + " not started");
         }
 
-        return timers.get(tag).durationSeconds();
+        return timers.get(tag).durationS();
     }
 
-    public List<Pair<String, Long>> getTimings() {
+    public List<Pair<String, Long>> getTimingsNs() {
         return timers.entrySet()
                 .stream()
-                .map(entry -> new Pair<>(entry.getKey(), entry.getValue().durationMs()))
+                .map(entry -> new Pair<>(entry.getKey(), entry.getValue().durationNs()))
                 .filter(pair -> pair.second() > 0)
                 .toList();
     }
@@ -60,27 +60,31 @@ public class TaggedTimer {
         }
 
         public void start() {
-            start = System.currentTimeMillis();
+            start = System.nanoTime();
             state = TimerState.RUNNING;
         }
 
         public void stop() {
             if (state == TimerState.RUNNING) {
-                end = System.currentTimeMillis();
+                end = System.nanoTime();
                 state = TimerState.STOPPED;
             }
         }
 
-        public long durationMs() {
+        public long durationNs() {
             if (state != TimerState.STOPPED) {
-                return System.currentTimeMillis() - start;
+                return System.nanoTime() - start;
             }
 
             return end - start;
         }
 
-        public double durationSeconds() {
-            return durationMs() / 1000.0;
+        public double durationS() {
+            return durationNs() / 1_000_000_000.0;
+        }
+
+        public double durationMs() {
+            return durationNs() / 1_000_000.0;
         }
     }
 }

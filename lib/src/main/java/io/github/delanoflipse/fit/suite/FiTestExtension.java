@@ -2,6 +2,7 @@ package io.github.delanoflipse.fit.suite;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -46,6 +47,7 @@ import io.github.delanoflipse.fit.suite.util.TaggedTimer;
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
     private StrategyRunner strategy;
+    private static final String OUTPUT_DIR_KEY = "dsfit.output.dir";
     private final TaggedTimer totalTimer = new TaggedTimer();
     private static final Logger logger = LoggerFactory.getLogger(FiTestExtension.class);
 
@@ -144,6 +146,18 @@ public class FiTestExtension
         if (annotation.initialGetTraceDelay() > 0) {
             strategy.withGetDelay(annotation.initialGetTraceDelay());
         }
+
+        var outputConfig = context.getConfigurationParameter(OUTPUT_DIR_KEY);
+        if (outputConfig.isPresent()) {
+            String dir = outputConfig.get();
+            Path projectRoot = Path.of("").toAbsolutePath().getParent();
+            Path outputDir = projectRoot.resolve(dir);
+            strategy.setOutputDir(outputDir);
+        }
+
+        String testClassName = context.getRequiredTestClass().getSimpleName();
+        String testMethodName = context.getTestMethod().orElseThrow().getName();
+        strategy.setContextName(testClassName + "#" + testMethodName);
 
         if (annotation.additionalComponents().length > 0) {
             for (Class<?> componentClass : annotation.additionalComponents()) {

@@ -18,7 +18,6 @@ import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.Faultload;
 import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.suite.strategy.StrategyReporter;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
@@ -196,28 +195,45 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 .orElse(0);
     }
 
+    public double getAvgQueueSize() {
+        return queueSize.stream()
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0.0);
+    }
+
     public int getQueuSize() {
         return toVisit.size();
     }
 
     @Override
-    public Map<String, String> report(PruneContext context) {
-        Map<String, String> report = new LinkedHashMap<>();
-        report.put("Fault injection points", String.valueOf(getNumerOfPoints()));
-        report.put("Modes", String.valueOf(getFailureModes().size()));
-        report.put("Redundant faultloads", String.valueOf(store.getRedundantFaultloads().size()));
-        report.put("Redundant fault points", String.valueOf(store.getRedundantUidSubsets().size()));
-        report.put("Redundant fault subsets", String.valueOf(store.getRedundantFaultSubsets().size()));
-        report.put("Max queue size", String.valueOf(getMaxQueueSize()));
+    public Object report(PruneContext context) {
+        Map<String, Object> stats = new LinkedHashMap<>();
+        Map<String, Object> details = new LinkedHashMap<>();
+
+        List<String> points = getFaultInjectionPoints().stream()
+                .map(FaultUid::toString)
+                .toList();
+        stats.put("fault_injection_points", points.size());
+        details.put("fault_injection_points", points);
+
+        List<String> modes = getFailureModes().stream()
+                .map(FailureMode::toString)
+                .toList();
+        stats.put("failure_modes", modes.size());
+        details.put("failure_modes", modes);
+
+        stats.put("redundant_faultloads", store.getRedundantFaultloads().size());
+        stats.put("redundant_fault_points", store.getRedundantUidSubsets().size());
+        stats.put("Rredundant_fault_subsets", store.getRedundantFaultSubsets().size());
+
+        stats.put("max_queue_size", getMaxQueueSize());
+        stats.put("avg_queue_size", getAvgQueueSize());
+        details.put("queue_size", queueSize);
+
         int queueSize = getQueuSize();
         if (queueSize > 0) {
-            report.put("Queue size (left)", String.valueOf(getQueuSize()));
-        }
-
-        int i = 0;
-        for (var point : getFaultInjectionPoints()) {
-            report.put("FID(" + i + ")", point.toString());
-            i++;
+            stats.put("Queue size (left)", queueSize);
         }
 
         // Report the visited faultloads
@@ -226,30 +242,39 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 .toList();
 
         // Unique visited
-        Map<String, String> simplifiedReport = new LinkedHashMap<>();
+        List<Object> visitByUid = new ArrayList<>();
+        List<Object> visitByFaults = new ArrayList<>();
+
         var simplified = Simplify.simplify(faultloads, getFailureModes());
         var failureModesCount = getFailureModes().size();
-        int simpleIndex = 1;
         for (Set<FaultUid> cause : simplified.second()) {
-            int start = simpleIndex;
             int increase = (int) Math.pow(failureModesCount, cause.size());
-            simpleIndex += increase;
-            String key = "[" + start + " - " + (start + increase - 1) + " (+" + increase + ")" + "]";
-            if (cause.isEmpty()) {
-                simplifiedReport.put(key, "(initial empty set)");
-                continue;
-            }
-
-            simplifiedReport.put(key, cause.toString() + " (all modes)");
+            Map<String, Object> causeReport = new LinkedHashMap<>();
+            List<String> causeList = cause.stream()
+                    .map(FaultUid::toString)
+                    .toList();
+            causeReport.put("faultload", causeList);
+            causeReport.put("count", increase);
+            visitByUid.add(causeReport);
         }
 
         for (Set<Fault> cause : simplified.first()) {
-            simplifiedReport.put("[" + simpleIndex + "]", cause.toString());
-            simpleIndex++;
+            Map<String, Object> causeReport = new LinkedHashMap<>();
+            List<String> causeList = cause.stream()
+                    .map(Fault::toString)
+                    .toList();
+            causeReport.put("faultload", causeList);
+            visitByFaults.add(causeReport);
         }
 
-        StrategyReporter.printReport("Visited (simplified)", simplifiedReport);
+        Map<String, Object> visitReport = new LinkedHashMap<>();
+        visitReport.put("by_uid", visitByUid);
+        visitReport.put("by_faults", visitByFaults);
+        details.put("visited", visitReport);
 
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("stats", stats);
+        report.put("details", details);
         return report;
     }
 }

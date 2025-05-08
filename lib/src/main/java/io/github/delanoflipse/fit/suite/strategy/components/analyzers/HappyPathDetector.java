@@ -1,5 +1,6 @@
 package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,22 +43,23 @@ public class HappyPathDetector implements FeedbackHandler, Reporter {
     }
 
     @Override
-    public Map<String, String> report(PruneContext context) {
-        Map<String, String> report = new LinkedHashMap<>();
+    public Object report(PruneContext context) {
         var happyPath = context.getHappyPaths();
 
-        if (!happyPath.isEmpty()) {
-            var i = 0;
-            for (var entry : happyPath) {
-                i++;
-                var response = entry.response;
-                report.put("[" + i + "] Point", entry.faultUid.toString());
-                String bodyLimited = response.body.replace("\n", "");
-                if (response.body.length() > 200) {
-                    bodyLimited = response.body.substring(0, 97) + "...";
-                }
-                report.put("[" + i + "] Response", "[" + response.status + "] " + bodyLimited);
+        List<Object> report = new ArrayList<>();
+
+        for (var entry : happyPath) {
+            Map<String, Object> reportEntry = new LinkedHashMap<>();
+            var response = entry.response;
+            reportEntry.put("point", entry.faultUid.toString());
+            String bodyLimited = response.body.replace("\n", "");
+            if (response.body.length() > 200) {
+                bodyLimited = response.body.substring(0, 97) + "...";
             }
+            reportEntry.put("response", bodyLimited);
+            reportEntry.put("status", response.status);
+            reportEntry.put("durationMs", response.durationMs);
+            report.add(reportEntry);
         }
 
         return report;

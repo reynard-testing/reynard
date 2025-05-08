@@ -35,17 +35,15 @@ public class StatusAnalyzer implements FeedbackHandler, Reporter {
     }
 
     @Override
-    public Map<String, String> report(PruneContext context) {
-        Map<String, String> report = new LinkedHashMap<>();
+    public Object report(PruneContext context) {
+        Map<String, Object> report = new LinkedHashMap<>();
         for (var entry : faultStatus.entrySet()) {
             String downstream = entry.getKey();
             Set<Integer> statuses = entry.getValue();
-            List<String> sortedStatuses = statuses.stream()
+            List<Integer> sortedStatuses = statuses.stream()
                     .sorted()
-                    .map(String::valueOf)
-                    .collect(Collectors.toList());
-            String joinedStatuses = String.join(",", sortedStatuses);
-            report.put(downstream, joinedStatuses);
+                    .toList();
+            report.put(downstream, sortedStatuses);
         }
         return report;
     }

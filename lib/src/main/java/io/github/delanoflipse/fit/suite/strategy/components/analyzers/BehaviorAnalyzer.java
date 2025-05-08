@@ -1,5 +1,6 @@
 package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -145,64 +146,78 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     }
 
     @Override
-    public Map<String, String> report(PruneContext context) {
-        StrategyReporter.printNewline();
-        StrategyReporter.printHeader("Behavioral Anlaysis", 48, "=");
+    public Object report(PruneContext context) {
+        Map<String, Object> report = new LinkedHashMap<>();
 
-        StrategyReporter.printNewline();
-        Map<String, String> maxArityReport = new LinkedHashMap<>();
+        Map<String, Object> maxArityReport = new LinkedHashMap<>();
         for (var entry : maxArity.entrySet()) {
             var fault = entry.getKey();
             var arity = entry.getValue();
-            maxArityReport.put(fault.toString(), String.valueOf(arity));
+            maxArityReport.put(fault.toString(), arity);
         }
-        StrategyReporter.printReport("Max arity", maxArityReport);
 
-        StrategyReporter.printNewline();
-        StrategyReporter.printHeader("(Internal) Failures", 48, "-");
+        List<Object> internalFailuresReport = new ArrayList<>();
         for (var entry : knownFailures.entrySet()) {
             var fault = entry.getKey();
             var store = entry.getValue();
 
-            StrategyReporter.printNewline();
-            StrategyReporter.printKeyValue("Failure", fault.toString());
+            Map<String, Object> faultReport = new LinkedHashMap<>();
+            List<Object> causes = new ArrayList<>();
 
             var simplified = Simplify.simplify(store.getSets(), failureModes);
-
-            var i = 0;
+            var i = 1;
             for (Set<Fault> cause : simplified.first()) {
-                StrategyReporter.printKeyValue("Cause (" + i + ")", cause.toString());
-                i++;
+                Map<String, Object> failureReport = new LinkedHashMap<>();
+                failureReport.put("id", i++);
+                failureReport.put("cause", cause.toString());
+                causes.add(failureReport);
             }
+
             for (Set<FaultUid> cause : simplified.second()) {
-                StrategyReporter.printKeyValue("Cause (" + i + ")", cause.toString() + " (any failure mode)");
-                i++;
+                Map<String, Object> failureReport = new LinkedHashMap<>();
+                failureReport.put("id", i++);
+                failureReport.put("cause", cause.toString());
+                causes.add(failureReport);
             }
+
+            faultReport.put("fault", fault.toString());
+            faultReport.put("causes", causes);
+            internalFailuresReport.add(faultReport);
         }
 
-        StrategyReporter.printNewline();
-        StrategyReporter.printHeader("(Internal) Resiliency", 48, "-");
+        List<Object> knownResilienciesReport = new ArrayList<>();
         for (var entry : knownResolutions.entrySet()) {
             var point = entry.getKey();
             var store = entry.getValue();
 
-            StrategyReporter.printNewline();
-            StrategyReporter.printKeyValue("Point", point.toString());
+            Map<String, Object> resilienceReport = new LinkedHashMap<>();
+            List<Object> causes = new ArrayList<>();
 
             var simplified = Simplify.simplify(store.getSets(), failureModes);
 
-            var i = 0;
+            var i = 1;
             for (Set<Fault> cause : simplified.first()) {
-                StrategyReporter.printKeyValue("Redundancy (" + i + ")", cause.toString());
-                i++;
+                Map<String, Object> failureReport = new LinkedHashMap<>();
+                failureReport.put("id", i++);
+                failureReport.put("redundancy", cause.toString());
+                causes.add(failureReport);
             }
             for (Set<FaultUid> cause : simplified.second()) {
-                StrategyReporter.printKeyValue("Redundancy (" + i + ")", cause.toString() + " (any failure mode)");
-                i++;
+                Map<String, Object> failureReport = new LinkedHashMap<>();
+                failureReport.put("id", i++);
+                failureReport.put("redundancy", cause.toString());
+                causes.add(failureReport);
             }
+
+            resilienceReport.put("point", point.toString());
+            resilienceReport.put("redundancies", causes);
+            knownResilienciesReport.add(resilienceReport);
         }
-        // Don't report in the normal sense
-        return null;
+
+        report.put("max_arity", maxArityReport);
+        report.put("failures", internalFailuresReport);
+        report.put("resiliency", knownResilienciesReport);
+        return report;
     }
 
 }

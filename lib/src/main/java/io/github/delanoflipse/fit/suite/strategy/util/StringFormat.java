@@ -31,8 +31,11 @@ public class StringFormat {
         return padding + s + padding;
     }
 
+    public static double percentage(long num, long div) {
+        return 100d * num / (double) div;
+    }
+
     public static String asPercentage(long num, long div) {
-        double percentage = 100d * num / (double) div;
-        return String.format("%1.1f", percentage);
+        return String.format("%1.1f", percentage(num, div));
     }
 }

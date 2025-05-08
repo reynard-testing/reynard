@@ -124,7 +124,7 @@ public class FeedbackContextProvider extends FeedbackContext {
         return sizeCount;
     }
 
-    public static Map<String, String> getReport(String contextName, Generator generator) {
+    public static Map<String, Object> getReport(String contextName, Generator generator) {
         if (!hasContext(contextName)) {
             return null;
         }

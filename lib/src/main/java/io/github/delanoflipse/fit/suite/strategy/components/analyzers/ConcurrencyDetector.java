@@ -1,6 +1,7 @@
 package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -26,15 +27,15 @@ public class ConcurrencyDetector implements FeedbackHandler, Reporter {
     }
 
     @Override
-    public Map<String, String> report(PruneContext context) {
-        Map<String, String> report = new LinkedHashMap<>();
+    public Object report(PruneContext context) {
+        Map<String, Object> report = new LinkedHashMap<>();
 
         for (var relation : relation.getRelations().entrySet()) {
             var f = relation.getKey();
-            String value = relation.getValue().stream()
+            List<String> values = relation.getValue().stream()
                     .map(FaultUid::toString)
-                    .collect(Collectors.joining("\n"));
-            report.put(f.toString(), value);
+                    .collect(Collectors.toList());
+            report.put(f.toString(), values);
         }
 
         return report;

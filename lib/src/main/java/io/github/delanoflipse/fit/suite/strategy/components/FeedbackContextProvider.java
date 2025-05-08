@@ -129,7 +129,7 @@ public class FeedbackContextProvider extends FeedbackContext {
             return null;
         }
 
-        Map<String, String> report = new LinkedHashMap<>();
+        Map<String, Object> report = new LinkedHashMap<>();
         DynamicAnalysisStore store = stores.get(contextName);
         boolean hasImpact = false;
 

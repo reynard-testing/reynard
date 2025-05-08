@@ -117,8 +117,6 @@ public class IncreasingSizeGenerator extends StoreBasedGenerator implements Repo
             simpleIndex++;
         }
 
-        StrategyReporter.printReport("Visited (simplified)", simplifiedReport);
-
         return report;
     }
 

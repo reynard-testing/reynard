@@ -325,11 +325,11 @@ public class ImplicationsStore {
     return Pair.of(causeBehaviour, transativeUpstreams);
   }
 
-  public Map<String, String> getReport(DynamicAnalysisStore store) {
-    Map<String, String> report = new LinkedHashMap<>();
+  public Map<String, Object> getReport(DynamicAnalysisStore store) {
+    Map<String, Object> report = new LinkedHashMap<>();
 
     if (!upstreamEffects.isEmpty()) {
-      report.put("Upstream effects", upstreamEffects.size() + "");
+      report.put("Upstream effects", upstreamEffects.size());
 
       for (var upstream : upstreamEffects) {
         report.put(upstream.cause.toString(), upstream.effects().toString());
@@ -337,7 +337,7 @@ public class ImplicationsStore {
     }
 
     if (!inclusions.isEmpty()) {
-      report.put("Inclusion effects", inclusions.size() + "");
+      report.put("inclusions", inclusions.size());
 
       Map<FaultUid, List<Substitution>> groupedInclusions = inclusions.stream()
           .collect(Collectors.groupingBy(Substitution::effect));
@@ -365,7 +365,7 @@ public class ImplicationsStore {
     }
 
     if (!exclusions.isEmpty()) {
-      report.put("Exclusion effects", exclusions.size() + "");
+      report.put("exclusions", exclusions.size());
 
       Map<FaultUid, List<Substitution>> groupedExclusions = exclusions.stream()
           .collect(Collectors.groupingBy(Substitution::effect));
@@ -393,7 +393,7 @@ public class ImplicationsStore {
     }
 
     if (!downstreamEffects.isEmpty()) {
-      report.put("Downstream effects", downstreamEffects.size() + "");
+      report.put("Downstream effects", downstreamEffects.size());
     }
 
     return report;

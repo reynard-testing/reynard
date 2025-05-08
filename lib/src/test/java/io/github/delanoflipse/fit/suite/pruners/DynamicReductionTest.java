@@ -60,10 +60,10 @@ public class DynamicReductionTest {
                                 Pair.of(nodeA.getFaults(), initialTrace.getBehaviours())));
 
                 Set<Fault> faultSet = Set.of(
-                                new Fault(nodeB.getFaultUid(), ErrorFault.fromError(propagated)));
+                                new Fault(nodeB.uid(), ErrorFault.fromError(propagated)));
                 when(contextMock.getExpectedBehaviours(faultSet)).thenReturn(Set.of(
-                                initialTrace.getReportByFaultUid(nodeA.getFaultUid()).getBehaviour(),
-                                initialTrace.getReportByFaultUid(nodeB.getFaultUid()).getBehaviour()));
+                                initialTrace.getReportByFaultUid(nodeA.uid()).getBehaviour(),
+                                initialTrace.getReportByFaultUid(nodeB.uid()).getBehaviour()));
 
                 // The error at just B is pruned
                 PruneDecision decision = pruner.prune(new Faultload(faultSet), contextMock);

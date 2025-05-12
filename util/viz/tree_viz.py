@@ -150,20 +150,11 @@ def needs_signature(nodes: list[SearchNode]):
     return False
 
 
-def render_tree(tree: dict, output_dir: str, combine=True):
+def render_tree(tree: dict, output_name: str, combine=True):
     root, nodes = parse_tree(tree)
 
     use_sig = needs_signature(nodes)
-    dot = graphviz.Digraph(comment='Faultspace Search', format='svg')
+    dot = graphviz.Digraph(comment='Faultspace Search', format='pdf')
     build_tree(dot, root, use_sig, combine)
-    output_file = os.path.join(output_dir, "search_tree")
-    dot.render(filename=output_file)
+    dot.render(filename=output_name)
 
-
-if __name__ == '__main__':
-    args = get_args()
-    with open(args.json_path, 'r') as file:
-        data = json.load(file)
-    tree = data['tree']
-    directory = os.path.dirname(args.json_path)
-    render_tree(tree, directory, args.combine)

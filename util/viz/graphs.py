@@ -104,7 +104,7 @@ def render_for_dir(json_dir: str):
     queue_sizes = generator_data['details']['queue_size']
     queue_sizes = np.array(queue_sizes)
     render_queue_size_graph(queue_sizes, json_dir)
-    render_tree(generator_data['tree'], json_dir)
+    render_tree(generator_data['tree'], os.path.join(json_dir, 'search_tree'))
 
     timing_data = get_json(os.path.join(json_dir, 'timing.json'))
     timings: tuple[str, list[float]] = []

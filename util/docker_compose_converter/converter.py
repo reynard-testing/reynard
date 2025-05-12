@@ -141,7 +141,9 @@ class Converter:
 
         real_service.with_environment("OTEL_SERVICE_NAME", service_name)\
             .with_environment("OTEL_TRACES_EXPORTER", "otlp")\
-            .with_environment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://"+self.service_names['jaeger']+":4317")
+            .with_environment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://"+self.service_names['jaeger']+":4317")\
+            .with_environment("OTEL_LOGS_EXPORTER", "none")\
+            .with_environment("OTEL_METRICS_EXPORTER", "none")
 
         for env in ADDITIONAL_ENV:
             real_service.with_environment(env[0], env[1])

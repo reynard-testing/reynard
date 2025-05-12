@@ -40,6 +40,7 @@ import io.github.delanoflipse.fit.suite.strategy.components.pruners.DynamicReduc
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.FaultloadSizePruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.NoImpactPruner;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.UnreachabilityPruner;
+import io.github.delanoflipse.fit.suite.strategy.util.Env;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
 import io.github.delanoflipse.fit.suite.util.TaggedTimer;
@@ -151,7 +152,8 @@ public class FiTestExtension
         if (outputConfig.isPresent()) {
             String dir = outputConfig.get();
             Path projectRoot = Path.of("").toAbsolutePath().getParent();
-            Path outputDir = projectRoot.resolve(dir);
+            var outputTag = Env.getEnv("OUTPUT_TAG", "default");
+            Path outputDir = projectRoot.resolve(dir).resolve(outputTag);
             strategy.setOutputDir(outputDir);
         }
 

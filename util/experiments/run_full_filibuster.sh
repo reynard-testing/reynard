@@ -47,7 +47,7 @@ fi
 if [ "${SKIP_RESTART:-0}" != "1" ]; then
   PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
 
-  until curl -sSf http://localhost:5001/; do
+  until curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/ | grep -qv '^5'; do
     echo "Waiting for services to be available..."
     sleep 1
   done

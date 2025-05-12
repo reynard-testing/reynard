@@ -73,6 +73,12 @@ def get_node_label(node: SearchNode, needs_signature=False):
     return "\n".join(parts)
 
 
+def get_combined_edge_label(indices: list[int]):
+    min_index = min(indices)
+    max_index = max(indices)
+    return f"{min_index}-{max_index} (+{len(indices)})"
+
+
 def build_tree(dot, node: SearchNode, needs_signature=False, combine=False):
     node_label = get_node_label(node, needs_signature)
     dot.node(node.id, label=node_label)
@@ -93,7 +99,8 @@ def build_tree(dot, node: SearchNode, needs_signature=False, combine=False):
 
     for key, children in grouped_by_key.items():
         combined_id = ",".join([c.id for c in children])
-        combined_index = min([c.index for c in children])
+        indices = [c.index for c in children]
+        combined_index = min(indices)
         combined_mode = ""
         combined_children = []
 
@@ -110,9 +117,8 @@ def build_tree(dot, node: SearchNode, needs_signature=False, combine=False):
         )
 
         build_tree(dot, combined_child, needs_signature, combine)
-        combined_index_label = f"{combined_index + 1} (+{len(children)})"
         dot.edge(node.id, combined_child.id,
-                 label=combined_index_label)
+                 label=get_combined_edge_label(indices))
 
 
 def parse_tree(tree) -> tuple[SearchNode, list[SearchNode]]:

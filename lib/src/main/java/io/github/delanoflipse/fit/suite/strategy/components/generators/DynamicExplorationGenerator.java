@@ -227,6 +227,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         if (!nodeIndex.containsKey(node)) {
             return null;
         }
+
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("index", nodeIndex.get(node));
 

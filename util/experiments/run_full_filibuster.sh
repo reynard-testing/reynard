@@ -44,7 +44,14 @@ if [ -n "${BUILD_BEFORE}" ]; then
 fi
 
 # Start containers
-PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
+if [ "${SKIP_RESTART:-0}" != "1" ]; then
+  PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
+
+  until curl -sSf http://localhost:5001/; do
+    echo "Waiting for services to be available..."
+    sleep 1
+  done
+fi
 
 # Wait for containers to be healthy
 sleep 5

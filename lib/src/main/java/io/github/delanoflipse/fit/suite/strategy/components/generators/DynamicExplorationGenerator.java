@@ -32,6 +32,7 @@ import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStr
 public class DynamicExplorationGenerator extends StoreBasedGenerator implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(DynamicExplorationGenerator.class);
 
+    private final TreeNode root = new TreeNode(Set.of());
     private final List<TreeNode> toVisit = new ArrayList<>();
     private final Set<TreeNode> visitedNodes = new LinkedHashSet<>();
     private final Map<TreeNode, List<TreeNode>> expansionTree = new LinkedHashMap<>();
@@ -47,7 +48,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         this.pruneFunction = pruneFunction;
         this.traversalStrategy = traversalStrategy;
 
-        nodeIndex.put(new TreeNode(Set.of()), 0);
+        nodeIndex.put(root, 0);
     }
 
     public DynamicExplorationGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {
@@ -82,6 +83,11 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         queueSize.add(toVisit.size());
     }
 
+    private void addToTree(TreeNode parent, TreeNode node) {
+        expansionTree.putIfAbsent(parent, new ArrayList<>());
+        expansionTree.get(parent).add(node);
+    }
+
     private void expand(TreeNode node, List<FaultUid> expansion) {
         if (expansion.isEmpty()) {
             return;
@@ -93,8 +99,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 TreeNode newNode = new TreeNode(Sets.plus(node.value, newFault));
                 boolean expanded = addNode(newNode);
                 if (expanded) {
-                    expansionTree.putIfAbsent(node, new ArrayList<>());
-                    expansionTree.get(node).add(newNode);
+                    addToTree(node, newNode);
                 }
             }
         }
@@ -150,6 +155,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         boolean isNew = addNode(node);
 
         if (isNew) {
+            addToTree(root, node);
             logger.info("Exploring new point {}", node);
         }
 

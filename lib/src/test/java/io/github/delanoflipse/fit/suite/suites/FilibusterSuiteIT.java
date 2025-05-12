@@ -60,6 +60,11 @@ public class FilibusterSuiteIT {
         }
     }
 
+    @FiTest()
+    public void testAudibleFaults(TrackedFaultload faultload) throws IOException {
+        testAudible(faultload);
+    }
+
     @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
     public void testNetflix(TrackedFaultload faultload) throws IOException {
 
@@ -86,6 +91,11 @@ public class FilibusterSuiteIT {
             // assertEquals(200, response.code());
             // }
         }
+    }
+
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
+    public void testNetflixFaults(TrackedFaultload faultload) throws IOException {
+        testNetflix(faultload);
     }
 
     @FiTest(maxTestCases = 99)
@@ -281,5 +291,10 @@ public class FilibusterSuiteIT {
 
         try (Response response = client.newCall(request).execute()) {
         }
+    }
+
+    @FiTest(maxTestCases = 1000)
+    public void testMailchimpFaults(TrackedFaultload faultload) throws IOException {
+        testMailchimp(faultload);
     }
 }

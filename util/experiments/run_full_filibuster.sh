@@ -17,6 +17,11 @@ if [ -n "${OPT_RETRIES}" ]; then
   result_path="${project_path}/results/${benchmark_category}/${benchmark_id}-retries"
 fi
 
+if [ -n "${WITH_FAULTS}" ]; then
+  test_name="${test_name}Faults"
+  result_path="${project_path}/results/${benchmark_category}/${benchmark_id}-faults"
+fi
+
 output_file="${result_path}/${benchmark_id}${result_tag}.log"
 
 echo "Running ${benchmark_category} benchmark: ${benchmark_id} (${test_name})"
@@ -42,7 +47,7 @@ fi
 PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
 
 # Wait for containers to be healthy
-sleep 3
+sleep 5
 
 # Run tests
 cd ${project_path}

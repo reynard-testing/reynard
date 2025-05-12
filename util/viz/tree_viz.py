@@ -3,12 +3,25 @@ import json
 import argparse
 import os
 import graphviz
+from dataclasses import dataclass, field
+
+
+@dataclass
+class SearchNode:
+    id: str
+    index: int
+    mode: str
+    signature: str
+    uid: str
+    children: list['SearchNode'] = field(default_factory=list)
 
 
 def get_args():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('json_path', type=str,
                             help='Path to the JSON file')
+    arg_parser.add_argument('--combine', action='store_true',
+                            help='Combine nodes with the same UID')
 
     args = arg_parser.parse_args()
     return args
@@ -18,22 +31,23 @@ def simplify_name(name: str):
     no_fault = name.replace("Fault", "")
     no_brackets = no_fault.replace("[", "").replace("]", "")
     if no_brackets == "":
-        return "[]", ""
+        return "&empty;", "", ""
 
     no_uid = no_brackets.replace("uid=", "")
     if ", mode=" not in no_uid:
-        return no_uid, ""
+        return no_uid, "", ""
     uid, mode = no_uid.split(", mode=")
 
+    signature = ""
     uid_parts = uid.split(">")
     relevant_parts = []
     for i in range(len(uid_parts)):
         p1, count = uid_parts[i].split("#")
         if ":" in p1:
-            dest, sig = p1.split(":")
+            destination, signature = p1.split(":")
         else:
-            dest = p1
-        name = f"{dest}"
+            destination = p1
+        name = f"{destination}"
         is_relevant = i == len(uid_parts) - 1
         if count != "0":
             is_relevant = True
@@ -47,54 +61,103 @@ def simplify_name(name: str):
     mode = mode.replace("HTTP_ERROR(", "")
     mode = mode.replace(")", "")
 
-    return uid_str, mode
+    return uid_str, mode, signature
 
 
-COMBINE = True
+def get_node_label(node: SearchNode, needs_signature=False):
+    parts = [node.uid]
+    if needs_signature and node.signature:
+        parts.append(node.signature)
+    if node.mode:
+        parts.append(node.mode)
+    return "\n".join(parts)
 
 
-def build_tree(dot, node, parent=None):
-    uid, mode = simplify_name(node['node'])
-    index = node['index']
-    dot.node(str(index), label=f"{uid}\n{mode}")
+def build_tree(dot, node: SearchNode, needs_signature=False, combine=False):
+    node_label = get_node_label(node, needs_signature)
+    dot.node(node.id, label=node_label)
 
-    if COMBINE:
-        by_uid = {}
-        modes_by_uid = {}
-        for child in node.get('children', []):
-            child_uid, child_mode = simplify_name(child['node'])
-            if child_uid not in by_uid:
-                by_uid[child_uid] = []
-                modes_by_uid[child_uid] = []
-            by_uid[child_uid].append(child)
-            modes_by_uid[child_uid].append(child_mode)
+    if not combine:
+        for child in node.children:
+            build_tree(dot, child, needs_signature, combine)
+            dot.edge(node.id, child.id, label=f"{child.index + 1}")
+        return
 
-        for child_uid, children in by_uid.items():
-            if len(children) > 1:
-                child_mode = "Multiple"
-            else:
-                child_mode = modes_by_uid[child_uid][0]
-            combined_children = []
-            for child in children:
-                if 'children' in child:
-                    combined_children += child['children']
+    # Group children by key
+    grouped_by_key: dict[str, list[SearchNode]] = {}
+    for child in node.children:
+        key = f"{child.uid}\n{child.signature}" if needs_signature else child.uid
+        if key not in grouped_by_key:
+            grouped_by_key[key] = []
+        grouped_by_key[key].append(child)
 
-            combined_index = ",".join([str(c['index']) for c in children])
-            min_index = min([c['index'] for c in children])
-            combined_index_label = f"{min_index} (+{len(children)})"
-            new_child = {
-                'node': child_uid,
-                'index': combined_index,
-                'children': combined_children
-            }
-            build_tree(dot, new_child, node)
-            dot.edge(str(node['index']), combined_index,
-                     label=combined_index_label)
+    for key, children in grouped_by_key.items():
+        combined_id = ",".join([c.id for c in children])
+        combined_index = min([c.index for c in children])
+        combined_mode = ""
+        combined_children = []
+
+        for child in children:
+            combined_children.extend(child.children)
+
+        combined_child = SearchNode(
+            id=combined_id,
+            index=combined_index,
+            mode=combined_mode,
+            signature=children[0].signature,
+            uid=children[0].uid,
+            children=combined_children
+        )
+
+        build_tree(dot, combined_child, needs_signature, combine)
+        combined_index_label = f"{combined_index + 1} (+{len(children)})"
+        dot.edge(node.id, combined_child.id,
+                 label=combined_index_label)
+
+
+def parse_tree(tree) -> tuple[SearchNode, list[SearchNode]]:
+    nodes: list[SearchNode] = []
+    if isinstance(tree, dict):
+        uid, mode, signature = simplify_name(tree['node'])
+        children: list[SearchNode] = []
+
+        for child in tree.get('children', []):
+            child_node, child_nodes = parse_tree(child)
+            children.append(child_node)
+            nodes.append(child_node)
+            nodes.extend(child_nodes)
+
+        node = SearchNode(
+            id=str(tree['index']),
+            index=tree['index'],
+            mode=str(mode),
+            signature=signature,
+            uid=uid,
+            children=children
+        )
+
+        nodes.append(node)
+        return node, nodes
     else:
-        for child in node.get('children', []):
-            build_tree(dot, child, node)
-            dot.edge(str(node['index']), str(child['index']),
-                     label=str(child['index'] + 1))
+        raise ValueError("Invalid tree structure")
+
+
+def needs_signature(nodes: list[SearchNode]):
+    for node in nodes:
+        for other in nodes:
+            if node.uid == other.uid and node.signature != other.signature:
+                return True
+    return False
+
+
+def render_tree(tree: dict, output_dir: str, combine=True):
+    root, nodes = parse_tree(tree)
+
+    use_sig = needs_signature(nodes)
+    dot = graphviz.Digraph(comment='Faultspace Search', format='svg')
+    build_tree(dot, root, use_sig, combine)
+    output_file = os.path.join(output_dir, "search_tree")
+    dot.render(filename=output_file)
 
 
 if __name__ == '__main__':
@@ -102,7 +165,5 @@ if __name__ == '__main__':
     with open(args.json_path, 'r') as file:
         data = json.load(file)
     tree = data['tree']
-    dot = graphviz.Digraph(comment='The Round Table', format='svg')
-    build_tree(dot, tree)
     directory = os.path.dirname(args.json_path)
-    dot.render(directory=directory)
+    render_tree(tree, directory, args.combine)

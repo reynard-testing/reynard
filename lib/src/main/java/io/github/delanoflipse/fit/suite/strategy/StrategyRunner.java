@@ -1,5 +1,6 @@
 package io.github.delanoflipse.fit.suite.strategy;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -50,6 +51,9 @@ public class StrategyRunner {
     private long maxTimeS = 0;
     private long testCasesLeft = -1;
     private long startTime = 0;
+
+    private Path outputDir = null;
+    private String contextName = "";
 
     private final Logger logger = LoggerFactory.getLogger(StrategyRunner.class);
 
@@ -128,6 +132,26 @@ public class StrategyRunner {
 
         componentNames.add(name);
         return this;
+    }
+
+    public void setOutputDir(Path outputDir) {
+        this.outputDir = outputDir;
+    }
+
+    public boolean hasOutputDir() {
+        return outputDir != null;
+    }
+
+    public Path getOutputDir() {
+        return outputDir;
+    }
+
+    public void setContextName(String contextName) {
+        this.contextName = contextName;
+    }
+
+    public String getContextName() {
+        return contextName;
     }
 
     public boolean hasGenerators() {

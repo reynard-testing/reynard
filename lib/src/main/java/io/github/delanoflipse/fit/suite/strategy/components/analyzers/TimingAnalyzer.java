@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import io.github.delanoflipse.fit.suite.faultload.Behaviour;
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.suite.strategy.StrategyReporter;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
@@ -44,28 +43,28 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
     }
 
     @Override
-    public Map<String, String> report(PruneContext context) {
-        StrategyReporter.printNewline();
-        StrategyReporter.printHeader("Timing per behaviour", 48, "-");
-        NumberFormat formatter = new DecimalFormat("#0.0");
+    public Object report(PruneContext context) {
+        List<Object> report = new ArrayList<>();
 
-        // TODO: sort by average
         for (var entry : timings.entrySet()) {
+            Map<String, Object> reportEntry = new LinkedHashMap<>();
             var point = entry.getKey();
             var values = entry.getValue();
             var average = asDoubleStream(values).average().getAsDouble();
             var max = asDoubleStream(values).max().getAsDouble();
             var min = asDoubleStream(values).min().getAsDouble();
 
-            StrategyReporter.printNewline();
-            StrategyReporter.printKeyValue("Behaviour", point.toString() + " (" + values.size() + ")");
+            reportEntry.put("behaviour", point.toString());
+            reportEntry.put("min_ms", min);
+            reportEntry.put("average_ms", average);
+            reportEntry.put("max_ms", max);
+            reportEntry.put("count", values.size());
+            reportEntry.put("values", values);
 
-            StrategyReporter.printLine("Min (ms): " + formatter.format(min)
-                    + "\tAverage (ms): " + formatter.format(average)
-                    + "\tMax (ms): " + formatter.format(max));
+            report.add(reportEntry);
         }
-        // Don't report in the normal sense
-        return null;
+
+        return report;
     }
 
 }

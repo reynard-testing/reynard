@@ -18,7 +18,6 @@ import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.Faultload;
 import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.suite.strategy.StrategyReporter;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
@@ -35,6 +34,9 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
     private final List<TreeNode> toVisit = new ArrayList<>();
     private final Set<TreeNode> visitedNodes = new LinkedHashSet<>();
+    private final Map<TreeNode, List<TreeNode>> expansionTree = new LinkedHashMap<>();
+    private int nodeCounter = 0;
+    private final Map<TreeNode, Integer> nodeIndex = new LinkedHashMap<>();
     private final List<Integer> queueSize = new ArrayList<>();
     private final TraversalStrategy traversalStrategy;
     private final Function<Set<Fault>, PruneDecision> pruneFunction;
@@ -44,6 +46,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         super(store);
         this.pruneFunction = pruneFunction;
         this.traversalStrategy = traversalStrategy;
+
+        nodeIndex.put(new TreeNode(Set.of()), 0);
     }
 
     public DynamicExplorationGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {
@@ -87,7 +91,11 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             var point = expansion.get(i);
             for (Fault newFault : Fault.allFaults(point, getFailureModes())) {
                 TreeNode newNode = new TreeNode(Sets.plus(node.value, newFault));
-                addNode(newNode);
+                boolean expanded = addNode(newNode);
+                if (expanded) {
+                    expansionTree.putIfAbsent(node, new ArrayList<>());
+                    expansionTree.get(node).add(newNode);
+                }
             }
         }
     }
@@ -123,6 +131,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
                 case KEEP -> {
                     logger.info("Found a candidate after {} attempt(s)", ops);
+                    nodeCounter++;
+                    nodeIndex.put(node, nodeCounter);
                     return new Faultload(node.value);
                 }
             }
@@ -198,35 +208,92 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 .orElse(0);
     }
 
+    public double getAvgQueueSize() {
+        return queueSize.stream()
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0.0);
+    }
+
     public int getQueuSize() {
         return toVisit.size();
     }
 
+    private Object buildTreeReport(TreeNode node, TreeNode parent) {
+        if (!nodeIndex.containsKey(node)) {
+            return null;
+        }
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("index", nodeIndex.get(node));
+
+        if (parent == null) {
+            report.put("node", node.value.toString());
+        } else {
+            Fault addition = Sets.getOnlyElement(Sets.difference(node.value, parent.value));
+            report.put("node", addition.toString());
+        }
+
+        if (nodeIndex.containsKey(node)) {
+            report.put("index", nodeIndex.get(node));
+        }
+
+        List<TreeNode> children = expansionTree.get(node);
+        if (children == null || children.isEmpty()) {
+            return report;
+        }
+
+        List<Object> childReports = new ArrayList<>();
+        for (var child : children) {
+            var childReport = buildTreeReport(child, node);
+            if (childReport == null) {
+                continue;
+            }
+            childReports.add(childReport);
+        }
+
+        if (childReports.isEmpty()) {
+            return report;
+        }
+
+        report.put("children", childReports);
+        return report;
+    }
+
     @Override
-    public Map<String, String> report(PruneContext context) {
-        Map<String, String> report = new LinkedHashMap<>();
-        report.put("Fault injection points", String.valueOf(getNumerOfPoints()));
-        report.put("Modes", String.valueOf(getFailureModes().size()));
-        report.put("Redundant faultloads", String.valueOf(store.getRedundantFaultloads().size()));
-        report.put("Redundant fault points", String.valueOf(store.getRedundantUidSubsets().size()));
-        report.put("Redundant fault subsets", String.valueOf(store.getRedundantFaultSubsets().size()));
-        report.put("Max queue size", String.valueOf(getMaxQueueSize()));
-        int qs = getQueuSize();
-        if (qs > 0) {
-            report.put("Queue size (left)", String.valueOf(getQueuSize()));
+    public Object report(PruneContext context) {
+        Map<String, Object> stats = new LinkedHashMap<>();
+        Map<String, Object> details = new LinkedHashMap<>();
+
+        List<String> points = getFaultInjectionPoints().stream()
+                .map(FaultUid::toString)
+                .toList();
+        stats.put("fault_injection_points", points.size());
+        details.put("fault_injection_points", points);
+
+        List<String> modes = getFailureModes().stream()
+                .map(FailureMode::toString)
+                .toList();
+        stats.put("failure_modes", modes.size());
+        details.put("failure_modes", modes);
+
+        stats.put("redundant_faultloads", store.getRedundantFaultloads().size());
+        stats.put("redundant_fault_points", store.getRedundantUidSubsets().size());
+        stats.put("Rredundant_fault_subsets", store.getRedundantFaultSubsets().size());
+
+        stats.put("max_queue_size", getMaxQueueSize());
+        stats.put("avg_queue_size", getAvgQueueSize());
+        details.put("queue_size", queueSize);
+
+        int queueSize = getQueuSize();
+        if (queueSize > 0) {
+            stats.put("Queue size (left)", queueSize);
         }
 
-        int i = 1;
-        for (var point : getFaultInjectionPoints()) {
-            report.put("FID(" + i + ")", point.toString());
-            i++;
-        }
-
-        i = 1;
-        for (var point : getSimplifiedFaultInjectionPoints()) {
-            report.put("FID [simplified] (" + i + ")", point.toString());
-            i++;
-        }
+        var simplifiedPoints = getSimplifiedFaultInjectionPoints();
+        stats.put("simplified_fault_injection_points", simplifiedPoints.size());
+        details.put("simplified_fault_injection_points", simplifiedPoints.stream()
+                .map(FaultUid::toString)
+                .toList());
 
         // Report the visited faultloads
         var faultloads = store.getHistoricResults().stream()
@@ -234,30 +301,40 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 .toList();
 
         // Unique visited
-        Map<String, String> simplifiedReport = new LinkedHashMap<>();
+        List<Object> visitByUid = new ArrayList<>();
+        List<Object> visitByFaults = new ArrayList<>();
+
         var simplified = Simplify.simplify(faultloads, getFailureModes());
         var failureModesCount = getFailureModes().size();
-        int simpleIndex = 1;
         for (Set<FaultUid> cause : simplified.second()) {
-            int start = simpleIndex;
             int increase = (int) Math.pow(failureModesCount, cause.size());
-            simpleIndex += increase;
-            String key = "[" + start + " - " + (start + increase - 1) + " (+" + increase + ")" + "]";
-            if (cause.isEmpty()) {
-                simplifiedReport.put(key, "(initial empty set)");
-                continue;
-            }
-
-            simplifiedReport.put(key, cause.toString() + " (all modes)");
+            Map<String, Object> causeReport = new LinkedHashMap<>();
+            List<String> causeList = cause.stream()
+                    .map(FaultUid::toString)
+                    .toList();
+            causeReport.put("faultload", causeList);
+            causeReport.put("count", increase);
+            visitByUid.add(causeReport);
         }
 
         for (Set<Fault> cause : simplified.first()) {
-            simplifiedReport.put("[" + simpleIndex + "]", cause.toString());
-            simpleIndex++;
+            Map<String, Object> causeReport = new LinkedHashMap<>();
+            List<String> causeList = cause.stream()
+                    .map(Fault::toString)
+                    .toList();
+            causeReport.put("faultload", causeList);
+            visitByFaults.add(causeReport);
         }
 
-        StrategyReporter.printReport("Visited (simplified)", simplifiedReport);
+        Map<String, Object> visitReport = new LinkedHashMap<>();
+        visitReport.put("by_uid", visitByUid);
+        visitReport.put("by_faults", visitByFaults);
+        details.put("visited", visitReport);
 
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("stats", stats);
+        report.put("tree", buildTreeReport(new TreeNode(Set.of()), null));
+        report.put("details", details);
         return report;
     }
 }

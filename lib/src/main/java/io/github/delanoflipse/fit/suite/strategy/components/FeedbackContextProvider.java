@@ -124,12 +124,12 @@ public class FeedbackContextProvider extends FeedbackContext {
         return sizeCount;
     }
 
-    public static Map<String, String> getReport(String contextName, Generator generator) {
+    public static Map<String, Object> getReport(String contextName, Generator generator) {
         if (!hasContext(contextName)) {
             return null;
         }
 
-        Map<String, String> report = new LinkedHashMap<>();
+        Map<String, Object> report = new LinkedHashMap<>();
         DynamicAnalysisStore store = stores.get(contextName);
         boolean hasImpact = false;
 

@@ -70,7 +70,7 @@ public class DynamicAnalysisStore {
         return this.redundantFaultSubsets;
     }
 
-    public Map<String, String> getImplicationsReport() {
+    public Map<String, Object> getImplicationsReport() {
         return implicationsStore.getReport(this);
     }
 

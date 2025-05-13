@@ -48,7 +48,28 @@ public class IncreasingSizeGenerator extends StoreBasedGenerator implements Repo
     }
 
     @Override
-    public Map<String, String> report(PruneContext context) {
+    public boolean exploreFrom(Collection<Fault> startingNode) {
+        return iterator.expandFrom(startingNode);
+    }
+
+    @Override
+    public Faultload generate() {
+        var nextFaults = iterator.next();
+
+        if (nextFaults == null) {
+            return null;
+        }
+
+        return new Faultload(nextFaults);
+    }
+
+    @Override
+    public void prune() {
+        iterator.pruneQueue();
+    }
+
+    @Override
+    public Object report(PruneContext context) {
         Map<String, String> report = new LinkedHashMap<>();
         report.put("Fault injection points", String.valueOf(getNumerOfPoints()));
         report.put("Modes", String.valueOf(getFailureModes().size()));
@@ -96,30 +117,7 @@ public class IncreasingSizeGenerator extends StoreBasedGenerator implements Repo
             simpleIndex++;
         }
 
-        StrategyReporter.printReport("Visited (simplified)", simplifiedReport);
-
         return report;
-    }
-
-    @Override
-    public boolean exploreFrom(Collection<Fault> startingNode) {
-        return iterator.expandFrom(startingNode);
-    }
-
-    @Override
-    public Faultload generate() {
-        var nextFaults = iterator.next();
-
-        if (nextFaults == null) {
-            return null;
-        }
-
-        return new Faultload(nextFaults);
-    }
-
-    @Override
-    public void prune() {
-        iterator.pruneQueue();
     }
 
 }

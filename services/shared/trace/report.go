@@ -17,3 +17,14 @@ type TraceReport struct {
 	Response      *ResponseData         `json:"response"`
 	ConcurrentTo  []*faultload.FaultUid `json:"concurrent_to"`
 }
+
+func (tr *TraceReport) Matches(o *TraceReport) bool {
+	if tr.TraceId != o.TraceId {
+		return false
+	}
+	if tr.SpanId != o.SpanId {
+		return false
+	}
+
+	return true
+}

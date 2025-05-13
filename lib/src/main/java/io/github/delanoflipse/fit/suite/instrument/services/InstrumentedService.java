@@ -19,9 +19,9 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
     private final int randomId;
 
     static {
-        boolean useHosted = Env.getEnv("USE_REMOTE", "0").equals("1");
+        boolean useHosted = Env.getEnvBool(Env.Keys.USE_REMOTE);
         if (useHosted) {
-            IMAGE = Env.getEnv("PROXY_MAGE", "dflipse/ds-fit-proxy:latest");
+            IMAGE = Env.getEnv(Env.Keys.PROXY_IMAGE);
         } else {
             IMAGE = "fit-proxy:latest";
         }

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"log"
 	"sync"
 
 	"dflipse.nl/ds-fit/shared/faultload"
@@ -60,14 +61,17 @@ func remove(s []trace.TraceReport, i int) []trace.TraceReport {
 	return s[:len(s)-1]
 }
 
-func (rs *ReportStore) RemoveByTraceIdAndSpanId(TraceId faultload.TraceID, SpanId faultload.SpanID) {
+func (rs *ReportStore) RemoveByTraceIdAndSpanId(TraceId faultload.TraceID, SpanId faultload.SpanID) int {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
+
+	index := -1
 
 	// Remove the report from the reports slice
 	for i := 0; i < len(rs.reports); i++ {
 		if rs.reports[i].TraceId == TraceId && rs.reports[i].SpanId == SpanId {
 			rs.reports = remove(rs.reports, i)
+			index = i
 			break
 		}
 	}
@@ -96,6 +100,63 @@ func (rs *ReportStore) RemoveByTraceIdAndSpanId(TraceId faultload.TraceID, SpanI
 		}
 	}
 
+	return index
+}
+
+func (rs *ReportStore) Upsert(report trace.TraceReport) bool {
+	if rs.HasSpanIdForTraceId(report.TraceId, report.SpanId) {
+		rs.Replace(report)
+		return true
+	} else {
+		rs.Add(report)
+		return false
+	}
+}
+
+func (rs *ReportStore) Replace(report trace.TraceReport) {
+	rs.mu.Lock()
+	defer rs.mu.Unlock()
+
+	found := false
+	// Replace the old report with the new one
+	for i := 0; i < len(rs.reports); i++ {
+		if rs.reports[i].Matches(&report) {
+			rs.reports[i] = report
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		rs.reports = append(rs.reports, report)
+		log.Printf("Could not find report to replace: (%s,%s), added instead\n", report.TraceId, report.SpanId)
+	}
+
+	found = false
+
+	if byTraceId, ok := rs.reportsByTraceId[report.TraceId]; ok {
+		for i := 0; i < len(byTraceId); i++ {
+			if byTraceId[i].Matches(&report) {
+				byTraceId[i] = report
+				found = true
+				break
+			}
+		}
+
+		rs.reportsByTraceId[report.TraceId] = byTraceId
+	}
+
+	if !found {
+		log.Printf("Could not find report to replace by traceId: (%s,%s), added instead\n", report.TraceId, report.SpanId)
+		rs.reportsByTraceId[report.TraceId] = append(rs.reportsByTraceId[report.TraceId], report)
+	}
+
+	if _, exists := rs.reportsByTraceIdBySpanId[report.TraceId]; !exists {
+		log.Printf("Could not mapping for traceId: %s, added instead\n", report.TraceId)
+		rs.reportsByTraceIdBySpanId[report.TraceId] = make(map[faultload.SpanID]trace.TraceReport)
+	}
+
+	rs.reportsByTraceIdBySpanId[report.TraceId][report.SpanId] = report
 }
 
 func (rs *ReportStore) Add(report trace.TraceReport) trace.TraceReport {

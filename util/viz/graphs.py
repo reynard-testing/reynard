@@ -39,7 +39,10 @@ def render_queue_size_graph(queue_sizes, output_dir):
     # Add labels and title
     plt.xlabel('Index')
     plt.ylabel('Queue Size')
-    plt.title('Queue Size vs Index')
+    ax = plt.gca()
+    ax.yaxis.get_major_locator().set_params(integer=True)
+    ax.xaxis.get_major_locator().set_params(integer=True)
+    plt.title('Queue size over time')
     plt.legend()
 
     # Save the plot to a file
@@ -60,13 +63,15 @@ def render_distribution_of_timing(timings: list[tuple[str, list[float]]], output
 
         # Boxplot
         axes[0, i].boxplot(data_ms, vert=True, patch_artist=True)
-        axes[0, i].set_title(f'{key} (Boxplot)')
+        axes[0, i].set_title(f'{key}')
         axes[0, i].set_ylabel('Time (ms)')
+        axes[0, i].set_ylim(bottom=0)
 
         # Violin plot
         violin_ax = axes[0, i].twinx()
         violin_ax.violinplot(data_ms, showmeans=True, showextrema=True)
         violin_ax.set_ylabel('Time (ms)')
+        violin_ax.set_ylim(bottom=0)
 
     # Save the plot to a file
     output_file = os.path.join(output_dir, 'timing_distribution_plot.svg')
@@ -74,7 +79,7 @@ def render_distribution_of_timing(timings: list[tuple[str, list[float]]], output
     plt.close()
 
 
-def render_timing_over_time(key, data, output_dir):
+def render_timing_over_index(key, data, output_dir):
     # Plot the data
     plt.figure(figsize=(10, 6))
     data_ms = np.array(data) * 1e-6  # Convert to milliseconds
@@ -82,8 +87,12 @@ def render_timing_over_time(key, data, output_dir):
 
     # Add labels and title
     plt.xlabel('Index')
-    plt.ylabel('Time (ms)')
-    # plt.title('Timing Over Time')
+    plt.ylabel('Average time (ms)')
+
+    ax = plt.gca()
+    ax.xaxis.get_major_locator().set_params(integer=True)
+    ax.set_ylim(bottom=0)
+    plt.title('Average time per index')
     plt.legend()
 
     # Save the plot to a file
@@ -93,28 +102,27 @@ def render_timing_over_time(key, data, output_dir):
 
 
 TIMINGS_OF_INTEREST = ['nextFaultload', 'Per test', 'registerFaultload',
-                       'unregisterFautload', 'testMethod', 'getTraceWithDelay', 'handleResult']
+                       'unregisterFautload', 'testMethod', 'getTraceWithDelay', 'handleResult', 'Total test time']
 TIMINGS_OF_EXTRA_INTEREST = ['nextFaultload',
                              'handleResult', 'registerFaultload', 'Per test']
 
 
 def render_for_dir(json_dir: str):
     generator_data = get_json(find_json(json_dir, "generator"))
-
-    queue_sizes = generator_data['details']['queue_size']
-    queue_sizes = np.array(queue_sizes)
+    queue_sizes = np.array(generator_data['details']['queue_size'])
     render_queue_size_graph(queue_sizes, json_dir)
     render_tree(generator_data['tree'], os.path.join(json_dir, 'search_tree'))
 
     timing_data = get_json(os.path.join(json_dir, 'timing.json'))
     timings: tuple[str, list[float]] = []
+
     for key in TIMINGS_OF_INTEREST:
         if key not in timing_data['details']:
             continue
         dataset = np.array(timing_data['details'][key])
         timings.append((key, dataset))
         if key in TIMINGS_OF_EXTRA_INTEREST:
-            render_timing_over_time(key, dataset, json_dir)
+            render_timing_over_index(key, dataset, json_dir)
     render_distribution_of_timing(timings, json_dir)
     print(f"Rendered {json_dir}")
 
@@ -125,6 +133,7 @@ if __name__ == '__main__':
     if args.nested:
         for root, dirs, _ in os.walk(json_dir):
             for dir in dirs:
-                render_for_dir(os.path.join(root, dir))
+                if "timing.json" in os.listdir(os.path.join(root, dir)):
+                    render_for_dir(os.path.join(root, dir))
     else:
         render_for_dir(json_dir)

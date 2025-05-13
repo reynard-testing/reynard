@@ -114,11 +114,11 @@ public class DynamicAnalysisStore {
     }
 
     public boolean addUpstreamEffect(FaultUid fid, Collection<FaultUid> children) {
-        return implicationsStore.addUpstreamEffect(fid, children);
+        return implicationsStore.addDownstreamRequests(fid, children);
     }
 
     public boolean addDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
-        return implicationsStore.addDownstreamEffect(condition, effect);
+        return implicationsStore.addUpstreamResponse(condition, effect);
     }
 
     public boolean addConditionForFaultUid(Collection<Behaviour> condition, FaultUid inclusion) {

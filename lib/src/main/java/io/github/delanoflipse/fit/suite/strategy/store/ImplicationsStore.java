@@ -23,25 +23,25 @@ import io.github.delanoflipse.fit.suite.strategy.util.Simplify;
 public class ImplicationsStore {
   private static final Logger logger = LoggerFactory.getLogger(ImplicationsStore.class);
 
-  private final List<UpstreamEffect> upstreamEffects = new ArrayList<>();
+  private final List<DownstreamRequestEffect> downstreamRequests = new ArrayList<>();
   private final List<Substitution> inclusions = new ArrayList<>();
   private final List<Substitution> exclusions = new ArrayList<>();
-  private final List<DownstreamEffect> downstreamEffects = new ArrayList<>();
+  private final List<UpstreamResponseEffect> upstreamResponses = new ArrayList<>();
 
-  record UpstreamEffect(FaultUid cause, Set<FaultUid> effects) {
+  record DownstreamRequestEffect(FaultUid cause, Set<FaultUid> effects) {
   }
 
-  record DownstreamEffect(Set<Behaviour> causes, Behaviour effect) {
+  record UpstreamResponseEffect(Set<Behaviour> causes, Behaviour effect) {
   }
 
   record Substitution(Set<Behaviour> causes, FaultUid effect) {
   }
 
-  public boolean hasUpstreamEffect(FaultUid cause) {
-    return upstreamEffects.stream().anyMatch(x -> x.cause.matches(cause));
+  public boolean hasDownstreamRequests(FaultUid cause) {
+    return downstreamRequests.stream().anyMatch(x -> x.cause.matches(cause));
   }
 
-  public boolean addUpstreamEffect(FaultUid cause, Collection<FaultUid> effects) {
+  public boolean addDownstreamRequests(FaultUid cause, Collection<FaultUid> effects) {
     if (!cause.isNormalForm()) {
       throw new IllegalArgumentException("Upstream cause must be in normal form!");
     }
@@ -56,20 +56,20 @@ public class ImplicationsStore {
       }
     }
 
-    if (hasUpstreamEffect(cause)) {
+    if (hasDownstreamRequests(cause)) {
       return false;
     }
 
-    upstreamEffects.add(new UpstreamEffect(cause, Set.copyOf(effects)));
+    downstreamRequests.add(new DownstreamRequestEffect(cause, Set.copyOf(effects)));
     return true;
   }
 
-  public boolean hasDownstreamEffect(Set<Behaviour> causes, Behaviour effect) {
-    return downstreamEffects.stream()
+  public boolean hasUpstreamResponse(Set<Behaviour> causes, Behaviour effect) {
+    return upstreamResponses.stream()
         .anyMatch(x -> x.effect.matches(effect) && Behaviour.isSubsetOf(x.causes, causes));
   }
 
-  public boolean addDownstreamEffect(Collection<Behaviour> causes, Behaviour effect) {
+  public boolean addUpstreamResponse(Collection<Behaviour> causes, Behaviour effect) {
     if (!effect.isFault()) {
       throw new IllegalArgumentException("Downstream cause must be a fault!");
     }
@@ -88,11 +88,11 @@ public class ImplicationsStore {
       }
     }
     Set<Behaviour> causesSet = Set.copyOf(causes);
-    if (hasDownstreamEffect(causesSet, effect)) {
+    if (hasUpstreamResponse(causesSet, effect)) {
       return false;
     }
 
-    downstreamEffects.add(new DownstreamEffect(causesSet, effect));
+    upstreamResponses.add(new UpstreamResponseEffect(causesSet, effect));
     return true;
   }
 
@@ -145,7 +145,7 @@ public class ImplicationsStore {
   }
 
   public FaultUid getRootCause() {
-    for (var upstream : upstreamEffects) {
+    for (var upstream : downstreamRequests) {
       if (upstream.cause.isInitial()) {
         return upstream.cause;
       }
@@ -197,15 +197,15 @@ public class ImplicationsStore {
         .orElse(null);
   }
 
-  private UpstreamEffect getUpstreamEffect(FaultUid cause) {
-    return upstreamEffects.stream()
+  private DownstreamRequestEffect getUpstreamEffect(FaultUid cause) {
+    return downstreamRequests.stream()
         .filter(x -> x.cause.matches(cause))
         .findFirst()
         .orElse(null);
   }
 
-  private DownstreamEffect getDownstreamEffect(FaultUid cause, Set<Behaviour> upstreams) {
-    return downstreamEffects.stream()
+  private UpstreamResponseEffect getDownstreamEffect(FaultUid cause, Set<Behaviour> upstreams) {
+    return upstreamResponses.stream()
         .filter(x -> x.effect.uid().matches(cause))
         .filter(x -> Behaviour.isSubsetOf(x.causes, upstreams))
         .findFirst()
@@ -288,7 +288,7 @@ public class ImplicationsStore {
 
     // Find upstream effects
     Behaviour causeBehaviour = Behaviour.of(cause);
-    UpstreamEffect upstream = getUpstreamEffect(cause);
+    DownstreamRequestEffect upstream = getUpstreamEffect(cause);
 
     // 1.b. No upstream effects, so we are done
     if (upstream == null) {
@@ -316,7 +316,7 @@ public class ImplicationsStore {
     // -- Stage 3 - Downstream effects --
 
     // 3. check for downstream effects
-    DownstreamEffect downstream = getDownstreamEffect(cause, directUpstreams);
+    UpstreamResponseEffect downstream = getDownstreamEffect(cause, directUpstreams);
 
     if (downstream != null) {
       return Pair.of(downstream.effect(), transativeUpstreams);
@@ -328,10 +328,10 @@ public class ImplicationsStore {
   public Map<String, String> getReport(DynamicAnalysisStore store) {
     Map<String, String> report = new LinkedHashMap<>();
 
-    if (!upstreamEffects.isEmpty()) {
-      report.put("Upstream effects", upstreamEffects.size() + "");
+    if (!downstreamRequests.isEmpty()) {
+      report.put("Upstream effects", downstreamRequests.size() + "");
 
-      for (var upstream : upstreamEffects) {
+      for (var upstream : downstreamRequests) {
         report.put(upstream.cause.toString(), upstream.effects().toString());
       }
     }
@@ -392,8 +392,8 @@ public class ImplicationsStore {
       }
     }
 
-    if (!downstreamEffects.isEmpty()) {
-      report.put("Downstream effects", downstreamEffects.size() + "");
+    if (!upstreamResponses.isEmpty()) {
+      report.put("Downstream effects", upstreamResponses.size() + "");
     }
 
     return report;

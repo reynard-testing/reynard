@@ -41,6 +41,11 @@ public class EventBuilder {
     this(parent, parent.report.traceId);
   }
 
+  public EventBuilder(String name) {
+    this(null, "");
+    withPoint(name, name + "1");
+  }
+
   public EventBuilder(EventBuilder parent, String traceId) {
     report.isInitial = parent == null;
     report.spanId = newSpanId();
@@ -83,6 +88,11 @@ public class EventBuilder {
     return builder;
   }
 
+  public EventBuilder createChild(String name) {
+    return createChild()
+        .withPoint(name, name + "1");
+  }
+
   public EventBuilder findService(String service) {
     if (point != null && point.destination().equals(service)) {
       return this;
@@ -110,7 +120,7 @@ public class EventBuilder {
   }
 
   public EventBuilder withFault(FailureMode mode) {
-    Fault fault = new Fault(getFaultUid(), mode);
+    Fault fault = new Fault(uid(), mode);
     this.report.injectedFault = fault;
 
     if (fault.mode().getType().equals(ErrorFault.FAULT_TYPE)) {
@@ -128,15 +138,15 @@ public class EventBuilder {
     return Lists.plus(parent.getStack(), point);
   }
 
-  public Behaviour getBehaviour() {
+  public Behaviour behaviour() {
     if (report.injectedFault != null) {
       return new Behaviour(report.injectedFault.uid(), report.injectedFault.mode());
     }
 
-    return new Behaviour(getFaultUid(), null);
+    return new Behaviour(uid(), null);
   }
 
-  public FaultUid getFaultUid() {
+  public FaultUid uid() {
     if (point == null) {
       point = new FaultInjectionPoint("unknown", "unknown", "", Map.of(), 0);
     }
@@ -147,7 +157,7 @@ public class EventBuilder {
   }
 
   public TraceReport build() {
-    report.faultUid = getFaultUid();
+    report.faultUid = uid();
     return report;
   }
 

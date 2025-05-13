@@ -181,6 +181,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 .map(Fault::uid)
                 .toList();
 
+        // Note: we could already prune any faults that contain a causual parent
+        // currenlty, this is only caught by the reachability pruner
         List<FaultUid> toExplore = knownObserved.stream()
                 .filter(p -> !FaultUid.contains(injectedPoints, p))
                 .toList();
@@ -209,14 +211,20 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         report.put("Redundant fault points", String.valueOf(store.getRedundantUidSubsets().size()));
         report.put("Redundant fault subsets", String.valueOf(store.getRedundantFaultSubsets().size()));
         report.put("Max queue size", String.valueOf(getMaxQueueSize()));
-        int queueSize = getQueuSize();
-        if (queueSize > 0) {
+        int qs = getQueuSize();
+        if (qs > 0) {
             report.put("Queue size (left)", String.valueOf(getQueuSize()));
         }
 
-        int i = 0;
+        int i = 1;
         for (var point : getFaultInjectionPoints()) {
             report.put("FID(" + i + ")", point.toString());
+            i++;
+        }
+
+        i = 1;
+        for (var point : getSimplifiedFaultInjectionPoints()) {
+            report.put("FID [simplified] (" + i + ")", point.toString());
             i++;
         }
 

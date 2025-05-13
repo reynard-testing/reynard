@@ -3,6 +3,7 @@ package io.github.delanoflipse.fit.suite.trace.tree;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.github.delanoflipse.fit.suite.faultload.Behaviour;
@@ -10,8 +11,6 @@ import io.github.delanoflipse.fit.suite.faultload.Fault;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.modes.ErrorFault;
 import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonSerialize
 @JsonDeserialize

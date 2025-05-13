@@ -164,6 +164,7 @@ public class OTELSuiteIT {
         private int maxCount = 1;
 
         private boolean isProductCatalogueCall(FaultUid uid) {
+            // Call to product-catalogue from the frontend
             return uid.getPoint().destination().equals("product-catalog")
                     && uid.getParent().getPoint().destination().equals("frontend");
         }
@@ -171,6 +172,7 @@ public class OTELSuiteIT {
         @Override
         public void handleFeedback(FaultloadResult result, FeedbackContext context) {
             if (result.isInitial()) {
+                // Get the number of relevant calls
                 List<FaultUid> uids = new ArrayList<>();
                 for (var report : result.trace.getReports()) {
                     if (isProductCatalogueCall(report.faultUid)) {
@@ -179,6 +181,9 @@ public class OTELSuiteIT {
                     }
                 }
 
+                // Add one case where we explore all faults (same fault)
+                // This is because the pruner will prevent us from reaching
+                // this state
                 for (var mode : context.getFailureModes()) {
                     List<Fault> faults = uids.stream()
                             .map(uid -> new Fault(uid, mode))
@@ -197,6 +202,7 @@ public class OTELSuiteIT {
                 }
             }
 
+            // Either 1 fault, or all faults, not in between
             if (present <= 1 || present == maxCount + 1) {
                 return PruneDecision.KEEP;
             }

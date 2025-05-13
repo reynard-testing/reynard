@@ -12,6 +12,15 @@ type PartialInjectionPoint struct {
 	Payload     string `json:"payload"`
 }
 
+func (f PartialInjectionPoint) String() string {
+	payloadStr := ""
+	if f.Payload != "*" && f.Payload != "" {
+		payloadStr = fmt.Sprintf("(%s)", f.Payload)
+	}
+
+	return fmt.Sprintf("%s:%s%s", f.Destination, f.Signature, payloadStr)
+}
+
 type InjectionPointCallStack map[string]int
 
 type InjectionPoint struct {
@@ -21,8 +30,35 @@ type InjectionPoint struct {
 	CallStack   InjectionPointCallStack `json:"call_stack"`
 	Count       int                     `json:"count"`
 }
+
+func (p InjectionPoint) AsPartial() PartialInjectionPoint {
+	return PartialInjectionPoint{
+		Destination: p.Destination,
+		Signature:   p.Signature,
+		Payload:     p.Payload,
+	}
+}
+
 type FaultUid struct {
 	Stack []InjectionPoint `json:"stack"`
+}
+
+func (f FaultUid) Parent() FaultUid {
+	if len(f.Stack) == 0 {
+		return FaultUid{}
+	}
+
+	return FaultUid{
+		Stack: f.Stack[:len(f.Stack)-1],
+	}
+}
+
+func (f FaultUid) Point() InjectionPoint {
+	if len(f.Stack) == 0 {
+		return InjectionPoint{}
+	}
+
+	return f.Stack[len(f.Stack)-1]
 }
 
 func stringMatches(v1, v2 string) bool {
@@ -123,15 +159,6 @@ func (f InjectionPoint) String() string {
 	csStr := f.CallStack.String()
 
 	return fmt.Sprintf("%s:%s%s%s%s", f.Destination, f.Signature, payloadStr, csStr, countStr)
-}
-
-func (f PartialInjectionPoint) String() string {
-	payloadStr := ""
-	if f.Payload != "*" && f.Payload != "" {
-		payloadStr = fmt.Sprintf("(%s)", f.Payload)
-	}
-
-	return fmt.Sprintf("%s:%s%s", f.Destination, f.Signature, payloadStr)
 }
 
 type Fault struct {

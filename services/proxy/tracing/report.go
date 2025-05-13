@@ -8,47 +8,23 @@ import (
 	"net/http"
 	"os"
 
-	"dflipse.nl/fit-proxy/faultload"
+	"dflipse.nl/ds-fit/controller/endpoints"
+	"dflipse.nl/ds-fit/shared/faultload"
+	"dflipse.nl/ds-fit/shared/trace"
 )
 
-type ResponseData struct {
-	Status     int     `json:"status"`
-	Body       string  `json:"body"`
-	DurationMs float64 `json:"duration_ms"`
-}
-
-type UidRequest struct {
-	TraceId        string `json:"trace_id"`
-	ReportParentId string `json:"parent_span_id"`
-}
-type UidResponse struct {
-	Stack           []faultload.InjectionPoint        `json:"stack"`
-	CompletedEvents faultload.InjectionPointCallStack `json:"completed_events"`
-}
-
-type RequestReport struct {
-	TraceId       string                `json:"trace_id"`
-	SpanId        string                `json:"span_id"`
-	FaultUid      faultload.FaultUid    `json:"uid"`
-	IsInitial     bool                  `json:"is_initial"`
-	InjectedFault *faultload.Fault      `json:"injected_fault"`
-	Response      *ResponseData         `json:"response"`
-	ConcurrentTo  []*faultload.FaultUid `json:"concurrent_to"`
-}
-
 type RequestMetadata struct {
-	TraceId        string
-	ParentId       string
-	ReportParentId string
-	SpanId         string
+	TraceId        faultload.TraceID
+	ParentId       faultload.SpanID
+	ReportParentId faultload.SpanID
+	SpanId         faultload.SpanID
 	FaultUid       faultload.FaultUid
 	IsInitial      bool
 }
 
 var queryHost string = os.Getenv("CONTROLLER_HOST")
 
-func attemptReport(report RequestReport) bool {
-
+func attemptReport(report trace.TraceReport) bool {
 	queryUrl := fmt.Sprintf("http://%s/v1/proxy/report", queryHost)
 
 	jsonBodyBytes, err := json.Marshal(report)
@@ -75,7 +51,7 @@ func attemptReport(report RequestReport) bool {
 
 }
 
-func ReportSpanUID(report RequestReport) bool {
+func ReportSpanUID(report trace.TraceReport) bool {
 	success := attemptReport(report)
 
 	if !success {
@@ -86,7 +62,7 @@ func ReportSpanUID(report RequestReport) bool {
 	return success
 }
 
-func attemptGetUid(req UidRequest) *UidResponse {
+func attemptGetUid(req endpoints.UidRequest) *endpoints.UidResponse {
 	queryUrl := fmt.Sprintf("http://%s/v1/proxy/get-parent-uid", queryHost)
 
 	jsonBodyBytes, err := json.Marshal(req)
@@ -109,7 +85,7 @@ func attemptGetUid(req UidRequest) *UidResponse {
 		return nil
 	}
 
-	var response UidResponse
+	var response endpoints.UidResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		log.Printf("Failed to decode response: %v\n", err)
 		return nil
@@ -118,14 +94,14 @@ func attemptGetUid(req UidRequest) *UidResponse {
 	return &response
 }
 
-func GetUid(traceId, parentId string, isInitial bool) (faultload.FaultUid, faultload.InjectionPointCallStack) {
+func GetUid(traceId faultload.TraceID, parentId faultload.SpanID, isInitial bool) (faultload.FaultUid, faultload.InjectionPointCallStack) {
 	if isInitial {
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
 		}, faultload.InjectionPointCallStack{}
 	}
 
-	req := UidRequest{
+	req := endpoints.UidRequest{
 		TraceId:        traceId,
 		ReportParentId: parentId,
 	}

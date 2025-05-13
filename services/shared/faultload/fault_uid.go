@@ -1,4 +1,4 @@
-package tracing
+package faultload
 
 import (
 	"crypto/sha256"
@@ -11,12 +11,11 @@ import (
 	"regexp"
 	"strings"
 
-	"dflipse.nl/fit-proxy/faultload"
+	"dflipse.nl/ds-fit/shared/util"
 )
 
 var (
-	stackPrefix string = os.Getenv("STACK_PREFIX")
-	pathPrefix  string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
+	pathPrefix string = getEnvOrDefault("GRPC_PATH_PREFIX", "/")
 )
 
 func getEnvOrDefault(envVar, defaultValue string) string {
@@ -27,7 +26,7 @@ func getEnvOrDefault(envVar, defaultValue string) string {
 	return value
 }
 
-func PartialPointFromRequest(r *http.Request, destination string, maskPayload bool) faultload.PartialInjectionPoint {
+func PartialPointFromRequest(r *http.Request, destination string, maskPayload bool) PartialInjectionPoint {
 	signature := getCallSignature(r)
 
 	payload := "*"
@@ -35,7 +34,7 @@ func PartialPointFromRequest(r *http.Request, destination string, maskPayload bo
 		payload = getPayloadHash(r)
 	}
 
-	return faultload.PartialInjectionPoint{
+	return PartialInjectionPoint{
 		Destination: destination,
 		Signature:   signature,
 		Payload:     payload,
@@ -100,40 +99,6 @@ func getCallSignature(r *http.Request) string {
 	}
 }
 
-var postfixRegex = regexp.MustCompile(`-\d+$`)
-
-func GetHostIdentifier(addr string) string {
-	names, err := net.LookupAddr(addr)
-	if err != nil || len(names) == 0 {
-		// Handle the case where no hostname is found
-		log.Printf("No hostname for: %s\n", addr)
-		return addr // Return the IP as fallback
-	}
-	// Extract service name from the FQDN
-	log.Printf("Hostnames: %s\n", names)
-	fqdn := names[0]
-	parts := strings.Split(fqdn, ".")
-	if len(parts) == 0 {
-		return fqdn
-	}
-
-	// In docker, the name is [stack]-[service]-[index].[stack]_[network]
-	prefix := stackPrefix
-	if prefix == "" {
-		domainName := parts[1]
-		domainParts := strings.Split(domainName, "_")
-		prefix = domainParts[0]
-	}
-
-	fullServiceName := parts[0]
-	// remove [stack]- from the service name
-	serviceWithoutPrefix := strings.TrimPrefix(fullServiceName, prefix+"-")
-	// remove -[index] from the service name
-	serviceWithoutIndex := postfixRegex.ReplaceAllString(serviceWithoutPrefix, "")
-
-	return serviceWithoutIndex
-}
-
 // Returns the hostname of the service that made the request
 func getOrigin(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -143,5 +108,5 @@ func getOrigin(r *http.Request) string {
 	}
 
 	log.Printf("Remote address: %s\n", r.RemoteAddr)
-	return GetHostIdentifier(host)
+	return util.GetHostIdentifier(host)
 }

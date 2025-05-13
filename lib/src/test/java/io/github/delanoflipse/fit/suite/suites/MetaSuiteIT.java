@@ -70,7 +70,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROLLER_HOST", "controller:5000")
                     .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
-                    .withEnv("OTEL_SERVICE_NAME", "proxy1")
+                    .withEnv("OTEL_SERVICE_NAME", "proxy1-real")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -81,7 +81,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROLLER_HOST", "controller:5000")
                     .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
-                    .withEnv("OTEL_SERVICE_NAME", "proxy2")
+                    .withEnv("OTEL_SERVICE_NAME", "proxy2-real")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -92,20 +92,17 @@ public class MetaSuiteIT {
                     .withEnv("CONTROLLER_HOST", "controller:5000")
                     .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
-                    .withEnv("OTEL_SERVICE_NAME", "proxy3")
+                    .withEnv("OTEL_SERVICE_NAME", "proxy3-real")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
     private static final InstrumentedService controller = app.instrument("controller", 5000,
             new GenericContainer<>(CONTROLLER_IMAGE)
-                    // Note: using FLASK_DEBUG=1 will stop the OTEL instrumentation from working, so
-                    // don't use that
                     .withEnv("PROXY_LIST", "proxy1:8050,proxy2:8050,proxy3:8050")
-                    .withEnv("OTEL_SERVICE_NAME", "controller")
-                    .withEnv("OTEL_TRACES_EXPORTER", "otlp")
-                    .withEnv("OTEL_BSP_SCHEDULE_DELAY", "1")
                     .withEnv("PROXY_RETRY_COUNT", "" + PROXY_RETRY_COUNT)
-                    .withEnv("OTEL_SDK_DISABLED", "false")
+                    .withEnv("PROXY_TIMEOUT", "0")
+                    .withEnv("USE_OTEL", "true")
+                    .withEnv("OTEL_SERVICE_NAME", "controller-real")
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT))
             .withExposedPorts(5000);
 

@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"time"
 
-	"dflipse.nl/fit-proxy/config"
-	"dflipse.nl/fit-proxy/control"
-	"dflipse.nl/fit-proxy/faultload"
-	"dflipse.nl/fit-proxy/tracing"
+	"dflipse.nl/ds-fit/proxy/config"
+	"dflipse.nl/ds-fit/proxy/control"
+	"dflipse.nl/ds-fit/proxy/tracing"
+	"dflipse.nl/ds-fit/shared/faultload"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -162,13 +162,13 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		shouldUseCallStack := state.GetWithDefault(FIT_USE_CALL_STACK, "0") == "1"
 
 		// -- Determine FID --
-		reportParentId := state.GetWithDefault(FIT_PARENT_KEY, "0")
+		reportParentId := faultload.SpanID(state.GetWithDefault(FIT_PARENT_KEY, "0"))
 		log.Printf("Report parent ID: %s\n", reportParentId)
 
 		parentStack, callStack := tracing.GetUid(traceId, reportParentId, isInitial)
 		log.Printf("Parent Stack: %s\n", parentStack)
 
-		partialPoint := tracing.PartialPointFromRequest(r, destination, shouldMaskPayload)
+		partialPoint := faultload.PartialPointFromRequest(r, destination, shouldMaskPayload)
 		// do not include the current span in the call stack
 		if shouldUseCallStack {
 			callStack.Del(partialPoint)
@@ -182,7 +182,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, callStack, invocationCount)
 		// --
 
-		state.Set(FIT_PARENT_KEY, currentSpan.ParentID)
+		state.Set(FIT_PARENT_KEY, string(currentSpan.ParentID))
 		r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{

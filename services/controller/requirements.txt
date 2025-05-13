@@ -1,5 +1,0 @@
-Flask[async]==3.1.0
-protobuf==5.29.2
-requests==2.32.3
-opentelemetry-distro[otlp]
-frozendict

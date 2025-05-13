@@ -1,19 +1,20 @@
-FROM python:3.12-slim-bullseye
+FROM golang:1.23.4-bullseye AS builder
 
-WORKDIR /app
+# Set workdir in container
+WORKDIR /go/src/dflipse.nl/ds-fit
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc
-
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-RUN opentelemetry-bootstrap -a install
+COPY go.mod go.sum ./
+RUN go mod download
 
 COPY . .
 
-# CMD [ "opentelemetry-instrument", "python", "main.py"]
-ENV OTEL_SDK_DISABLED=true
-CMD [ "opentelemetry-instrument", "flask", "--app", "main.py", "run", "--host=0.0.0.0"]
+# Build the project binary
+RUN go build -o fit-controller controller/main.go
+
+# Final minimal image
+FROM debian:bullseye-slim
+
+WORKDIR /app
+COPY --from=builder /go/src/dflipse.nl/ds-fit/fit-controller fit-controller
+
+ENTRYPOINT ["/app/fit-controller"]

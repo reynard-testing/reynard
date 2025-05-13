@@ -3,8 +3,8 @@ package io.github.delanoflipse.fit.suite.faultload;
 import java.util.Collections;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonSerialize
@@ -80,6 +80,10 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     public FaultInjectionPoint asAnyCount() {
         return new FaultInjectionPoint(destination, signature, payload, callStack, -1);
+    }
+
+    public FaultInjectionPoint asAnyCallStack() {
+        return new FaultInjectionPoint(destination, signature, payload, Map.of(), count);
     }
 
     public PartialFaultInjectionPoint asPartial() {

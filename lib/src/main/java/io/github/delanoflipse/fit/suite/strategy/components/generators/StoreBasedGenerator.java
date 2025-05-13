@@ -1,5 +1,6 @@
 package io.github.delanoflipse.fit.suite.strategy.components.generators;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,29 @@ public abstract class StoreBasedGenerator extends Generator {
     @Override
     public List<FaultUid> getFaultInjectionPoints() {
         return store.getPoints();
+    }
+
+    public List<FaultUid> getSimplifiedFaultInjectionPoints() {
+        var points = store.getPoints();
+        List<FaultUid> res = new ArrayList<>();
+
+        for (var point : points) {
+            if (point.isPersistent()) {
+                continue;
+            }
+
+            FaultUid simplePoint = point.withoutCallStack();
+
+            boolean alreadyPresent = res.stream()
+                    .anyMatch(p -> simplePoint.matches(p));
+            if (alreadyPresent) {
+                continue;
+            }
+
+            res.add(simplePoint);
+        }
+
+        return res;
     }
 
     @Override

@@ -2,6 +2,7 @@ package io.github.delanoflipse.fit.suite.suites;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,11 @@ import io.github.delanoflipse.fit.suite.instrument.FaultController;
 import io.github.delanoflipse.fit.suite.instrument.controller.RemoteController;
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
+import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
+import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
+import io.github.delanoflipse.fit.suite.strategy.components.Pruner;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -152,6 +158,56 @@ public class OTELSuiteIT {
                 assertEquals(200, response.code());
             }
         }
+    }
+
+    static public class OneOrAllProductsPruner implements Pruner, FeedbackHandler {
+        private int maxCount = 1;
+
+        private boolean isProductCatalogueCall(FaultUid uid) {
+            return uid.getPoint().destination().equals("product-catalog")
+                    && uid.getParent().getPoint().destination().equals("frontend");
+        }
+
+        @Override
+        public void handleFeedback(FaultloadResult result, FeedbackContext context) {
+            if (result.isInitial()) {
+                List<FaultUid> uids = new ArrayList<>();
+                for (var report : result.trace.getReports()) {
+                    if (isProductCatalogueCall(report.faultUid)) {
+                        uids.add(report.faultUid);
+                        maxCount = Math.max(maxCount, report.faultUid.count());
+                    }
+                }
+
+                for (var mode : context.getFailureModes()) {
+                    List<Fault> faults = uids.stream()
+                            .map(uid -> new Fault(uid, mode))
+                            .toList();
+                    context.exploreFrom(faults);
+                }
+            }
+        }
+
+        @Override
+        public PruneDecision prune(Faultload faultload, PruneContext context) {
+            int present = 0;
+            for (FaultUid uid : faultload.getFaultUids()) {
+                if (isProductCatalogueCall(uid)) {
+                    present++;
+                }
+            }
+
+            if (present <= 1 || present == maxCount + 1) {
+                return PruneDecision.KEEP;
+            }
+
+            return PruneDecision.PRUNE;
+        }
+    }
+
+    @FiTest(maskPayload = true, additionalComponents = { OneOrAllProductsPruner.class })
+    public void testRecommendationsWithPruner(TrackedFaultload f) throws IOException {
+        testRecommendations(f);
     }
 
     @FiTest(maskPayload = true)

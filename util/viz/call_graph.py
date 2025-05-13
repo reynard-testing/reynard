@@ -2,7 +2,7 @@
 import graphviz
 
 
-def call_graph(tree: dict):
+def build_call_graph(dot, graph: dict):
     pass
 
 
@@ -11,9 +11,7 @@ def parse_tree(tree: dict):
 
 
 def render_call_graph(tree: dict, output_name: str):
-    root, nodes = parse_tree(tree)
-
-    use_sig = needs_signature(nodes)
+    graph, nodes = parse_tree(tree)
     dot = graphviz.Digraph(comment='Faultspace Search', format='pdf')
-    build_tree(dot, root, use_sig, combine)
+    build_call_graph(dot, graph)
     dot.render(filename=output_name)

@@ -28,6 +28,25 @@ def get_args():
 
 
 def simplify_name(name: str):
+    if name == "[]":
+        return "&empty;", "", ""
+
+    if name.startswith("["):
+        names = name[1:-1].split("], Fault[")
+        print(names)
+        uids = set()
+        modes = set()
+        signatures = set()
+        for n in names:
+            uid, mode, signature = simplify_name(n)
+            uids.add(uid)
+            modes.add(mode)
+            signatures.add(signature)
+        uid = ",".join(uids)
+        mode = ",".join(modes)
+        signature = ",".join(signatures)
+        return uid, mode, signature
+
     no_fault = name.replace("Fault", "")
     no_brackets = no_fault.replace("[", "").replace("]", "")
     if no_brackets == "":
@@ -163,4 +182,3 @@ def render_tree(tree: dict, output_name: str, combine=True):
     dot = graphviz.Digraph(comment='Faultspace Search', format='pdf')
     build_tree(dot, root, use_sig, combine)
     dot.render(filename=output_name)
-

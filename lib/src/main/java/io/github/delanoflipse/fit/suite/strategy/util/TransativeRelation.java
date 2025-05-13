@@ -1,7 +1,7 @@
 package io.github.delanoflipse.fit.suite.strategy.util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,9 +9,9 @@ import java.util.Set;
 
 public class TransativeRelation<X> {
     private final Set<X> elements = new LinkedHashSet<>();
-    private final Map<X, X> inverseRelation = new HashMap<>();
-    private final Map<X, Set<X>> relation = new HashMap<>();
-    private final Map<X, Set<X>> transitiveRelations = new HashMap<>();
+    private final Map<X, X> inverseRelation = new LinkedHashMap<>();
+    private final Map<X, Set<X>> relation = new LinkedHashMap<>();
+    private final Map<X, Set<X>> transitiveRelations = new LinkedHashMap<>();
 
     public void addRelation(X parent, X child) {
         elements.add(parent);

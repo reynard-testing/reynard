@@ -17,6 +17,11 @@ if [ -n "${OPT_RETRIES}" ]; then
   result_path="${project_path}/results/${benchmark_category}/${benchmark_id}-retries"
 fi
 
+if [ -n "${WITH_FAULTS}" ]; then
+  test_name="${test_name}Faults"
+  result_path="${project_path}/results/${benchmark_category}/${benchmark_id}-faults"
+fi
+
 output_file="${result_path}/${benchmark_id}${result_tag}.log"
 
 echo "Running ${benchmark_category} benchmark: ${benchmark_id} (${test_name})"
@@ -39,10 +44,17 @@ if [ -n "${BUILD_BEFORE}" ]; then
 fi
 
 # Start containers
-PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
+if [ "${SKIP_RESTART:-0}" != "1" ]; then
+  PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
+
+  until curl -sSf http://localhost:5001/; do
+    echo "Waiting for services to be available..."
+    sleep 1
+  done
+fi
 
 # Wait for containers to be healthy
-sleep 3
+sleep 5
 
 # Run tests
 cd ${project_path}

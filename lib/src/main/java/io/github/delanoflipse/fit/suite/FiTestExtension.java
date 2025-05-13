@@ -152,8 +152,8 @@ public class FiTestExtension
         if (outputConfig.isPresent()) {
             String dir = outputConfig.get();
             Path projectRoot = Path.of("").toAbsolutePath().getParent();
-            var outputTag = Env.getEnv("OUTPUT_TAG", "default");
-            Path outputDir = projectRoot.resolve(dir).resolve(outputTag);
+            Path outputDir = projectRoot.resolve(dir);
+            logger.info("Exporting reports to: " + outputDir);
             strategy.setOutputDir(outputDir);
         }
 

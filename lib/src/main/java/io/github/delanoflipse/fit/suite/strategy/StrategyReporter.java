@@ -18,6 +18,7 @@ import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContextProvi
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContextProvider;
 import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
+import io.github.delanoflipse.fit.suite.strategy.util.Env;
 import io.github.delanoflipse.fit.suite.strategy.util.Pair;
 import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 import io.github.delanoflipse.fit.suite.strategy.util.StringFormat;
@@ -193,8 +194,11 @@ public class StrategyReporter {
 
         boolean logToConsole = true;
 
+        String outputTag = Env.getEnv(Env.Keys.OUTPUT_TAG);
         if (runner.hasOutputDir()) {
-            Path dir = runner.getOutputDir().resolve(runner.getContextName());
+            Path dir = runner.getOutputDir()
+                    .resolve(runner.getContextName())
+                    .resolve(outputTag);
             dir.toFile().mkdirs();
             Path file = dir.resolve(subcontext + ".json");
             try {

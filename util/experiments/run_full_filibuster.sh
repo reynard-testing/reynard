@@ -39,7 +39,7 @@ CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
 
 # Build images
 cd ${corpus_path}
-if [ -n "${BUILD_BEFORE}" ]; then
+if [ "${BUILD_BEFORE:-1}" == "1" ]; then
     PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml build
 fi
 
@@ -51,18 +51,18 @@ if [ "${SKIP_RESTART:-0}" != "1" ]; then
     echo "Waiting for services to be available..."
     sleep 1
   done
+
+  # Wait for containers to be healthy
+  sleep 5
 fi
 
-# Wait for containers to be healthy
-sleep 5
 
 # Run tests
 cd ${project_path}
 mkdir -p ${result_path}
 mvn clean test -Dtest=FilibusterSuiteIT#test${test_name} | tee ${output_file}
 
-
-if [ -n "${STOP_AFTER}" ]; then
+if [ "${STOP_AFTER:-1}" == "1" ]; then
     cd ${corpus_path}
     PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml down
     exit 0

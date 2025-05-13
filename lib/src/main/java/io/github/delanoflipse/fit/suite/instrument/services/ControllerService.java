@@ -8,9 +8,9 @@ public class ControllerService extends GenericContainer<ControllerService> {
     public static final String IMAGE;
 
     static {
-        boolean useHosted = Env.getEnv("USE_REMOTE", "0").equals("1");
+        boolean useHosted = Env.getEnvBool(Env.Keys.USE_REMOTE);
         if (useHosted) {
-            IMAGE = Env.getEnv("CONTROLLER_IMAGE", "dflipse/ds-fit-controller:latest");
+            IMAGE = Env.getEnv(Env.Keys.CONTROLLER_IMAGE);
         } else {
             IMAGE = "fit-controller:latest";
         }

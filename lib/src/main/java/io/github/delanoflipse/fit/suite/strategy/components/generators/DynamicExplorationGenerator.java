@@ -197,6 +197,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 .map(Fault::uid)
                 .toList();
 
+        // Note: we could already prune any faults that contain a causual parent
+        // currenlty, this is only caught by the reachability pruner
         List<FaultUid> toExplore = knownObserved.stream()
                 .filter(p -> !FaultUid.contains(injectedPoints, p))
                 .toList();
@@ -293,6 +295,12 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         if (queueSize > 0) {
             stats.put("Queue size (left)", queueSize);
         }
+
+        var simplifiedPoints = getSimplifiedFaultInjectionPoints();
+        stats.put("simplified_fault_injection_points", simplifiedPoints.size());
+        details.put("simplified_fault_injection_points", simplifiedPoints.stream()
+                .map(FaultUid::toString)
+                .toList());
 
         // Report the visited faultloads
         var faultloads = store.getHistoricResults().stream()

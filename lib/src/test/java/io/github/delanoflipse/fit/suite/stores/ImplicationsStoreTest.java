@@ -73,20 +73,20 @@ public class ImplicationsStoreTest {
     nodeG = nodeF.createChild()
         .withPoint("G", "g1");
 
-    a = nodeA.getBehaviour();
-    b = nodeB.getBehaviour();
-    c = nodeC.getBehaviour();
-    d = nodeD.getBehaviour();
-    e = nodeE.getBehaviour();
-    f = nodeF.getBehaviour();
-    g = nodeG.getBehaviour();
+    a = nodeA.behaviour();
+    b = nodeB.behaviour();
+    c = nodeC.behaviour();
+    d = nodeD.behaviour();
+    e = nodeE.behaviour();
+    f = nodeF.behaviour();
+    g = nodeG.behaviour();
 
     store = new ImplicationsStore();
 
     // happy path
-    store.addUpstreamEffect(a.uid(), Set.of(b.uid(), c.uid(), f.uid()));
-    store.addUpstreamEffect(c.uid(), Set.of(d.uid(), e.uid()));
-    store.addUpstreamEffect(f.uid(), Set.of(g.uid()));
+    store.addDownstreamRequests(a.uid(), Set.of(b.uid(), c.uid(), f.uid()));
+    store.addDownstreamRequests(c.uid(), Set.of(d.uid(), e.uid()));
+    store.addDownstreamRequests(f.uid(), Set.of(g.uid()));
   }
 
   private void setupDownstream() {
@@ -97,14 +97,14 @@ public class ImplicationsStoreTest {
     Behaviour fe2 = new Behaviour(e.uid(), mode2);
     Behaviour fc1 = new Behaviour(c.uid(), mode1);
 
-    store.addDownstreamEffect(Set.of(fd1, e), fc1);
-    store.addDownstreamEffect(Set.of(fd2, e), fc1);
-    store.addDownstreamEffect(Set.of(d, fe1), fc1);
-    store.addDownstreamEffect(Set.of(d, fe2), fc1);
-    store.addDownstreamEffect(Set.of(fd1, fe1), fc1);
-    store.addDownstreamEffect(Set.of(fd1, fe2), fc1);
-    store.addDownstreamEffect(Set.of(fd2, fe1), fc1);
-    store.addDownstreamEffect(Set.of(fd2, fe2), fc1);
+    store.addUpstreamResponse(Set.of(fd1, e), fc1);
+    store.addUpstreamResponse(Set.of(fd2, e), fc1);
+    store.addUpstreamResponse(Set.of(d, fe1), fc1);
+    store.addUpstreamResponse(Set.of(d, fe2), fc1);
+    store.addUpstreamResponse(Set.of(fd1, fe1), fc1);
+    store.addUpstreamResponse(Set.of(fd1, fe2), fc1);
+    store.addUpstreamResponse(Set.of(fd2, fe1), fc1);
+    store.addUpstreamResponse(Set.of(fd2, fe2), fc1);
 
     // G has no effect downstream (F)
   }
@@ -129,33 +129,33 @@ public class ImplicationsStoreTest {
     // retry on F
     nodeF_retry = nodeA.createChild()
         .withPoint("F", "f1", 1);
-    f2 = nodeF_retry.getBehaviour();
+    f2 = nodeF_retry.behaviour();
     nodeG_F_retry = nodeF_retry.createChild()
         .withPoint("G", "g1");
-    g2 = nodeG_F_retry.getBehaviour();
+    g2 = nodeG_F_retry.behaviour();
     Behaviour ff1 = new Behaviour(f.uid(), mode1);
     Behaviour ff2 = new Behaviour(f.uid(), mode2);
-    store.addUpstreamEffect(f2.uid(), Set.of(g2.uid()));
+    store.addDownstreamRequests(f2.uid(), Set.of(g2.uid()));
     store.addInclusionEffect(Set.of(ff1), f2.uid());
     store.addInclusionEffect(Set.of(ff2), f2.uid());
 
     // retry 2 on F
     nodeF_retry2 = nodeA.createChild()
         .withPoint("F", "f1", Map.of(), 2);
-    f3 = nodeF_retry2.getBehaviour();
+    f3 = nodeF_retry2.behaviour();
     nodeG_F_retry2 = nodeF_retry2.createChild()
         .withPoint("G", "g1");
-    g3 = nodeG_F_retry2.getBehaviour();
+    g3 = nodeG_F_retry2.behaviour();
     Behaviour f21 = new Behaviour(f2.uid(), mode1);
     Behaviour f22 = new Behaviour(f2.uid(), mode2);
-    store.addUpstreamEffect(f3.uid(), Set.of(g3.uid()));
+    store.addDownstreamRequests(f3.uid(), Set.of(g3.uid()));
     store.addInclusionEffect(Set.of(f21), f3.uid());
     store.addInclusionEffect(Set.of(f22), f3.uid());
 
     // alternative for B, for mode 1
     nodeB_alt = nodeA.createChild()
         .withPoint("B_prime", "b1", 0);
-    bprime = nodeB_alt.getBehaviour();
+    bprime = nodeB_alt.behaviour();
     Behaviour fb = new Behaviour(b.uid(), mode1);
     store.addInclusionEffect(Set.of(fb), bprime.uid());
 
@@ -402,30 +402,30 @@ public class ImplicationsStoreTest {
         .withPoint("B prime", "b1");
 
     // Happy path, root calls A and B
-    testStore.addUpstreamEffect(nRoot.getFaultUid(), Set.of(
-        nA.getFaultUid(), nB.getFaultUid()));
+    testStore.addDownstreamRequests(nRoot.uid(), Set.of(
+        nA.uid(), nB.uid()));
 
     // If A or B is faulty, then A' and B' are called
     testStore.addInclusionEffect(Set.of(
-        new Behaviour(nA.getFaultUid(), mode1)), nAprime.getFaultUid());
+        new Behaviour(nA.uid(), mode1)), nAprime.uid());
 
     testStore.addInclusionEffect(Set.of(
-        new Behaviour(nA.getFaultUid(), mode1)), nBprime.getFaultUid());
+        new Behaviour(nA.uid(), mode1)), nBprime.uid());
 
     testStore.addInclusionEffect(Set.of(
-        new Behaviour(nB.getFaultUid(), mode1)), nAprime.getFaultUid());
+        new Behaviour(nB.uid(), mode1)), nAprime.uid());
 
     testStore.addInclusionEffect(Set.of(
-        new Behaviour(nB.getFaultUid(), mode1)), nBprime.getFaultUid());
+        new Behaviour(nB.uid(), mode1)), nBprime.uid());
 
     // If A' is faulty, then B' is not called
     testStore.addExclusionEffect(Set.of(
-        new Behaviour(nAprime.getFaultUid(), mode1)), nBprime.getFaultUid());
+        new Behaviour(nAprime.uid(), mode1)), nBprime.uid());
 
     Set<Behaviour> result = testStore.getBehaviours(Set.of(
-        new Fault(nA.getFaultUid(), mode1),
-        new Fault(nB.getFaultUid(), mode1),
-        new Fault(nAprime.getFaultUid(), mode1)));
+        new Fault(nA.uid(), mode1),
+        new Fault(nB.uid(), mode1),
+        new Fault(nAprime.uid(), mode1)));
 
     // Expect root, A, B, A' but not B'
     assertEquals(4, result.size());
@@ -449,18 +449,18 @@ public class ImplicationsStoreTest {
         .withPoint("A fallback 2", "y1");
 
     // Happy path, root calls A and B
-    testStore.addUpstreamEffect(nRoot.getFaultUid(), Set.of(nA.getFaultUid()));
+    testStore.addDownstreamRequests(nRoot.uid(), Set.of(nA.uid()));
 
     // If A is faulty, then X and Y are called
     testStore.addInclusionEffect(Set.of(
-        new Behaviour(nA.getFaultUid(), mode1)), nAfallback1.getFaultUid());
+        new Behaviour(nA.uid(), mode1)), nAfallback1.uid());
 
     testStore.addInclusionEffect(Set.of(
-        new Behaviour(nA.getFaultUid(), mode1)), nAfallback2.getFaultUid());
+        new Behaviour(nA.uid(), mode1)), nAfallback2.uid());
 
     Set<Behaviour> result = testStore.getBehaviours(Set.of(
-        new Fault(nA.getFaultUid(), mode1),
-        new Fault(nAfallback2.getFaultUid(), mode1)));
+        new Fault(nA.uid(), mode1),
+        new Fault(nAfallback2.uid(), mode1)));
 
     // Expect root, A, X and Y
     assertEquals(4, result.size());
@@ -474,26 +474,26 @@ public class ImplicationsStoreTest {
 
     var nRoot = new EventBuilder()
         .withPoint("R", "r1");
-    var r = nRoot.getFaultUid();
+    var r = nRoot.uid();
 
     var nA = nRoot.createChild()
         .withPoint("A", "a1");
-    var a = nA.getFaultUid();
+    var a = nA.uid();
 
     var nB = nRoot.createChild()
         .withPoint("B", "b1");
-    var b = nB.getFaultUid();
+    var b = nB.uid();
 
     var nC = nRoot.createChild()
         .withPoint("C", "c1");
-    var c = nC.getFaultUid();
+    var c = nC.uid();
 
     var nD = nRoot.createChild()
         .withPoint("D", "d1");
-    var d = nD.getFaultUid();
+    var d = nD.uid();
 
     // Happy path, root calls A and B
-    testStore.addUpstreamEffect(r, Set.of(a, b, d));
+    testStore.addDownstreamRequests(r, Set.of(a, b, d));
 
     // Fallback for A is C
     testStore.addInclusionEffect(Set.of(new Behaviour(a, mode1)), c);
@@ -525,34 +525,34 @@ public class ImplicationsStoreTest {
 
     var nRoot = new EventBuilder()
         .withPoint("R", "r1");
-    var r = nRoot.getFaultUid();
+    var r = nRoot.uid();
 
     var nA = nRoot.createChild()
         .withPoint("A", "a1");
-    var a = nA.getFaultUid();
+    var a = nA.uid();
 
     var nC1 = nRoot.createChild()
         .withPoint("C", "c1", Map.of("A", 1));
-    var c1 = nC1.getFaultUid();
+    var c1 = nC1.uid();
 
     var nBafterA = nRoot.createChild()
         .withPoint("B", "b1", Map.of("A", 1));
-    var b_a = nBafterA.getFaultUid();
+    var b_a = nBafterA.uid();
 
     var nBafterC = nRoot.createChild()
         .withPoint("B", "b1", Map.of("A", 1, "C", 1));
-    var b_ac = nBafterC.getFaultUid();
+    var b_ac = nBafterC.uid();
 
     var nC2 = nRoot.createChild()
         .withPoint("C", "c1", Map.of("A", 1, "B", 1), 0);
-    FaultUid c2 = nC2.getFaultUid();
+    FaultUid c2 = nC2.uid();
 
     var nD = nRoot.createChild()
         .withPoint("D", "d1");
-    var d = nD.getFaultUid();
+    var d = nD.uid();
 
     // Happy path, root calls A and B
-    testStore.addUpstreamEffect(r, Set.of(a, b_a, d));
+    testStore.addDownstreamRequests(r, Set.of(a, b_a, d));
 
     // Fallback for A is C1, causing B to be called in a different manner
     testStore.addInclusionEffect(Set.of(new Behaviour(a, mode1)), c1);

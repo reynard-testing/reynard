@@ -59,6 +59,20 @@ public class FiTestExtension
                 context.getTestMethod().get().isAnnotationPresent(FiTest.class);
     }
 
+    private String getOutputDir(ExtensionContext context) {
+        String envOutput = Env.getEnv(Env.Keys.OUTPUT_DIR);
+        if (!envOutput.equals("")) {
+            return envOutput;
+        }
+
+        var outputConfig = context.getConfigurationParameter(OUTPUT_DIR_KEY);
+        if (outputConfig.isPresent()) {
+            return outputConfig.get();
+        }
+
+        return null;
+    }
+
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
         totalTimer.start("Total test time");
@@ -148,11 +162,17 @@ public class FiTestExtension
             strategy.withGetDelay(annotation.initialGetTraceDelay());
         }
 
-        var outputConfig = context.getConfigurationParameter(OUTPUT_DIR_KEY);
-        if (outputConfig.isPresent()) {
-            String dir = outputConfig.get();
-            Path projectRoot = Path.of("").toAbsolutePath().getParent();
-            Path outputDir = projectRoot.resolve(dir);
+        String outputConfig = getOutputDir(context);
+        if (outputConfig != null) {
+            Path outputDir;
+
+            if (outputConfig.startsWith("/")) {
+                outputDir = Path.of(outputConfig);
+            } else {
+                Path projectRoot = Path.of("").toAbsolutePath().getParent();
+                outputDir = projectRoot.resolve(outputConfig);
+            }
+
             logger.info("Exporting reports to: " + outputDir);
             strategy.setOutputDir(outputDir);
         }

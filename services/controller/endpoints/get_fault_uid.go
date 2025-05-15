@@ -38,7 +38,8 @@ func getCompletedEvents(parentEvent *trace.TraceReport) map[string]int {
 		point := report.FaultUid.Point()
 		key := point.AsPartial().String()
 
-		if count := completed[key]; count < point.Count {
+		currentCount, exists := completed[key]
+		if !exists || currentCount < point.Count {
 			completed[key] = point.Count
 		}
 	}

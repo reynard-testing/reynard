@@ -1,6 +1,7 @@
 package io.github.delanoflipse.fit.suite.strategy.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -366,8 +367,9 @@ public class TraceAnalysis {
     public void traverseRandom(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
         boolean depthFirstForThisNode = Math.random() < 0.5;
         if (depthFirstForThisNode) {
-
-            for (var child : getChildren(node)) {
+            var children = new ArrayList<>(getChildren(node));
+            Collections.shuffle(children);
+            for (var child : children) {
                 traverseRandom(child, includeInitial, consumer);
             }
         }
@@ -379,7 +381,9 @@ public class TraceAnalysis {
         }
 
         if (!depthFirstForThisNode) {
-            for (var child : getChildren(node)) {
+            var children = new ArrayList<>(getChildren(node));
+            Collections.shuffle(children);
+            for (var child : children) {
                 traverseRandom(child, includeInitial, consumer);
             }
         }

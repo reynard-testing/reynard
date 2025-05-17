@@ -22,7 +22,6 @@ def get_args():
 def get_dirs(dir: str):
     indexed = [d for d in os.listdir(
         dir) if os.path.isdir(os.path.join(dir, d))]
-    indexed.sort(key=lambda x: int(x) if x.isdigit() else x)
     return indexed
 
 

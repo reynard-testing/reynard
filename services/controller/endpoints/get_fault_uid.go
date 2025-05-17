@@ -64,9 +64,9 @@ func GetFaultUid(w http.ResponseWriter, r *http.Request) {
 
 	completedEvents := getCompletedEvents(report)
 
-	response := map[string]interface{}{
-		"stack":            report.FaultUid.Stack,
-		"completed_events": completedEvents,
+	response := UidResponse{
+		Stack:           report.FaultUid.Stack,
+		CompletedEvents: completedEvents,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

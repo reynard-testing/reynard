@@ -4,6 +4,7 @@ import argparse
 import os
 import graphviz
 from dataclasses import dataclass, field
+import re
 
 
 @dataclass
@@ -42,7 +43,8 @@ def simplify_name(name: str):
     uid_parts = uid.split(">")
     relevant_parts = []
     for i in range(len(uid_parts)):
-        p1, count = uid_parts[i].split("#")
+        p_uid = re.sub(r"\{.+\}", "", uid_parts[i])
+        p1, count = p_uid.split("#")
         if ":" in p1:
             destination, signature = p1.split(":")
         else:
@@ -163,4 +165,3 @@ def render_tree(tree: dict, output_name: str, combine=True):
     dot = graphviz.Digraph(comment='Faultspace Search', format='pdf')
     build_tree(dot, root, use_sig, combine)
     dot.render(filename=output_name)
-

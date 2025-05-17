@@ -14,6 +14,7 @@ import (
 	"dflipse.nl/ds-fit/proxy/control"
 	"dflipse.nl/ds-fit/proxy/tracing"
 	"dflipse.nl/ds-fit/shared/faultload"
+	"dflipse.nl/ds-fit/shared/util"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -89,16 +90,8 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 	} else {
 		// Start with defaults
-		customTransport := http.DefaultTransport.(*http.Transport).Clone()
-		// Increase total idle connections
-		customTransport.MaxIdleConns = 100
-		// Increase idle connections per host
-		customTransport.MaxIdleConnsPerHost = 100
-		// No limit, or set to a high number
-		customTransport.MaxConnsPerHost = 0
-		customTransport.IdleConnTimeout = 90 * time.Second
-		customTransport.ExpectContinueTimeout = 1 * time.Second
-		proxy.Transport = customTransport
+		// customTransport.ExpectContinueTimeout = 1 * time.Second
+		proxy.Transport = util.GetDefaultTransport()
 	}
 
 	// Wrap the proxy with a custom handler to inspect requests and responses
@@ -247,7 +240,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// Forward the request to the target server
 		if !proxyState.ReponseOverwritten {
 			proxy.ServeHTTP(capture, r)
-			slog.Info("Response forwarded")
+			slog.Debug("Response forwarded")
 		}
 
 		proxyState.Complete = true

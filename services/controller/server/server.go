@@ -3,13 +3,13 @@ package server
 import (
 	"context"
 	"errors"
+	"log"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
-	"time"
 
 	"dflipse.nl/ds-fit/controller/endpoints"
 	"dflipse.nl/ds-fit/shared/util"
@@ -21,6 +21,18 @@ var (
 )
 
 func StartController(port int, useOTEL bool) (err error) {
+	logLevel := util.GetLogLevel()
+
+	// Create handler
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	})
+
+	// Set default logger
+	slog.SetDefault(slog.New(handler))
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds) // Ensure timestamps are logged
+	slog.Info("Logging", "level", logLevel)
+
 	slog.Info("Registered proxies", "proxyList", endpoints.ProxyList)
 	slog.Info("Debug", "enabled", DebugMode)
 	slog.Info("OTEL", "enabled", useOTEL)
@@ -45,11 +57,9 @@ func StartController(port int, useOTEL bool) (err error) {
 
 	// Start HTTP server.
 	srv := &http.Server{
-		Addr:         controlPort,
-		BaseContext:  func(_ net.Listener) context.Context { return ctx },
-		ReadTimeout:  time.Second,
-		WriteTimeout: 10 * time.Second,
-		Handler:      newHTTPHandler(),
+		Addr:        controlPort,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
+		Handler:     newHTTPHandler(),
 	}
 
 	srvErr := make(chan error, 1)

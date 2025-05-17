@@ -28,6 +28,7 @@ services:
     environment:
       - PROXY_LIST=proxy:8050
       - OTEL_SDK_ENABLED=false
+      - LOG_LEVEL=debug
   # controller-dummy:
   #   build: ./target-svc
   #   ports:

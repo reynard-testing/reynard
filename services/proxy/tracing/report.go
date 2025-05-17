@@ -7,11 +7,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
 
 	"dflipse.nl/ds-fit/controller/endpoints"
 	"dflipse.nl/ds-fit/shared/faultload"
 	"dflipse.nl/ds-fit/shared/trace"
+	"dflipse.nl/ds-fit/shared/util"
 )
 
 type RequestMetadata struct {
@@ -24,8 +24,8 @@ type RequestMetadata struct {
 }
 
 var (
-	queryHost  = os.Getenv("CONTROLLER_HOST")
-	httpClient = &http.Client{Timeout: 5 * time.Second}
+	queryHost        = os.Getenv("CONTROLLER_HOST")
+	controllerClient = util.GetDefaultClient()
 )
 
 func postJSON(url string, body any) (*http.Response, error) {
@@ -40,7 +40,7 @@ func postJSON(url string, body any) (*http.Response, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	return httpClient.Do(req)
+	return controllerClient.Do(req)
 }
 
 func attemptReport(report trace.TraceReport) bool {

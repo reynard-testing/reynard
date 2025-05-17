@@ -15,7 +15,7 @@ controller_port=${CONTROLLER_PORT:-5050}
 # controller_port=${CONTROLLER_PORT:-8081}
 
 test_duration=${TEST_DURATION:-30s}
-max_connections=${MAX_CONNECTIONS:-10}
+max_connections=${MAX_CONNECTIONS:-4}
 threads=${THREADS:-4}
 
 start_experiment() {
@@ -64,6 +64,24 @@ register_no_fault() {
   ]}' http://localhost:$controller_port/v1/faultload/register
 }
 
+register_parent_event() {
+  curl -X POST -H "Content-Type: application/json" -d '{
+  "trace_id":"efcbf3a8ae78f65a35bf05ddcc8419e8",
+  "span_id": "ce086bebffb14783",
+  "uid": {
+    "stack": []
+  },
+  "is_initial": true,
+  "injected_fault": null,
+  "response": {
+    "status": 200,
+    "body": "OK",
+    "duration_ms": 1
+  },
+  "concurrent_to": []
+}' http://localhost:$controller_port/v1/proxy/report
+}
+
 register_fault() {
 curl -X POST -H "Content-Type: application/json" -d '{"trace_id":"efcbf3a8ae78f65a35bf05ddcc8419e8", "faults":[{
   "uid": {
@@ -86,21 +104,25 @@ cleanup_experiment() {
   docker compose down
 }
 
-# # --- Service overhead ---
-# start_experiment "only_service"
-# run_experiment "only_service" -H 'Connection: close' http://localhost:8080/
+# Set sysctl parameters to avoid running out of ephemeral ports
+sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+sudo sysctl -w net.ipv4.tcp_fin_timeout=10
+sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+echo "Adjusted sysctl settings for ephemeral ports"
 
-# start_experiment "only_service_keep_alive"
-# run_experiment "only_service_keep_alive" http://localhost:8080/
+# --- Service overhead ---
+start_experiment "only_service"
+run_experiment "only_service" -H 'Connection: close' http://localhost:8080/
 
-# # --- Service overhead with proxy ---
-# start_experiment "proxy"
-# run_experiment "proxy" -H 'Connection: close' http://localhost:8081/
+start_experiment "only_service_keep_alive"
+run_experiment "only_service_keep_alive" http://localhost:8080/
 
-# start_experiment "proxy_keep_alive"
-# run_experiment "proxy_keep_alive" http://localhost:8081/
+# --- Service overhead with proxy ---
+start_experiment "proxy"
+run_experiment "proxy" -H 'Connection: close' http://localhost:8081/
 
-
+start_experiment "proxy_keep_alive"
+run_experiment "proxy_keep_alive" http://localhost:8081/
 
 # init=1
 # mask
@@ -108,26 +130,30 @@ cleanup_experiment() {
 # headerlog
 # use-cs
 
-# # --- No faults to inject ---
+# --- no fault, init=1 ---
+start_experiment "proxy_no_faults_init"
+register_no_fault
+register_parent_event
+run_experiment "proxy_no_faults_init" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,init=1"
+
+
+# --- No faults to inject ---
 start_experiment "proxy_no_faults"
 register_no_fault
-run_experiment "proxy_no_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1"
+register_parent_event
+run_experiment "proxy_no_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
 
-# # --- no fault, init=1 ---
-# start_experiment "proxy_no_faults_init"
-# register_no_fault
-# run_experiment "proxy_no_faults_init" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,init=1"
+# --- With faults to inject, init ---
+start_experiment "proxy_faults_init"
+register_fault
+run_experiment "proxy_faults_init" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,init=1"
 
 
-# # --- With faults to inject ---
-# start_experiment "proxy_faults"
-# register_fault
-# run_experiment "proxy_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1"
-
-# # --- With faults to inject, init ---
-# start_experiment "proxy_faults_init"
-# register_fault
-# run_experiment "proxy_faults_init" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,init=1"
+# --- With faults to inject ---
+start_experiment "proxy_faults"
+register_fault
+register_parent_event
+run_experiment "proxy_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
 
 # # --- cleanup ---
 # cleanup_experiment

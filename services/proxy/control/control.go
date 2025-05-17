@@ -14,7 +14,6 @@ import (
 	"os/signal"
 	"runtime"
 	"strconv"
-	"time"
 
 	"dflipse.nl/ds-fit/controller/endpoints"
 	"dflipse.nl/ds-fit/proxy/config"
@@ -62,11 +61,12 @@ func StartControlServer(config config.ControlConfig) {
 
 	// Start HTTP server.
 	srv := &http.Server{
-		Addr:         controlPort,
-		BaseContext:  func(_ net.Listener) context.Context { return ctx },
-		ReadTimeout:  time.Second,
-		WriteTimeout: 10 * time.Second,
-		Handler:      newHTTPHandler(),
+		Addr:        controlPort,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
+		// ReadTimeout:  2 * time.Second,
+		// WriteTimeout: 10 * time.Second,
+		// IdleTimeout: 60 * time.Second,
+		Handler: newHTTPHandler(),
 	}
 
 	srvErr := make(chan error, 1)
@@ -133,7 +133,7 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	slog.Info("Registered faults for trace ID", "faults", len(myFaults), "traceId", newFaultload.TraceId)
+	slog.Info("Registered faults", "faults", len(myFaults), "traceId", newFaultload.TraceId)
 	// Store the faultload for the given trace ID
 	RegisteredFaults.Register(newFaultload.TraceId, myFaults)
 

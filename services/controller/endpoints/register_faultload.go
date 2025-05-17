@@ -15,16 +15,13 @@ import (
 	"dflipse.nl/ds-fit/controller/store"
 	"dflipse.nl/ds-fit/shared/faultload"
 	"dflipse.nl/ds-fit/shared/util"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
 	ProxyList       = strings.Split(os.Getenv("PROXY_LIST"), ",")
 	ProxyRetryCount = util.GetIntEnvOrDefault("PROXY_RETRY_COUNT", 3)
 	ProxyTimeout    = time.Duration(util.GetIntEnvOrDefault("PROXY_TIMEOUT", 100)) * time.Millisecond
-	client          = http.Client{
-		Transport: otelhttp.NewTransport(http.DefaultTransport),
-	}
+	proxyClient     = util.GetDefaultClient()
 )
 
 func RegisterFaultload(proxyAddr string, ctx context.Context, f *faultload.Faultload) error {
@@ -40,7 +37,7 @@ func RegisterFaultload(proxyAddr string, ctx context.Context, f *faultload.Fault
 		return fmt.Errorf("failed to create POST request: %v", err)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := proxyClient.Do(req)
 
 	if err != nil {
 		return fmt.Errorf("failed to perform POST request: %v", err)
@@ -134,7 +131,7 @@ func UnregisterFaultload(proxyAddr string, ctx context.Context, payload *Unregis
 		return fmt.Errorf("failed to create POST request: %v", err)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := proxyClient.Do(req)
 
 	if err != nil {
 		return fmt.Errorf("failed to perform POST request: %v", err)

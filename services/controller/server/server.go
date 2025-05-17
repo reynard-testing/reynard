@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -21,9 +21,9 @@ var (
 )
 
 func StartController(port int, useOTEL bool) (err error) {
-	log.Printf("Registered proxies %s\n", endpoints.ProxyList)
-	log.Printf("Debug?: %t\n", DebugMode)
-	log.Printf("Use OTEL?: %t\n", useOTEL)
+	slog.Info("Registered proxies", "proxyList", endpoints.ProxyList)
+	slog.Info("Debug", "enabled", DebugMode)
+	slog.Info("OTEL", "enabled", useOTEL)
 
 	// Handle SIGINT (CTRL+C) gracefully.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -32,7 +32,7 @@ func StartController(port int, useOTEL bool) (err error) {
 	// Set up OpenTelemetry.
 	otelShutdown, err := util.SetupOTelSDK(ctx, useOTEL)
 	if err != nil {
-		log.Printf("Failed to set up OpenTelemetry: %v\n", err)
+		slog.Error("Failed to set up OpenTelemetry", "err", err)
 		return
 	}
 
@@ -54,7 +54,7 @@ func StartController(port int, useOTEL bool) (err error) {
 
 	srvErr := make(chan error, 1)
 	go func() {
-		log.Printf("Listening on port %s\n", controlPort)
+		slog.Info("Controller is listening", "port", controlPort)
 		srvErr <- srv.ListenAndServe()
 	}()
 

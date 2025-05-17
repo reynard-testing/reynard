@@ -1,7 +1,7 @@
 package util
 
 import (
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"regexp"
@@ -41,11 +41,11 @@ func GetHostIdentifier(addr string) string {
 	names, err := net.LookupAddr(addr)
 	if err != nil || len(names) == 0 {
 		// Handle the case where no hostname is found
-		log.Printf("No hostname for: %s\n", addr)
+		slog.Warn("Failed to resolve hostname", "addr", addr, "err", err)
 		return addr // Return the IP as fallback
 	}
 	// Extract service name from the FQDN
-	log.Printf("Hostnames: %s\n", names)
+	slog.Debug("Hostnames", "names", names)
 	fqdn := names[0]
 	parts := strings.Split(fqdn, ".")
 	if len(parts) == 0 {

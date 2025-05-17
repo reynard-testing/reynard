@@ -3,20 +3,22 @@ services:
     build: ./target-svc
     ports:
       - "8080:8080"
-    environment:
-      - TARGET_PORT=8080
-      - TARGET_HOST=
+
   proxy:
     image: "${PROXY_IMAGE:-fit-proxy:latest}"
     ports:
       - "8081:8080"
+      - "8050:8050"
+      # - "6060:6060"
     environment:
       - OTEL_SDK_ENABLED=false
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://target:8080
       - SERVICE_NAME=target
+      # - CONTROLLER_HOST=controller:8080
       - CONTROLLER_HOST=controller:5000
       - CONTROL_PORT=8050
+      # - USE_PPROF=true
       - USE_OTEL=false
 
   controller:
@@ -26,3 +28,7 @@ services:
     environment:
       - PROXY_LIST=proxy:8050
       - OTEL_SDK_ENABLED=false
+  # controller-dummy:
+  #   build: ./target-svc
+  #   ports:
+  #     - "5050:8080"

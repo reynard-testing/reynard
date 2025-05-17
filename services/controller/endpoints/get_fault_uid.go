@@ -2,7 +2,7 @@ package endpoints
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"dflipse.nl/ds-fit/controller/store"
@@ -54,7 +54,7 @@ func GetFaultUid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Received request for trace ID: %s, parent span ID: %s", data.TraceId, data.ReportParentId)
+	slog.Debug("Received request", "traceId", data.TraceId, "parentSpanId", data.ReportParentId)
 
 	report := store.Reports.GetByTraceAndSpanId(data.TraceId, data.ReportParentId)
 	if report == nil {

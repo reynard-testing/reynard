@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strconv"
+	"time"
 
 	"dflipse.nl/ds-fit/controller/endpoints"
 	"dflipse.nl/ds-fit/proxy/config"
@@ -65,8 +66,8 @@ func StartControlServer(config config.ControlConfig) {
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
 		// ReadTimeout:  2 * time.Second,
 		// WriteTimeout: 10 * time.Second,
-		// IdleTimeout: 60 * time.Second,
-		Handler: newHTTPHandler(),
+		IdleTimeout: 120 * time.Second,
+		Handler:     newHTTPHandler(),
 	}
 
 	srvErr := make(chan error, 1)

@@ -48,8 +48,9 @@ func StartProxy(config config.ProxyConfig) {
 	}
 
 	httpServer = &http.Server{
-		Addr:    config.Host,
-		Handler: handler,
+		Addr:        config.Host,
+		Handler:     handler,
+		IdleTimeout: 120 * time.Second,
 	}
 
 	destination = config.Destination
@@ -166,7 +167,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		reportParentId := faultload.SpanID(state.GetWithDefault(FIT_PARENT_KEY, "0"))
 		slog.Debug("Report parent ID", "reportParentId", reportParentId)
 
-		parentStack, callStack := tracing.GetUid(traceId, reportParentId, isInitial)
+		parentStack, callStack := tracing.GetUid(traceId, reportParentId, shouldUseCallStack, isInitial)
 		slog.Debug("Parent stack", "parentStack", parentStack)
 
 		partialPoint := faultload.PartialPointFromRequest(r, destination, shouldMaskPayload)
@@ -174,8 +175,6 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		if shouldUseCallStack {
 			callStack.Del(partialPoint)
 			slog.Debug("Call stack", "callStack", callStack)
-		} else {
-			callStack = faultload.InjectionPointCallStack{}
 		}
 
 		invocationCount := tracing.GetCountForTrace(traceId, parentStack, partialPoint, callStack)

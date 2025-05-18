@@ -75,16 +75,22 @@ func GetHostIdentifier(addr string) string {
 
 func GetDefaultTransport() *http.Transport {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.MaxIdleConns = 100
-	transport.MaxIdleConnsPerHost = 100
+	transport.MaxIdleConns = 1000
+	transport.MaxIdleConnsPerHost = 1000
 	transport.MaxConnsPerHost = 0
 	transport.IdleConnTimeout = 90 * time.Second
 	return transport
 }
 
 func GetDefaultClient() *http.Client {
+	useTelemetry := os.Getenv("USE_OTEL") == "true"
+	var transport http.RoundTripper = GetDefaultTransport()
+	if useTelemetry {
+		transport = otelhttp.NewTransport(transport)
+	}
+
 	return &http.Client{
-		Transport: otelhttp.NewTransport(GetDefaultTransport()),
+		Transport: transport,
 		Timeout:   5 * time.Second,
 	}
 }

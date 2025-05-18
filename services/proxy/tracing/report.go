@@ -95,7 +95,7 @@ func attemptGetUid(req endpoints.UidRequest) *endpoints.UidResponse {
 	return &response
 }
 
-func GetUid(traceId faultload.TraceID, parentId faultload.SpanID, isInitial bool) (faultload.FaultUid, faultload.InjectionPointCallStack) {
+func GetUid(traceId faultload.TraceID, parentId faultload.SpanID, includeEvents, isInitial bool) (faultload.FaultUid, faultload.InjectionPointCallStack) {
 	if isInitial {
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
@@ -104,6 +104,7 @@ func GetUid(traceId faultload.TraceID, parentId faultload.SpanID, isInitial bool
 	req := endpoints.UidRequest{
 		TraceId:        traceId,
 		ReportParentId: parentId,
+		IncludeEvents:  includeEvents,
 	}
 	res := attemptGetUid(req)
 	if res == nil {

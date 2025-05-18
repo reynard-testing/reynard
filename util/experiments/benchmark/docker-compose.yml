@@ -15,11 +15,17 @@ services:
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://target:8080
       - SERVICE_NAME=target
-      # - CONTROLLER_HOST=controller:8080
-      - CONTROLLER_HOST=controller:5000
+      - CONTROLLER_HOST
       - CONTROL_PORT=8050
       # - USE_PPROF=true
       - USE_OTEL=false
+    # Ensure the proxy is not running out of ephemeral ports
+    sysctls:
+      - net.ipv4.tcp_tw_reuse=1
+      - net.ipv4.tcp_max_tw_buckets=65536
+      - net.ipv4.ip_local_port_range=1024 65535
+    cap_add:
+      - NET_ADMIN
 
   controller:
     image: "${CONTROLLER_IMAGE:-fit-controller:latest}"
@@ -28,8 +34,6 @@ services:
     environment:
       - PROXY_LIST=proxy:8050
       - OTEL_SDK_ENABLED=false
-      - LOG_LEVEL=debug
-  # controller-dummy:
-  #   build: ./target-svc
-  #   ports:
-  #     - "5050:8080"
+      # - LOG_LEVEL=debug
+  controller-dummy:
+    build: ./target-svc

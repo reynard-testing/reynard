@@ -15,7 +15,7 @@ controller_port=${CONTROLLER_PORT:-5050}
 # controller_port=${CONTROLLER_PORT:-8081}
 
 test_duration=${TEST_DURATION:-1m}
-max_connections=${MAX_CONNECTIONS:-16}
+max_connections=${MAX_CONNECTIONS:-4}
 threads=${THREADS:-4}
 
 start_experiment() {

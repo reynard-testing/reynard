@@ -17,8 +17,10 @@ services:
       - SERVICE_NAME=target
       - CONTROLLER_HOST
       - CONTROL_PORT=8050
+      # - LOG_LEVEL=debug
       # - USE_PPROF=true
       - USE_OTEL=false
+
     # Ensure the proxy is not running out of ephemeral ports
     sysctls:
       - net.ipv4.tcp_tw_reuse=1

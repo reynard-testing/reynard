@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,14 +14,14 @@ func performHttpError(f faultload.Fault, s *ProxyState, omit bool) {
 	intStatusCode, err := strconv.Atoi(statusCode)
 
 	if err != nil {
-		log.Printf("Invalid status code: %v\n", statusCode)
+		slog.Warn("Invalid status code", "statusCode", statusCode)
 		return
 	}
 
-	log.Printf("Injecting fault: HTTP error %d\n", intStatusCode)
+	slog.Debug("Injecting fault", "type", "HTTP Error", "statusCode", intStatusCode)
 
 	if omit {
-		log.Printf("Forwarding response, before injecting fault\n")
+		slog.Debug("Forwarding response, before injecting fault")
 		noOpWriter := &NoOpResponseWriter{}
 		s.Proxy.ServeHTTP(noOpWriter, s.Request)
 	}
@@ -45,7 +45,7 @@ func performDelay(f faultload.Fault, s *ProxyState) {
 	delay := f.Mode.Args[0]
 	intDelay, err := strconv.Atoi(delay)
 	if err != nil {
-		log.Printf("Invalid delay: %v\n", delay)
+		slog.Warn("Invalid delay", "delay", delay)
 		return
 	}
 
@@ -65,6 +65,6 @@ func Perform(f faultload.Fault, s *ProxyState) {
 		performDelay(f, s)
 		return
 	} else {
-		log.Printf("Unknown fault type: %s\n", f.Mode)
+		slog.Warn("Unknown failure mode", "mode", f.Mode)
 	}
 }

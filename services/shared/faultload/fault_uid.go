@@ -4,14 +4,11 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"log"
-	"net"
+	"log/slog"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
-
-	"dflipse.nl/ds-fit/shared/util"
 )
 
 var (
@@ -50,7 +47,7 @@ func getPayloadHash(r *http.Request) string {
 
 	requestBodyBytes, err := io.ReadAll(body)
 	if err != nil {
-		log.Printf("Failed to read request body: %v\n", err)
+		slog.Warn("Failed to read request body", "err", err)
 		return ""
 	}
 	// Reset the body so it can be read again
@@ -97,16 +94,4 @@ func getCallSignature(r *http.Request) string {
 	} else {
 		return r.Method + " " + normalizeUrl(pathOnly)
 	}
-}
-
-// Returns the hostname of the service that made the request
-func getOrigin(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		log.Printf("Failed to get originating service: %v\n", err)
-		return "<none>"
-	}
-
-	log.Printf("Remote address: %s\n", r.RemoteAddr)
-	return util.GetHostIdentifier(host)
 }

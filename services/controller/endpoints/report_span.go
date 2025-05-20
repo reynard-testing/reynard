@@ -3,7 +3,7 @@ package endpoints
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"dflipse.nl/ds-fit/controller/store"
@@ -26,9 +26,9 @@ func ReportSpanId(w http.ResponseWriter, r *http.Request) {
 	existed := store.Reports.Upsert(data)
 
 	if existed {
-		log.Printf("Updated reported span %s for trace id %s\n", data.SpanId, data.TraceId)
+		slog.Debug("Updated reported span", "spanId", data.SpanId, "traceId", data.TraceId)
 	} else {
-		log.Printf("Added reported span %s for trace id %s\n", data.SpanId, data.TraceId)
+		slog.Debug("Added reported span", "spanId", data.SpanId, "traceId", data.TraceId)
 	}
 
 	w.WriteHeader(http.StatusOK)

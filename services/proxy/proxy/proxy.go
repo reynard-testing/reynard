@@ -3,6 +3,7 @@ package proxy
 import (
 	"crypto/tls"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -13,6 +14,7 @@ import (
 	"dflipse.nl/ds-fit/proxy/control"
 	"dflipse.nl/ds-fit/proxy/tracing"
 	"dflipse.nl/ds-fit/shared/faultload"
+	"dflipse.nl/ds-fit/shared/util"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -33,18 +35,15 @@ const (
 )
 
 func StartProxy(config config.ProxyConfig) {
-	// Set up the proxy host and target
-
-	log.Printf("Reverse proxy for: %s\n", config.Target)
-	log.Printf("Destination: %s\n", config.Destination)
-	log.Printf("Listening at: %s\n", config.Host)
+	slog.Info("Starting proxy server", "host", config.Host, "target", config.Target)
+	slog.Info("HTTP/2", "enabled", config.UseHttp2)
+	slog.Info("Destination", "host", config.Destination)
 
 	// Start an HTTP/2 server with a custom reverse proxy handler
 	var httpServer *http.Server
 	var handler http.Handler = proxyHandler(config.Target, config.UseHttp2)
 
 	if config.UseHttp2 {
-		log.Printf("Using HTTP/2\n")
 		handler = h2c.NewHandler(handler, &http2.Server{})
 	}
 
@@ -89,6 +88,10 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 				return net.Dial(network, addr)
 			},
 		}
+	} else {
+		// Start with defaults
+		// customTransport.ExpectContinueTimeout = 1 * time.Second
+		proxy.Transport = util.GetDefaultTransport()
 	}
 
 	// Wrap the proxy with a custom handler to inspect requests and responses
@@ -119,7 +122,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		faults, ok := control.RegisteredFaults.Get(parentSpan.TraceID)
 		if !ok {
 			// Forward the request to the target server
-			log.Printf("No faults registered for trace ID: %s\n", parentSpan.TraceID)
+			slog.Debug("No faults registered for trace ID", "traceId", parentSpan.TraceID)
 			proxy.ServeHTTP(w, r)
 			return
 		}
@@ -136,24 +139,22 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			return
 		}
 
-		log.Printf("Received injectable request: %s %s\n", r.Method, r.URL)
-		log.Printf("Traceparent: %+v\n", parentSpan)
-		log.Printf("New span id: %+v\n", currentSpan.ParentID)
-		log.Printf("Tracestate: %+v\n", state)
+		slog.Debug("Received injectable request", "method", r.Method, "url", r.URL)
+		slog.Debug("Traceparent", "traceparent", parentSpan)
+		slog.Debug("New span id", "spanId", currentSpan.ParentID)
+		slog.Debug("Tracestate", "tracestate", state)
 
 		// determine the span ID for the current request
 		// and report the link to the parent span
-		log.Printf("Faults registered for this trace: %s\n", faults)
+		slog.Debug("Faults registered for this trace", "faults", faults)
 		shouldMaskPayload := state.GetWithDefault(FIT_MASK_PAYLOAD_FLAG, "0") == "1"
-		if shouldMaskPayload {
-			log.Printf("Payload masking enabled.\n")
-		}
+		slog.Debug("Mask payload", "enabled", shouldMaskPayload)
 
 		// determine if this is the initial request
 		// and update the tracestate accordingly
 		isInitial := state.GetWithDefault(FIT_IS_INITIAL_KEY, "0") == "1"
 		if isInitial {
-			log.Printf("Initial request.\n")
+			slog.Debug("Is initial request")
 			state.Delete(FIT_IS_INITIAL_KEY)
 			r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 		}
@@ -163,17 +164,16 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		// -- Determine FID --
 		reportParentId := faultload.SpanID(state.GetWithDefault(FIT_PARENT_KEY, "0"))
-		log.Printf("Report parent ID: %s\n", reportParentId)
+		slog.Debug("Report parent ID", "reportParentId", reportParentId)
 
 		parentStack, callStack := tracing.GetUid(traceId, reportParentId, isInitial)
-		log.Printf("Parent Stack: %s\n", parentStack)
+		slog.Debug("Parent stack", "parentStack", parentStack)
 
 		partialPoint := faultload.PartialPointFromRequest(r, destination, shouldMaskPayload)
 		// do not include the current span in the call stack
 		if shouldUseCallStack {
 			callStack.Del(partialPoint)
-			log.Printf("Using call stack.\n")
-			log.Printf("Call stack: %s\n", callStack.String())
+			slog.Debug("Call stack", "callStack", callStack)
 		} else {
 			callStack = faultload.InjectionPointCallStack{}
 		}
@@ -212,17 +212,14 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		// Start reporting the span for the request
 		shouldHashBody := state.GetWithDefault(FIT_HASH_BODY_FLAG, "0") == "1"
-		if shouldHashBody {
-			log.Printf("Body hashing enabled.\n")
-		}
+		slog.Debug("Hash body", "enabled", shouldHashBody)
 
 		shouldLogHeader := state.GetWithDefault(FIT_HEADER_LOGGING_FLAG, "0") == "1"
 		if shouldLogHeader {
-			log.Printf("Header logging enabled.\n")
-			log.Printf("Headers: %s\n", r.Header)
+			slog.Info("Logging headers", "headers", r.Header)
 		}
 
-		log.Printf("Determined Fault UID: %s\n", faultUid.String())
+		slog.Debug("Determined ID", "faultUid", faultUid)
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 		tracing.TrackFault(traceId, &faultUid)
 
@@ -235,15 +232,15 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		}
 
 		if proxyState.InjectedFault != nil {
-			log.Printf("Fault injected: %s\n", proxyState.InjectedFault)
+			slog.Debug("Fault injected", "fault", proxyState.InjectedFault)
 		} else {
-			log.Printf("No faults applied.\n")
+			slog.Debug("No fault injected")
 		}
 
 		// Forward the request to the target server
 		if !proxyState.ReponseOverwritten {
 			proxy.ServeHTTP(capture, r)
-			log.Printf("Forwarding response.\n")
+			slog.Debug("Response forwarded")
 		}
 
 		proxyState.Complete = true
@@ -254,14 +251,12 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		if !capture.DirectlyForward {
 			err := capture.Flush(shouldLogHeader)
 			if err != nil {
-				log.Printf("Error flushing response: %v\n", err)
+				slog.Error("Error flushing response", "error", err)
 			}
 		}
 
 		if len(proxyState.ConcurrentFaults) > 0 {
-			log.Printf("Concurrent faults: %s\n", proxyState.ConcurrentFaults)
+			slog.Debug("Concurrent faults", "faults", proxyState.ConcurrentFaults)
 		}
-
-		log.Printf("Response sent.\n")
 	})
 }

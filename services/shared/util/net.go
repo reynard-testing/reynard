@@ -1,12 +1,16 @@
 package util
 
 import (
-	"log"
+	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var stackPrefix string = os.Getenv("STACK_PREFIX")
@@ -41,11 +45,11 @@ func GetHostIdentifier(addr string) string {
 	names, err := net.LookupAddr(addr)
 	if err != nil || len(names) == 0 {
 		// Handle the case where no hostname is found
-		log.Printf("No hostname for: %s\n", addr)
+		slog.Warn("Failed to resolve hostname", "addr", addr, "err", err)
 		return addr // Return the IP as fallback
 	}
 	// Extract service name from the FQDN
-	log.Printf("Hostnames: %s\n", names)
+	slog.Debug("Hostnames", "names", names)
 	fqdn := names[0]
 	parts := strings.Split(fqdn, ".")
 	if len(parts) == 0 {
@@ -67,4 +71,20 @@ func GetHostIdentifier(addr string) string {
 	serviceWithoutIndex := postfixRegex.ReplaceAllString(serviceWithoutPrefix, "")
 
 	return serviceWithoutIndex
+}
+
+func GetDefaultTransport() *http.Transport {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.MaxIdleConns = 100
+	transport.MaxIdleConnsPerHost = 100
+	transport.MaxConnsPerHost = 0
+	transport.IdleConnTimeout = 90 * time.Second
+	return transport
+}
+
+func GetDefaultClient() *http.Client {
+	return &http.Client{
+		Transport: otelhttp.NewTransport(GetDefaultTransport()),
+		Timeout:   5 * time.Second,
+	}
 }

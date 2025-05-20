@@ -3,6 +3,7 @@ package io.github.delanoflipse.fit.suite.faultload;
 import java.util.Collections;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -19,14 +20,17 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     private static String ANY_WILDCARD = "*";
 
+    @JsonIgnore
     public boolean isAnyDestination() {
         return destination.equals(ANY_WILDCARD);
     }
 
+    @JsonIgnore
     public boolean isAnySignature() {
         return signature.equals(ANY_WILDCARD);
     }
 
+    @JsonIgnore
     public boolean isAnyPayload() {
         return payload.equals(ANY_WILDCARD);
     }
@@ -69,31 +73,38 @@ public record FaultInjectionPoint(String destination, String signature, String p
         return destination + ":" + signature + payloadStr + csStr + countStr;
     }
 
+    @JsonIgnore
     public String toSimplifiedString() {
         String countStr = count < 0 ? "#∞" : ("#" + count);
         return destination + countStr;
     }
 
+    @JsonIgnore
     public FaultInjectionPoint asAnyPayload() {
         return new FaultInjectionPoint(destination, signature, "*", callStack, count);
     }
 
+    @JsonIgnore
     public FaultInjectionPoint asAnyCount() {
         return new FaultInjectionPoint(destination, signature, payload, callStack, -1);
     }
 
+    @JsonIgnore
     public FaultInjectionPoint asAnyCallStack() {
         return new FaultInjectionPoint(destination, signature, payload, Map.of(), count);
     }
 
+    @JsonIgnore
     public PartialFaultInjectionPoint asPartial() {
         return new PartialFaultInjectionPoint(destination, signature, payload);
     }
 
+    @JsonIgnore
     public boolean isTransient() {
         return count >= 0;
     }
 
+    @JsonIgnore
     public boolean isPersistent() {
         return count < 0;
     }

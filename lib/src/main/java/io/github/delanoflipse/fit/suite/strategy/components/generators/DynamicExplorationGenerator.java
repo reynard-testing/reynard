@@ -138,14 +138,15 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                     logger.info("Found a candidate after {} attempt(s)", ops);
                     nodeCounter++;
                     nodeIndex.put(node, nodeCounter);
+                    updateQueueSize();
                     return new Faultload(node.value);
                 }
             }
 
-            updateQueueSize();
         }
 
         logger.info("Found no candidate after {} attempt(s)!", ops);
+        updateQueueSize();
         return null;
     }
 
@@ -271,17 +272,17 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         Map<String, Object> stats = new LinkedHashMap<>();
         Map<String, Object> details = new LinkedHashMap<>();
 
-        List<String> points = getFaultInjectionPoints().stream()
-                .map(FaultUid::toString)
-                .toList();
-        stats.put("fault_injection_points", points.size());
-        details.put("fault_injection_points", points);
-
         List<String> modes = getFailureModes().stream()
                 .map(FailureMode::toString)
                 .toList();
         stats.put("failure_modes", modes.size());
         details.put("failure_modes", modes);
+
+        stats.put("fault_injection_points", getFaultInjectionPoints().size());
+        details.put("fault_injection_point_names", getFaultInjectionPoints().stream()
+                .map(FaultUid::toString)
+                .toList());
+        details.put("fault_injection_points", getFaultInjectionPoints());
 
         stats.put("redundant_faultloads", store.getRedundantFaultloads().size());
         stats.put("redundant_fault_points", store.getRedundantUidSubsets().size());
@@ -289,18 +290,20 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
         stats.put("max_queue_size", getMaxQueueSize());
         stats.put("avg_queue_size", getAvgQueueSize());
-        details.put("queue_size", queueSize);
+        stats.put("visited_nodes", visitedNodes.size());
 
-        int queueSize = getQueuSize();
-        if (queueSize > 0) {
-            stats.put("Queue size (left)", queueSize);
+        int queueSizeLeft = getQueuSize();
+        if (queueSizeLeft > 0) {
+            stats.put("queue_size_left", queueSizeLeft);
         }
 
         var simplifiedPoints = getSimplifiedFaultInjectionPoints();
         stats.put("simplified_fault_injection_points", simplifiedPoints.size());
-        details.put("simplified_fault_injection_points", simplifiedPoints.stream()
+        details.put("simplified_fault_injection_points_names", simplifiedPoints.stream()
                 .map(FaultUid::toString)
                 .toList());
+        details.put("simplified_fault_injection_points", simplifiedPoints);
+        details.put("queue_size", queueSize);
 
         // Report the visited faultloads
         var faultloads = store.getHistoricResults().stream()
@@ -336,12 +339,14 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         Map<String, Object> visitReport = new LinkedHashMap<>();
         visitReport.put("by_uid", visitByUid);
         visitReport.put("by_faults", visitByFaults);
-        details.put("visited", visitReport);
 
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("stats", stats);
-        report.put("tree", buildTreeReport(new TreeNode(Set.of()), null));
         report.put("details", details);
+
+        report.put("implications", store.getImplicationsReport());
+        report.put("visited", visitReport);
+        report.put("tree", buildTreeReport(new TreeNode(Set.of()), null));
         return report;
     }
 }

@@ -18,7 +18,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import io.github.delanoflipse.fit.suite.FiTest;
 import io.github.delanoflipse.fit.suite.faultload.Fault;
-import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.Faultload;
 import io.github.delanoflipse.fit.suite.faultload.modes.ErrorFault;
@@ -167,6 +166,11 @@ public class MetaSuiteIT {
     @FiTest(maxTestCases = 999, optimizeForRetries = true, withCallStack = false, additionalComponents = {
             Proxy3Ignorer.class })
     public void testRegisterWithCustomPruner(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    @FiTest(maxTestCases = 99999, optimizeForRetries = false, withCallStack = false)
+    public void testRegisterNoOpt(TrackedFaultload faultload) throws IOException {
         testRegister(faultload);
     }
 

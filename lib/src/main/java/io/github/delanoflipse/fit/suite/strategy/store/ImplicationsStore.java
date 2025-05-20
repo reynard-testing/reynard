@@ -325,78 +325,96 @@ public class ImplicationsStore {
     return Pair.of(causeBehaviour, transativeUpstreams);
   }
 
+  private Map<String, Object> reportOf(List<Substitution> substitutions, DynamicAnalysisStore store) {
+    Map<String, Object> report = new LinkedHashMap<>();
+    report.put("count", substitutions.size());
+
+    List<Map<String, Object>> fullList = substitutions.stream()
+        .map(x -> {
+          Map<String, Object> entry = new LinkedHashMap<>();
+          entry.put("causes_names", x.causes.stream().map(Behaviour::toString).toList());
+          entry.put("effect_name", x.effect.toString());
+          return entry;
+        })
+        .toList();
+    report.put("list", fullList);
+
+    Map<FaultUid, List<Substitution>> grouped = inclusions.stream()
+        .collect(Collectors.groupingBy(Substitution::effect));
+
+    List<Map<String, Object>> simplifiedList = new ArrayList<>();
+
+    for (var entry : grouped.entrySet()) {
+      List<Set<Behaviour>> causes = entry.getValue().stream()
+          .map(x -> x.causes)
+          .toList();
+
+      var simplified = Simplify.simplifyBehaviour(causes, store.getModes());
+
+      for (Set<FaultUid> cause : simplified.second()) {
+        Map<String, Object> causeReport = new LinkedHashMap<>();
+        causeReport.put("any_failure_mode", true);
+        causeReport.put("effect_name", entry.getKey().toString());
+        causeReport.put("causes_name", cause.toString());
+        simplifiedList.add(causeReport);
+      }
+
+      for (Set<Behaviour> cause : simplified.first()) {
+        Map<String, Object> causeReport = new LinkedHashMap<>();
+        causeReport.put("effect_name", entry.getKey().toString());
+        causeReport.put("causes_name", cause.toString());
+        simplifiedList.add(causeReport);
+      }
+    }
+    report.put("simplified", simplifiedList);
+    return report;
+  }
+
   public Map<String, Object> getReport(DynamicAnalysisStore store) {
     Map<String, Object> report = new LinkedHashMap<>();
 
     if (!downstreamRequests.isEmpty()) {
-      report.put("Downstream request effects", downstreamRequests.size());
+      Map<String, Object> downstreamReport = new LinkedHashMap<>();
+      downstreamReport.put("count", downstreamRequests.size());
 
-      for (var upstream : downstreamRequests) {
-        report.put(upstream.cause.toString(), upstream.effects().toString());
-      }
+      List<Map<String, Object>> downstreams = downstreamRequests.stream()
+          .map(x -> {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("cause_name", x.cause.toString());
+            entry.put("effect_names", x.effects.stream().map(FaultUid::toString).toList());
+            return entry;
+          })
+          .toList();
+
+      downstreamReport.put("all", downstreams);
+      report.put("downstream", downstreamReport);
     }
 
     if (!inclusions.isEmpty()) {
-      report.put("inclusions", inclusions.size());
-
-      Map<FaultUid, List<Substitution>> groupedInclusions = inclusions.stream()
-          .collect(Collectors.groupingBy(Substitution::effect));
-
-      for (var entry : groupedInclusions.entrySet()) {
-        List<Set<Behaviour>> causes = entry.getValue().stream()
-            .map(x -> x.causes)
-            .toList();
-
-        var simplified = Simplify.simplifyBehaviour(causes, store.getModes());
-        var i = 0;
-
-        for (Set<FaultUid> cause : simplified.second()) {
-          String key = "[" + i + "] " + entry.getKey();
-          report.put(key, cause.toString() + " (any failure mode)");
-          i++;
-        }
-
-        for (Set<Behaviour> cause : simplified.first()) {
-          String key = "[" + i + "] " + entry.getKey();
-          report.put(key, cause.toString());
-          i++;
-        }
-      }
+      report.put("inclusions", reportOf(inclusions, store));
     }
 
     if (!exclusions.isEmpty()) {
-      report.put("exclusions", exclusions.size());
-
-      Map<FaultUid, List<Substitution>> groupedExclusions = exclusions.stream()
-          .collect(Collectors.groupingBy(Substitution::effect));
-
-      for (var entry : groupedExclusions.entrySet()) {
-        List<Set<Behaviour>> causes = entry.getValue().stream()
-            .map(x -> x.causes)
-            .toList();
-
-        var simplified = Simplify.simplifyBehaviour(causes, store.getModes());
-        var i = 0;
-
-        for (Set<FaultUid> cause : simplified.second()) {
-          String key = "[" + i + "] " + entry.getKey();
-          report.put(key, cause.toString() + " (any failure mode)");
-          i++;
-        }
-
-        for (Set<Behaviour> cause : simplified.first()) {
-          String key = "[" + i + "] " + entry.getKey();
-          report.put(key, cause.toString());
-          i++;
-        }
-      }
+      report.put("exclusions", reportOf(exclusions, store));
     }
 
     if (!upstreamResponses.isEmpty()) {
-      report.put("Upstream response effects", upstreamResponses.size());
+      Map<String, Object> upstreamReport = new LinkedHashMap<>();
+      upstreamReport.put("count", upstreamResponses.size());
+
+      List<Map<String, Object>> upstreams = upstreamResponses.stream()
+          .map(x -> {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("effect_name", x.effect.toString());
+            entry.put("causes_names", x.causes.stream().map(Behaviour::toString).toList());
+            return entry;
+          })
+          .toList();
+
+      upstreamReport.put("all", upstreams);
+      report.put("upstream", upstreamReport);
     }
 
     return report;
   }
-
 }

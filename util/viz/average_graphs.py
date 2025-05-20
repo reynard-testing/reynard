@@ -4,7 +4,7 @@ import os
 
 import numpy as np
 
-from graphs import find_json, get_json
+from util import get_json, find_json
 from graphs import TIMINGS_OF_INTEREST, TIMINGS_OF_EXTRA_INTEREST
 from graphs import render_timing_over_index, render_distribution_of_timing
 from graphs import render_queue_size_graph, render_tree

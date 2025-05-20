@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import io.github.delanoflipse.fit.suite.FiTest;
 import io.github.delanoflipse.fit.suite.instrument.FaultController;
@@ -299,6 +300,32 @@ public class FilibusterSuiteIT {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
+        }
+    }
+
+    @FiTest(maxTestCases = 500)
+    public void testExpediaWithAssertions(TrackedFaultload faultload) throws IOException {
+
+        var traceparent = faultload.getTraceParent().toString();
+        var tracestate = faultload.getTraceState().toString();
+
+        Request request = new Request.Builder()
+                .url("http://localhost:" + SERVICE_PORT + "/review/hotels/hotel1")
+                .addHeader("traceparent", traceparent)
+                .addHeader("tracestate", tracestate)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            TraceAnalysis result = getController().getTrace(faultload);
+            boolean hasInjectionAtMl = result.getInjectedFaults()
+                    .stream()
+                    .anyMatch(f -> f.uid().destination().equals("review-ml"));
+
+            boolean hasReqToTime = result.getFaultUids()
+                    .stream()
+                    .anyMatch(f -> f.destination().equals("review-time"));
+
+            assertTrue((hasInjectionAtMl && hasReqToTime) || (!hasInjectionAtMl && !hasReqToTime));
         }
     }
 

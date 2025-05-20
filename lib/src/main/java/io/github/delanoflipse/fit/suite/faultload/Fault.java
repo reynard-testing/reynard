@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -19,14 +20,17 @@ public record Fault(
         @JsonProperty("uid") FaultUid uid,
         @JsonProperty("mode") FailureMode mode) {
 
+    @JsonIgnore
     public boolean isTransient() {
         return uid.getPoint().isTransient();
     }
 
+    @JsonIgnore
     public boolean isPersistent() {
         return uid.getPoint().isPersistent();
     }
 
+    @JsonIgnore
     public Behaviour asBehaviour() {
         return new Behaviour(uid, mode);
     }

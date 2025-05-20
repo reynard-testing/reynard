@@ -159,8 +159,10 @@ public class StrategyReporter {
 
             if (prunerCount.containsKey(contextName)) {
                 long value = prunerCount.get(contextName);
-                prunerReport.put("Directly pruned",
-                        value + " (" + StringFormat.asPercentage(value, totalGenerated) + "% of generated)");
+                prunerReport.put("directly_pruned",
+                        Map.of(
+                                "count", value,
+                                "percentage", (double) 100.0 * value / totalGenerated));
             }
 
             if (FeedbackContextProvider.hasContext(contextName)) {

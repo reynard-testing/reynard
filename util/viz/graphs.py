@@ -1,10 +1,11 @@
-import json
 import argparse
 import os
 
 import numpy as np
 import matplotlib.pyplot as plt
 from tree_viz import render_tree
+from call_graph import render_call_graph
+from util import get_json, find_json
 import config
 
 
@@ -17,24 +18,6 @@ def get_args():
 
     args = arg_parser.parse_args()
     return args
-
-
-def get_json(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            return json.load(file)
-    except Exception as e:
-        print(f"Error reading JSON file {file_path}: {e}")
-        return None
-
-
-def find_json(dir: str, s: str):
-    for root, _, files in os.walk(dir):
-        for file in files:
-            if file.endswith(".json") and s.lower() in file.lower():
-                return os.path.join(root, file)
-    print(f"JSON file with '{s}' not found in {dir}")
-    return None
 
 
 def render_queue_size_graph(queue_sizes, output_dir):
@@ -125,6 +108,7 @@ def render_for_dir(json_dir: str):
     queue_sizes = np.array(generator_data['details']['queue_size'])
     render_queue_size_graph(queue_sizes, json_dir)
     render_tree(generator_data['tree'], os.path.join(json_dir, 'search_tree'))
+    render_call_graph(generator_data, os.path.join(json_dir, 'call_graph'))
 
     timing_data = get_json(os.path.join(json_dir, 'timing.json'))
     timings: tuple[str, list[float]] = []
@@ -144,9 +128,11 @@ if __name__ == '__main__':
     args = get_args()
     json_dir = args.json_dir
     if args.nested:
-        for root, dirs, _ in os.walk(json_dir):
-            for dir in dirs:
-                if "timing.json" in os.listdir(os.path.join(root, dir)):
-                    render_for_dir(os.path.join(root, dir))
+        for root, dirs, filenames in os.walk(json_dir):
+            dirname = os.path.basename(root)
+            if dirname != 'default' or 'timing.json' not in filenames:
+                continue
+            render_for_dir(root)
+
     else:
         render_for_dir(json_dir)

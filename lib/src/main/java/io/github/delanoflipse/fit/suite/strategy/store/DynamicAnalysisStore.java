@@ -311,5 +311,4 @@ public class DynamicAnalysisStore {
     public long estimatePruned() {
         return estimatePruned(getPoints());
     }
-
 }

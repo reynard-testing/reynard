@@ -5,18 +5,25 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
 
+@JsonSerialize
 public record Behaviour(FaultUid uid, FailureMode mode) {
 
+    @JsonIgnore
     public boolean isFault() {
         return mode != null;
     }
 
+    @JsonIgnore
     public boolean isHappyPath() {
         return mode == null;
     }
 
+    @JsonIgnore
     public Fault getFault() {
         if (mode == null) {
             return null;
@@ -34,6 +41,11 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
 
         boolean uidMatches = uid.matches(other.uid);
         return uidMatches;
+    }
+
+    @JsonIgnore
+    public Behaviour asMode(FailureMode newMode) {
+        return new Behaviour(uid, newMode);
     }
 
     public static Behaviour of(FaultUid uid) {
@@ -54,10 +66,6 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
 
     public static boolean matches(Set<Behaviour> a, Set<Behaviour> b) {
         return isSubsetOf(a, b) && isSubsetOf(b, a);
-    }
-
-    public Behaviour asMode(FailureMode newMode) {
-        return new Behaviour(uid, newMode);
     }
 
     // if a <= b

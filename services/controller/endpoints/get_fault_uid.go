@@ -13,6 +13,7 @@ import (
 type UidRequest struct {
 	TraceId        faultload.TraceID `json:"trace_id"`
 	ReportParentId faultload.SpanID  `json:"parent_span_id"`
+	IncludeEvents  bool              `json:"include_events"`
 }
 type UidResponse struct {
 	Stack           []faultload.InjectionPoint        `json:"stack"`
@@ -62,7 +63,10 @@ func GetFaultUid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	completedEvents := getCompletedEvents(report)
+	completedEvents := make(map[string]int)
+	if data.IncludeEvents {
+		completedEvents = getCompletedEvents(report)
+	}
 
 	response := UidResponse{
 		Stack:           report.FaultUid.Stack,

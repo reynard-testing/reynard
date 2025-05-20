@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -30,8 +31,18 @@ func main() {
 		}
 	})
 
+	// Create a custom http.Server instance
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: nil, // use default http.ServeMux
+
+		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
 	fmt.Println("Server is running on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := server.ListenAndServe(); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
 }

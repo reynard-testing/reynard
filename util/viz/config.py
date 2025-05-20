@@ -1,0 +1,2 @@
+OUTPUT_FORMAT = "svg"
+OUTPUT_DPI = 300

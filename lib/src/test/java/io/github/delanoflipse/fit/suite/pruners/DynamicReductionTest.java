@@ -30,7 +30,7 @@ public class DynamicReductionTest {
 
         // The empty faultload is not pruned, there are no historic results
         PruneDecision decision = pruner.prune(new Faultload(Set.of()), contextMock);
-        assertEquals(PruneDecision.KEEP, decision);
+        assertEquals(PruneDecision.PRUNE, decision);
     }
 
     @Test

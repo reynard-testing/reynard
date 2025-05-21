@@ -12,23 +12,31 @@ func TestMatch(t *testing.T) {
 		match bool
 	}
 
-	f1 := FaultUid{Stack: []InjectionPoint{{}}}
-	f2 := FaultUid{Stack: []InjectionPoint{{
+	fEmpty := FaultUid{Stack: []InjectionPoint{{}}}
+	fDest := FaultUid{Stack: []InjectionPoint{{
 		Destination: "x",
 	}}}
-	f3 := FaultUid{Stack: []InjectionPoint{{
+	fDestWildcard := FaultUid{Stack: []InjectionPoint{{
 		Destination: "*",
 	}}}
 
-	f4 := FaultUid{Stack: []InjectionPoint{{
-		CallStack: nil,
+	fCount := FaultUid{Stack: []InjectionPoint{{
+		Count: 0,
 	}}}
 
-	f5 := FaultUid{Stack: []InjectionPoint{{
+	fCountWildcard := FaultUid{Stack: []InjectionPoint{{
+		Count: -1,
+	}}}
+
+	fCallStack := FaultUid{Stack: []InjectionPoint{{
 		CallStack: &InjectionPointCallStack{},
 	}}}
 
-	f6 := FaultUid{Stack: []InjectionPoint{{
+	fCallStackWildcard := FaultUid{Stack: []InjectionPoint{{
+		CallStack: nil,
+	}}}
+
+	fCallStackDifference := FaultUid{Stack: []InjectionPoint{{
 		CallStack: &InjectionPointCallStack{
 			"1": 1,
 		},
@@ -37,59 +45,70 @@ func TestMatch(t *testing.T) {
 	tests := []testCase{
 		{
 			name:  "empty stacks match",
-			f1:    f1,
-			f2:    f1,
+			f1:    fEmpty,
+			f2:    fEmpty,
 			match: true,
 		},
 		{
 			name:  "different destination",
-			f1:    f1,
-			f2:    f2,
+			f1:    fEmpty,
+			f2:    fDest,
 			match: false,
 		},
 		{
-			name:  "wildcard",
-			f1:    f2,
-			f2:    f3,
+			name:  "destination wildcard",
+			f1:    fDest,
+			f2:    fDestWildcard,
+			match: true,
+		},
+		{
+			name:  "different count",
+			f1:    fEmpty,
+			f2:    fCount,
+			match: false,
+		},
+		{
+			name:  "count wildcard",
+			f1:    fCount,
+			f2:    fCountWildcard,
+			match: true,
+		},
+		{
+			name:  "count wildcard",
+			f1:    fCount,
+			f2:    fCountWildcard,
 			match: true,
 		},
 		{
 			name:  "wildcard stack <> itself",
-			f1:    f4,
-			f2:    f4,
+			f1:    fCallStackWildcard,
+			f2:    fCallStackWildcard,
 			match: true,
 		},
 		{
 			name:  "wildcard stack <> empty stack",
-			f1:    f4,
-			f2:    f5,
+			f1:    fCallStackWildcard,
+			f2:    fCallStack,
 			match: true,
 		},
 		{
 			name:  "empty <> wildcard stack",
-			f1:    f5,
-			f2:    f4,
+			f1:    fCallStack,
+			f2:    fCallStackWildcard,
 			match: true,
 		},
 		{
 			name:  "wildcard stack <> some value",
-			f1:    f4,
-			f2:    f6,
+			f1:    fCallStackWildcard,
+			f2:    fCallStackDifference,
 			match: true,
 		},
 		{
 			name:  "empyt call stack <> some value",
-			f1:    f5,
-			f2:    f6,
+			f1:    fCallStack,
+			f2:    fCallStackDifference,
 			match: false,
 		},
-		// Add more cases as needed, e.g.:
-		// {
-		// 	name: "different stacks don't match",
-		// 	f1: FaultUid{Stack: []InjectionPoint{{ID: 1}}},
-		// 	f2: FaultUid{Stack: []InjectionPoint{{ID: 2}}},
-		// 	match: false,
-		// },
 	}
 
 	for _, tc := range tests {

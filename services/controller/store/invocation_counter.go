@@ -19,7 +19,7 @@ func NewTraceInvocationCounter() *TraceInvocationCounter {
 
 var InvocationCounter = NewTraceInvocationCounter()
 
-func getKey(stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips faultload.InjectionPointCallStack) string {
+func getKey(stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips *faultload.InjectionPointCallStack) string {
 	key := stack.String() + ">" + partial.String() + ips.String()
 	return key
 }
@@ -51,6 +51,6 @@ func (t *TraceInvocationCounter) Clear(trace faultload.TraceID) {
 	delete(t.m, trace)
 }
 
-func (t *TraceInvocationCounter) GetCount(trace faultload.TraceID, stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips faultload.InjectionPointCallStack) int {
+func (t *TraceInvocationCounter) GetCount(trace faultload.TraceID, stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips *faultload.InjectionPointCallStack) int {
 	return t.getCountByKey(trace, getKey(stack, partial, ips))
 }

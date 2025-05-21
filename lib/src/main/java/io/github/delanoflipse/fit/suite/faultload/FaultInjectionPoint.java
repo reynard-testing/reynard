@@ -15,7 +15,9 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     public FaultInjectionPoint {
         // Ensure map is immutable
-        callStack = Collections.unmodifiableMap(callStack);
+        if (callStack != null) {
+            callStack = Collections.unmodifiableMap(callStack);
+        }
     }
 
     private static String ANY_WILDCARD = "*";
@@ -63,7 +65,7 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
         // {key1:value1,key2:value2, ...}
         String csStr = "";
-        if (callStack != null && !callStack.isEmpty()) {
+        if (callStack != null) {
             csStr = "{" + callStack.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(e -> e.getKey().toString() + ":" + e.getValue())
@@ -91,7 +93,7 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     @JsonIgnore
     public FaultInjectionPoint asAnyCallStack() {
-        return new FaultInjectionPoint(destination, signature, payload, Map.of(), count);
+        return new FaultInjectionPoint(destination, signature, payload, null, count);
     }
 
     @JsonIgnore

@@ -69,7 +69,7 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
     }
 
     // if a <= b
-    public static boolean isSubsetOf(Set<Behaviour> subset, Set<Behaviour> superset) {
+    public static boolean isSubsetOf(Collection<Behaviour> subset, Collection<Behaviour> superset) {
         if (subset == null || superset == null) {
             return false;
         }

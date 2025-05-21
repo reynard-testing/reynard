@@ -24,11 +24,11 @@ func (f PartialInjectionPoint) String() string {
 type InjectionPointCallStack map[string]int
 
 type InjectionPoint struct {
-	Destination string                  `json:"destination"`
-	Signature   string                  `json:"signature"`
-	Payload     string                  `json:"payload"`
-	CallStack   InjectionPointCallStack `json:"call_stack"`
-	Count       int                     `json:"count"`
+	Destination string                   `json:"destination"`
+	Signature   string                   `json:"signature"`
+	Payload     string                   `json:"payload"`
+	CallStack   *InjectionPointCallStack `json:"call_stack"`
+	Count       int                      `json:"count"`
 }
 
 func (p InjectionPoint) AsPartial() PartialInjectionPoint {
@@ -70,6 +70,10 @@ func intMatches(v1, v2 int) bool {
 }
 
 func (f1 FaultUid) Matches(f2 FaultUid) bool {
+	if f1.Stack == nil || f2.Stack == nil {
+		return true
+	}
+
 	if len(f1.Stack) != len(f2.Stack) {
 		return false
 	}
@@ -83,13 +87,17 @@ func (f1 FaultUid) Matches(f2 FaultUid) bool {
 	return true
 }
 
-func (cs1 InjectionPointCallStack) Matches(cs2 InjectionPointCallStack) bool {
-	if len(cs1) != len(cs2) {
+func (cs1 InjectionPointCallStack) Matches(cs2 *InjectionPointCallStack) bool {
+	if cs2 == nil {
+		return true
+	}
+
+	if len(cs1) != len(*cs2) {
 		return false
 	}
 
 	for k, v := range cs1 {
-		if v2, ok := cs2[k]; !ok || !intMatches(v, v2) {
+		if v2, ok := (*cs2)[k]; !ok || !intMatches(v, v2) {
 			return false
 		}
 	}
@@ -101,7 +109,7 @@ func (f1 InjectionPoint) Matches(f2 InjectionPoint) bool {
 	return stringMatches(f1.Destination, f2.Destination) &&
 		stringMatches(f1.Signature, f2.Signature) &&
 		stringMatches(f1.Payload, f2.Payload) &&
-		f1.CallStack.Matches(f2.CallStack) &&
+		(f1.CallStack == nil || f1.CallStack.Matches(f2.CallStack)) &&
 		intMatches(f1.Count, f2.Count)
 }
 
@@ -171,7 +179,7 @@ type FaultMode struct {
 	Args []string `json:"args"`
 }
 
-func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, ips InjectionPointCallStack, count int) FaultUid {
+func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, ips *InjectionPointCallStack, count int) FaultUid {
 	fid := make([]InjectionPoint, len(parent.Stack)+1)
 	// Copy the existing stack
 	copy(fid, parent.Stack)

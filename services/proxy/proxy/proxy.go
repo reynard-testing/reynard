@@ -109,6 +109,8 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			return
 		}
 
+		traceId := parentSpan.TraceID
+
 		// Get and parse the "tracestate" header
 		tracestate := r.Header.Get(OTEL_STATE_HEADER)
 		state := tracing.ParseTraceState(tracestate)
@@ -120,15 +122,14 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		r.Header[OTEL_STATE_HEADER] = []string{tracestate}
 
 		// Determine if registered as an interesting trace
-		faults, ok := control.RegisteredFaults.Get(parentSpan.TraceID)
+		faults, ok := control.RegisteredFaults.Get(traceId)
 		if !ok {
 			// Forward the request to the target server
-			slog.Debug("No faults registered for trace ID", "traceId", parentSpan.TraceID)
+			slog.Debug("No faults registered for trace ID", "traceId", traceId)
 			proxy.ServeHTTP(w, r)
 			return
 		}
 
-		traceId := parentSpan.TraceID
 		// TODO (optional): export to collector, so that jeager understands whats going on
 		currentSpan := parentSpan.GenerateNew()
 		r.Header[OTEL_PARENT_HEADER] = []string{currentSpan.String()}
@@ -160,38 +161,33 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 		}
 
-		// determine if call stacks should be used
-		shouldUseCallStack := state.GetWithDefault(FIT_USE_CALL_STACK, "0") == "1"
-
 		// -- Determine FID --
 		reportParentId := faultload.SpanID(state.GetWithDefault(FIT_PARENT_KEY, "0"))
-		slog.Debug("Report parent ID", "reportParentId", reportParentId)
-
-		parentStack, callStack := tracing.GetUid(traceId, reportParentId, shouldUseCallStack, isInitial)
-		slog.Debug("Parent stack", "parentStack", parentStack)
-
-		partialPoint := faultload.PartialPointFromRequest(r, destination, shouldMaskPayload)
-		// do not include the current span in the call stack
-		if shouldUseCallStack {
-			callStack.Del(partialPoint)
-			slog.Debug("Call stack", "callStack", callStack)
-		}
-
-		invocationCount := tracing.GetCountForTrace(traceId, parentStack, partialPoint, callStack)
-		faultUid := faultload.BuildFaultUid(parentStack, partialPoint, callStack, invocationCount)
-		// --
-
-		state.Set(FIT_PARENT_KEY, string(currentSpan.ParentID))
-		r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
 			TraceId:        traceId,
 			ReportParentId: reportParentId,
 			ParentId:       parentSpan.ParentID,
 			SpanId:         currentSpan.ParentID,
-			FaultUid:       faultUid,
 			IsInitial:      isInitial,
+			FaultUid:       nil,
 		}
+
+		partialPoint := faultload.PartialPointFromRequest(r, destination, shouldMaskPayload)
+		slog.Debug("Partial point", "partialPoint", partialPoint)
+
+		// determine if call stacks should be used
+		shouldUseCallStack := state.GetWithDefault(FIT_USE_CALL_STACK, "0") == "1"
+		slog.Debug("Report parent ID", "reportParentId", reportParentId)
+
+		faultUid := tracing.GetUid(metadata, partialPoint, shouldUseCallStack)
+		metadata.FaultUid = &faultUid
+		slog.Debug("Determined ID", "faultUid", faultUid)
+		tracing.TrackFault(traceId, &faultUid)
+		// --
+
+		state.Set(FIT_PARENT_KEY, string(currentSpan.ParentID))
+		r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 
 		// Only directly forward the response if call stacks are not used
 		// Because for call stacks we want to ensure we have reports on all previous spans
@@ -205,7 +201,6 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			Request:            r,
 			DurationMs:         0,
 			ReponseOverwritten: false,
-			Complete:           false,
 			ConcurrentFaults:   nil,
 		}
 
@@ -217,10 +212,6 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		if shouldLogHeader {
 			slog.Info("Logging headers", "headers", r.Header)
 		}
-
-		slog.Debug("Determined ID", "faultUid", faultUid)
-		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
-		tracing.TrackFault(traceId, &faultUid)
 
 		startTime := time.Now()
 		for _, fault := range faults {
@@ -242,7 +233,6 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			slog.Debug("Response forwarded")
 		}
 
-		proxyState.Complete = true
 		proxyState.DurationMs = time.Since(startTime).Seconds() * 1000
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))

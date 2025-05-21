@@ -44,6 +44,7 @@ import okhttp3.Response;
 public class MetaSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final int PROXY_RETRY_COUNT;
+    private static final String LOG_LEVEL;
     private static final String PROXY_IMAGE = InstrumentedService.IMAGE;
     private static final String CONTROLLER_IMAGE = ControllerService.IMAGE;
     private static final String COLLECTOR_ENDPOINT = "http://" + app.jaegerHost + ":4317";
@@ -59,6 +60,7 @@ public class MetaSuiteIT {
 
     static {
         PROXY_RETRY_COUNT = Integer.parseInt(Env.getEnv("PROXY_RETRY_COUNT", "3"));
+        LOG_LEVEL = Env.getEnv("LOG_LEVEL", "info");
     }
 
     @Container
@@ -70,6 +72,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy1-real")
+                    .withEnv("LOG_LEVEL", LOG_LEVEL)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -81,6 +84,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy2-real")
+                    .withEnv("LOG_LEVEL", LOG_LEVEL)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -92,6 +96,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy3-real")
+                    .withEnv("LOG_LEVEL", LOG_LEVEL)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -102,6 +107,7 @@ public class MetaSuiteIT {
                     .withEnv("PROXY_TIMEOUT", "0")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "controller-real")
+                    .withEnv("LOG_LEVEL", LOG_LEVEL)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT))
             .withExposedPorts(5000);
 

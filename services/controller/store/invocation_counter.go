@@ -1,4 +1,4 @@
-package tracing
+package store
 
 import (
 	"sync"
@@ -11,14 +11,20 @@ type TraceInvocationCounter struct {
 	m map[faultload.TraceID]map[string]int
 }
 
-var traceInvocationCounter = TraceInvocationCounter{m: make(map[faultload.TraceID]map[string]int)}
+func NewTraceInvocationCounter() *TraceInvocationCounter {
+	return &TraceInvocationCounter{
+		m: make(map[faultload.TraceID]map[string]int),
+	}
+}
+
+var InvocationCounter = NewTraceInvocationCounter()
 
 func getKey(stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips faultload.InjectionPointCallStack) string {
 	key := stack.String() + ">" + partial.String() + ips.String()
 	return key
 }
 
-func (t *TraceInvocationCounter) GetCount(trace faultload.TraceID, key string) int {
+func (t *TraceInvocationCounter) getCountByKey(trace faultload.TraceID, key string) int {
 	t.Lock()
 	defer t.Unlock()
 
@@ -45,10 +51,6 @@ func (t *TraceInvocationCounter) Clear(trace faultload.TraceID) {
 	delete(t.m, trace)
 }
 
-func GetCountForTrace(trace faultload.TraceID, stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips faultload.InjectionPointCallStack) int {
-	return traceInvocationCounter.GetCount(trace, getKey(stack, partial, ips))
-}
-
-func ClearTraceCount(trace faultload.TraceID) {
-	traceInvocationCounter.Clear(trace)
+func (t *TraceInvocationCounter) GetCount(trace faultload.TraceID, stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips faultload.InjectionPointCallStack) int {
+	return t.getCountByKey(trace, getKey(stack, partial, ips))
 }

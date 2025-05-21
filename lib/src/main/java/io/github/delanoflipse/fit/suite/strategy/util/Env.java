@@ -9,7 +9,8 @@ public class Env {
         // Image definition for testcontainers tests
         USE_REMOTE("false"),
         CONTROLLER_IMAGE("dflipse/ds-fit-controller:latest"),
-        PROXY_IMAGE("dflipse/ds-fit-proxy:latest");
+        PROXY_IMAGE("dflipse/ds-fit-proxy:latest"),
+        LOG_LEVEL("info");
 
         private final String defaultValue;
 

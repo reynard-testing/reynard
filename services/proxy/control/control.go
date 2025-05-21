@@ -125,7 +125,7 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	faults := newFaultload.Faults
 	myFaults := []faultload.Fault{}
 
-	slog.Debug("\n----------------------------\n")
+	slog.Debug("------------- NEW TEST CASE ---------------")
 	slog.Debug("Registering faultload", "size", len(newFaultload.Faults), "traceId", newFaultload.TraceId)
 	for _, fault := range faults {
 		lastIp := fault.Uid.Stack[len(fault.Uid.Stack)-1]
@@ -159,7 +159,6 @@ func unregisterFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Removed faults", "traceId", traceId)
 	// Store the faultload for the given trace ID
 	RegisteredFaults.Remove(traceId)
-	tracing.ClearTraceCount(traceId)
 	tracing.ClearTracked(traceId)
 
 	// Respond with a 200 OK

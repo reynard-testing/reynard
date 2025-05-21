@@ -44,6 +44,7 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
                 .withEnv("CONTROLLER_HOST", app.controllerHost + ":" + app.controllerPort)
                 .withEnv("SERVICE_NAME", hostname)
                 .withEnv("CONTROL_PORT", "" + controlPort)
+                .withEnv("LOG_LEVEL", Env.getEnv(Env.Keys.LOG_LEVEL))
                 .withNetwork(app.network)
                 .withCreateContainerCmdModifier(cmd -> cmd.withName(hostname + "-proxy-" + randomId))
                 .withNetworkAliases(hostname);

@@ -164,7 +164,10 @@ func (f InjectionPoint) String() string {
 		countStr = fmt.Sprintf("#%d", f.Count)
 	}
 
-	csStr := f.CallStack.String()
+	csStr := ""
+	if f.CallStack != nil {
+		csStr = f.CallStack.String()
+	}
 
 	return fmt.Sprintf("%s:%s%s%s%s", f.Destination, f.Signature, payloadStr, csStr, countStr)
 }

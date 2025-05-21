@@ -163,6 +163,8 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		// -- Determine FID --
 		reportParentId := faultload.SpanID(state.GetWithDefault(FIT_PARENT_KEY, "0"))
+		protocol := util.GetProtocol(r)
+		slog.Debug("Protocol", "protocol", protocol)
 
 		var metadata tracing.RequestMetadata = tracing.RequestMetadata{
 			TraceId:        traceId,
@@ -170,7 +172,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			ParentId:       parentSpan.ParentID,
 			SpanId:         currentSpan.ParentID,
 			IsInitial:      isInitial,
-			Protocol:       util.GetProtocol(r),
+			Protocol:       protocol,
 			FaultUid:       nil,
 		}
 

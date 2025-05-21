@@ -20,7 +20,11 @@ func NewTraceInvocationCounter() *TraceInvocationCounter {
 var InvocationCounter = NewTraceInvocationCounter()
 
 func getKey(stack faultload.FaultUid, partial faultload.PartialInjectionPoint, ips *faultload.InjectionPointCallStack) string {
-	key := stack.String() + ">" + partial.String() + ips.String()
+	ipsString := ""
+	if ips != nil {
+		ipsString = ips.String()
+	}
+	key := stack.String() + ">" + partial.String() + ipsString
 	return key
 }
 

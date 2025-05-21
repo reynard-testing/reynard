@@ -21,8 +21,9 @@ func main() {
 	http.HandleFunc("/v1/proxy/get-parent-uid", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		response := map[string]interface{}{
-			"stack":            []string{},
-			"completed_events": map[string]int{},
+			"uid": map[string]interface{}{
+				"stack": []string{},
+			},
 		}
 
 		w.Header().Set("Content-Type", "application/json")

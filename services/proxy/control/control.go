@@ -128,6 +128,11 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("------------- NEW TEST CASE ---------------")
 	slog.Debug("Registering faultload", "size", len(newFaultload.Faults), "traceId", newFaultload.TraceId)
 	for _, fault := range faults {
+		if fault.Uid.Stack == nil {
+			slog.Error("Fault UID stack is nil", "fault", fault)
+			continue
+		}
+
 		lastIp := fault.Uid.Stack[len(fault.Uid.Stack)-1]
 		if lastIp.Destination == destination {
 			myFaults = append(myFaults, fault)

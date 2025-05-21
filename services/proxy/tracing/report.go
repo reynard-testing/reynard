@@ -19,7 +19,7 @@ type RequestMetadata struct {
 	ParentId       faultload.SpanID
 	ReportParentId faultload.SpanID
 	SpanId         faultload.SpanID
-	FaultUid       faultload.FaultUid
+	FaultUid       *faultload.FaultUid
 	IsInitial      bool
 }
 
@@ -95,29 +95,29 @@ func attemptGetUid(req endpoints.UidRequest) *endpoints.UidResponse {
 	return &response
 }
 
-func GetUid(traceId faultload.TraceID, parentId faultload.SpanID, includeEvents, isInitial bool) (faultload.FaultUid, faultload.InjectionPointCallStack) {
-	if isInitial {
-		return faultload.FaultUid{
-			Stack: []faultload.InjectionPoint{},
-		}, faultload.InjectionPointCallStack{}
-	}
+func GetUid(metadata RequestMetadata, partial faultload.PartialInjectionPoint, includeEvents bool) faultload.FaultUid {
 	req := endpoints.UidRequest{
-		TraceId:        traceId,
-		ReportParentId: parentId,
+		TraceId:        metadata.TraceId,
+		ReportParentId: metadata.ReportParentId,
+		SpanId:         metadata.SpanId,
+		IsInitial:      metadata.IsInitial,
+		PartialPoint:   partial,
 		IncludeEvents:  includeEvents,
 	}
+
 	res := attemptGetUid(req)
 	if res == nil {
 		// retry once
 		res = attemptGetUid(req)
 	}
+
 	if res == nil {
-		slog.Warn("Failed to get UID from controller after retry.", "traceId", traceId, "parentId", parentId)
+		slog.Warn("Failed to get UID from controller after retry.", "traceId", metadata.TraceId, "parentId", metadata.ReportParentId)
+
 		return faultload.FaultUid{
 			Stack: []faultload.InjectionPoint{},
-		}, faultload.InjectionPointCallStack{}
+		}
 	}
-	return faultload.FaultUid{
-		Stack: res.Stack,
-	}, res.CompletedEvents
+
+	return res.Uid
 }

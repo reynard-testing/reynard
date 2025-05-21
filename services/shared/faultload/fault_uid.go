@@ -1,13 +1,15 @@
 package faultload
 
 import (
+	"bytes"
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -39,30 +41,53 @@ func PartialPointFromRequest(r *http.Request, destination string, maskPayload bo
 }
 
 func getPayloadHash(r *http.Request) string {
-	body := r.Body
+	var payloadBytes []byte
 
-	if body == nil {
+	// 1. Handle Request Body
+	if r.Body != nil {
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			slog.Error("Failed to read request body", "error", err)
+			return ""
+		}
+
+		// Restore the body for subsequent reads
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		payloadBytes = append(payloadBytes, bodyBytes...)
+	}
+
+	// 2. Handle Request Query Parameters
+	if len(r.URL.RawQuery) > 0 {
+		queryValues := r.URL.Query()
+
+		// Sort query parameters by key to ensure consistent hashing
+		// regardless of the order they appear in the URL.
+		keys := make([]string, 0, len(queryValues))
+		for k := range queryValues {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			values := queryValues[key]
+			sort.Strings(values) // Sort values for multi-value parameters
+			payloadBytes = append(payloadBytes, []byte(key)...)
+			payloadBytes = append(payloadBytes, []byte("=")...)
+			for _, val := range values {
+				payloadBytes = append(payloadBytes, []byte(val)...)
+			}
+		}
+	}
+
+	// 3. Check if payload is empty
+	if len(payloadBytes) == 0 {
 		return ""
 	}
 
-	requestBodyBytes, err := io.ReadAll(body)
-	if err != nil {
-		slog.Warn("Failed to read request body", "err", err)
-		return ""
-	}
-	// Reset the body so it can be read again
-	// This is necessary because the proxy will read the body to forward the request
-	r.Body = io.NopCloser(strings.NewReader(string(requestBodyBytes)))
-
-	hash := ""
-	if len(requestBodyBytes) > 0 {
-		bodyHash := sha256.Sum256(requestBodyBytes)
-		hash = fmt.Sprintf("%X", bodyHash)
-	}
-
-	// shortHash := hash[:8] // Use only the first 8 bytes of the hash
-	// return fmt.Sprintf("%x", shortHash)
-	return hash
+	// 4. Calculate SHA256 Hash
+	hasher := sha256.New()
+	hasher.Write(payloadBytes)
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 var digitCheck = regexp.MustCompile(`^[0-9]+$`)

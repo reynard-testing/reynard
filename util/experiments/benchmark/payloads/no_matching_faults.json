@@ -1,0 +1,19 @@
+{
+  "trace_id": "efcbf3a8ae78f65a35bf05ddcc8419e8",
+  "faults": [
+    {
+      "uid": {
+        "stack": [
+          {
+            "destination": "target",
+            "signature": "",
+            "payload": "",
+            "call_stack": {},
+            "count": 0
+          }
+        ]
+      },
+      "mode": { "type": "HTTP_ERROR", "args": ["500"] }
+    }
+  ]
+}

@@ -11,13 +11,16 @@ import (
 )
 
 type UidRequest struct {
-	TraceId        faultload.TraceID `json:"trace_id"`
-	ReportParentId faultload.SpanID  `json:"parent_span_id"`
-	IncludeEvents  bool              `json:"include_events"`
+	TraceId        faultload.TraceID               `json:"trace_id"`
+	SpanId         faultload.SpanID                `json:"span_id"`
+	ReportParentId faultload.SpanID                `json:"parent_span_id"`
+	PartialPoint   faultload.PartialInjectionPoint `json:"partial_point"`
+	IsInitial      bool                            `json:"is_initial"`
+	IncludeEvents  bool                            `json:"include_events"`
 }
+
 type UidResponse struct {
-	Stack           []faultload.InjectionPoint        `json:"stack"`
-	CompletedEvents faultload.InjectionPointCallStack `json:"completed_events"`
+	Uid faultload.FaultUid `json:"uid"`
 }
 
 func getCompletedEvents(parentEvent *trace.TraceReport) map[string]int {
@@ -48,6 +51,32 @@ func getCompletedEvents(parentEvent *trace.TraceReport) map[string]int {
 	return completed
 }
 
+func determineUid(data UidRequest) *faultload.FaultUid {
+	if data.IsInitial {
+		uid := faultload.BuildFaultUid(faultload.FaultUid{}, data.PartialPoint, faultload.InjectionPointCallStack{}, 0)
+		return &uid
+	}
+
+	parentReport := store.Reports.GetByTraceAndSpanId(data.TraceId, data.ReportParentId)
+	if parentReport == nil {
+		slog.Error("Parent report not found", "traceId", data.TraceId, "parentSpanId", data.ReportParentId)
+		return nil
+	}
+
+	callStack := faultload.InjectionPointCallStack{}
+	if data.IncludeEvents {
+		callStack = getCompletedEvents(parentReport)
+		// do not include the current span in the call stack
+		callStack.Del(data.PartialPoint)
+	}
+
+	invocationCount := store.InvocationCounter.GetCount(data.TraceId, parentReport.FaultUid, data.PartialPoint, callStack)
+
+	uid := faultload.BuildFaultUid(parentReport.FaultUid, data.PartialPoint, callStack, invocationCount)
+	return &uid
+
+}
+
 func GetFaultUid(w http.ResponseWriter, r *http.Request) {
 	var data UidRequest
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -55,22 +84,30 @@ func GetFaultUid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Debug("Received request", "traceId", data.TraceId, "parentSpanId", data.ReportParentId)
+	slog.Debug("Received uid request", "traceId", data.TraceId, "parentSpanId", data.ReportParentId, "spanId", data.SpanId, "partialPoint", data.PartialPoint, "isInitial", data.IsInitial)
 
-	report := store.Reports.GetByTraceAndSpanId(data.TraceId, data.ReportParentId)
-	if report == nil {
-		http.Error(w, "Report not found", http.StatusNotFound)
+	faultUid := determineUid(data)
+	if faultUid == nil {
+		http.Error(w, "Failed to determine uid", http.StatusInternalServerError)
 		return
 	}
 
-	completedEvents := make(map[string]int)
-	if data.IncludeEvents {
-		completedEvents = getCompletedEvents(report)
+	slog.Debug("Determined uid", "uid", faultUid)
+
+	traceReport := trace.TraceReport{
+		TraceId:       data.TraceId,
+		SpanId:        data.SpanId,
+		FaultUid:      *faultUid,
+		IsInitial:     data.IsInitial,
+		InjectedFault: nil,
+		Response:      nil,
+		ConcurrentTo:  nil,
 	}
 
+	store.Reports.Add(traceReport)
+
 	response := UidResponse{
-		Stack:           report.FaultUid.Stack,
-		CompletedEvents: completedEvents,
+		Uid: *faultUid,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

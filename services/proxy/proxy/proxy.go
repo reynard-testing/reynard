@@ -170,6 +170,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			ParentId:       parentSpan.ParentID,
 			SpanId:         currentSpan.ParentID,
 			IsInitial:      isInitial,
+			Protocol:       util.GetProtocol(r),
 			FaultUid:       nil,
 		}
 

@@ -94,3 +94,12 @@ func GetDefaultClient() *http.Client {
 		Timeout:   5 * time.Second,
 	}
 }
+
+func GetProtocol(r *http.Request) string {
+	contentType := r.Header.Get("Content-Type")
+	if contentType == "application/grpc" {
+		return "gRPC"
+	} else {
+		return "HTTP"
+	}
+}

@@ -56,11 +56,16 @@ public class ImplicationsStore {
       }
     }
 
-    if (hasDownstreamRequests(cause)) {
+    var localisedCause = cause.asLocalised();
+
+    if (hasDownstreamRequests(localisedCause)) {
       return false;
     }
 
-    downstreamRequests.add(new DownstreamRequestEffect(cause, Set.copyOf(effects)));
+    var localisedEffects = effects.stream()
+        .map(x -> x.asLocalised())
+        .collect(Collectors.toSet());
+    downstreamRequests.add(new DownstreamRequestEffect(localisedCause, localisedEffects));
     return true;
   }
 
@@ -87,12 +92,17 @@ public class ImplicationsStore {
         throw new IllegalArgumentException("Downstream effect must be a parent of the cause(s)!");
       }
     }
-    Set<Behaviour> causesSet = Set.copyOf(causes);
-    if (hasUpstreamResponse(causesSet, effect)) {
+
+    var localisedEffect = effect.asLocalised();
+    var localisedCauses = causes.stream()
+        .map(x -> x.asLocalised())
+        .collect(Collectors.toSet());
+
+    if (hasUpstreamResponse(localisedCauses, localisedEffect)) {
       return false;
     }
 
-    upstreamResponses.add(new UpstreamResponseEffect(causesSet, effect));
+    upstreamResponses.add(new UpstreamResponseEffect(localisedCauses, localisedEffect));
     return true;
   }
 
@@ -123,16 +133,19 @@ public class ImplicationsStore {
       }
     }
 
-    Set<Behaviour> causesSet = Set.copyOf(causes);
-    if (hasEffect(causesSet, effect, target)) {
+    var localisedEffect = effect.asLocalised();
+    Set<Behaviour> causesSet = causes.stream()
+        .map(x -> x.asLocalised())
+        .collect(Collectors.toSet());
+    if (hasEffect(causesSet, localisedEffect, target)) {
       return false;
     }
 
     // Remove supersets
-    target.removeIf(x -> x.effect.matches(effect) && Behaviour.isSubsetOf(causesSet, x.causes));
+    target.removeIf(x -> x.effect.matches(localisedEffect) && Behaviour.isSubsetOf(causesSet, x.causes));
 
     // Add myself
-    target.add(new Substitution(causesSet, effect));
+    target.add(new Substitution(causesSet, localisedEffect));
     return true;
   }
 

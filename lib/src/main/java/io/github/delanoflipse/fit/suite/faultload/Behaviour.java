@@ -48,6 +48,11 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
         return new Behaviour(uid, newMode);
     }
 
+    @JsonIgnore
+    public Behaviour asLocalised() {
+        return new Behaviour(uid.asLocalised(), mode);
+    }
+
     public static Behaviour of(FaultUid uid) {
         return new Behaviour(uid, null);
     }

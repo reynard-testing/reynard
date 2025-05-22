@@ -13,6 +13,13 @@ public class Lists {
                 .collect(Collectors.toList());
     }
 
+    /** Return A ∪ B */
+    public static <T> List<T> union(Collection<T> A, Collection<T> B) {
+        List<T> union = new ArrayList<>(A);
+        union.addAll(B);
+        return union;
+    }
+
     public static <T> List<T> plus(List<T> A, T e) {
         var list = new ArrayList<>(A);
         list.add(e);

@@ -477,27 +477,22 @@ public class ImplicationsStoreTest {
   public void testContradiction() {
     ImplicationsStore testStore = new ImplicationsStore();
 
-    var nRoot = new EventBuilder()
-        .withPoint("R", "r1");
+    var nRoot = new EventBuilder().withPoint("R");
     var r = nRoot.uid();
 
-    var nA = nRoot.createChild()
-        .withPoint("A", "a1");
+    var nA = nRoot.createChild().withPoint("A");
     var a = nA.uid();
 
-    var nB = nRoot.createChild()
-        .withPoint("B", "b1");
+    var nB = nRoot.createChild().withPoint("B");
     var b = nB.uid();
 
-    var nC = nRoot.createChild()
-        .withPoint("C", "c1");
+    var nC = nRoot.createChild().withPoint("C");
     var c = nC.uid();
 
-    var nD = nRoot.createChild()
-        .withPoint("D", "d1");
+    var nD = nRoot.createChild().withPoint("D");
     var d = nD.uid();
 
-    // Happy path, root calls A and B
+    // Happy path, root calls A B, D
     testStore.addDownstreamRequests(r, Set.of(a, b, d));
 
     // Fallback for A is C
@@ -507,13 +502,13 @@ public class ImplicationsStoreTest {
 
     // if A&C fail, then no b or d
     testStore.addExclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c, mode1)), b);
-
     testStore.addExclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c, mode1)), d);
 
     // if B&C fail, then no d
     testStore.addExclusionEffect(Set.of(new Behaviour(b, mode1), new Behaviour(c, mode1)), d);
 
     // if A, B and C fail, then no D
+    // But which c are we failing?
     Set<Behaviour> res4 = new ImplicationsModel(testStore).getBehaviours(Set.of(
         new Fault(a, mode1),
         new Fault(b, mode1),
@@ -691,7 +686,7 @@ public class ImplicationsStoreTest {
     assertEquals(7, res1.size());
     assertEquals(2, faultyBehaviours(res1));
 
-    // if A and A1 fail, exclude B, but include D, E
+    // if A and A1 fail, exclude B, B1 and C, but include D, E
     Set<Behaviour> res2 = new ImplicationsModel(testStore).getBehaviours(Set.of(
         new Fault(a, mode1),
         new Fault(a1, mode1)));
@@ -699,13 +694,13 @@ public class ImplicationsStoreTest {
     assertEquals(5, res2.size());
     assertEquals(2, faultyBehaviours(res2));
 
-    // if A and A1 fail, exclude B and,B1, C, E
+    // if A and A1 fail, exclude B and,B1, C, but include D, E
     Set<Behaviour> res3 = new ImplicationsModel(testStore).getBehaviours(Set.of(
         new Fault(a, mode1),
         new Fault(b, mode1),
         new Fault(a1, mode1)));
 
-    assertEquals(4, res3.size());
+    assertEquals(5, res3.size());
     assertEquals(2, faultyBehaviours(res3));
   }
 }

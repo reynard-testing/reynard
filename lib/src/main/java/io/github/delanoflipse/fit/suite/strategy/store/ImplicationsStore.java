@@ -159,14 +159,14 @@ public class ImplicationsStore {
     return false;
   }
 
-  public DownstreamRequestEffect getUpstreamEffect(FaultUid cause) {
+  public DownstreamRequestEffect getDownstream(FaultUid cause) {
     return downstreamRequests.stream()
         .filter(x -> x.cause.matches(cause))
         .findFirst()
         .orElse(null);
   }
 
-  public UpstreamResponseEffect getDownstreamEffect(FaultUid cause, Set<Behaviour> upstreams) {
+  public UpstreamResponseEffect getUpstream(FaultUid cause, Set<Behaviour> upstreams) {
     return upstreamResponses.stream()
         .filter(x -> x.effect.uid().matches(cause))
         .filter(x -> Behaviour.isSubsetOf(x.causes, upstreams))

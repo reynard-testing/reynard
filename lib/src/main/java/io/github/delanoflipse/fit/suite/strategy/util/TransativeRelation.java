@@ -142,4 +142,41 @@ public class TransativeRelation<X> {
         return elements;
     }
 
+    public List<X> topologicalOrder() {
+        var roots = elements.stream()
+                .filter(x -> getParent(x) == null)
+                .toList();
+
+        var edges = getRelations();
+
+        var ordered = new ArrayList<X>();
+        var front = new ArrayList<>(roots);
+
+        // no roots, just return them all
+        if (roots.isEmpty()) {
+            return List.copyOf(elements);
+        }
+
+        while (!front.isEmpty()) {
+            X el = front.remove(0);
+            ordered.add(el);
+
+            var edgesFrom = edges.stream()
+                    .filter(x -> x.first().equals(el))
+                    .toList();
+            for (var edge : edgesFrom) {
+                var edgeDestination = edge.second();
+                edges.remove(edge);
+                var edgesLeft = edges.stream()
+                        .filter(x -> x.second().equals(edgeDestination))
+                        .count();
+                if (edgesLeft == 0) {
+                    front.add(edgeDestination);
+                }
+            }
+        }
+
+        return ordered;
+    }
+
 }

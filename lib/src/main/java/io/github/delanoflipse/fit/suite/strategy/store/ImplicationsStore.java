@@ -123,6 +123,10 @@ public class ImplicationsStore {
       return false;
     }
 
+    if (Behaviour.contains(causesSet, effect)) {
+      throw new IllegalArgumentException("Effect " + effect + " is a cause!");
+    }
+
     // Remove supersets
     target.removeIf(x -> x.effect.matches(effect) && Behaviour.isSubsetOf(causesSet, x.causes));
 

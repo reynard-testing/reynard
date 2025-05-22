@@ -3,7 +3,7 @@ parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}")
 
 result_tag=${1:+-$1}
-iterations=${N:-1}
+iterations=${N:-30}
 
 export STOP_AFTER=1
 export BUILD_BEFORE=${BUILD_BEFORE:-1}
@@ -59,7 +59,7 @@ if [ -z "${SKIP_INDUSTRY}" ]; then
 
     run_n_benchmark "expedia"
     run_n_benchmark "mailchimp"
-    run_n_benchmark "mailchimp" "WITH_FAULTS=1 DB_READ_ONLY=1"
+    # run_n_benchmark "mailchimp" "WITH_FAULTS=1 DB_READ_ONLY=1"
     run_n_benchmark "netflix"
     run_n_benchmark "netflix" "WITH_FAULTS=1 NETFLIX_FAULTS=1"
 fi

@@ -63,12 +63,17 @@ public class ConditionalPointDetector implements FeedbackHandler {
             Set<Behaviour> expectedBehaviours) {
 
         Set<Fault> injected = result.trace.getInjectedFaults();
+        List<FaultUid> newPointsUids = newPoints.stream()
+                .map(x -> x.faultUid)
+                .collect(Collectors.toList());
 
         // determine which reports can cause the new point
         List<TraceReport> parentalCauses = result.trace.getChildren(parent);
         List<Behaviour> directCauses = parentalCauses.stream()
                 .map(TraceReport::getBehaviour)
                 .filter(x -> x.isFault())
+                // Cannot cause itself
+                .filter(x -> !FaultUid.contains(newPointsUids, x.uid()))
                 .collect(Collectors.toList());
 
         for (var point : newPoints) {

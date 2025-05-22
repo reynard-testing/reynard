@@ -6,6 +6,7 @@ from dataclasses import dataclass, field, replace
 from util import get_json, find_json
 from tree_viz import simplify_signature
 
+
 @dataclass(frozen=True)
 class Point:
     signature: str
@@ -17,11 +18,14 @@ class Point:
 
     def any_count(self) -> 'Point':
         return Point(self.signature, self.destination, -1)
+
+
 @dataclass(frozen=True)
 class CallGraphNode:
     id: str
     stack: tuple[Point]
     children: list['CallGraphNode'] = field(default_factory=list)
+
 
 def parse_point_str(name: str) -> tuple[Point]:
     name = re.sub(r"\{.+\}", "", name)
@@ -42,6 +46,7 @@ def parse_point_str(name: str) -> tuple[Point]:
         ))
     return tuple(points)
 
+
 def parse_point(p: dict) -> tuple[Point]:
     points: list[Point] = []
     for ip in p['stack']:
@@ -56,13 +61,15 @@ def parse_point(p: dict) -> tuple[Point]:
         ))
     return tuple(points)
 
+
 def build_tree_from_mapping(node: tuple[Point], parent_children: dict[tuple[Point], list[Point]]):
     lookup_key = tuple([x.any_sig().any_count() for x in node])
     if lookup_key in parent_children:
-        children = [build_tree_from_mapping(node + (x,), parent_children) for x in parent_children[lookup_key]]
+        children = [build_tree_from_mapping(
+            node + (x,), parent_children) for x in parent_children[lookup_key]]
     else:
         children = []
-    
+
     point = node[-1]
     return CallGraphNode(
         id=f"{len(node)}-{point.signature}-{point.destination}",
@@ -70,11 +77,17 @@ def build_tree_from_mapping(node: tuple[Point], parent_children: dict[tuple[Poin
         children=children,
     )
 
-def build_call_graph(pts: list, implications: list) -> CallGraphNode:
-    stacks = [parse_point_str(p) if isinstance(p, str) else parse_point(p) for p in pts]
+
+def build_call_graph(pts: list, implications: list) -> tuple[CallGraphNode, list[tuple[Point]]]:
+    stacks = [parse_point_str(p) if isinstance(
+        p, str) else parse_point(p) for p in pts]
     stacks = [x for x in stacks if x != None]
     stacks.sort(key=lambda x: len(x))
     parent_children: dict[tuple[Point], list[Point]] = {}
+    if len(stacks) == 0 or len(stacks[0]) == 0:
+        print("No points found")
+        print(stacks)
+        return None, []
     root = tuple([stacks[0][0].any_count()])
     parent_children.setdefault(root, [])
 
@@ -86,24 +99,34 @@ def build_call_graph(pts: list, implications: list) -> CallGraphNode:
         if point not in parent_children[parent_key]:
             parent_children[parent_key].append(point)
 
-    for key in parent_children.keys():
-        print(key)
-        print(len(parent_children[key]))
+    return build_tree_from_mapping(root, parent_children), stacks
 
-    return build_tree_from_mapping(root, parent_children)
 
-def construct_call_graph(dot: Digraph, node: CallGraphNode):
+def construct_call_graph(dot: Digraph, node: CallGraphNode, use_signature: bool = True):
     point = node.stack[-1]
     label_parts = [
         point.destination,
-        point.signature,
     ]
+    if use_signature:
+        label_parts.append(point.signature)
     label = "\n".join(label_parts)
     dot.node(node.id, label=label)
 
     for child in node.children:
-        construct_call_graph(dot, child)
+        construct_call_graph(dot, child, use_signature)
         dot.edge(node.id, child.id, label=f"#{child.stack[-1].count}")
+
+
+def should_use_signature(pts: list[tuple[Point]]) -> bool:
+    ids: dict[str, str] = {}
+    for p in pts:
+        identifier = p[-1].destination + str(p[-1].count)
+        if identifier in ids:
+            if ids[identifier] != p[-1].signature:
+                return True
+        ids[identifier] = p[-1].signature
+    return False
+
 
 def render_call_graph(data: dict, output_name: str):
     fault_injection_points = []
@@ -115,9 +138,13 @@ def render_call_graph(data: dict, output_name: str):
     if 'implications' in data:
         implications = data['implications']
 
-    tree = build_call_graph(fault_injection_points, implications)
+    tree, pts = build_call_graph(fault_injection_points, implications)
+    if tree is None:
+        print("No call graph found")
+        return
+    use_signature = should_use_signature(pts)
     dot = Digraph(comment='Call graph', format='pdf')
-    construct_call_graph(dot, tree)
+    construct_call_graph(dot, tree, use_signature)
     dot.render(filename=output_name)
 
 

@@ -8,6 +8,7 @@ from util import get_json, find_json
 from graphs import TIMINGS_OF_INTEREST, TIMINGS_OF_EXTRA_INTEREST
 from graphs import render_timing_over_index, render_distribution_of_timing
 from graphs import render_queue_size_graph, render_tree
+from call_graph import render_call_graph
 import config
 
 
@@ -35,18 +36,26 @@ def for_dir(directory: str):
     print(f"Found {len(iteration_dirs)} iterations in {directory}")
 
     # skip: not really needed
-    # TODO: check if consistent
     ref_generator_data = get_json(find_json(iteration_dirs[0], "generator"))
 
     for iteration_dir in iteration_dirs[1:]:
         generator_data = get_json(find_json(iteration_dir, "generator"))
-        if ref_generator_data != generator_data:
+        is_inconsistent = False
+        if ref_generator_data['stats'] != generator_data['stats']:
+            is_inconsistent = True
+        if ref_generator_data['details'] != generator_data['details']:
+            is_inconsistent = True
+        if ref_generator_data['tree'] != generator_data['tree']:
+            is_inconsistent = True
+        if is_inconsistent:
             print(f"Inconsistent generator data in {iteration_dir}!")
 
     queue_sizes = np.array(ref_generator_data['details']['queue_size'])
     render_queue_size_graph(queue_sizes, directory)
     render_tree(ref_generator_data['tree'],
                 os.path.join(directory, 'search_tree'))
+    render_call_graph(ref_generator_data,
+                      os.path.join(directory, 'call_graph'))
 
     render_statistics(iteration_dirs, directory, True)
     print(f"Rendered {directory}")

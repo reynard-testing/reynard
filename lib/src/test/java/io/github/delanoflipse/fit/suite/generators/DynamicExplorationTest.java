@@ -175,7 +175,7 @@ public class DynamicExplorationTest {
     }
 
     @Test
-    public void testWithWildcars() {
+    public void testWithWildcards() {
         var modes = FailureModes.getModes(1);
 
         var a = new EventBuilder("A");

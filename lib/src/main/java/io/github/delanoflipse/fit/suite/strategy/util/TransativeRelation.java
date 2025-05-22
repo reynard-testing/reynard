@@ -143,6 +143,7 @@ public class TransativeRelation<X> {
     }
 
     public List<X> topologicalOrder() {
+        // (this is Kahn's algorithm)
         var roots = elements.stream()
                 .filter(x -> getParent(x) == null)
                 .toList();

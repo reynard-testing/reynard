@@ -16,6 +16,7 @@ def simplify_signature(sig: str) -> str:
     signature = str(sig)
     signature = re.sub(r"\(.+\)", "", signature)
     signature = re.sub(r"(GET|POST|PUT|DELETE) ", "", signature)
+    signature = re.sub(r"\{.*\}", "", signature)
     signature_parts = signature.split("/")
     if len(signature_parts) > 1:
         return ".../" + signature_parts[-1]
@@ -37,7 +38,7 @@ def simplify_name(name: str):
     uid_parts = uid.split(">")
     relevant_parts = []
     for i in range(len(uid_parts)):
-        p_uid = re.sub(r"\{.+\}", "", uid_parts[i])
+        p_uid = re.sub(r"\{.*\}", "", uid_parts[i])
         p1, count = p_uid.split("#")
         if ":" in p1:
             destination, signature = p1.split(":")

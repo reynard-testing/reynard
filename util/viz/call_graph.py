@@ -42,6 +42,20 @@ def parse_point_str(name: str) -> tuple[Point]:
         ))
     return tuple(points)
 
+def parse_point(p: dict) -> tuple[Point]:
+    points: list[Point] = []
+    for ip in p['stack']:
+        if ip["count"] < 0:
+            return None
+        sig = ip["signature"]
+        sig = re.sub(r"\{.+\}", "", sig)
+        points.append(Point(
+            count=ip["count"],
+            signature=simplify_signature(sig),
+            destination=ip["destination"],
+        ))
+    return tuple(points)
+
 def build_tree_from_mapping(node: tuple[Point], parent_children: dict[tuple[Point], list[Point]]):
     lookup_key = tuple([x.any_sig().any_count() for x in node])
     if lookup_key in parent_children:
@@ -57,7 +71,8 @@ def build_tree_from_mapping(node: tuple[Point], parent_children: dict[tuple[Poin
     )
 
 def build_call_graph(pts: list, implications: list) -> CallGraphNode:
-    stacks = [parse_point_str(p) for p in pts]
+    stacks = [parse_point_str(p) if isinstance(p, str) else parse_point(p) for p in pts]
+    stacks = [x for x in stacks if x != None]
     stacks.sort(key=lambda x: len(x))
     parent_children: dict[tuple[Point], list[Point]] = {}
     root = tuple([stacks[0][0].any_count()])

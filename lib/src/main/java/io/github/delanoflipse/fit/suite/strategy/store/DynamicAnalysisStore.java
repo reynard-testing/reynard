@@ -241,11 +241,11 @@ public class DynamicAnalysisStore {
     }
 
     public Set<Behaviour> getExpectedBehaviour(Collection<Fault> faults) {
-        return implicationsStore.getBehaviours(faults);
+        return new ImplicationsModel(implicationsStore).getBehaviours(faults);
     }
 
     public Set<FaultUid> getExpectedPoints(Collection<Fault> faults) {
-        return implicationsStore.getBehaviours(faults)
+        return new ImplicationsModel(implicationsStore).getBehaviours(faults)
                 .stream()
                 .map(Behaviour::uid)
                 .collect(Collectors.toSet());

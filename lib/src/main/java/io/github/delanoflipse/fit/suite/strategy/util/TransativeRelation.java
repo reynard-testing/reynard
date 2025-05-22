@@ -79,6 +79,10 @@ public class TransativeRelation<X> {
         return hasTransativeRelation(item1, item2) || hasTransativeRelation(item2, item1);
     }
 
+    public Set<X> getChildren(X parent) {
+        return relation.getOrDefault(parent, Set.of());
+    }
+
     public Set<X> getDecendants(X parent) {
         return transitiveRelations.getOrDefault(parent, Set.of());
     }
@@ -132,10 +136,6 @@ public class TransativeRelation<X> {
         } else {
             return getRoot(parent);
         }
-    }
-
-    public Set<X> getChildren(X parent) {
-        return relation.getOrDefault(parent, Set.of());
     }
 
     public Set<X> getElements() {

@@ -1,7 +1,6 @@
 package io.github.delanoflipse.fit.suite.testutil;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +11,6 @@ import io.github.delanoflipse.fit.suite.faultload.Fault;
 import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.Faultload;
-import io.github.delanoflipse.fit.suite.faultload.PartialFaultInjectionPoint;
 import io.github.delanoflipse.fit.suite.faultload.modes.ErrorFault;
 import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
@@ -74,6 +72,14 @@ public class EventBuilder {
 
   public EventBuilder withPoint(String service, String signature) {
     return withPoint(service, signature, Map.of(), 0);
+  }
+
+  public EventBuilder withPoint(String service, int count) {
+    return withPoint(service, service, Map.of(), count);
+  }
+
+  public EventBuilder withPoint(String service) {
+    return withPoint(service, service, Map.of(), 0);
   }
 
   public EventBuilder withResponse(int status, String body) {

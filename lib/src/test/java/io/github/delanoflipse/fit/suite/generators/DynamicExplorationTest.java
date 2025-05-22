@@ -13,6 +13,7 @@ import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicExplorationGenerator;
+import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsModel;
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsStore;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 import io.github.delanoflipse.fit.suite.testutil.EventBuilder;
@@ -25,8 +26,8 @@ public class DynamicExplorationTest {
     private FaultloadResult toResult(Faultload f, ImplicationsStore store) {
         var root = store.getRootCause();
         List<TraceReport> reports = new ArrayList<>();
-
-        for (var behav : store.getBehaviours(f.faultSet())) {
+        var model = new ImplicationsModel(store);
+        for (var behav : model.getBehaviours(f.faultSet())) {
             TraceReport report = asReport(behav, f);
             if (behav.uid().matches(root)) {
                 report.isInitial = true;

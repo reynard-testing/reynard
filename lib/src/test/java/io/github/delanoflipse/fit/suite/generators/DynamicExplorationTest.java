@@ -173,4 +173,26 @@ public class DynamicExplorationTest {
         // We omit B,C,D,E and B,C,D
         assertEquals(10, result.size());
     }
+
+    @Test
+    public void testWithWildcars() {
+        var modes = FailureModes.getModes(1);
+
+        var a = new EventBuilder("A");
+        var b = a.createChild().withPoint("B");
+        var bRetry = a.createChild().withPoint("B", 1);
+
+        ImplicationsStore store = new ImplicationsStore();
+        store.addDownstreamRequests(a.uid(), List.of(b.uid()));
+
+        // B failure includes B retry
+        store.addInclusionEffect(Set.of(b.behaviour().asMode(modes.get(0))), bRetry.uid());
+
+        DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
+        generator.getStore().addFaultUid(b.uid().asAnyCount());
+        var result = playout(generator, store);
+
+        // [], B, B1, Binf
+        assertEquals(4, result.size());
+    }
 }

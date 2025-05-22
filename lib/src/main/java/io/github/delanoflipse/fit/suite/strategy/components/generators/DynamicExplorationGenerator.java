@@ -188,21 +188,23 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             context.reportFaultUid(point);
         }
 
-        // Also included known points that are similar (e.g., persistent faults)
-        List<FaultUid> knownObserved = context.getFaultInjectionPoints().stream()
-                .filter(p -> FaultUid.contains(observed, p))
-                .toList();
-
         Set<Fault> injected = result.trace.getInjectedFaults();
         List<FaultUid> injectedPoints = injected.stream()
                 .map(Fault::uid)
                 .toList();
+        List<FaultUid> known = context.getFaultInjectionPoints();
+        List<FaultUid> toExplore = new ArrayList<>();
 
-        // Note: we could already prune any faults that contain a causual parent
-        // currenlty, this is only caught by the reachability pruner
-        List<FaultUid> toExplore = knownObserved.stream()
-                .filter(p -> !FaultUid.contains(injectedPoints, p))
-                .toList();
+        for (var point : observed) {
+            // Also included known points that are similar (e.g., persistent faults)
+            // And ignore points that are already injected
+            var relatedPoints = known.stream()
+                    .filter(p -> point.matches(p))
+                    .filter(p -> !FaultUid.contains(injectedPoints, p))
+                    .toList();
+
+            toExplore.addAll(relatedPoints);
+        }
 
         TreeNode currentNode = new TreeNode(Set.copyOf(injected));
         expand(currentNode, toExplore);

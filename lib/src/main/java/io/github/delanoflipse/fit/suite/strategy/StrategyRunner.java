@@ -21,7 +21,6 @@ import io.github.delanoflipse.fit.suite.strategy.components.Pruner;
 import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicExplorationGenerator;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.Generator;
-import io.github.delanoflipse.fit.suite.strategy.components.generators.IncreasingSizeGenerator;
 import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
 import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 import io.github.delanoflipse.fit.suite.util.TaggedTimer;
@@ -286,10 +285,6 @@ public class StrategyRunner {
                 logger.info("Progress: generated and pruned >" + order + " faultloads");
                 orders++;
             }
-        }
-
-        if (generator instanceof IncreasingSizeGenerator gen) {
-            logger.info("Generator queue size: {}", gen.getQueuSize());
         }
 
         if (generator instanceof DynamicExplorationGenerator gen) {

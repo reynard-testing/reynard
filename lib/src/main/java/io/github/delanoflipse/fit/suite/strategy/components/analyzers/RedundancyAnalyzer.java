@@ -117,6 +117,7 @@ public class RedundancyAnalyzer implements FeedbackHandler, Reporter {
                     .map(Fault::toString)
                     .collect(Collectors.toList()));
 
+            reports.add(missingReport);
         }
 
         report.put("count", notInjected.size());

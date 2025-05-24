@@ -101,18 +101,15 @@ public class FiTestExtension
 
         strategy = new StrategyRunner(modes);
         strategy
-                // .withComponent(new IncreasingSizeGenerator(strategy.getStore(),
-                // strategy::prune))
                 .withComponent(new DynamicExplorationGenerator(strategy.getStore(), strategy::prune, traversalStrategy))
+                // These components detect the necessairy info
+                // for the implications store
                 .withComponent(new HappyPathDetector())
                 .withComponent(new ParentChildDetector())
                 .withComponent(new HappensBeforeNeighbourDetector())
                 .withComponent(new ErrorPropagationDetector())
-                // Note: InjectionPointDetector needs to be the last detector in the chain
-                // Because it can add new cases, which can get prune,
-                // which rely on info of the other detectors
-                // .withComponent(new InjectionPointDetector(traversalStrategy,
-                // onlyPersistantOrTransientRetries))
+                // Note: ConditionalPointDetector needs to be the last detector in the chain, as
+                // it relies on the implications
                 .withComponent(new ConditionalPointDetector(onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())

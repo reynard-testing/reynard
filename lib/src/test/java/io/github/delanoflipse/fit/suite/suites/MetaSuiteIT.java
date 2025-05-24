@@ -160,7 +160,7 @@ public class MetaSuiteIT {
         @Override
         public PruneDecision prune(Faultload faultload, PruneContext context) {
             for (FaultUid uid : faultload.getFaultUids()) {
-                if (uid.getPoint().destination().equals("proxy3")) {
+                if (!uid.getPoint().destination().equals("proxy1")) {
                     return PruneDecision.PRUNE_SUPERSETS;
                 }
             }

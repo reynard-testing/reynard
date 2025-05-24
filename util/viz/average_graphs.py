@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from unittest import loader
 
 import numpy as np
 
@@ -8,7 +9,56 @@ from util import get_json, find_json
 from graphs import TIMINGS_OF_INTEREST, TIMINGS_OF_EXTRA_INTEREST
 from graphs import render_timing_over_index, render_distribution_of_timing
 from graphs import render_queue_size_graph, render_tree
+from call_graph import render_call_graph
 import config
+
+
+class DataLoader:
+    def get_sub_dirs(self):
+        sub_dirs = [os.path.join(self.root_dir, d) for d in os.listdir(
+            self.root_dir) if os.path.isdir(os.path.join(self.root_dir, d))]
+        return sub_dirs
+
+    def __init__(self, root_dir: str):
+        self.root_dir = root_dir
+        self.sub_dirs = self.get_sub_dirs()
+        self.generator_data = []
+        self.timing_data = []
+        self.search_space_data = []
+        self.pruner_data = []
+
+        self.reference_generator_data = None
+        self.reference_search_space = None
+        self.reference_pruner_data = None
+
+    def load(self):
+        for sub_dir in self.sub_dirs:
+            generator_json = find_json(sub_dir, "generator")
+            if generator_json is not None:
+                self.generator_data.append(get_json(generator_json))
+
+            timing_json = find_json(sub_dir, "timing.json")
+            if timing_json is not None:
+                self.timing_data.append(get_json(timing_json))
+
+            search_json = find_json(sub_dir, "search_space.json")
+            if search_json is not None:
+                self.search_space_data.append(get_json(search_json))
+
+            pruners_json = find_json(sub_dir, "pruners.json")
+            if pruners_json is not None:
+                self.pruner_data.append(get_json(pruners_json))
+
+        self.reference_generator_data = self.generator_data[0]
+        self.generator_data = self.generator_data[1:]
+
+        self.reference_search_space = self.search_space_data[0]
+        self.search_space_data = self.search_space_data[1:]
+
+        self.reference_pruner_data = self.pruner_data[0]
+        self.pruner_data = self.pruner_data[1:]
+        print(
+            f"Loaded {len(self.generator_data) + 1} entries from {self.root_dir}")
 
 
 def get_args():
@@ -24,43 +74,65 @@ def get_args():
     return args
 
 
-def get_dirs(dir: str):
-    indexed = [d for d in os.listdir(
-        dir) if os.path.isdir(os.path.join(dir, d))]
-    return indexed
+def determine_inconsistencies(loader: DataLoader) -> tuple[int, set]:
+    generator_data = loader.reference_generator_data
+    inconcistencies_found = 0
+    errors = set()
+    for other_generator_data in loader.generator_data:
+        is_inconsistent = False
+        if generator_data['stats'] != other_generator_data['stats']:
+            is_inconsistent = True
+            errors.add('gen-stats')
+        if generator_data['details'] != other_generator_data['details']:
+            is_inconsistent = True
+            errors.add('gen-stats')
+        if generator_data['tree'] != other_generator_data['tree']:
+            is_inconsistent = True
+            errors.add('gen-tree')
+        if is_inconsistent:
+            inconcistencies_found += 1
+
+    pruner_data = loader.reference_pruner_data
+    for other_pruner_data in loader.pruner_data:
+        if not 'DynamicReductionPruner' in pruner_data:
+            continue
+        if pruner_data['DynamicReductionPruner'] != other_pruner_data['DynamicReductionPruner']:
+            errors.add('pruner-dynamic-reduction')
+
+    search_space_data = loader.reference_search_space
+    for other_search_space_data in loader.search_space_data:
+        if search_space_data != other_search_space_data:
+            errors.add('search-space')
+
+    return inconcistencies_found, errors
 
 
 def for_dir(directory: str):
-    iteration_dirs = [os.path.join(directory, x) for x in get_dirs(directory)]
-    print(f"Found {len(iteration_dirs)} iterations in {directory}")
+    loader = DataLoader(directory)
+    loader.load()
 
-    # skip: not really needed
-    # TODO: check if consistent
-    ref_generator_data = get_json(find_json(iteration_dirs[0], "generator"))
+    inconcistencies_found, inconsitency_errors = determine_inconsistencies(
+        loader)
+    if inconcistencies_found > 0:
+        print(f"{inconcistencies_found} inconcistencies in data in {directory}!")
+        print(f"errors: {inconsitency_errors}")
 
-    for iteration_dir in iteration_dirs[1:]:
-        generator_data = get_json(find_json(iteration_dir, "generator"))
-        if ref_generator_data != generator_data:
-            print(f"Inconsistent generator data in {iteration_dir}!")
-
-    queue_sizes = np.array(ref_generator_data['details']['queue_size'])
+    generator_data = loader.reference_generator_data
+    queue_sizes = np.array(generator_data['details']['queue_size'])
     render_queue_size_graph(queue_sizes, directory)
-    render_tree(ref_generator_data['tree'],
+    render_tree(generator_data['tree'],
                 os.path.join(directory, 'search_tree'))
-
-    render_statistics(iteration_dirs, directory, True)
+    render_call_graph(generator_data,
+                      os.path.join(directory, 'call_graph'))
+    render_statistics(loader, directory, True)
     print(f"Rendered {directory}")
 
 
-def render_statistics(iteration_dirs: list[str], directory: str, over_time: bool = False):
+def render_statistics(loader: DataLoader, directory: str, over_time: bool = False):
     timings_per_key: dict[str, list[float]] = {}
     timings_over_index: dict[str, list[np.array]] = {}
 
-    for iteration_dir in iteration_dirs:
-        timing_data = get_json(find_json(iteration_dir, "timing.json"))
-        if timing_data is None:
-            print(f"Timing data not found in {iteration_dir}")
-            continue
+    for timing_data in loader.timing_data:
         for key in TIMINGS_OF_INTEREST:
             if key not in timing_data['details']:
                 continue
@@ -89,6 +161,39 @@ def render_statistics(iteration_dirs: list[str], directory: str, over_time: bool
     # average over all iterations
     render_distribution_of_timing(timings, directory)
     output_timing_stats(timings_per_key, directory)
+
+    test_timer_per_iteration = []
+    for timing_data in loader.timing_data:
+        if 'Total test time' in timing_data['details']:
+            avg_time = timing_data['stats']['Total test time']['average']['ns']
+            test_timer_per_iteration.append(avg_time)
+
+    render_timing_over_index(
+        'test_time_per_it', test_timer_per_iteration, directory)
+
+    # Output results summary
+    pruner_data = loader.reference_pruner_data
+    search_space_data = loader.reference_search_space
+    # Convert to seconds
+    test_time_data = np.array(
+        timings_per_key.get("Total test time", [])) * 1e-9
+    dynamic_reduction = 0
+    if 'DynamicReductionPruner' in pruner_data:
+        dynamic_reduction = pruner_data['DynamicReductionPruner']['directly_pruned']['count']
+    output_results({
+        "explored": search_space_data['total_run'],
+        "dynamic_reduction": dynamic_reduction,
+        "time_avg_s": np.mean(test_time_data),
+        "time_avg_n": len(test_time_data),
+    }, directory)
+
+
+def output_results(output: dict, directory: str):
+    data = output
+
+    results_path = os.path.join(directory, "results.json")
+    with open(results_path, "w") as f:
+        json.dump(data, f, indent=4)
 
 
 def output_timing_stats(timings_per_key, directory: str):

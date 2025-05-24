@@ -45,12 +45,13 @@ public class RedundancyAnalyzer implements FeedbackHandler, Reporter {
             logger.info("No faults were injected!");
             logger.info("There is a high likelyhood of the fault injection not working correctly!");
             logger.info("Missing: " + intendedFaults);
+            notInjected.add(Pair.of(result.trackedFaultload.getFaultload(), notInjectedFaults));
         } else if (!notInjectedFaults.isEmpty()) {
             logger.info("Not all faults were injected, missing:" + notInjectedFaults);
             logger.info("This can be due to redundant faults or a bug in the fault injection!");
+            notInjected.add(Pair.of(result.trackedFaultload.getFaultload(), notInjectedFaults));
         }
 
-        notInjected.add(Pair.of(result.trackedFaultload.getFaultload(), notInjectedFaults));
         return notInjectedFaults;
     }
 
@@ -117,6 +118,7 @@ public class RedundancyAnalyzer implements FeedbackHandler, Reporter {
                     .map(Fault::toString)
                     .collect(Collectors.toList()));
 
+            reports.add(missingReport);
         }
 
         report.put("count", notInjected.size());

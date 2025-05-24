@@ -1,0 +1,25 @@
+{
+  "name": "leaf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.59.0",
+    "@opentelemetry/sdk-metrics": "^2.0.1",
+    "@opentelemetry/sdk-node": "^0.201.1",
+    "@opentelemetry/sdk-trace-node": "^2.0.1",
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.21",
+    "axios": "^1.9.0",
+    "express": "^5.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

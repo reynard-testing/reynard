@@ -561,8 +561,6 @@ public class ImplicationsStoreTest {
 
     // fallback for B is C2
     testStore.addInclusionEffect(Set.of(new Behaviour(b_a, mode1)), c2);
-    testStore.addInclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c2, null), new Behaviour(b_ac, mode1)),
-        c2);
 
     // if A&C1 fail, then no b or d
     testStore.addExclusionEffect(Set.of(new Behaviour(a, mode1), new Behaviour(c1, mode1)), b_ac);

@@ -53,26 +53,13 @@ public class ImplicationsStoreTest {
 
   @BeforeEach
   public void setUp() {
-    nodeA = new EventBuilder()
-        .withPoint("A", "a1");
-
-    nodeB = nodeA.createChild()
-        .withPoint("B", "b1");
-
-    nodeC = nodeA.createChild()
-        .withPoint("C", "c1");
-
-    nodeD = nodeC.createChild()
-        .withPoint("D", "d1");
-
-    nodeE = nodeC.createChild()
-        .withPoint("E", "e1");
-
-    nodeF = nodeA.createChild()
-        .withPoint("F", "f1");
-
-    nodeG = nodeF.createChild()
-        .withPoint("G", "g1");
+    nodeA = new EventBuilder().withPoint("A");
+    nodeB = nodeA.createChild().withPoint("B");
+    nodeC = nodeA.createChild().withPoint("C");
+    nodeD = nodeC.createChild().withPoint("D");
+    nodeE = nodeC.createChild().withPoint("E");
+    nodeF = nodeA.createChild().withPoint("F");
+    nodeG = nodeF.createChild().withPoint("G");
 
     a = nodeA.behaviour();
     b = nodeB.behaviour();
@@ -90,7 +77,7 @@ public class ImplicationsStoreTest {
     store.addDownstreamRequests(f.uid(), Set.of(g.uid()));
   }
 
-  private void setupDownstream() {
+  private void setupUpstreamResponses() {
     // any fault in D/E causes C to be faulty in mode 1
     Behaviour fd1 = new Behaviour(d.uid(), mode1);
     Behaviour fd2 = new Behaviour(d.uid(), mode2);
@@ -129,10 +116,10 @@ public class ImplicationsStoreTest {
   private void setupInclusionAndExclusion() {
     // retry on F
     nodeF_retry = nodeA.createChild()
-        .withPoint("F", "f1", 1);
+        .withPoint("F", 1);
     f2 = nodeF_retry.behaviour();
     nodeG_F_retry = nodeF_retry.createChild()
-        .withPoint("G", "g1");
+        .withPoint("G");
     g2 = nodeG_F_retry.behaviour();
     Behaviour ff1 = new Behaviour(f.uid(), mode1);
     Behaviour ff2 = new Behaviour(f.uid(), mode2);
@@ -142,10 +129,10 @@ public class ImplicationsStoreTest {
 
     // retry 2 on F
     nodeF_retry2 = nodeA.createChild()
-        .withPoint("F", "f1", Map.of(), 2);
+        .withPoint("F", Map.of(), 2);
     f3 = nodeF_retry2.behaviour();
     nodeG_F_retry2 = nodeF_retry2.createChild()
-        .withPoint("G", "g1");
+        .withPoint("G");
     g3 = nodeG_F_retry2.behaviour();
     Behaviour f21 = new Behaviour(f2.uid(), mode1);
     Behaviour f22 = new Behaviour(f2.uid(), mode2);
@@ -155,7 +142,7 @@ public class ImplicationsStoreTest {
 
     // alternative for B, for mode 1
     nodeB_alt = nodeA.createChild()
-        .withPoint("B_prime", "b1", 0);
+        .withPoint("B_prime", b.uid().signature(), 0);
     bprime = nodeB_alt.behaviour();
     Behaviour fb = new Behaviour(b.uid(), mode1);
     store.addInclusionEffect(Set.of(fb), bprime.uid());
@@ -249,7 +236,7 @@ public class ImplicationsStoreTest {
 
   @Test
   public void testDownstreamD() {
-    setupDownstream();
+    setupUpstreamResponses();
 
     Set<Behaviour> result = getExpected(Set.of(new Fault(d.uid(), mode1)));
     Set<Behaviour> faulty = getFaultyBehaviours(result);
@@ -258,7 +245,7 @@ public class ImplicationsStoreTest {
 
   @Test
   public void testDownstreamE() {
-    setupDownstream();
+    setupUpstreamResponses();
 
     Set<Behaviour> result = getExpected(Set.of(new Fault(e.uid(), mode1)));
     assertEquals(2, faultyBehaviours(result));
@@ -266,7 +253,7 @@ public class ImplicationsStoreTest {
 
   @Test
   public void testDownstreamG() {
-    setupDownstream();
+    setupUpstreamResponses();
 
     Set<Behaviour> result = getExpected(Set.of(new Fault(g.uid(), mode1)));
     assertEquals(1, faultyBehaviours(result));
@@ -274,7 +261,7 @@ public class ImplicationsStoreTest {
 
   @Test
   public void testDownstreamDE() {
-    setupDownstream();
+    setupUpstreamResponses();
 
     Set<Behaviour> result = getExpected(Set.of(new Fault(d.uid(), mode1), new Fault(e.uid(), mode2)));
     assertEquals(3, faultyBehaviours(result));
@@ -282,7 +269,7 @@ public class ImplicationsStoreTest {
 
   @Test
   public void testHideDDownstreamHideF() {
-    setupDownstream();
+    setupUpstreamResponses();
     setupExclusion();
 
     Set<Behaviour> result = getExpected(Set.of(new Fault(d.uid(), mode1)));
@@ -336,20 +323,20 @@ public class ImplicationsStoreTest {
 
   @Test
   public void testComplex() {
-    setupDownstream();
+    setupUpstreamResponses();
     setupInclusionAndExclusion();
 
     Set<Behaviour> result = getExpected(
         Set.of(new Fault(b.uid(), mode1), new Fault(d.uid(), mode1)));
 
-    // A, b, b', c, d, e; exludes f, g
+    // A, b, b', c, d, e; exludes all f(0-2), g's
     assertEquals(6, result.size());
     assertEquals(3, faultyBehaviours(result));
   }
 
   @Test
   public void testComplexRedundant() {
-    setupDownstream();
+    setupUpstreamResponses();
     setupInclusionAndExclusion();
 
     Set<Behaviour> result = getExpected(
@@ -363,7 +350,7 @@ public class ImplicationsStoreTest {
 
   @Test
   public void testComplexRedundant2() {
-    setupDownstream();
+    setupUpstreamResponses();
     setupInclusionAndExclusion();
 
     Set<Behaviour> result = getExpected(
@@ -377,7 +364,7 @@ public class ImplicationsStoreTest {
 
   @Test
   public void testPersistent() {
-    setupDownstream();
+    setupUpstreamResponses();
     setupInclusionAndExclusion();
 
     Set<Behaviour> result = getExpected(Set.of(new Fault(f.uid().asAnyCount(), mode1)));

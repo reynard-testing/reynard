@@ -90,6 +90,11 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     }
 
     @JsonIgnore
+    public FaultUid asChild(FaultInjectionPoint point) {
+        return new FaultUid(Lists.plus(stack, point));
+    }
+
+    @JsonIgnore
     public FaultUid asAnyCount() {
         var head = getPoint();
         var tail = getTail();
@@ -112,8 +117,8 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
             return this;
         }
 
+        FaultInjectionPoint origin = getOrigin().asAnyCount().asAnyCallStack();
         FaultInjectionPoint destination = getPoint();
-        FaultInjectionPoint origin = getOrigin().asAnyCount();
 
         return new FaultUid(List.of(origin, destination));
     }

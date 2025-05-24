@@ -70,6 +70,10 @@ public class EventBuilder {
     return withPoint(service, signature, cs, 0);
   }
 
+  public EventBuilder withPoint(String service, Map<String, Integer> cs, int count) {
+    return withPoint(service, service, cs, count);
+  }
+
   public EventBuilder withPoint(String service, String signature) {
     return withPoint(service, signature, Map.of(), 0);
   }

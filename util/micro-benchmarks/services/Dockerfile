@@ -16,5 +16,9 @@ RUN npm run build
 
 # Start the application with OpenTelemetry auto-instrumentation
 ARG SERVICE_NAME=leaf
+
+
 WORKDIR /app/${SERVICE_NAME}
+
+ENV OTEL_SERVICE_NAME=microservice
 CMD ["node", "--require", "@opentelemetry/auto-instrumentations-node/register", "server.js"]

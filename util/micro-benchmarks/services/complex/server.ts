@@ -1,5 +1,10 @@
 import express, { Express } from "express";
 import axios from "axios";
+import fs from "fs";
+
+const action = JSON.parse(
+  fs.readFileSync(require.resolve("/action.json"), "utf-8")
+);
 
 const PORT: number = parseInt(process.env.PORT || "8080");
 const app: Express = express();
@@ -17,41 +22,6 @@ type ServerAction =
       onFailure?: ServerAction;
     }
   | ActionComposition;
-
-const callB: ServerAction = {
-  endpoint: "http://service-b-proxy:8080/get",
-  method: "GET",
-};
-
-const callC: ServerAction = {
-  endpoint: "http://service-c-proxy:8080/get",
-  method: "GET",
-};
-
-const callF: ServerAction = {
-  endpoint: "http://service-f-proxy:8080/get",
-  method: "GET",
-};
-
-const callH: ServerAction = {
-  endpoint: "http://service-h-proxy:8080/get",
-  method: "GET",
-};
-
-const action: ServerAction = {
-  order: "sequential",
-  actions: [
-    {
-      ...callB,
-      onFailure: callB,
-    },
-    callC,
-    {
-      ...callF,
-      onFailure: callH,
-    },
-  ],
-};
 
 async function executeAction(action: ServerAction): Promise<any> {
   if ("order" in action) {

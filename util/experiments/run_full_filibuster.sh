@@ -3,7 +3,7 @@ parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../..")
 benchmark_id=$1
 benchmark_category="filibuster"
-result_tag=${2:+-$2}
+result_tag=$2
 result_path="${project_path}/results/${benchmark_category}/${benchmark_id}"
 
 corpus_path=${CORPUS_PATH:-"${project_path}/../../benchmarks/filibuster-corpus"}
@@ -60,7 +60,7 @@ fi
 # Run tests
 cd ${project_path}
 mkdir -p ${result_path}
-mvn clean test -Dtest=FilibusterSuiteIT#test${test_name} | tee ${output_file}
+OUTPUT_TAG=$result_tag mvn clean test -Dtest=FilibusterSuiteIT#test${test_name} | tee ${output_file}
 
 if [ "${STOP_AFTER:-1}" == "1" ]; then
     cd ${corpus_path}

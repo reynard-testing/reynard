@@ -28,6 +28,7 @@ func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) tr
 		SpanId:        metadata.SpanId,
 		FaultUid:      *metadata.FaultUid,
 		IsInitial:     metadata.IsInitial,
+		Protocol:      metadata.Protocol,
 		InjectedFault: s.InjectedFault,
 		Response:      &response,
 		ConcurrentTo:  s.ConcurrentFaults,

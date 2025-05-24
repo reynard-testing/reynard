@@ -23,9 +23,9 @@ type UidResponse struct {
 	Uid faultload.FaultUid `json:"uid"`
 }
 
-func getCompletedEvents(parentEvent *trace.TraceReport) map[string]int {
+func getCompletedEvents(parentEvent *trace.TraceReport) *faultload.InjectionPointCallStack {
 	reports := store.Reports.GetByTraceId(parentEvent.TraceId)
-	completed := make(map[string]int)
+	completed := faultload.InjectionPointCallStack{}
 
 	for _, report := range reports {
 		// Ignore the parent event itself and any incomplete reports.
@@ -48,12 +48,12 @@ func getCompletedEvents(parentEvent *trace.TraceReport) map[string]int {
 		}
 	}
 
-	return completed
+	return &completed
 }
 
 func determineUid(data UidRequest) *faultload.FaultUid {
 	if data.IsInitial {
-		uid := faultload.BuildFaultUid(faultload.FaultUid{}, data.PartialPoint, faultload.InjectionPointCallStack{}, 0)
+		uid := faultload.BuildFaultUid(faultload.FaultUid{}, data.PartialPoint, nil, 0)
 		return &uid
 	}
 
@@ -63,7 +63,7 @@ func determineUid(data UidRequest) *faultload.FaultUid {
 		return nil
 	}
 
-	callStack := faultload.InjectionPointCallStack{}
+	var callStack *faultload.InjectionPointCallStack
 	if data.IncludeEvents {
 		callStack = getCompletedEvents(parentReport)
 		// do not include the current span in the call stack

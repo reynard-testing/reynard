@@ -19,6 +19,7 @@ type RequestMetadata struct {
 	ParentId       faultload.SpanID
 	ReportParentId faultload.SpanID
 	SpanId         faultload.SpanID
+	Protocol       string
 	FaultUid       *faultload.FaultUid
 	IsInitial      bool
 }

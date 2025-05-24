@@ -24,6 +24,9 @@ public class TraceReport {
     @JsonProperty("uid")
     public FaultUid faultUid;
 
+    @JsonProperty("protocol")
+    public String protocol;
+
     @JsonProperty("concurrent_to")
     public List<FaultUid> concurrentTo;
 

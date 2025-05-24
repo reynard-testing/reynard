@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize
 public record FaultInjectionPoint(String destination, String signature, String payload,
         @JsonProperty("call_stack") Map<String, Integer> callStack, int count) {
+    private static final String ANY_WILDCARD = "*";
 
     public FaultInjectionPoint {
         // Ensure map is immutable
@@ -20,7 +21,9 @@ public record FaultInjectionPoint(String destination, String signature, String p
         }
     }
 
-    private static String ANY_WILDCARD = "*";
+    public static FaultInjectionPoint Any() {
+        return new FaultInjectionPoint(ANY_WILDCARD, ANY_WILDCARD, ANY_WILDCARD, null, -1);
+    }
 
     @JsonIgnore
     public boolean isAnyDestination() {
@@ -68,7 +71,7 @@ public record FaultInjectionPoint(String destination, String signature, String p
         if (callStack != null) {
             csStr = "{" + callStack.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
-                    .map(e -> e.getKey().toString() + ":" + e.getValue())
+                    .map(e -> e.getKey() + ":" + e.getValue())
                     .reduce((a, b) -> a + "," + b).orElse("") + "}";
         }
 

@@ -1,8 +1,10 @@
 package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -100,13 +102,25 @@ public class RedundancyAnalyzer implements FeedbackHandler, Reporter {
 
     @Override
     public Object report(PruneContext context) {
+        Map<String, Object> report = new LinkedHashMap<>();
+
         List<Object> reports = new ArrayList<>();
         for (var missing : notInjected) {
-            // Map<String, Object> report = new LinkedHashSet<>();
-            // report.put("faultload", );
-            // report.put("missing", );
+            Map<String, Object> missingReport = new LinkedHashMap<>();
+            missingReport.put("faultload", missing.first().faultSet()
+                    .stream()
+                    .map(Fault::toString)
+                    .collect(Collectors.toList()));
+
+            missingReport.put("missing", missing.second()
+                    .stream()
+                    .map(Fault::toString)
+                    .collect(Collectors.toList()));
 
         }
-        return reports;
+
+        report.put("count", notInjected.size());
+        report.put("list", reports);
+        return report;
     }
 }

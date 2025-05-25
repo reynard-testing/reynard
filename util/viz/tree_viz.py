@@ -12,6 +12,7 @@ class SearchNode:
     uid: str
     children: list['SearchNode'] = field(default_factory=list)
 
+
 def simplify_signature(sig: str) -> str:
     signature = str(sig)
     signature = re.sub(r"\(.+\)", "", signature)
@@ -24,6 +25,25 @@ def simplify_signature(sig: str) -> str:
 
 
 def simplify_name(name: str):
+    if name == "[]":
+        return "&empty;", "", ""
+
+    if name.startswith("["):
+        names = name[1:-1].split("], Fault[")
+        print(names)
+        uids = set()
+        modes = set()
+        signatures = set()
+        for n in names:
+            uid, mode, signature = simplify_name(n)
+            uids.add(uid)
+            modes.add(mode)
+            signatures.add(signature)
+        uid = ",".join(uids)
+        mode = ",".join(modes)
+        signature = ",".join(signatures)
+        return uid, mode, signature
+
     no_fault = name.replace("Fault", "")
     no_brackets = no_fault.replace("[", "").replace("]", "")
     if no_brackets == "":
@@ -69,9 +89,11 @@ def get_node_label(node: SearchNode, needs_signature=False):
         parts.append(node.mode)
     return "\n".join(parts)
 
-def id_to_indices(id: str)-> list[int]:
+
+def id_to_indices(id: str) -> list[int]:
     indices = [int(x) for x in id.split(",")]
     return indices
+
 
 def get_edge_label(node: SearchNode):
     indices = [int(x) for x in node.id.split(",")]
@@ -82,6 +104,7 @@ def get_edge_label(node: SearchNode):
     max_id = max(indices)
     return f"{min_id} - {max_id} ({len(indices)})"
 
+
 def combine_tree(node: SearchNode):
     # Group children by key
     grouped_by_key: dict[str, list[SearchNode]] = {}
@@ -90,7 +113,7 @@ def combine_tree(node: SearchNode):
         if key not in grouped_by_key:
             grouped_by_key[key] = []
         grouped_by_key[key].append(child)
-    
+
     new_children: list[SearchNode] = []
     for key, children in grouped_by_key.items():
         combined_id = ",".join([c.id for c in children])
@@ -111,10 +134,11 @@ def combine_tree(node: SearchNode):
             children=combined_children,
         )
         new_children.append(combine_tree(combined_child))
-    
+
     new_node = replace(node)
     new_node.children = new_children
     return new_node
+
 
 def render_tree_structure(dot: Digraph, node: SearchNode, needs_signature=False):
     node_label = get_node_label(node, needs_signature)
@@ -123,6 +147,7 @@ def render_tree_structure(dot: Digraph, node: SearchNode, needs_signature=False)
     for child in node.children:
         render_tree_structure(dot, child, needs_signature)
         dot.edge(node.id, child.id, label=get_edge_label(child))
+
 
 def parse_tree(tree: dict) -> tuple[SearchNode, list[SearchNode]]:
     nodes: list[SearchNode] = []

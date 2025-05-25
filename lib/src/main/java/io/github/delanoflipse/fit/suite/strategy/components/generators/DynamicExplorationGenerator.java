@@ -239,8 +239,12 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         if (parent == null) {
             report.put("node", node.value.toString());
         } else {
-            Fault addition = Sets.getOnlyElement(Sets.difference(node.value, parent.value));
-            report.put("node", addition.toString());
+            var addition = Sets.difference(node.value, parent.value);
+            if (addition.size() == 1) {
+                report.put("node", Sets.getOnlyElement(addition).toString());
+            } else {
+                report.put("node", node.value.toString());
+            }
         }
 
         if (nodeIndex.containsKey(node)) {

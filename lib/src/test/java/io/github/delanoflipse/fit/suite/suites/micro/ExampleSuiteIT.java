@@ -84,9 +84,12 @@ public class ExampleSuiteIT {
     private static final InstrumentedService serviceC = app.instrument("service-c", 8080, new GenericContainer<>(
             new ImageFromDockerfile()
                     .withFileFromPath(IMAGE_BUILD_CONTEXT, IMAGE_PATH)
-                    .withBuildArg("SERVICE_NAME", "leaf"))
+                    // .withBuildArg("SERVICE_NAME", "parallel"))
+                    .withBuildArg("SERVICE_NAME", "pass-through"))
             .withEnv("LOG_LEVEL", LOG_LEVEL)
-            .withEnv("TARGET_SERVICE_URLS", "http://service-d:8080/get,http://service-e:8080/get"));
+            .withEnv("TARGET_SERVICE_URL", "http://service-d:8080/get"));
+    // .withEnv("TARGET_SERVICE_URLS",
+    // "http://service-d:8080/get,http://service-e:8080/get"));
 
     @Container
     private static final InstrumentedService serviceF = app.instrument("service-f", 8080, new GenericContainer<>(

@@ -41,7 +41,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(Lists.plus(tail, head.asAnyPayload()));
     }
 
-    /** Whether all points are without persistent faults */
+    /** Whether all points are without query */
     @JsonIgnore
     public boolean isNormalForm() {
         var head = getPoint();
@@ -90,6 +90,11 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     }
 
     @JsonIgnore
+    public FaultUid asChild(FaultInjectionPoint point) {
+        return new FaultUid(Lists.plus(stack, point));
+    }
+
+    @JsonIgnore
     public FaultUid asAnyCount() {
         var head = getPoint();
         var tail = getTail();
@@ -104,6 +109,18 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
                 .toList();
 
         return new FaultUid(without);
+    }
+
+    @JsonIgnore
+    public FaultUid asLocalised() {
+        if (stack.size() <= 2) {
+            return this;
+        }
+
+        FaultInjectionPoint origin = getOrigin().asAnyCount().asAnyCallStack();
+        FaultInjectionPoint destination = getPoint();
+
+        return new FaultUid(List.of(origin, destination));
     }
 
     @JsonIgnore
@@ -135,6 +152,14 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
             return null;
         }
         return stack.get(stack.size() - 1);
+    }
+
+    @JsonIgnore
+    public FaultInjectionPoint getOrigin() {
+        if (stack == null || stack.size() < 2) {
+            return null;
+        }
+        return stack.get(stack.size() - 2);
     }
 
     @JsonIgnore

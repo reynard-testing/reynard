@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 public class Sets {
@@ -26,6 +27,35 @@ public class Sets {
     /** Whether A ⊃ B */
     public static <T> boolean isProperSupersetOf(Collection<T> A, Collection<T> B) {
         return A.stream().anyMatch(x -> !B.contains(x)) && isSupersetOf(A, B);
+    }
+
+    /** Whether A ⊆ B */
+    public static <T> boolean isSubsetOf(Collection<T> subset, Collection<T> superset,
+            BiPredicate<T, T> matcher) {
+        if (subset == null || superset == null) {
+            return false;
+        }
+
+        if (subset.size() > superset.size()) {
+            return false;
+        }
+
+        for (T a : subset) {
+            boolean found = false;
+
+            for (T b : superset) {
+                if (matcher.test(a, b)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** Return A ∪ B */

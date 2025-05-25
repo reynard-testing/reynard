@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
+import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 
 @JsonSerialize
 public record Behaviour(FaultUid uid, FailureMode mode) {
@@ -32,7 +33,6 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
     }
 
     public boolean matches(Behaviour other) {
-
         boolean modeMatches = mode == null ? other.mode == null : mode.equals(other.mode);
 
         if (!modeMatches) {
@@ -46,6 +46,11 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
     @JsonIgnore
     public Behaviour asMode(FailureMode newMode) {
         return new Behaviour(uid, newMode);
+    }
+
+    @JsonIgnore
+    public Behaviour asLocalised() {
+        return new Behaviour(uid.asLocalised(), mode);
     }
 
     public static Behaviour of(FaultUid uid) {
@@ -70,30 +75,7 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
 
     // if a <= b
     public static boolean isSubsetOf(Collection<Behaviour> subset, Collection<Behaviour> superset) {
-        if (subset == null || superset == null) {
-            return false;
-        }
-
-        if (subset.size() > superset.size()) {
-            return false;
-        }
-
-        for (Behaviour a : subset) {
-            boolean found = false;
-
-            for (Behaviour b : superset) {
-                if (a.matches(b)) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                return false;
-            }
-        }
-
-        return true;
+        return Sets.isSubsetOf(subset, superset, Behaviour::matches);
     }
 
     public static Set<FaultUid> getFaultUids(Collection<Behaviour> behaviours) {

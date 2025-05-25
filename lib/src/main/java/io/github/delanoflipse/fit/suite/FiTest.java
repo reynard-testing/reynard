@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
 
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,4 +37,6 @@ public @interface FiTest {
     int initialGetTraceDelay() default 0;
 
     Class<?>[] additionalComponents() default {};
+
+    TraversalStrategy traversalStrategy() default TraversalStrategy.DEPTH_FIRST;
 }

@@ -27,7 +27,7 @@ if [ -z "${SKIP_INDUSTRY}" ]; then
     WITH_FAULTS=1 BAD_METADATA=1 ./run_full_filibuster.sh audible bad-metadata${result_tag}
     ./run_full_filibuster.sh expedia $1
     ./run_full_filibuster.sh mailchimp $1
-    WITH_FAULTS=1 DB_READ_ONLY=1 ./run_full_filibuster.sh mailchimp db-read-only${result_tag}
+    # WITH_FAULTS=1 DB_READ_ONLY=1 ./run_full_filibuster.sh mailchimp db-read-only${result_tag}
     ./run_full_filibuster.sh netflix $1
     WITH_FAULTS=1 NETFLIX_FAULTS=1 ./run_full_filibuster.sh netflix faults${result_tag}
 fi

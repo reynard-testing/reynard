@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -19,45 +20,32 @@ public record Fault(
         @JsonProperty("uid") FaultUid uid,
         @JsonProperty("mode") FailureMode mode) {
 
+    @JsonIgnore
     public boolean isTransient() {
         return uid.getPoint().isTransient();
     }
 
+    @JsonIgnore
     public boolean isPersistent() {
         return uid.getPoint().isPersistent();
     }
 
+    @JsonIgnore
     public Behaviour asBehaviour() {
         return new Behaviour(uid, mode);
     }
 
+    public boolean matches(Fault other) {
+        if (!uid.matches(other.uid())) {
+            return false;
+        }
+
+        return mode.equals(other.mode());
+    }
+
     // if a <= b
     public static boolean isSubsetOf(Set<Fault> subset, Set<Fault> superset) {
-        if (subset == null || superset == null) {
-            return false;
-        }
-
-        if (subset.size() > superset.size()) {
-            return false;
-        }
-
-        for (Fault a : subset) {
-            boolean found = false;
-
-            for (Fault b : superset) {
-                // if equal
-                if (a.uid().matches(b.uid()) && a.mode().equals(b.mode())) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                return false;
-            }
-        }
-
-        return true;
+        return Sets.isSubsetOf(subset, superset, Fault::matches);
     }
 
     public static Set<Fault> allFaults(FaultUid point, Collection<FailureMode> modes) {

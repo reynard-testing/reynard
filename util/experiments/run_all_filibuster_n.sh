@@ -3,7 +3,7 @@ parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}")
 
 result_tag=${1:+-$1}
-iterations=${N:-1}
+iterations=${N:-30}
 
 export STOP_AFTER=1
 export BUILD_BEFORE=${BUILD_BEFORE:-1}
@@ -39,31 +39,26 @@ run_n_benchmark() {
     done
 }
 
+if [ -z "${SKIP_CINEMA}" ]; then
+    # run_n_benchmark "cinema-1"
+    run_n_benchmark "cinema-2"
+    run_n_benchmark "cinema-3"
+    run_n_benchmark "cinema-3" OPT_RETRIES=1
+    run_n_benchmark "cinema-4"
+    run_n_benchmark "cinema-5"
+    run_n_benchmark "cinema-6"
+    run_n_benchmark "cinema-7"
+    run_n_benchmark "cinema-8"
+    run_n_benchmark "cinema-8" OPT_RETRIES=1
+fi
 
-for ((i=1; i<=iterations; i++)); do
-    iteration_tag="${result_tag}-${i}"
-    echo "Iteration $i of $iterations (tag: $iteration_tag)"
-    if [ -z "${SKIP_CINEMA}" ]; then
-        run_n_benchmark "cinema-1"
-        run_n_benchmark "cinema-2"
-        run_n_benchmark "cinema-3"
-        run_n_benchmark "cinema-3" OPT_RETRIES=1
-        run_n_benchmark "cinema-4"
-        run_n_benchmark "cinema-5"
-        run_n_benchmark "cinema-6"
-        run_n_benchmark "cinema-7"
-        run_n_benchmark "cinema-8"
-        run_n_benchmark "cinema-8" OPT_RETRIES=1
-    fi
+if [ -z "${SKIP_INDUSTRY}" ]; then
+    run_n_benchmark "audible"
+    # run_n_benchmark "audible" "WITH_FAULTS=1 BAD_METADATA=1"
 
-    if [ -z "${SKIP_INDUSTRY}" ]; then
-        run_n_benchmark "audible"
-        run_n_benchmark "audible" "WITH_FAULTS=1 BAD_METADATA=1"
-
-        run_n_benchmark "expedia"
-        run_n_benchmark "mailchimp"
-        run_n_benchmark "mailchimp" "WITH_FAULTS=1 DB_READ_ONLY=1"
-        run_n_benchmark "netflix"
-        run_n_benchmark "netflix" "WITH_FAULTS=1 NETFLIX_FAULTS=1"
-    fi
-done
+    run_n_benchmark "expedia"
+    run_n_benchmark "mailchimp"
+    # run_n_benchmark "mailchimp" "WITH_FAULTS=1 DB_READ_ONLY=1"
+    run_n_benchmark "netflix"
+    run_n_benchmark "netflix" "WITH_FAULTS=1 NETFLIX_FAULTS=1"
+fi

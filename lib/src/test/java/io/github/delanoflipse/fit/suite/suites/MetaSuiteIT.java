@@ -18,7 +18,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import io.github.delanoflipse.fit.suite.FiTest;
 import io.github.delanoflipse.fit.suite.faultload.Fault;
-import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.Faultload;
 import io.github.delanoflipse.fit.suite.faultload.modes.ErrorFault;
@@ -45,6 +44,7 @@ import okhttp3.Response;
 public class MetaSuiteIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
     private static final int PROXY_RETRY_COUNT;
+    private static final String LOG_LEVEL;
     private static final String PROXY_IMAGE = InstrumentedService.IMAGE;
     private static final String CONTROLLER_IMAGE = ControllerService.IMAGE;
     private static final String COLLECTOR_ENDPOINT = "http://" + app.jaegerHost + ":4317";
@@ -60,6 +60,7 @@ public class MetaSuiteIT {
 
     static {
         PROXY_RETRY_COUNT = Integer.parseInt(Env.getEnv("PROXY_RETRY_COUNT", "3"));
+        LOG_LEVEL = Env.getEnv("LOG_LEVEL", "info");
     }
 
     @Container
@@ -71,6 +72,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy1-real")
+                    .withEnv("LOG_LEVEL", LOG_LEVEL)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -82,6 +84,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy2-real")
+                    .withEnv("LOG_LEVEL", LOG_LEVEL)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -93,6 +96,7 @@ public class MetaSuiteIT {
                     .withEnv("CONTROL_PORT", "8050")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "proxy3-real")
+                    .withEnv("LOG_LEVEL", LOG_LEVEL)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT));
 
     @Container
@@ -103,6 +107,7 @@ public class MetaSuiteIT {
                     .withEnv("PROXY_TIMEOUT", "0")
                     .withEnv("USE_OTEL", "true")
                     .withEnv("OTEL_SERVICE_NAME", "controller-real")
+                    .withEnv("LOG_LEVEL", LOG_LEVEL)
                     .withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", COLLECTOR_ENDPOINT))
             .withExposedPorts(5000);
 
@@ -155,7 +160,7 @@ public class MetaSuiteIT {
         @Override
         public PruneDecision prune(Faultload faultload, PruneContext context) {
             for (FaultUid uid : faultload.getFaultUids()) {
-                if (uid.getPoint().destination().equals("proxy3")) {
+                if (!uid.getPoint().destination().equals("proxy1")) {
                     return PruneDecision.PRUNE_SUPERSETS;
                 }
             }
@@ -167,6 +172,11 @@ public class MetaSuiteIT {
     @FiTest(maxTestCases = 999, optimizeForRetries = true, withCallStack = false, additionalComponents = {
             Proxy3Ignorer.class })
     public void testRegisterWithCustomPruner(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    @FiTest(maxTestCases = 99999, optimizeForRetries = false, withCallStack = false)
+    public void testRegisterNoOpt(TrackedFaultload faultload) throws IOException {
         testRegister(faultload);
     }
 

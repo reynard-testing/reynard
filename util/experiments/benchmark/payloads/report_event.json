@@ -1,0 +1,15 @@
+{
+  "trace_id": "efcbf3a8ae78f65a35bf05ddcc8419e8",
+  "span_id": "ce086bebffb14783",
+  "uid": {
+    "stack": []
+  },
+  "is_initial": true,
+  "injected_fault": null,
+  "response": {
+    "status": 200,
+    "body": "OK",
+    "duration_ms": 1
+  },
+  "concurrent_to": []
+}

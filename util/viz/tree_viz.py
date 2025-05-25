@@ -1,9 +1,6 @@
-from cProfile import label
-import json
-import argparse
-import os
-import graphviz
-from dataclasses import dataclass, field
+from graphviz import Digraph
+from dataclasses import dataclass, field, replace
+import re
 
 
 @dataclass
@@ -16,15 +13,15 @@ class SearchNode:
     children: list['SearchNode'] = field(default_factory=list)
 
 
-def get_args():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('json_path', type=str,
-                            help='Path to the JSON file')
-    arg_parser.add_argument('--combine', action='store_true',
-                            help='Combine nodes with the same UID')
-
-    args = arg_parser.parse_args()
-    return args
+def simplify_signature(sig: str) -> str:
+    signature = str(sig)
+    signature = re.sub(r"\(.+\)", "", signature)
+    signature = re.sub(r"(GET|POST|PUT|DELETE) ", "", signature)
+    signature = re.sub(r"\{.*\}", "", signature)
+    signature_parts = signature.split("/")
+    if len(signature_parts) > 1:
+        return ".../" + signature_parts[-1]
+    return signature
 
 
 def simplify_name(name: str):
@@ -61,7 +58,8 @@ def simplify_name(name: str):
     uid_parts = uid.split(">")
     relevant_parts = []
     for i in range(len(uid_parts)):
-        p1, count = uid_parts[i].split("#")
+        p_uid = re.sub(r"\{.*\}", "", uid_parts[i])
+        p1, count = p_uid.split("#")
         if ":" in p1:
             destination, signature = p1.split(":")
         else:
@@ -80,7 +78,7 @@ def simplify_name(name: str):
     mode = mode.replace("HTTP_ERROR(", "")
     mode = mode.replace(")", "")
 
-    return uid_str, mode, signature
+    return uid_str, mode, simplify_signature(signature)
 
 
 def get_node_label(node: SearchNode, needs_signature=False):
@@ -92,22 +90,22 @@ def get_node_label(node: SearchNode, needs_signature=False):
     return "\n".join(parts)
 
 
-def get_combined_edge_label(indices: list[int]):
-    min_index = min(indices)
-    max_index = max(indices)
-    return f"{min_index}-{max_index} (+{len(indices)})"
+def id_to_indices(id: str) -> list[int]:
+    indices = [int(x) for x in id.split(",")]
+    return indices
 
 
-def build_tree(dot, node: SearchNode, needs_signature=False, combine=False):
-    node_label = get_node_label(node, needs_signature)
-    dot.node(node.id, label=node_label)
+def get_edge_label(node: SearchNode):
+    indices = [int(x) for x in node.id.split(",")]
+    if len(indices) == 1:
+        return f"{node.index}"
 
-    if not combine:
-        for child in node.children:
-            build_tree(dot, child, needs_signature, combine)
-            dot.edge(node.id, child.id, label=f"{child.index + 1}")
-        return
+    min_id = min(indices)
+    max_id = max(indices)
+    return f"{min_id} - {max_id} ({len(indices)})"
 
+
+def combine_tree(node: SearchNode):
     # Group children by key
     grouped_by_key: dict[str, list[SearchNode]] = {}
     for child in node.children:
@@ -116,6 +114,7 @@ def build_tree(dot, node: SearchNode, needs_signature=False, combine=False):
             grouped_by_key[key] = []
         grouped_by_key[key].append(child)
 
+    new_children: list[SearchNode] = []
     for key, children in grouped_by_key.items():
         combined_id = ",".join([c.id for c in children])
         indices = [c.index for c in children]
@@ -132,16 +131,27 @@ def build_tree(dot, node: SearchNode, needs_signature=False, combine=False):
             mode=combined_mode,
             signature=children[0].signature,
             uid=children[0].uid,
-            children=combined_children
+            children=combined_children,
         )
+        new_children.append(combine_tree(combined_child))
 
-        build_tree(dot, combined_child, needs_signature, combine)
-        dot.edge(node.id, combined_child.id,
-                 label=get_combined_edge_label(indices))
+    new_node = replace(node)
+    new_node.children = new_children
+    return new_node
 
 
-def parse_tree(tree) -> tuple[SearchNode, list[SearchNode]]:
+def render_tree_structure(dot: Digraph, node: SearchNode, needs_signature=False):
+    node_label = get_node_label(node, needs_signature)
+    dot.node(node.id, label=node_label)
+
+    for child in node.children:
+        render_tree_structure(dot, child, needs_signature)
+        dot.edge(node.id, child.id, label=get_edge_label(child))
+
+
+def parse_tree(tree: dict) -> tuple[SearchNode, list[SearchNode]]:
     nodes: list[SearchNode] = []
+
     if isinstance(tree, dict):
         uid, mode, signature = simplify_name(tree['node'])
         children: list[SearchNode] = []
@@ -177,8 +187,11 @@ def needs_signature(nodes: list[SearchNode]):
 
 def render_tree(tree: dict, output_name: str, combine=True):
     root, nodes = parse_tree(tree)
-
     use_sig = needs_signature(nodes)
-    dot = graphviz.Digraph(comment='Faultspace Search', format='pdf')
-    build_tree(dot, root, use_sig, combine)
+
+    if combine:
+        root = combine_tree(root)
+
+    dot = Digraph(comment='Faultspace Search', format='pdf')
+    render_tree_structure(dot, root, use_sig)
     dot.render(filename=output_name)

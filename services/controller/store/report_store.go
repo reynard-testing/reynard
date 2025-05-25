@@ -1,7 +1,7 @@
 package store
 
 import (
-	"log"
+	"log/slog"
 	"sync"
 
 	"dflipse.nl/ds-fit/shared/faultload"
@@ -129,7 +129,7 @@ func (rs *ReportStore) Replace(report trace.TraceReport) {
 
 	if !found {
 		rs.reports = append(rs.reports, report)
-		log.Printf("Could not find report to replace: (%s,%s), added instead\n", report.TraceId, report.SpanId)
+		slog.Warn("Could not find report to replace, added instead", "traceId", report.TraceId, "spanId", report.SpanId)
 	}
 
 	found = false
@@ -147,12 +147,12 @@ func (rs *ReportStore) Replace(report trace.TraceReport) {
 	}
 
 	if !found {
-		log.Printf("Could not find report to replace by traceId: (%s,%s), added instead\n", report.TraceId, report.SpanId)
+		slog.Warn("Could not find report to replace by traceId, added instead", "traceId", report.TraceId, "spanId", report.SpanId)
 		rs.reportsByTraceId[report.TraceId] = append(rs.reportsByTraceId[report.TraceId], report)
 	}
 
 	if _, exists := rs.reportsByTraceIdBySpanId[report.TraceId]; !exists {
-		log.Printf("Could not mapping for traceId: %s, added instead\n", report.TraceId)
+		slog.Warn("No mapping existed yet, added instead", "traceId", report.TraceId, "spanId", report.SpanId)
 		rs.reportsByTraceIdBySpanId[report.TraceId] = make(map[faultload.SpanID]trace.TraceReport)
 	}
 

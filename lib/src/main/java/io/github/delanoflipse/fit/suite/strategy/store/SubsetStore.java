@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
+import io.github.delanoflipse.fit.suite.strategy.util.Sets;
+
 public class SubsetStore<E> {
     private final List<Set<E>> sets = new ArrayList<>();
     private final boolean allowNull = false;
@@ -26,22 +28,7 @@ public class SubsetStore<E> {
 
     // if a <= b
     private boolean isSubsetOf(Set<E> a, Set<E> b) {
-        for (E e : a) {
-            boolean found = false;
-
-            for (E f : b) {
-                if (equality.test(e, f)) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                return false;
-            }
-        }
-
-        return true;
+        return Sets.isSubsetOf(a, b, equality);
     }
 
     public List<Set<E>> getSets() {

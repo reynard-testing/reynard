@@ -6,10 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -23,7 +26,12 @@ import (
 
 var destination string
 
+var usePPROF = os.Getenv("USE_PPROF") == "true"
+
 func StartControlServer(config config.ControlConfig) {
+	// Set up the proxy host and target
+	// From https://pkg.go.dev/runtime/pprof
+
 	// Handle SIGINT (CTRL+C) gracefully.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
@@ -31,7 +39,7 @@ func StartControlServer(config config.ControlConfig) {
 	// Set up OpenTelemetry.
 	otelShutdown, err := util.SetupOTelSDK(ctx, config.UseTelemetry)
 	if err != nil {
-		log.Printf("Failed to set up OpenTelemetry: %v\n", err)
+		slog.Error("Failed to set up OpenTelemetry", "err", err)
 		return
 	}
 
@@ -40,22 +48,32 @@ func StartControlServer(config config.ControlConfig) {
 		err = errors.Join(err, otelShutdown(context.Background()))
 	}()
 
+	// Start pprof server for profiling.
+	if usePPROF {
+		runtime.SetCPUProfileRate(500)
+		go func() {
+			slog.Info("Starting pprof server on :6060")
+			log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+		}()
+	}
+
 	destination = config.Destination
 	controlPort := ":" + strconv.Itoa(config.Port)
 
 	// Start HTTP server.
 	srv := &http.Server{
-		Addr:         controlPort,
-		BaseContext:  func(_ net.Listener) context.Context { return ctx },
-		ReadTimeout:  time.Second,
-		WriteTimeout: 10 * time.Second,
-		Handler:      newHTTPHandler(),
+		Addr:        controlPort,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
+		// ReadTimeout:  2 * time.Second,
+		// WriteTimeout: 10 * time.Second,
+		IdleTimeout: 120 * time.Second,
+		Handler:     newHTTPHandler(),
 	}
 
 	srvErr := make(chan error, 1)
 
 	go func() {
-		log.Printf("Listening for control commands on port %s\n", controlPort)
+		slog.Info("Listening for control commands", "port", controlPort)
 		srvErr <- srv.ListenAndServe()
 	}()
 
@@ -97,7 +115,7 @@ func newHTTPHandler() http.Handler {
 // Handle the /v1/faultload/register endpoint
 func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the newFaultload from the request body
-	newFaultload, err := faultload.ParseRequest(r)
+	newFaultload, err := faultload.ParseFaultloadRequest(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "Failed to parse request body: %v", err)
@@ -107,16 +125,21 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	faults := newFaultload.Faults
 	myFaults := []faultload.Fault{}
 
-	log.Printf("\n----------------------------\n")
-	log.Printf("Registering faultload (size=%d) for trace ID %s\n", len(newFaultload.Faults), newFaultload.TraceId)
+	slog.Debug("------------- NEW TEST CASE ---------------")
+	slog.Debug("Registering faultload", "size", len(newFaultload.Faults), "traceId", newFaultload.TraceId)
 	for _, fault := range faults {
+		if fault.Uid.Stack == nil {
+			slog.Error("Fault UID stack is nil", "fault", fault)
+			continue
+		}
+
 		lastIp := fault.Uid.Stack[len(fault.Uid.Stack)-1]
 		if lastIp.Destination == destination {
 			myFaults = append(myFaults, fault)
 		}
 	}
 
-	log.Printf("Registered %d faults for trace ID %s\n", len(myFaults), newFaultload.TraceId)
+	slog.Info("Registered faults", "faults", len(myFaults), "traceId", newFaultload.TraceId)
 	// Store the faultload for the given trace ID
 	RegisteredFaults.Register(newFaultload.TraceId, myFaults)
 
@@ -138,10 +161,9 @@ func unregisterFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	traceId := requestData.TraceId
 
-	log.Printf("Removed faults for trace ID %s\n", traceId)
+	slog.Info("Removed faults", "traceId", traceId)
 	// Store the faultload for the given trace ID
 	RegisteredFaults.Remove(traceId)
-	tracing.ClearTraceCount(traceId)
 	tracing.ClearTracked(traceId)
 
 	// Respond with a 200 OK

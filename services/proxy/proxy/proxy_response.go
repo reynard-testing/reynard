@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -80,7 +80,7 @@ func (rc *ResponseCapture) Flush(logHeaders bool) error {
 		for _, v := range vv {
 			rc.ResponseWriter.Header().Add(k, v)
 			if logHeaders {
-				log.Printf("Writing Header \"%s\": %s\n", k, v)
+				slog.Debug("Writing Header", "key", k, "value", v)
 			}
 		}
 	}
@@ -90,8 +90,13 @@ func (rc *ResponseCapture) Flush(logHeaders bool) error {
 
 	// Write the full body
 	written, err := io.Copy(rc.ResponseWriter, &rc.CapturedBuffer)
-	log.Printf("Wrote %d bytes to response\n", written)
-	return err
+	slog.Debug("Flushing response", "status", rc.Status, "bytesWritten", written)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type NoOpResponseWriter struct{}

@@ -3,6 +3,7 @@ package io.github.delanoflipse.fit.suite.faultload;
 import java.util.Collection;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -17,18 +18,22 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         }
     }
 
+    @JsonIgnore
     public int count() {
         return getPoint().count();
     }
 
+    @JsonIgnore
     public String destination() {
         return getPoint().destination();
     }
 
+    @JsonIgnore
     public String signature() {
         return getPoint().signature();
     }
 
+    @JsonIgnore
     public FaultUid asAnyPayload() {
         var head = getPoint();
         var tail = getTail();
@@ -36,7 +41,8 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(Lists.plus(tail, head.asAnyPayload()));
     }
 
-    /** Whether all points are without persistent faults */
+    /** Whether all points are without query */
+    @JsonIgnore
     public boolean isNormalForm() {
         var head = getPoint();
 
@@ -51,10 +57,12 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         }
     }
 
+    @JsonIgnore
     public boolean hasParent() {
         return hasParent(false);
     }
 
+    @JsonIgnore
     public boolean hasParent(boolean includeRoot) {
         if (stack == null || stack.isEmpty()) {
             return false;
@@ -67,10 +75,12 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return true;
     }
 
+    @JsonIgnore
     public FaultUid getParent() {
         return getParent(false);
     }
 
+    @JsonIgnore
     public FaultUid getParent(boolean includeRoot) {
         if (!hasParent(includeRoot)) {
             return null;
@@ -79,6 +89,12 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(getTail());
     }
 
+    @JsonIgnore
+    public FaultUid asChild(FaultInjectionPoint point) {
+        return new FaultUid(Lists.plus(stack, point));
+    }
+
+    @JsonIgnore
     public FaultUid asAnyCount() {
         var head = getPoint();
         var tail = getTail();
@@ -86,6 +102,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(Lists.plus(tail, head.asAnyCount()));
     }
 
+    @JsonIgnore
     public FaultUid withoutCallStack() {
         List<FaultInjectionPoint> without = stack.stream()
                 .map(x -> x.asAnyCallStack())
@@ -94,10 +111,24 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(without);
     }
 
+    @JsonIgnore
+    public FaultUid asLocalised() {
+        if (stack.size() <= 2) {
+            return this;
+        }
+
+        FaultInjectionPoint origin = getOrigin().asAnyCount().asAnyCallStack();
+        FaultInjectionPoint destination = getPoint();
+
+        return new FaultUid(List.of(origin, destination));
+    }
+
+    @JsonIgnore
     public boolean isTransient() {
         return getPoint().isTransient();
     }
 
+    @JsonIgnore
     public boolean isPersistent() {
         return getPoint().isPersistent();
     }
@@ -115,6 +146,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return String.join(">", stackStrings) + ">" + getPoint().toString();
     }
 
+    @JsonIgnore
     public FaultInjectionPoint getPoint() {
         if (stack == null || stack.isEmpty()) {
             return null;
@@ -122,14 +154,25 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return stack.get(stack.size() - 1);
     }
 
+    @JsonIgnore
+    public FaultInjectionPoint getOrigin() {
+        if (stack == null || stack.size() < 2) {
+            return null;
+        }
+        return stack.get(stack.size() - 2);
+    }
+
+    @JsonIgnore
     public List<FaultInjectionPoint> getTail() {
         return stack.subList(0, stack.size() - 1);
     }
 
+    @JsonIgnore
     public boolean isRoot() {
         return stack.isEmpty();
     }
 
+    @JsonIgnore
     public boolean isInitial() {
         return stack.size() == 1;
     }

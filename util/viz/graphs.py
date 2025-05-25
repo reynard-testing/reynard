@@ -1,10 +1,12 @@
-import json
 import argparse
 import os
 
 import numpy as np
 import matplotlib.pyplot as plt
 from tree_viz import render_tree
+from call_graph import render_call_graph
+from util import get_json, find_json
+import config
 
 
 def get_args():
@@ -16,19 +18,6 @@ def get_args():
 
     args = arg_parser.parse_args()
     return args
-
-
-def get_json(file_path):
-    with open(file_path, 'r') as file:
-        return json.load(file)
-
-
-def find_json(dir: str, s: str):
-    for root, _, files in os.walk(dir):
-        for file in files:
-            if file.endswith(".json") and s.lower() in file.lower():
-                return os.path.join(root, file)
-    return None
 
 
 def render_queue_size_graph(queue_sizes, output_dir):
@@ -46,37 +35,32 @@ def render_queue_size_graph(queue_sizes, output_dir):
     plt.legend()
 
     # Save the plot to a file
-    output_file = os.path.join(output_dir, 'queue_size_plot.svg')
-    plt.savefig(output_file)
+    output_file = os.path.join(
+        output_dir, 'queue_size_plot.' + config.OUTPUT_FORMAT)
+    plt.savefig(output_file, dpi=config.OUTPUT_DPI)
     plt.close()
 
 
 def render_distribution_of_timing(timings: list[tuple[str, list[float]]], output_dir: str):
     # Create a figure with subplots
-    num_timings = len(timings)
-
-    fig, axes = plt.subplots(1, num_timings, figsize=(
-        5 * num_timings, 6), squeeze=False)
-
-    for i, (key, data) in enumerate(timings):
+    for key, data in timings:
         data_ms = np.array(data) * 1e-6  # Convert to milliseconds
 
-        # Boxplot
-        axes[0, i].boxplot(data_ms, vert=True, patch_artist=True)
-        axes[0, i].set_title(f'{key}')
-        axes[0, i].set_ylabel('Time (ms)')
-        axes[0, i].set_ylim(bottom=0)
+        plt.figure(figsize=(8, 6))
+        plt.violinplot(data_ms, showmeans=True, showextrema=True)
+        plt.boxplot(data_ms, vert=True, patch_artist=True,
+                    widths=0.2, positions=[1])
 
-        # Violin plot
-        violin_ax = axes[0, i].twinx()
-        violin_ax.violinplot(data_ms, showmeans=True, showextrema=True)
-        violin_ax.set_ylabel('Time (ms)')
-        violin_ax.set_ylim(bottom=0)
-
-    # Save the plot to a file
-    output_file = os.path.join(output_dir, 'timing_distribution_plot.svg')
-    plt.savefig(output_file)
-    plt.close()
+        title = key
+        if key in PLOT_NAMES_BY_KEY:
+            title = PLOT_NAMES_BY_KEY[key]
+        plt.title(title)
+        plt.ylabel('Time (ms)')
+        plt.ylim(bottom=0)
+        combined_file = os.path.join(
+            output_dir, f'{key}_violin_boxplot.{config.OUTPUT_FORMAT}')
+        plt.savefig(combined_file, dpi=config.OUTPUT_DPI)
+        plt.close()
 
 
 def render_timing_over_index(key, data, output_dir):
@@ -96,8 +80,9 @@ def render_timing_over_index(key, data, output_dir):
     plt.legend()
 
     # Save the plot to a file
-    output_file = os.path.join(output_dir, f'{key}_over_time_plot.svg')
-    plt.savefig(output_file)
+    output_file = os.path.join(
+        output_dir, f'{key}_over_time_plot.' + config.OUTPUT_FORMAT)
+    plt.savefig(output_file, dpi=config.OUTPUT_DPI)
     plt.close()
 
 
@@ -106,12 +91,24 @@ TIMINGS_OF_INTEREST = ['nextFaultload', 'Per test', 'registerFaultload',
 TIMINGS_OF_EXTRA_INTEREST = ['nextFaultload',
                              'handleResult', 'registerFaultload', 'Per test']
 
+PLOT_NAMES_BY_KEY = {
+    'nextFaultload': 'Next Faultload',
+    'Per test': 'Per Test',
+    'registerFaultload': 'Register Faultload',
+    'unregisterFautload': 'Unregister Faultload',
+    'testMethod': 'Test Method',
+    'getTraceWithDelay': 'Get Trace With Delay',
+    'handleResult': 'Handle Result',
+    'Total test time': 'Total Test Time'
+}
+
 
 def render_for_dir(json_dir: str):
     generator_data = get_json(find_json(json_dir, "generator"))
     queue_sizes = np.array(generator_data['details']['queue_size'])
     render_queue_size_graph(queue_sizes, json_dir)
     render_tree(generator_data['tree'], os.path.join(json_dir, 'search_tree'))
+    render_call_graph(generator_data, os.path.join(json_dir, 'call_graph'))
 
     timing_data = get_json(os.path.join(json_dir, 'timing.json'))
     timings: tuple[str, list[float]] = []
@@ -131,9 +128,11 @@ if __name__ == '__main__':
     args = get_args()
     json_dir = args.json_dir
     if args.nested:
-        for root, dirs, _ in os.walk(json_dir):
-            for dir in dirs:
-                if "timing.json" in os.listdir(os.path.join(root, dir)):
-                    render_for_dir(os.path.join(root, dir))
+        for root, dirs, filenames in os.walk(json_dir):
+            dirname = os.path.basename(root)
+            if dirname != 'default' or 'timing.json' not in filenames:
+                continue
+            render_for_dir(root)
+
     else:
         render_for_dir(json_dir)

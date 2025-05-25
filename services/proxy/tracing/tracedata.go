@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -134,7 +134,7 @@ func ParseTraceParent(traceparent string) *TraceParentData {
 
 	parts := strings.Split(traceparent, "-")
 	if len(parts) != 4 {
-		log.Println("Invalid traceparent format")
+		slog.Warn("Invalid traceparent format", "traceparent", traceparent)
 		return nil
 	}
 

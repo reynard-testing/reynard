@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -15,16 +15,13 @@ import (
 	"dflipse.nl/ds-fit/controller/store"
 	"dflipse.nl/ds-fit/shared/faultload"
 	"dflipse.nl/ds-fit/shared/util"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
 	ProxyList       = strings.Split(os.Getenv("PROXY_LIST"), ",")
 	ProxyRetryCount = util.GetIntEnvOrDefault("PROXY_RETRY_COUNT", 3)
 	ProxyTimeout    = time.Duration(util.GetIntEnvOrDefault("PROXY_TIMEOUT", 100)) * time.Millisecond
-	client          = http.Client{
-		Transport: otelhttp.NewTransport(http.DefaultTransport),
-	}
+	proxyClient     = util.GetDefaultClient()
 )
 
 func RegisterFaultload(proxyAddr string, ctx context.Context, f *faultload.Faultload) error {
@@ -40,7 +37,7 @@ func RegisterFaultload(proxyAddr string, ctx context.Context, f *faultload.Fault
 		return fmt.Errorf("failed to create POST request: %v", err)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := proxyClient.Do(req)
 
 	if err != nil {
 		return fmt.Errorf("failed to perform POST request: %v", err)
@@ -52,7 +49,7 @@ func RegisterFaultload(proxyAddr string, ctx context.Context, f *faultload.Fault
 		return fmt.Errorf("failed to register faultload at proxy %s: %s", proxyAddr, resp.Status)
 	}
 
-	log.Printf("Registered faultload at proxy %s\n", proxyAddr)
+	slog.Debug("Registered faultload at proxy", "addr", proxyAddr)
 
 	return nil
 }
@@ -60,7 +57,7 @@ func RegisterFaultload(proxyAddr string, ctx context.Context, f *faultload.Fault
 func retry(attempts int, sleep time.Duration, f func() error) (err error) {
 	for i := 0; i < attempts; i++ {
 		if i > 0 {
-			log.Println("retrying after error:", err)
+			slog.Debug("Retrying after error", "err", err)
 			time.Sleep(sleep)
 			sleep *= 2
 		}
@@ -78,7 +75,7 @@ func retry(attempts int, sleep time.Duration, f func() error) (err error) {
 func RegisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	// Parse the request body to get the Faultload
-	faultload, err := faultload.ParseRequest(r)
+	faultload, err := faultload.ParseFaultloadRequest(r)
 	if err != nil {
 		http.Error(w, "Failed to parse request", http.StatusBadRequest)
 		return
@@ -112,7 +109,7 @@ func RegisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Registered faultload (size=%d) for trace ID %s\n", len(faultload.Faults), faultload.TraceId)
+	slog.Info("Registered faultload", "size", len(faultload.Faults), "traceId", faultload.TraceId)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
@@ -134,7 +131,7 @@ func UnregisterFaultload(proxyAddr string, ctx context.Context, payload *Unregis
 		return fmt.Errorf("failed to create POST request: %v", err)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := proxyClient.Do(req)
 
 	if err != nil {
 		return fmt.Errorf("failed to perform POST request: %v", err)
@@ -146,7 +143,7 @@ func UnregisterFaultload(proxyAddr string, ctx context.Context, payload *Unregis
 		return fmt.Errorf("failed to register faultload at proxy %s: %s", proxyAddr, resp.Status)
 	}
 
-	log.Printf("Unregistered faultload at proxy %s\n", proxyAddr)
+	slog.Debug("Unregistered faultload", "proxy", proxyAddr)
 
 	return nil
 }
@@ -162,6 +159,7 @@ func UnregisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	store.TraceIds.Unregister(requestData.TraceId)
+	store.InvocationCounter.Clear(requestData.TraceId)
 
 	// Register the Faultload at the proxies
 	var wg sync.WaitGroup
@@ -189,7 +187,7 @@ func UnregisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Unregistered faults for trace ID %s\n", requestData.TraceId)
+	slog.Info("Unregistered faults", "traceId", requestData.TraceId)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))

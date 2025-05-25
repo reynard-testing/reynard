@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
-	"time"
 
 	"dflipse.nl/ds-fit/controller/endpoints"
 	"dflipse.nl/ds-fit/shared/util"
@@ -21,9 +21,21 @@ var (
 )
 
 func StartController(port int, useOTEL bool) (err error) {
-	log.Printf("Registered proxies %s\n", endpoints.ProxyList)
-	log.Printf("Debug?: %t\n", DebugMode)
-	log.Printf("Use OTEL?: %t\n", useOTEL)
+	logLevel := util.GetLogLevel()
+
+	// Create handler
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	})
+
+	// Set default logger
+	slog.SetDefault(slog.New(handler))
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds) // Ensure timestamps are logged
+	slog.Info("Logging", "level", logLevel)
+
+	slog.Info("Registered proxies", "proxyList", endpoints.ProxyList)
+	slog.Info("Debug", "enabled", DebugMode)
+	slog.Info("OTEL", "enabled", useOTEL)
 
 	// Handle SIGINT (CTRL+C) gracefully.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -32,7 +44,7 @@ func StartController(port int, useOTEL bool) (err error) {
 	// Set up OpenTelemetry.
 	otelShutdown, err := util.SetupOTelSDK(ctx, useOTEL)
 	if err != nil {
-		log.Printf("Failed to set up OpenTelemetry: %v\n", err)
+		slog.Error("Failed to set up OpenTelemetry", "err", err)
 		return
 	}
 
@@ -45,16 +57,14 @@ func StartController(port int, useOTEL bool) (err error) {
 
 	// Start HTTP server.
 	srv := &http.Server{
-		Addr:         controlPort,
-		BaseContext:  func(_ net.Listener) context.Context { return ctx },
-		ReadTimeout:  time.Second,
-		WriteTimeout: 10 * time.Second,
-		Handler:      newHTTPHandler(),
+		Addr:        controlPort,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
+		Handler:     newHTTPHandler(),
 	}
 
 	srvErr := make(chan error, 1)
 	go func() {
-		log.Printf("Listening on port %s\n", controlPort)
+		slog.Info("Controller is listening", "port", controlPort)
 		srvErr <- srv.ListenAndServe()
 	}()
 

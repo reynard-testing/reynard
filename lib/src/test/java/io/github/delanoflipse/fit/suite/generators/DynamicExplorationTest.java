@@ -13,6 +13,7 @@ import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicExplorationGenerator;
+import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsModel;
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsStore;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 import io.github.delanoflipse.fit.suite.testutil.EventBuilder;
@@ -25,8 +26,8 @@ public class DynamicExplorationTest {
     private FaultloadResult toResult(Faultload f, ImplicationsStore store) {
         var root = store.getRootCause();
         List<TraceReport> reports = new ArrayList<>();
-
-        for (var behav : store.getBehaviours(f.faultSet())) {
+        var model = new ImplicationsModel(store);
+        for (var behav : model.getBehaviours(f.faultSet())) {
             TraceReport report = asReport(behav, f);
             if (behav.uid().matches(root)) {
                 report.isInitial = true;
@@ -171,5 +172,27 @@ public class DynamicExplorationTest {
 
         // We omit B,C,D,E and B,C,D
         assertEquals(10, result.size());
+    }
+
+    @Test
+    public void testWithWildcards() {
+        var modes = FailureModes.getModes(1);
+
+        var a = new EventBuilder("A");
+        var b = a.createChild().withPoint("B");
+        var bRetry = a.createChild().withPoint("B", 1);
+
+        ImplicationsStore store = new ImplicationsStore();
+        store.addDownstreamRequests(a.uid(), List.of(b.uid()));
+
+        // B failure includes B retry
+        store.addInclusionEffect(Set.of(b.behaviour().asMode(modes.get(0))), bRetry.uid());
+
+        DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
+        generator.getStore().addFaultUid(b.uid().asAnyCount());
+        var result = playout(generator, store);
+
+        // [], B, B1, Binf
+        assertEquals(4, result.size());
     }
 }

@@ -59,6 +59,20 @@ public class FiTestExtension
                 context.getTestMethod().get().isAnnotationPresent(FiTest.class);
     }
 
+    private String getOutputDir(ExtensionContext context) {
+        String envOutput = Env.getEnv(Env.Keys.OUTPUT_DIR);
+        if (!envOutput.equals("")) {
+            return envOutput;
+        }
+
+        var outputConfig = context.getConfigurationParameter(OUTPUT_DIR_KEY);
+        if (outputConfig.isPresent()) {
+            return outputConfig.get();
+        }
+
+        return null;
+    }
+
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
         totalTimer.start("Total test time");
@@ -83,24 +97,19 @@ public class FiTestExtension
         boolean onlyPersistantOrTransientRetries = annotation.optimizeForRetries();
         boolean pruneImpactless = annotation.optimizeForImpactless();
         int maxFaultloadSize = annotation.maxFaultloadSize();
-
-        // TraversalStrategy traversalStrategy = TraversalStrategy.BREADTH_FIRST;
-        TraversalStrategy traversalStrategy = TraversalStrategy.DEPTH_FIRST;
+        TraversalStrategy traversalStrategy = annotation.traversalStrategy();
 
         strategy = new StrategyRunner(modes);
         strategy
-                // .withComponent(new IncreasingSizeGenerator(strategy.getStore(),
-                // strategy::prune))
                 .withComponent(new DynamicExplorationGenerator(strategy.getStore(), strategy::prune, traversalStrategy))
+                // These components detect the necessairy info
+                // for the implications store
                 .withComponent(new HappyPathDetector())
                 .withComponent(new ParentChildDetector())
                 .withComponent(new HappensBeforeNeighbourDetector())
                 .withComponent(new ErrorPropagationDetector())
-                // Note: InjectionPointDetector needs to be the last detector in the chain
-                // Because it can add new cases, which can get prune,
-                // which rely on info of the other detectors
-                // .withComponent(new InjectionPointDetector(traversalStrategy,
-                // onlyPersistantOrTransientRetries))
+                // Note: ConditionalPointDetector needs to be the last detector in the chain, as
+                // it relies on the implications
                 .withComponent(new ConditionalPointDetector(onlyPersistantOrTransientRetries))
                 .withComponent(new RedundancyAnalyzer())
                 .withComponent(new StatusAnalyzer())
@@ -148,11 +157,17 @@ public class FiTestExtension
             strategy.withGetDelay(annotation.initialGetTraceDelay());
         }
 
-        var outputConfig = context.getConfigurationParameter(OUTPUT_DIR_KEY);
-        if (outputConfig.isPresent()) {
-            String dir = outputConfig.get();
-            Path projectRoot = Path.of("").toAbsolutePath().getParent();
-            Path outputDir = projectRoot.resolve(dir);
+        String outputConfig = getOutputDir(context);
+        if (outputConfig != null) {
+            Path outputDir;
+
+            if (outputConfig.startsWith("/")) {
+                outputDir = Path.of(outputConfig);
+            } else {
+                Path projectRoot = Path.of("").toAbsolutePath().getParent();
+                outputDir = projectRoot.resolve(outputConfig);
+            }
+
             logger.info("Exporting reports to: " + outputDir);
             strategy.setOutputDir(outputDir);
         }

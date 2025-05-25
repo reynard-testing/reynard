@@ -18,6 +18,7 @@ public class ControllerService extends GenericContainer<ControllerService> {
 
     public ControllerService() {
         super(IMAGE);
+        withEnv("LOG_LEVEL", Env.getEnv(Env.Keys.LOG_LEVEL));
 
         // .withNetwork(network)
         // .withNetworkAliases(name);

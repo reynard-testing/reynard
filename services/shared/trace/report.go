@@ -13,6 +13,7 @@ type TraceReport struct {
 	SpanId        faultload.SpanID      `json:"span_id"`
 	FaultUid      faultload.FaultUid    `json:"uid"`
 	IsInitial     bool                  `json:"is_initial"`
+	Protocol      string                `json:"protocol"`
 	InjectedFault *faultload.Fault      `json:"injected_fault"`
 	Response      *ResponseData         `json:"response"`
 	ConcurrentTo  []*faultload.FaultUid `json:"concurrent_to"`

@@ -16,26 +16,21 @@ type ProxyState struct {
 	ResponseWriter     *ResponseCapture
 	Request            *http.Request
 	ReponseOverwritten bool
-	Complete           bool
 	DurationMs         float64
 }
 
 func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) trace.TraceReport {
-	var response *trace.ResponseData = nil
-
-	if s.Complete {
-		responseData := s.ResponseWriter.GetResponseData(hashBody)
-		response = &responseData
-		response.DurationMs = s.DurationMs
-	}
+	response := s.ResponseWriter.GetResponseData(hashBody)
+	response.DurationMs = s.DurationMs
 
 	return trace.TraceReport{
 		TraceId:       metadata.TraceId,
 		SpanId:        metadata.SpanId,
-		FaultUid:      metadata.FaultUid,
+		FaultUid:      *metadata.FaultUid,
 		IsInitial:     metadata.IsInitial,
+		Protocol:      metadata.Protocol,
 		InjectedFault: s.InjectedFault,
-		Response:      response,
+		Response:      &response,
 		ConcurrentTo:  s.ConcurrentFaults,
 	}
 }

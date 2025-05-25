@@ -1,5 +1,5 @@
 base_tag=${1:-""}
-iterations=${N:-1}
+iterations=${N:-30}
 
 trap "exit" INT
 for ((i=1; i<=iterations; i++)); do

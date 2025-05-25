@@ -36,7 +36,7 @@ echo "Service is available."
 trap "exit" INT
 cd ${project_path}
 echo "returning to ${project_path}"
-iterations=${N:-1}
+iterations=${N:-30}
 for ((i=1; i<=iterations; i++)); do
     echo "Running iteration ${i} of ${iterations}"
 

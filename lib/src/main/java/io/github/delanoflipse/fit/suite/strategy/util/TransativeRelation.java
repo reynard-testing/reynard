@@ -79,6 +79,10 @@ public class TransativeRelation<X> {
         return hasTransativeRelation(item1, item2) || hasTransativeRelation(item2, item1);
     }
 
+    public Set<X> getChildren(X parent) {
+        return relation.getOrDefault(parent, Set.of());
+    }
+
     public Set<X> getDecendants(X parent) {
         return transitiveRelations.getOrDefault(parent, Set.of());
     }
@@ -134,12 +138,46 @@ public class TransativeRelation<X> {
         }
     }
 
-    public Set<X> getChildren(X parent) {
-        return relation.getOrDefault(parent, Set.of());
-    }
-
     public Set<X> getElements() {
         return elements;
+    }
+
+    public List<X> topologicalOrder() {
+        // (this is Kahn's algorithm)
+        var roots = elements.stream()
+                .filter(x -> getParent(x) == null)
+                .toList();
+
+        var edges = getRelations();
+
+        var ordered = new ArrayList<X>();
+        var front = new ArrayList<>(roots);
+
+        // no roots, just return them all
+        if (roots.isEmpty()) {
+            return List.copyOf(elements);
+        }
+
+        while (!front.isEmpty()) {
+            X el = front.remove(0);
+            ordered.add(el);
+
+            var edgesFrom = edges.stream()
+                    .filter(x -> x.first().equals(el))
+                    .toList();
+            for (var edge : edgesFrom) {
+                var edgeDestination = edge.second();
+                edges.remove(edge);
+                var edgesLeft = edges.stream()
+                        .filter(x -> x.second().equals(edgeDestination))
+                        .count();
+                if (edgesLeft == 0) {
+                    front.add(edgeDestination);
+                }
+            }
+        }
+
+        return ordered;
     }
 
 }

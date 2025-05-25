@@ -101,4 +101,32 @@ public record Behaviour(FaultUid uid, FailureMode mode) {
                 .map(Behaviour::uid)
                 .collect(Collectors.toSet());
     }
+
+    public static boolean contains(Collection<Behaviour> collection, Behaviour uid) {
+        if (collection == null || uid == null) {
+            return false;
+        }
+
+        for (Behaviour other : collection) {
+            if (other.matches(uid)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean contains(Collection<Behaviour> collection, FaultUid uid) {
+        if (collection == null || uid == null) {
+            return false;
+        }
+
+        for (Behaviour other : collection) {
+            if (other.uid().matches(uid)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -21,9 +21,15 @@ type ServerAction =
       method: "GET" | "POST" | "PUT" | "DELETE";
       onFailure?: ServerAction;
     }
-  | ActionComposition;
+  | ActionComposition
+  | string;
 
 async function executeAction(action: ServerAction): Promise<any> {
+  if (typeof action === "string") {
+    // Handle LeafAction
+    return action;
+  }
+
   if ("order" in action) {
     // Handle ActionComposition
     if (action.order === "parallel") {
@@ -54,7 +60,7 @@ async function executeAction(action: ServerAction): Promise<any> {
   }
 }
 
-app.get("/get", async (req, res) => {
+app.get("/", async (req, res) => {
   try {
     const result = await executeAction(action);
     res.status(200).send(result);

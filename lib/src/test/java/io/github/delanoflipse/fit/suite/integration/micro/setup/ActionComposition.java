@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.integration.micro;
+package io.github.delanoflipse.fit.suite.integration.micro.setup;
 
 import java.util.List;
 

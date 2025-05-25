@@ -221,6 +221,7 @@ public class ImplicationsStoreTest {
     setupExclusion();
 
     Set<Behaviour> result = getExpected(Set.of(new Fault(b.uid(), mode1)));
+    // A and B, which hides C and F (and others)
     assertEquals(2, result.size());
     assertEquals(1, faultyBehaviours(result));
   }

@@ -110,6 +110,11 @@ public class FilibusterSuiteIT {
         }
     }
 
+    @FiTest(maskPayload = true, maxTestCases = 9999)
+    public void testNetflixNoCs(TrackedFaultload faultload) throws IOException {
+        testNetflix(faultload);
+    }
+
     @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalStrategy.BREADTH_FIRST)
     public void testNetflixBfs(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);

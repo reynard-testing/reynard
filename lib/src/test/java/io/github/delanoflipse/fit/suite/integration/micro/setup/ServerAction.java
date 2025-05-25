@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.integration.micro;
+package io.github.delanoflipse.fit.suite.integration.micro.setup;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,6 +10,7 @@ public record ServerAction(String endpoint, String method, String body, Object o
         this(endpoint, "GET", null, null);
     }
 
+    // Note: onFailure can be a ActionComposition, ServerAction, or a String
     public ServerAction(String endpoint, Object onFailure) {
         this(endpoint, "GET", null, onFailure);
     }

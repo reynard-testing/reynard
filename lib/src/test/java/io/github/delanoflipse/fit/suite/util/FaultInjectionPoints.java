@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.testutil;
+package io.github.delanoflipse.fit.suite.util;
 
 import java.util.ArrayList;
 import java.util.List;

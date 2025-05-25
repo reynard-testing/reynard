@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.suites.micro;
+package io.github.delanoflipse.fit.suite.integration.micro;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

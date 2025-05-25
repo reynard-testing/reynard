@@ -30,7 +30,6 @@ def simplify_name(name: str):
 
     if name.startswith("["):
         names = name[1:-1].split("], Fault[")
-        print(names)
         uids = set()
         modes = set()
         signatures = set()

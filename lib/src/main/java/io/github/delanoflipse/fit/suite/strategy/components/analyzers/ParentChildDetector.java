@@ -10,7 +10,7 @@ import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.TraversalStrategy;
 
 public class ParentChildDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ParentChildDetector.class);

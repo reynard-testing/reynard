@@ -42,7 +42,7 @@ import io.github.delanoflipse.fit.suite.strategy.components.pruners.NoImpactPrun
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.UnreachabilityPruner;
 import io.github.delanoflipse.fit.suite.strategy.util.Env;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 import io.github.delanoflipse.fit.suite.util.TaggedTimer;
 
 public class FiTestExtension
@@ -97,7 +97,7 @@ public class FiTestExtension
         boolean onlyPersistantOrTransientRetries = annotation.optimizeForRetries();
         boolean pruneImpactless = annotation.optimizeForImpactless();
         int maxFaultloadSize = annotation.maxFaultloadSize();
-        TraversalStrategy traversalStrategy = annotation.traversalStrategy();
+        TraversalOrder traversalStrategy = annotation.traversalStrategy();
 
         strategy = new StrategyRunner(modes);
         strategy

@@ -27,7 +27,8 @@ import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
 import io.github.delanoflipse.fit.suite.strategy.util.Lists;
 import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 import io.github.delanoflipse.fit.suite.strategy.util.Simplify;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 
 public class DynamicExplorationGenerator extends StoreBasedGenerator implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(DynamicExplorationGenerator.class);
@@ -39,20 +40,21 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
     private int nodeCounter = 0;
     private final Map<TreeNode, Integer> nodeIndex = new LinkedHashMap<>();
     private final List<Integer> queueSize = new ArrayList<>();
-    private final TraversalStrategy traversalStrategy;
+    private final TraversalOrder nodeOrder;
+    private final TraversalOrder treeOrder = TraversalOrder.DEPTH_FIRST_POST_ORDER;
     private final Function<Set<Fault>, PruneDecision> pruneFunction;
 
     public DynamicExplorationGenerator(DynamicAnalysisStore store, Function<Set<Fault>, PruneDecision> pruneFunction,
-            TraversalStrategy traversalStrategy) {
+            TraversalOrder traversalStrategy) {
         super(store);
         this.pruneFunction = pruneFunction;
-        this.traversalStrategy = traversalStrategy;
+        this.nodeOrder = traversalStrategy;
 
         nodeIndex.put(root, 0);
     }
 
     public DynamicExplorationGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {
-        this(new DynamicAnalysisStore(modes), pruneFunction, TraversalStrategy.BREADTH_FIRST);
+        this(new DynamicAnalysisStore(modes), pruneFunction, TraversalOrder.BREADTH_FIRST);
     }
 
     public record TreeNode(Set<Fault> value) {
@@ -168,7 +170,21 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             return false;
         }
 
-        int insertionIndex = Lists.addBefore(toVisit, node, x -> x.value.size() > node.value.size());
+        int insertionIndex = -1;
+        switch (treeOrder) {
+            case DEPTH_FIRST_POST_ORDER,
+                    DEPTH_FIRST_REVERSE_POST_ORDER,
+                    DEPTH_FIRST_PRE_ORDER,
+                    DEPTH_FIRST_REVERSE_PRE_ORDER -> {
+                // explore new node first
+                insertionIndex = Lists.addBefore(toVisit, node, x -> x.value.size() <= node.value.size());
+            }
+            default -> {
+                // add before the first node that has a larger size
+                insertionIndex = Lists.addBefore(toVisit, node, x -> x.value.size() > node.value.size());
+            }
+
+        }
 
         if (insertionIndex == -1) {
             logger.debug("Adding {} to end of the queue", node);
@@ -182,7 +198,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        List<FaultUid> observed = result.trace.getFaultUids(traversalStrategy);
+        List<FaultUid> observed = result.trace.getFaultUids(nodeOrder);
 
         for (var point : observed) {
             context.reportFaultUid(point);

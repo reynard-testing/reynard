@@ -11,7 +11,7 @@ import io.github.delanoflipse.fit.suite.instrument.FaultController;
 import io.github.delanoflipse.fit.suite.instrument.controller.RemoteController;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.TraversalStrategy;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

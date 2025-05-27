@@ -18,19 +18,19 @@ public class TraversalStrategy<X> {
     public List<X> traverse(X root, List<Pair<X, X>> edges) {
         // Ensure that we only visit each node once
         // In case of cycles, this will prevent infinite loops
-        Set<X> visited = new LinkedHashSet<>();
-        visited.add(root);
 
         switch (mode) {
             case DEPTH_FIRST_PRE_ORDER,
                     DEPTH_FIRST_REVERSE_PRE_ORDER,
                     DEPTH_FIRST_POST_ORDER,
                     DEPTH_FIRST_REVERSE_POST_ORDER -> {
+                Set<X> visited = new LinkedHashSet<>();
+                visited.add(root);
                 return visitNodeDfs(root, edges, visited);
             }
 
             case BREADTH_FIRST -> {
-                return visitNodeBfs(root, edges, visited);
+                return visitNodeBfs(root, edges);
             }
 
             case RANDOM -> {
@@ -67,12 +67,38 @@ public class TraversalStrategy<X> {
         return children;
     }
 
-    private List<X> visitNodeBfs(X node, List<Pair<X, X>> edges, Set<X> visited) {
-        List<X> result = new ArrayList<>();
+    private List<X> getChildren(X node, List<Pair<X, X>> edges) {
+        List<X> children = new ArrayList<>();
 
-        result.add(node);
-        for (X child : getChildren(node, edges, visited)) {
-            result.addAll(visitNodeBfs(child, edges, visited));
+        for (Pair<X, X> edge : edges) {
+            if (edge.first().equals(node)) {
+                var child = edge.second();
+                children.add(child);
+            }
+        }
+
+        return children;
+    }
+
+    private List<X> visitNodeBfs(X node, List<Pair<X, X>> edges) {
+        List<X> result = new ArrayList<>();
+        List<X> queue = new ArrayList<>();
+
+        Set<X> visited = new LinkedHashSet<>();
+        queue.add(node);
+
+        while (!queue.isEmpty()) {
+            X currentNode = queue.remove(0);
+
+            if (visited.contains(currentNode)) {
+                continue; // Skip already visited nodes
+            }
+
+            visited.add(currentNode);
+            result.add(currentNode);
+
+            List<X> children = getChildren(currentNode, edges);
+            queue.addAll(children);
         }
 
         return result;

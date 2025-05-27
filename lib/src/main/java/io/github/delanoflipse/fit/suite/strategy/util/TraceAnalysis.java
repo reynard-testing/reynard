@@ -326,7 +326,7 @@ public class TraceAnalysis {
         return foundFaults;
     }
 
-    public void traverseReports(TraversalStrategy strategy, boolean includeInitial, Consumer<TraceReport> consumer) {
+    public void traverseReports(TraversalOrder strategy, boolean includeInitial, Consumer<TraceReport> consumer) {
         Consumer<FaultUid> mappedConsumer = (faultUid) -> {
             var report = getReportByFaultUid(faultUid);
             if (report != null) {

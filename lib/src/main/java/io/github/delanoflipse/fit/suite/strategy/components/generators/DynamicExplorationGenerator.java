@@ -27,7 +27,6 @@ import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
 import io.github.delanoflipse.fit.suite.strategy.util.Lists;
 import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 import io.github.delanoflipse.fit.suite.strategy.util.Simplify;
-import io.github.delanoflipse.fit.suite.strategy.util.TraversalStrategy;
 import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 
 public class DynamicExplorationGenerator extends StoreBasedGenerator implements FeedbackHandler, Reporter {

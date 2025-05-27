@@ -11,7 +11,7 @@ import io.github.delanoflipse.fit.suite.instrument.FaultController;
 import io.github.delanoflipse.fit.suite.instrument.controller.RemoteController;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
-import io.github.delanoflipse.fit.suite.strategy.util.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -67,12 +67,12 @@ public class FilibusterSuiteIT {
         testAudible(faultload);
     }
 
-    @FiTest(maxTestCases = 999, traversalStrategy = TraversalStrategy.BREADTH_FIRST)
+    @FiTest(maxTestCases = 999, traversalStrategy = TraversalOrder.BREADTH_FIRST)
     public void testAudibleBfs(TrackedFaultload faultload) throws IOException {
         testAudible(faultload);
     }
 
-    @FiTest(maxTestCases = 999, traversalStrategy = TraversalStrategy.RANDOM)
+    @FiTest(maxTestCases = 999, traversalStrategy = TraversalOrder.RANDOM)
     public void testAudibleRandomOrder(TrackedFaultload faultload) throws IOException {
         testAudible(faultload);
     }
@@ -115,12 +115,12 @@ public class FilibusterSuiteIT {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalStrategy.BREADTH_FIRST)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalOrder.BREADTH_FIRST)
     public void testNetflixBfs(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalStrategy.RANDOM)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalOrder.RANDOM)
     public void testNetflixRandomOrder(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }

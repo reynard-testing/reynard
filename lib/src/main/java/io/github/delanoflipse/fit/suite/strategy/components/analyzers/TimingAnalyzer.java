@@ -1,7 +1,5 @@
 package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,19 +20,23 @@ import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStr
 public class TimingAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(TimingAnalyzer.class);
 
-    private final Map<Behaviour, List<Float>> timings = new LinkedHashMap<>();
+    private final Map<Behaviour, List<Float>> responseTimings = new LinkedHashMap<>();
+    private final Map<Behaviour, List<Float>> overheadTimings = new LinkedHashMap<>();
+
+    private void addTiming(Map<Behaviour, List<Float>> timings, Behaviour b, float timing) {
+        if (timing <= 0) {
+            return;
+        }
+
+        timings.computeIfAbsent(b, x -> new ArrayList<>()).add(timing);
+    }
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
             var behaviour = report.getBehaviour();
-            float timing = report.response.durationMs;
-
-            if (timing <= 0 || report.injectedFault != null) {
-                return;
-            }
-
-            timings.computeIfAbsent(behaviour, x -> new ArrayList<>()).add(timing);
+            addTiming(responseTimings, behaviour, report.response.durationMs);
+            addTiming(overheadTimings, behaviour, report.response.overheadDurationMs);
         });
     }
 
@@ -42,8 +44,7 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
         return v.stream().mapToDouble(i -> i);
     }
 
-    @Override
-    public Object report(PruneContext context) {
+    private List<Object> getTimingReport(Map<Behaviour, List<Float>> timings) {
         List<Object> report = new ArrayList<>();
 
         for (var entry : timings.entrySet()) {
@@ -64,6 +65,15 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
             report.add(reportEntry);
         }
 
+        return report;
+
+    }
+
+    @Override
+    public Object report(PruneContext context) {
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("responses", getTimingReport(responseTimings));
+        report.put("overhead", getTimingReport(overheadTimings));
         return report;
     }
 

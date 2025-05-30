@@ -16,6 +16,9 @@ public class TraceResponse {
     @JsonProperty("duration_ms")
     public float durationMs;
 
+    @JsonProperty("overhead_duration_ms")
+    public float overheadDurationMs;
+
     public boolean isErrenous() {
         return !(status >= 200 && status < 300);
     }

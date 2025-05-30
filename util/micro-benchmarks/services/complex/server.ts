@@ -16,11 +16,11 @@ type ActionComposition = {
 };
 type ServerAction =
   | {
-      endpoint: string;
-      payload?: any;
-      method: "GET" | "POST" | "PUT" | "DELETE";
-      onFailure?: ServerAction;
-    }
+    endpoint: string;
+    payload?: any;
+    method: "GET" | "POST" | "PUT" | "DELETE";
+    onFailure?: ServerAction;
+  }
   | ActionComposition
   | string;
 
@@ -34,7 +34,19 @@ async function executeAction(action: ServerAction): Promise<any> {
     // Handle ActionComposition
     if (action.order === "parallel") {
       const promises = action.actions.map(executeAction);
-      return Promise.all(promises);
+      const res = await Promise.allSettled(promises);
+      const failedResponse = res.find(
+        (result) => result.status === "rejected"
+      );
+
+      if (failedResponse) {
+        throw failedResponse.reason;
+      }
+
+      return res
+        .filter(x => x.status == "fulfilled")
+        .map(x => x.value)
+        .join(",");
     } else {
       let result;
       for (const subAction of action.actions) {

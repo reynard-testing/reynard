@@ -2,6 +2,7 @@ package io.github.delanoflipse.fit.suite.strategy.components.generators;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -40,7 +41,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
     private final Map<TreeNode, Integer> nodeIndex = new LinkedHashMap<>();
     private final List<Integer> queueSize = new ArrayList<>();
     private final TraversalOrder nodeOrder;
-    private final TraversalOrder treeOrder = TraversalOrder.DEPTH_FIRST_POST_ORDER;
+    private final boolean breadthFirst = false;
     private final Function<Set<Fault>, PruneDecision> pruneFunction;
 
     public DynamicExplorationGenerator(DynamicAnalysisStore store, Function<Set<Fault>, PruneDecision> pruneFunction,
@@ -92,6 +93,10 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
     private void expand(TreeNode node, List<FaultUid> expansion) {
         if (expansion.isEmpty()) {
             return;
+        }
+
+        if (!breadthFirst) {
+            Collections.reverse(expansion);
         }
 
         for (var i = 0; i < expansion.size(); i++) {
@@ -170,19 +175,12 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         }
 
         int insertionIndex = -1;
-        switch (treeOrder) {
-            case DEPTH_FIRST_POST_ORDER,
-                    DEPTH_FIRST_REVERSE_POST_ORDER,
-                    DEPTH_FIRST_PRE_ORDER,
-                    DEPTH_FIRST_REVERSE_PRE_ORDER -> {
-                // explore new node first
-                insertionIndex = Lists.addBefore(toVisit, node, x -> x.value.size() <= node.value.size());
-            }
-            default -> {
-                // add before the first node that has a larger size
-                insertionIndex = Lists.addBefore(toVisit, node, x -> x.value.size() > node.value.size());
-            }
-
+        if (breadthFirst) {
+            // add before the first node that has a larger size
+            insertionIndex = Lists.addBefore(toVisit, node, x -> x.value.size() > node.value.size());
+        } else {
+            // explore new node first
+            insertionIndex = Lists.addBefore(toVisit, node, x -> x.value.size() <= node.value.size());
         }
 
         if (insertionIndex == -1) {

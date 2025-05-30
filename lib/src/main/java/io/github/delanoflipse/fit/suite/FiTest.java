@@ -39,5 +39,7 @@ public @interface FiTest {
 
     Class<?>[] additionalComponents() default {};
 
-    TraversalOrder traversalStrategy() default TraversalOrder.DEPTH_FIRST_POST_ORDER;
+    // TraversalOrder traversalOrder() default
+    // TraversalOrder.DEPTH_FIRST_POST_ORDER;
+    TraversalOrder traversalOrder() default TraversalOrder.DEPTH_FIRST_REVERSE_POST_ORDER;
 }

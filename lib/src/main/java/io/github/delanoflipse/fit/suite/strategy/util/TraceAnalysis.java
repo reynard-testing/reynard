@@ -285,6 +285,9 @@ public class TraceAnalysis {
     public List<TraceReport> getReports(TraversalOrder strategy) {
         var traversal = new TraversalStrategy<TraceReport>(strategy);
         List<Pair<TraceReport, TraceReport>> edges = parentChildRelation.getRelations().stream()
+                .filter(pair -> pair.first() != null && pair.second() != null)
+                .filter(pair -> reportByPoint.containsKey(pair.first())
+                        && reportByPoint.containsKey(pair.second()))
                 .map(pair -> new Pair<TraceReport, TraceReport>(getReportByFaultUid(pair.first()),
                         getReportByFaultUid(pair.second())))
                 .toList();
@@ -334,6 +337,11 @@ public class TraceAnalysis {
             }
         };
 
+        List<TraceReport> reports = getReports(strategy);
+        reports.stream()
+                .filter(report -> includeInitial || !report.isInitial)
+                .map(report -> report.faultUid)
+                .forEach(mappedConsumer);
     }
 
 }

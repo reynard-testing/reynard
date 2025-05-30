@@ -3,7 +3,6 @@ package io.github.delanoflipse.fit.suite.integration;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import io.github.delanoflipse.fit.suite.FiTest;
@@ -67,12 +66,12 @@ public class FilibusterSuiteIT {
         testAudible(faultload);
     }
 
-    @FiTest(maxTestCases = 999, traversalStrategy = TraversalOrder.BREADTH_FIRST)
+    @FiTest(maxTestCases = 999, traversalOrder = TraversalOrder.BREADTH_FIRST)
     public void testAudibleBfs(TrackedFaultload faultload) throws IOException {
         testAudible(faultload);
     }
 
-    @FiTest(maxTestCases = 999, traversalStrategy = TraversalOrder.RANDOM)
+    @FiTest(maxTestCases = 999, traversalOrder = TraversalOrder.RANDOM)
     public void testAudibleRandomOrder(TrackedFaultload faultload) throws IOException {
         testAudible(faultload);
     }
@@ -115,12 +114,12 @@ public class FilibusterSuiteIT {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalOrder.BREADTH_FIRST)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalOrder = TraversalOrder.BREADTH_FIRST)
     public void testNetflixBfs(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalOrder.RANDOM)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalOrder = TraversalOrder.RANDOM)
     public void testNetflixRandomOrder(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
@@ -204,6 +203,11 @@ public class FilibusterSuiteIT {
 
     @FiTest(maxTestCases = 500, optimizeForRetries = true)
     public void testCinema3Retries(TrackedFaultload faultload) throws IOException {
+        testCinema3(faultload);
+    }
+
+    @FiTest(maxTestCases = 500, traversalOrder = TraversalOrder.DEPTH_FIRST_REVERSE_POST_ORDER)
+    public void testCinema3DfsRevPostOrder(TrackedFaultload faultload) throws IOException {
         testCinema3(faultload);
     }
 

@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.pruners;
+package io.github.delanoflipse.fit.suite.unit.pruners;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +18,7 @@ import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
 import io.github.delanoflipse.fit.suite.strategy.components.pruners.DynamicReductionPruner;
 import io.github.delanoflipse.fit.suite.strategy.util.Pair;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
-import io.github.delanoflipse.fit.suite.testutil.EventBuilder;
+import io.github.delanoflipse.fit.suite.util.EventBuilder;
 
 public class DynamicReductionTest {
     @Test

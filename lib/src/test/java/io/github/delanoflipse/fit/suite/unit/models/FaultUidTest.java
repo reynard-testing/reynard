@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.models;
+package io.github.delanoflipse.fit.suite.unit.models;
 
 import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;

@@ -67,6 +67,10 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
         return this;
     }
 
+    public String getHostname() {
+        return hostname;
+    }
+
     public String getControlHost() {
         // controller port is original port + 1
         return hostname + ":" + this.controlPort;

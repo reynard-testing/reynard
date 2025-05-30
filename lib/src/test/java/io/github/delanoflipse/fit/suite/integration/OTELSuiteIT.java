@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.suites;
+package io.github.delanoflipse.fit.suite.integration;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

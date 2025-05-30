@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.util;
+package io.github.delanoflipse.fit.suite.unit.util;
 
 import static org.junit.Assert.assertTrue;
 

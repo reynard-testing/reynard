@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.generators;
+package io.github.delanoflipse.fit.suite.unit.generators;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,10 +16,10 @@ import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicEx
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsModel;
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsStore;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
-import io.github.delanoflipse.fit.suite.testutil.EventBuilder;
-import io.github.delanoflipse.fit.suite.testutil.FailureModes;
 import io.github.delanoflipse.fit.suite.trace.tree.TraceReport;
 import io.github.delanoflipse.fit.suite.trace.tree.TraceResponse;
+import io.github.delanoflipse.fit.suite.util.EventBuilder;
+import io.github.delanoflipse.fit.suite.util.FailureModes;
 
 public class DynamicExplorationTest {
 

@@ -27,8 +27,10 @@ public class TransativeRelation<X> {
         }
 
         inverseRelation.put(child, parent);
-        relation.computeIfAbsent(parent, k -> new LinkedHashSet<>()).add(child);
-        updateTransitiveRelations(parent);
+        relation.computeIfAbsent(parent, k -> new LinkedHashSet<>());
+        relation.get(parent).add(child);
+        var root = getRoot(parent);
+        updateTransitiveRelations(root);
     }
 
     public void removeRelation(X parent, X child) {
@@ -63,7 +65,8 @@ public class TransativeRelation<X> {
         }
 
         // Add the transative relation
-        transitiveRelations.computeIfAbsent(root, k -> new LinkedHashSet<>()).addAll(descendants);
+        transitiveRelations.computeIfAbsent(root, k -> new LinkedHashSet<>());
+        transitiveRelations.get(root).addAll(descendants);
         return descendants;
     }
 
@@ -89,6 +92,15 @@ public class TransativeRelation<X> {
 
     public X getParent(X child) {
         return inverseRelation.get(child);
+    }
+
+    public X getRootOf(X child) {
+        X parent = getParent(child);
+        if (parent == null) {
+            return child;
+        } else {
+            return getRootOf(parent);
+        }
     }
 
     public List<Pair<X, X>> getRelations() {

@@ -91,15 +91,19 @@ public class ImplicationsModel {
         TransativeRelation<FaultInjectionPoint> dependsOn = new TransativeRelation<>();
         List<Substitution> allSubs = Lists.union(exclusionsToApply, inclusionsToApply);
 
+        boolean circularDetected = false;
         for (var s : allSubs) {
             for (var cause : s.causes()) {
                 try {
                     dependsOn.addRelation(cause.uid().getPoint(), s.effect().getPoint());
                 } catch (Exception e) {
-                    logger.warn("Found a circular substitution dependency, likely due to indistinguishable events: {}",
-                            s);
+                    circularDetected = true;
                 }
             }
+        }
+
+        if (circularDetected) {
+            logger.warn("Circular dependencies detected in substitutions, this may lead to unexpected results");
         }
 
         // a return the topological order

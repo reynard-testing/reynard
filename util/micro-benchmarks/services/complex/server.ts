@@ -16,19 +16,37 @@ type ActionComposition = {
 };
 type ServerAction =
   | {
-      endpoint: string;
-      payload?: any;
-      method: "GET" | "POST" | "PUT" | "DELETE";
-      onFailure?: ServerAction;
-    }
-  | ActionComposition;
+    endpoint: string;
+    payload?: any;
+    method: "GET" | "POST" | "PUT" | "DELETE";
+    onFailure?: ServerAction;
+  }
+  | ActionComposition
+  | string;
 
 async function executeAction(action: ServerAction): Promise<any> {
+  if (typeof action === "string") {
+    // Handle LeafAction
+    return action;
+  }
+
   if ("order" in action) {
     // Handle ActionComposition
     if (action.order === "parallel") {
       const promises = action.actions.map(executeAction);
-      return Promise.all(promises);
+      const res = await Promise.allSettled(promises);
+      const failedResponse = res.find(
+        (result) => result.status === "rejected"
+      );
+
+      if (failedResponse) {
+        throw failedResponse.reason;
+      }
+
+      return res
+        .filter(x => x.status == "fulfilled")
+        .map(x => x.value)
+        .join(",");
     } else {
       let result;
       for (const subAction of action.actions) {
@@ -54,7 +72,7 @@ async function executeAction(action: ServerAction): Promise<any> {
   }
 }
 
-app.get("/get", async (req, res) => {
+app.get("/", async (req, res) => {
   try {
     const result = await executeAction(action);
     res.status(200).send(result);

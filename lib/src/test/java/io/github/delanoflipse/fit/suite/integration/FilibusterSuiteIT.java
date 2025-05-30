@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.suites;
+package io.github.delanoflipse.fit.suite.integration;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -108,6 +108,11 @@ public class FilibusterSuiteIT {
             // assertEquals(200, response.code());
             // }
         }
+    }
+
+    @FiTest(maskPayload = true, maxTestCases = 9999)
+    public void testNetflixNoCs(TrackedFaultload faultload) throws IOException {
+        testNetflix(faultload);
     }
 
     @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalStrategy.BREADTH_FIRST)

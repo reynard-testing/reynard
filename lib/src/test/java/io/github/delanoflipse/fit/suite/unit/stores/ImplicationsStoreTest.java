@@ -1,4 +1,4 @@
-package io.github.delanoflipse.fit.suite.stores;
+package io.github.delanoflipse.fit.suite.unit.stores;
 
 import java.util.Collection;
 import java.util.Map;
@@ -16,8 +16,8 @@ import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsModel;
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsStore;
-import io.github.delanoflipse.fit.suite.testutil.EventBuilder;
-import io.github.delanoflipse.fit.suite.testutil.FailureModes;
+import io.github.delanoflipse.fit.suite.util.EventBuilder;
+import io.github.delanoflipse.fit.suite.util.FailureModes;
 
 public class ImplicationsStoreTest {
   private FailureMode mode1 = FailureModes.getMode(0);
@@ -221,6 +221,7 @@ public class ImplicationsStoreTest {
     setupExclusion();
 
     Set<Behaviour> result = getExpected(Set.of(new Fault(b.uid(), mode1)));
+    // A and B, which hides C and F (and others)
     assertEquals(2, result.size());
     assertEquals(1, faultyBehaviours(result));
   }

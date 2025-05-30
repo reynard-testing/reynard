@@ -40,7 +40,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
         failureModes = context.getFailureModes();
 
         result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
-            var injectionPoint = report.faultUid;
+            var injectionPoint = report.injectionPoint;
 
             if (report.injectedFault != null) {
                 // Not interesting, we caused it ourselves
@@ -97,7 +97,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
                 if (hasAlteredResponse) {
                     logger.warn(
                             "Detected altered response {} at {} with no cause! This can be indicative of a bug!",
-                            report.response, report.faultUid);
+                            report.response, report.injectionPoint);
                 }
 
                 return;
@@ -126,7 +126,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             }
 
             if (!hasFailure) {
-                FaultUid point = report.faultUid;
+                FaultUid point = report.injectionPoint;
                 if (knownResolutions.containsKey(point)) {
                     SubsetStore<Fault> knownCauses = knownResolutions.get(point);
                     boolean hasKnownCause = knownCauses.hasSubsetOf(causes);

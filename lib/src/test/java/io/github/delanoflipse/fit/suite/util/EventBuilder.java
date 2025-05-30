@@ -160,14 +160,14 @@ public class EventBuilder {
     if (point == null) {
       point = new FaultInjectionPoint("unknown", "unknown", "", Map.of(), 0);
     }
-    if (report.faultUid == null) {
-      report.faultUid = new FaultUid(getStack());
+    if (report.injectionPoint == null) {
+      report.injectionPoint = new FaultUid(getStack());
     }
-    return report.faultUid;
+    return report.injectionPoint;
   }
 
   public TraceReport build() {
-    report.faultUid = uid();
+    report.injectionPoint = uid();
     return report;
   }
 

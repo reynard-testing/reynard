@@ -67,8 +67,8 @@ public class TraceAnalysis {
 
     private void analyseReport(TraceReport report) {
         // Save map of points by faultUid
-        if (!reportByPoint.containsKey(report.faultUid)) {
-            reportByPoint.put(report.faultUid, report);
+        if (!reportByPoint.containsKey(report.injectionPoint)) {
+            reportByPoint.put(report.injectionPoint, report);
             reports.add(report);
         } else {
             hasMultipleReports = true;
@@ -81,20 +81,21 @@ public class TraceAnalysis {
         }
 
         // Update parent-child relation
-        if (report.faultUid.hasParent()) {
-            addParents(report.faultUid);
+        if (report.injectionPoint.hasParent()) {
+            addParents(report.injectionPoint);
         }
 
         // Update concurrent relations
         if (report.concurrentTo != null) {
             for (var concurrent : report.concurrentTo) {
-                concurrentRelation.addRelation(report.faultUid, concurrent);
+                concurrentRelation.addRelation(report.injectionPoint, concurrent);
             }
         }
 
         // Handle initial report
         if (report.isInitial) {
-            if (rootReport != null && rootReport.response != null && !rootReport.faultUid.equals(report.faultUid)) {
+            if (rootReport != null && rootReport.response != null
+                    && !rootReport.injectionPoint.equals(report.injectionPoint)) {
                 hasMultipleInitial = true;
             }
 
@@ -102,7 +103,7 @@ public class TraceAnalysis {
             hasInitial = true;
         } else {
             // Do not inject faults between client and first proxy
-            faultUids.add(report.faultUid);
+            faultUids.add(report.injectionPoint);
         }
 
         // Handle injected faults
@@ -219,7 +220,7 @@ public class TraceAnalysis {
     }
 
     public TraceReport getParent(TraceReport faultUid) {
-        return getReportByFaultUid(parentChildRelation.getParent(faultUid.faultUid));
+        return getReportByFaultUid(parentChildRelation.getParent(faultUid.injectionPoint));
     }
 
     public Set<FaultUid> getDecendants(FaultUid node) {
@@ -227,7 +228,7 @@ public class TraceAnalysis {
     }
 
     public List<TraceReport> getDecendants(TraceReport report) {
-        return getReports(getDecendants(report.faultUid));
+        return getReports(getDecendants(report.injectionPoint));
     }
 
     public Set<FaultUid> getChildren(FaultUid node) {
@@ -235,7 +236,7 @@ public class TraceAnalysis {
     }
 
     public List<TraceReport> getChildren(TraceReport report) {
-        return getReports(getChildren(report.faultUid));
+        return getReports(getChildren(report.injectionPoint));
     }
 
     public Set<FaultUid> getNeighbours(FaultUid child) {
@@ -246,7 +247,7 @@ public class TraceAnalysis {
     }
 
     public List<TraceReport> getNeighbours(TraceReport report) {
-        Set<FaultUid> neighbours = getNeighbours(report.faultUid);
+        Set<FaultUid> neighbours = getNeighbours(report.injectionPoint);
         return getReports(neighbours);
     }
 
@@ -340,7 +341,7 @@ public class TraceAnalysis {
     }
 
     public void traverseFaults(TraversalStrategy strategy, boolean includeInitial, Consumer<FaultUid> consumer) {
-        FaultUid root = rootReport.faultUid;
+        FaultUid root = rootReport.injectionPoint;
         switch (strategy) {
             case DEPTH_FIRST -> traverseDepthFirst(root, includeInitial, consumer);
             case BREADTH_FIRST -> traverseBreadthFirst(root, includeInitial, consumer);

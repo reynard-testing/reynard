@@ -2,11 +2,14 @@ package io.github.delanoflipse.fit.suite.faultload;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 
 @JsonSerialize
 @JsonDeserialize
@@ -28,6 +31,11 @@ public record FaultInjectionPoint(String destination, String signature, String p
     @JsonIgnore
     public boolean isAnyDestination() {
         return destination.equals(ANY_WILDCARD);
+    }
+
+    @JsonIgnore
+    public boolean isAnyCallStack() {
+        return callStack == null;
     }
 
     @JsonIgnore
@@ -112,6 +120,40 @@ public record FaultInjectionPoint(String destination, String signature, String p
     @JsonIgnore
     public boolean isPersistent() {
         return count < 0;
+    }
+
+    // cs1 < cs2
+    public static boolean isBefore(Map<String, Integer> cs1, Map<String, Integer> cs2) {
+        Set<String> keys = Sets.union(cs1.keySet(), cs2.keySet());
+        boolean hasOneBefore = false;
+
+        for (String key : keys) {
+            if (!cs1.containsKey(key)) {
+                // cs1 has an event that cs2 has not seen
+                hasOneBefore = true;
+                break;
+            }
+
+            if (!cs2.containsKey(key)) {
+                // cs2 has an event that cs1 has not seen
+                return false;
+            }
+
+            int v1 = cs1.get(key);
+            int v2 = cs2.get(key);
+
+            if (v2 > v1) {
+                hasOneBefore = true;
+            }
+
+            if (v1 > v2) {
+                // cs1 has an event that is after cs2
+                return false;
+            }
+        }
+
+        // All events are <=, and one is before
+        return hasOneBefore;
     }
 
     private boolean matches(String a, String b) {

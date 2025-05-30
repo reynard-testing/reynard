@@ -2,6 +2,7 @@ package io.github.delanoflipse.fit.suite.faultload;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -103,6 +104,14 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     }
 
     @JsonIgnore
+    public FaultUid withCount(int count) {
+        var head = getPoint();
+        var tail = getTail();
+
+        return new FaultUid(Lists.plus(tail, head.withCount(count)));
+    }
+
+    @JsonIgnore
     public FaultUid withoutCallStack() {
         List<FaultInjectionPoint> without = stack.stream()
                 .map(x -> x.asAnyCallStack())
@@ -175,6 +184,34 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     @JsonIgnore
     public boolean isInitial() {
         return stack.size() == 1;
+    }
+
+    @JsonIgnore
+    public Optional<Boolean> isBefore(FaultUid other) {
+        // Points cannot be compared
+        if (!getParent().matches(other.getParent())) {
+            return Optional.empty();
+        }
+
+        FaultInjectionPoint pointOther = other.getPoint();
+        FaultInjectionPoint pointSelf = getPoint();
+
+        FaultUid withoutCount = other.asAnyCount();
+        int countOther = pointOther.count();
+        int countSelf = pointSelf.count();
+        boolean isCountBefore = countSelf < countOther;
+
+        if (matches(withoutCount)) {
+            // Same uid up to count, then it must be lower
+            return Optional.of(isCountBefore);
+        }
+
+        // cannot compare without call stack
+        if (pointSelf.isAnyCallStack() || pointOther.isAnyCallStack()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(FaultInjectionPoint.isBefore(pointSelf.callStack(), pointOther.callStack()));
     }
 
     private boolean matches(List<FaultInjectionPoint> a, List<FaultInjectionPoint> b, boolean ignoreCount) {

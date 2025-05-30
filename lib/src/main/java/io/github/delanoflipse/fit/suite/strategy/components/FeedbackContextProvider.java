@@ -12,7 +12,6 @@ import io.github.delanoflipse.fit.suite.faultload.Fault;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.Faultload;
 import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
-import io.github.delanoflipse.fit.suite.strategy.StrategyReporter;
 import io.github.delanoflipse.fit.suite.strategy.StrategyRunner;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.Generator;
 import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
@@ -194,7 +193,7 @@ public class FeedbackContextProvider extends FeedbackContext {
 
     @Override
     public void reportHappyPath(TraceReport report) {
-        localStore.addHappyPath(report.faultUid, report);
+        localStore.addHappyPath(report.injectionPoint, report);
         runner.getGenerator().reportHappyPath(report);
     }
 

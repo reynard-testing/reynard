@@ -39,11 +39,11 @@ public class HappensBeforeNeighbourDetector implements FeedbackHandler {
             List<TraceReport> childrenReports = result.trace.getChildren(report);
 
             Set<FaultUid> expectedChildren = expectedPoints.stream()
-                    .filter(f -> f.hasParent() && f.getParent().matches(report.faultUid))
+                    .filter(f -> f.hasParent() && f.getParent().matches(report.injectionPoint))
                     .collect(Collectors.toSet());
 
             Set<FaultUid> observedChildren = childrenReports.stream()
-                    .map(f -> f.faultUid)
+                    .map(f -> f.injectionPoint)
                     .filter(f -> f != null)
                     .collect(Collectors.toSet());
 

@@ -44,7 +44,7 @@ public abstract class StoreBasedGenerator extends Generator {
 
     @Override
     public void reportHappyPath(TraceReport report) {
-        store.addHappyPath(report.faultUid, report);
+        store.addHappyPath(report.injectionPoint, report);
     }
 
     @Override

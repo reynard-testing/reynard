@@ -38,6 +38,7 @@ public class NondeterminismAndRetry {
     private static final InstrumentedService serviceC = app.instrument("c-leaf", 8080,
             MicroBenchmarkContainer.Leaf());
 
+    // In parallel: call B with retry || call C
     private static final ActionComposition action = ActionComposition.Parallel(
             // Call B
             new ServerAction(MicroBenchmarkContainer.call(serviceB.getHostname()),
@@ -100,6 +101,11 @@ public class NondeterminismAndRetry {
             // Due to the call stack icm parallel, the number of completed events varies
             throw e;
         }
+    }
+
+    @FiTest(optimizeForRetries = true)
+    public void testOpt(TrackedFaultload faultload) throws IOException {
+        testA(faultload);
     }
 
 }

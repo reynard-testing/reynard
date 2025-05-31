@@ -3,7 +3,6 @@ package io.github.delanoflipse.fit.suite.integration;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import io.github.delanoflipse.fit.suite.FiTest;
@@ -11,7 +10,7 @@ import io.github.delanoflipse.fit.suite.instrument.FaultController;
 import io.github.delanoflipse.fit.suite.instrument.controller.RemoteController;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -67,12 +66,12 @@ public class FilibusterSuiteIT {
         testAudible(faultload);
     }
 
-    @FiTest(maxTestCases = 999, traversalStrategy = TraversalStrategy.BREADTH_FIRST)
+    @FiTest(maxTestCases = 999, pointOrder = TraversalOrder.BREADTH_FIRST)
     public void testAudibleBfs(TrackedFaultload faultload) throws IOException {
         testAudible(faultload);
     }
 
-    @FiTest(maxTestCases = 999, traversalStrategy = TraversalStrategy.RANDOM)
+    @FiTest(maxTestCases = 999, pointOrder = TraversalOrder.RANDOM)
     public void testAudibleRandomOrder(TrackedFaultload faultload) throws IOException {
         testAudible(faultload);
     }
@@ -115,17 +114,18 @@ public class FilibusterSuiteIT {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalStrategy.BREADTH_FIRST)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, pointOrder = TraversalOrder.BREADTH_FIRST)
     public void testNetflixBfs(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, traversalStrategy = TraversalStrategy.RANDOM)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, pointOrder = TraversalOrder.RANDOM)
     public void testNetflixRandomOrder(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
+    // @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, pointOrder = TraversalOrder.DEPTH_FIRST_POST_ORDER, depthFirstSearchOrder = false)
     public void testNetflixFaults(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
@@ -204,6 +204,11 @@ public class FilibusterSuiteIT {
 
     @FiTest(maxTestCases = 500, optimizeForRetries = true)
     public void testCinema3Retries(TrackedFaultload faultload) throws IOException {
+        testCinema3(faultload);
+    }
+
+    @FiTest(maxTestCases = 500, pointOrder = TraversalOrder.DEPTH_FIRST_REVERSE_POST_ORDER)
+    public void testCinema3DfsRevPostOrder(TrackedFaultload faultload) throws IOException {
         testCinema3(faultload);
     }
 

@@ -10,6 +10,7 @@ class SearchNode:
     mode: str
     signature: str
     uid: str
+    pruned: bool = False
     children: list['SearchNode'] = field(default_factory=list)
 
 
@@ -131,21 +132,29 @@ def combine_tree(node: SearchNode):
             signature=children[0].signature,
             uid=children[0].uid,
             children=combined_children,
+            pruned=all(c.pruned for c in children)
         )
         new_children.append(combine_tree(combined_child))
 
     new_node = replace(node)
-    new_node.children = new_children
+    new_node.children = sorted(new_children, key=lambda c: c.index)
     return new_node
 
 
-def render_tree_structure(dot: Digraph, node: SearchNode, needs_signature=False):
+def render_tree_structure(dot: Digraph, node: SearchNode, needs_signature=False, with_pruned=False) -> bool:
+    if node.pruned and not with_pruned:
+        return False
     node_label = get_node_label(node, needs_signature)
-    dot.node(node.id, label=node_label)
+    color = 'red' if node.pruned else 'black'
+    dot.node(node.id, label=node_label, color=color)
 
     for child in node.children:
-        render_tree_structure(dot, child, needs_signature)
+        rendered = render_tree_structure(
+            dot, child, needs_signature, with_pruned)
+        if not rendered:
+            continue
         dot.edge(node.id, child.id, label=get_edge_label(child))
+    return True
 
 
 def parse_tree(tree: dict) -> tuple[SearchNode, list[SearchNode]]:
@@ -167,6 +176,7 @@ def parse_tree(tree: dict) -> tuple[SearchNode, list[SearchNode]]:
             mode=str(mode),
             signature=signature,
             uid=uid,
+            pruned=tree.get('pruned', False),
             children=children
         )
 
@@ -194,3 +204,7 @@ def render_tree(tree: dict, output_name: str, combine=True):
     dot = Digraph(comment='Faultspace Search', format='pdf')
     render_tree_structure(dot, root, use_sig)
     dot.render(filename=output_name)
+
+    dot = Digraph(comment='Faultspace Search with pruned', format='pdf')
+    render_tree_structure(dot, root, use_sig, True)
+    dot.render(filename=output_name+"_pruned")

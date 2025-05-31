@@ -97,6 +97,7 @@ public class ImplicationsModel {
                 try {
                     dependsOn.addRelation(cause.uid().getPoint(), s.effect().getPoint());
                 } catch (Exception e) {
+                    logger.info("Circular dependency in {} given {}", cause.uid().getPoint(), s.effect().getPoint());
                     circularDetected = true;
                 }
             }

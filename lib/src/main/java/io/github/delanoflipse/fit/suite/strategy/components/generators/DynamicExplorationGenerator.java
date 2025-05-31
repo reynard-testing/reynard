@@ -8,11 +8,8 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -296,6 +293,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
     @Override
     public Object report(PruneContext context) {
+        // TODO: the report is a bit excessive, we should probably
+        // only report the most important information
         Map<String, Object> stats = new LinkedHashMap<>();
         Map<String, Object> details = new LinkedHashMap<>();
 

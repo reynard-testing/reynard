@@ -396,9 +396,6 @@ public class StrategyRunner {
             Pruner attributedPruner = Sets.getOnlyElement(attributed);
             String name = attributedPruner.getClass().getSimpleName();
             logger.debug("Pruner {} uniquely pruned ({}) the faultload {}", name, pruneDecision, faultload);
-            if (name.equals("DynamicReductionPruner")) {
-                var x = true;
-            }
             statistics.incrementPruner(name, 1);
         } else if (!attributed.isEmpty()) {
             String names = attributed.stream()

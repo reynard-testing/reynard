@@ -27,7 +27,7 @@ import okhttp3.Response;
 
 @SuppressWarnings("resource")
 @Testcontainers(parallel = true)
-public class TraversalOrderDifference {
+public class TraversalOrderDifferenceIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
 
     // B calls C (with retry)

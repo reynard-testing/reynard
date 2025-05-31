@@ -14,7 +14,7 @@ import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 import io.github.delanoflipse.fit.suite.trace.tree.TraceReport;
 
 /**
@@ -35,7 +35,7 @@ public class HappensBeforeNeighbourDetector implements FeedbackHandler {
         Set<Fault> injectedErrorFaults = result.trace.getInjectedFaults();
         Set<FaultUid> expectedPoints = context.getExpectedPoints(injectedErrorFaults);
 
-        result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
+        result.trace.traverseReports(TraversalOrder.BREADTH_FIRST, true, report -> {
             List<TraceReport> childrenReports = result.trace.getChildren(report);
 
             Set<FaultUid> expectedChildren = expectedPoints.stream()

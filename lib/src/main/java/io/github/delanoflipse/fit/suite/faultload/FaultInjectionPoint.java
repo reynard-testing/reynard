@@ -1,6 +1,5 @@
 package io.github.delanoflipse.fit.suite.faultload;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,7 +19,7 @@ public record FaultInjectionPoint(String destination, String signature, String p
     public FaultInjectionPoint {
         // Ensure map is immutable
         if (callStack != null) {
-            callStack = Collections.unmodifiableMap(callStack);
+            callStack = Map.copyOf(callStack);
         }
     }
 

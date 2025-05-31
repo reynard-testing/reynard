@@ -263,6 +263,12 @@ public class OTELSuiteIT {
 
     }
 
+    @FiTest(maskPayload = true, withCallStack = true)
+    public void testCheckoutWithCs(TrackedFaultload faultload)
+            throws IOException {
+        testCheckout(faultload);
+    }
+
     // @Test
     // public void testCounterExample() throws URISyntaxException, IOException {
     // // checkout>email:/send_order_confirmation(*)#0(HTTP_ERROR

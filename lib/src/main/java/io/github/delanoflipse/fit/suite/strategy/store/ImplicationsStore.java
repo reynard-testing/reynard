@@ -13,11 +13,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.github.delanoflipse.fit.suite.faultload.Behaviour;
+import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.strategy.util.Simplify;
+import io.github.delanoflipse.fit.suite.strategy.util.TransativeRelation;
 
 public class ImplicationsStore {
   private static final Logger logger = LoggerFactory.getLogger(ImplicationsStore.class);
+
+  private final Map<FaultInjectionPoint, TransativeRelation<FaultInjectionPoint>> implicationDependencies = new LinkedHashMap<>();
 
   private final List<DownstreamRequestEffect> downstreamRequests = new ArrayList<>();
   private final List<Substitution> inclusions = new ArrayList<>();

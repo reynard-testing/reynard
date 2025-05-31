@@ -1,6 +1,7 @@
 package io.github.delanoflipse.fit.suite.unit.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,5 +44,21 @@ public class ListsTest {
         int index1 = Lists.addAfter(list1, toAdd, i -> i > toAdd);
         assertEquals(List.of(1, 1, 2, 1, 2), list1);
         assertEquals(3, index1);
+    }
+
+    @Test
+    public void testBinarySearch1() {
+        List<Integer> list1 = new ArrayList<Integer>(List.of(1, 2, 3, 4, 5));
+        int toFind = 4;
+        int index = Lists.findIndexBinarySearch(list1, i -> i, toFind);
+        assertEquals(3, index);
+    }
+
+    @Test
+    public void testBinarySearch2() {
+        List<Integer> list1 = new ArrayList<Integer>(List.of(1, 1, 2, 3, 4, 4, 4, 4, 5));
+        int toFind = 4;
+        int index = Lists.findIndexBinarySearch(list1, i -> i, toFind);
+        assertTrue(index >= 4 && index <= 7);
     }
 }

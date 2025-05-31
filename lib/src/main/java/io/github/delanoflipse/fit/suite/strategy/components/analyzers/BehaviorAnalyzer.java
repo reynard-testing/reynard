@@ -14,7 +14,6 @@ import io.github.delanoflipse.fit.suite.faultload.Fault;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.faultload.modes.FailureMode;
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
-import io.github.delanoflipse.fit.suite.strategy.StrategyReporter;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
@@ -22,8 +21,7 @@ import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
 import io.github.delanoflipse.fit.suite.strategy.store.SubsetStore;
 import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 import io.github.delanoflipse.fit.suite.strategy.util.Simplify;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
-import io.github.delanoflipse.fit.suite.trace.tree.TraceResponse;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 
 public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(BehaviorAnalyzer.class);
@@ -39,7 +37,7 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         failureModes = context.getFailureModes();
 
-        result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
+        result.trace.traverseReports(TraversalOrder.BREADTH_FIRST, true, report -> {
             var injectionPoint = report.injectionPoint;
 
             if (report.injectedFault != null) {

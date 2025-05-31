@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import io.github.delanoflipse.fit.suite.faultload.Behaviour;
 import io.github.delanoflipse.fit.suite.faultload.Fault;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalStrategy;
 import io.github.delanoflipse.fit.suite.trace.tree.TraceReport;
 
 public class TraceAnalysis {
@@ -281,13 +283,16 @@ public class TraceAnalysis {
         return concurrentRelation.areRelated(fault1, fault2);
     }
 
-    public enum TraversalStrategy {
-        DEPTH_FIRST, BREADTH_FIRST, RANDOM
-    }
-
-    public List<TraceReport> getReports(TraversalStrategy strategy) {
-        List<TraceReport> foundReports = new ArrayList<>();
-        traverseReports(strategy, false, foundReports::add);
+    public List<TraceReport> getReports(TraversalOrder strategy) {
+        var traversal = new TraversalStrategy<TraceReport>(strategy);
+        List<Pair<TraceReport, TraceReport>> edges = parentChildRelation.getRelations().stream()
+                .filter(pair -> pair.first() != null && pair.second() != null)
+                .filter(pair -> reportByPoint.containsKey(pair.first())
+                        && reportByPoint.containsKey(pair.second()))
+                .map(pair -> new Pair<TraceReport, TraceReport>(getReportByFaultUid(pair.first()),
+                        getReportByFaultUid(pair.second())))
+                .toList();
+        List<TraceReport> foundReports = traversal.traverse(rootReport, edges);
 
         // ensure each known fault is present, not just those in the tree
         int missing = 0;
@@ -305,9 +310,9 @@ public class TraceAnalysis {
         return foundReports;
     }
 
-    public List<FaultUid> getFaultUids(TraversalStrategy strategy) {
-        List<FaultUid> foundFaults = new ArrayList<>();
-        traverseFaults(strategy, false, foundFaults::add);
+    public List<FaultUid> getFaultUids(TraversalOrder strategy) {
+        var traversal = new TraversalStrategy<FaultUid>(strategy);
+        List<FaultUid> foundFaults = traversal.traverse(rootReport.injectionPoint, parentChildRelation.getRelations());
 
         // ensure each known fault is present, not just those in the tree
         int missing = 0;
@@ -325,7 +330,7 @@ public class TraceAnalysis {
         return foundFaults;
     }
 
-    public void traverseReports(TraversalStrategy strategy, boolean includeInitial, Consumer<TraceReport> consumer) {
+    public void traverseReports(TraversalOrder strategy, boolean includeInitial, Consumer<TraceReport> consumer) {
         Consumer<FaultUid> mappedConsumer = (faultUid) -> {
             var report = getReportByFaultUid(faultUid);
             if (report != null) {
@@ -333,74 +338,11 @@ public class TraceAnalysis {
             }
         };
 
-        traverseFaults(strategy, includeInitial, mappedConsumer);
-    }
-
-    public void traverseReports(Consumer<TraceReport> consumer) {
-        traverseReports(TraversalStrategy.DEPTH_FIRST, true, consumer);
-    }
-
-    public void traverseFaults(TraversalStrategy strategy, boolean includeInitial, Consumer<FaultUid> consumer) {
-        FaultUid root = rootReport.injectionPoint;
-        switch (strategy) {
-            case DEPTH_FIRST -> traverseDepthFirst(root, includeInitial, consumer);
-            case BREADTH_FIRST -> traverseBreadthFirst(root, includeInitial, consumer);
-            case RANDOM -> traverseRandom(root, includeInitial, consumer);
-        }
-    }
-
-    public void traverseFaults(Consumer<FaultUid> consumer) {
-        traverseFaults(TraversalStrategy.DEPTH_FIRST, true, consumer);
-    }
-
-    public void traverseDepthFirst(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
-        for (var child : getChildren(node)) {
-            traverseDepthFirst(child, includeInitial, consumer);
-        }
-
-        if (node != null && !node.isRoot()) {
-            if (includeInitial || !node.isInitial()) {
-                consumer.accept(node);
-            }
-        }
-    }
-
-    public void traverseRandom(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
-        boolean depthFirstForThisNode = Math.random() < 0.5;
-        if (depthFirstForThisNode) {
-            var children = new ArrayList<>(getChildren(node));
-            Collections.shuffle(children);
-            for (var child : children) {
-                traverseRandom(child, includeInitial, consumer);
-            }
-        }
-
-        if (node != null && !node.isRoot()) {
-            if (includeInitial || !node.isInitial()) {
-                consumer.accept(node);
-            }
-        }
-
-        if (!depthFirstForThisNode) {
-            var children = new ArrayList<>(getChildren(node));
-            Collections.shuffle(children);
-            for (var child : children) {
-                traverseRandom(child, includeInitial, consumer);
-            }
-        }
-    }
-
-    public void traverseBreadthFirst(FaultUid node, boolean includeInitial, Consumer<FaultUid> consumer) {
-        if (node != null && !node.isRoot()) {
-            if (includeInitial || !node.isInitial()) {
-                consumer.accept(node);
-            }
-        }
-
-        for (var child : getChildren(node)) {
-            traverseBreadthFirst(child, includeInitial, consumer);
-        }
-
+        List<TraceReport> reports = getReports(strategy);
+        reports.stream()
+                .filter(report -> includeInitial || !report.isInitial)
+                .map(report -> report.injectionPoint)
+                .forEach(mappedConsumer);
     }
 
 }

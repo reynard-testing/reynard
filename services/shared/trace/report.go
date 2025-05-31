@@ -3,9 +3,10 @@ package trace
 import "dflipse.nl/ds-fit/shared/faultload"
 
 type ResponseData struct {
-	Status     int     `json:"status"`
-	Body       string  `json:"body"`
-	DurationMs float64 `json:"duration_ms"`
+	Status             int     `json:"status"`
+	Body               string  `json:"body"`
+	DurationMs         float64 `json:"duration_ms"`
+	OverheadDurationMs float64 `json:"overhead_duration_ms"`
 }
 
 type TraceReport struct {

@@ -97,6 +97,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 	// Wrap the proxy with a custom handler to inspect requests and responses
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fullStart := time.Now()
 		// Inspect request before forwarding
 
 		// Get and parse the "traceparent" headers
@@ -203,6 +204,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			ResponseWriter:     capture,
 			Request:            r,
 			DurationMs:         0,
+			OverheadDurationMs: 0,
 			ReponseOverwritten: false,
 			ConcurrentFaults:   nil,
 		}
@@ -216,7 +218,6 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 			slog.Info("Logging headers", "headers", r.Header)
 		}
 
-		startTime := time.Now()
 		for _, fault := range faults {
 			if fault.Uid.Matches(faultUid) {
 				Perform(fault, &proxyState)
@@ -232,12 +233,14 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		// Forward the request to the target server
 		if !proxyState.ReponseOverwritten {
+			requestStart := time.Now()
 			proxy.ServeHTTP(capture, r)
+			proxyState.DurationMs = time.Since(requestStart).Seconds() * 1000
 			slog.Debug("Response forwarded")
 		}
 
-		proxyState.DurationMs = time.Since(startTime).Seconds() * 1000
 		proxyState.ConcurrentFaults = tracing.GetTrackedAndClear(traceId, &faultUid)
+		proxyState.OverheadDurationMs = time.Since(fullStart).Seconds()*1000 - proxyState.DurationMs
 		tracing.ReportSpanUID(proxyState.asReport(metadata, shouldHashBody))
 
 		if !capture.DirectlyForward {

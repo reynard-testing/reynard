@@ -17,11 +17,13 @@ type ProxyState struct {
 	Request            *http.Request
 	ReponseOverwritten bool
 	DurationMs         float64
+	OverheadDurationMs float64
 }
 
 func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) trace.TraceReport {
 	response := s.ResponseWriter.GetResponseData(hashBody)
 	response.DurationMs = s.DurationMs
+	response.OverheadDurationMs = s.OverheadDurationMs
 
 	return trace.TraceReport{
 		TraceId:       metadata.TraceId,

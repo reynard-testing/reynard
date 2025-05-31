@@ -171,22 +171,6 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         return isNew;
     }
 
-    private boolean sameOrigin(TreeNode node) {
-        List<FaultUid> uids = node.value().stream()
-                .filter(x -> !x.uid().isInitial() && !x.uid().isRoot())
-                .map(Fault::uid)
-                .toList();
-
-        if (uids.isEmpty()) {
-            return true; // Root node
-        }
-
-        FaultUid firstUid = uids.get(0);
-
-        return uids.stream()
-                .allMatch(uid -> uid.getParent().matches(firstUid.getParent()));
-    }
-
     private boolean addNode(TreeNode node, boolean addLast) {
         if (consideredNodes.contains(node)) {
             return false;

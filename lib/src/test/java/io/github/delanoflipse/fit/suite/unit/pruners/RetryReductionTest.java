@@ -17,6 +17,7 @@ import io.github.delanoflipse.fit.suite.strategy.components.analyzers.ParentChil
 import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicExplorationGenerator;
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsStore;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 import io.github.delanoflipse.fit.suite.unit.generators.DynamicExplorationTest;
 import io.github.delanoflipse.fit.suite.util.EventBuilder;
 import io.github.delanoflipse.fit.suite.util.FailureModes;
@@ -69,7 +70,7 @@ public class RetryReductionTest {
 
         StrategyRunner runner = new StrategyRunner(modes);
         DynamicExplorationGenerator generator = new DynamicExplorationGenerator(runner.getStore(), runner::prune,
-                TraceAnalysis.TraversalStrategy.BREADTH_FIRST);
+                TraversalOrder.BREADTH_FIRST);
         runner.withComponent(generator)
                 .withComponent(generator)
                 .withComponent(new HappyPathDetector())

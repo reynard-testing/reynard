@@ -36,7 +36,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
     private final Logger logger = LoggerFactory.getLogger(DynamicExplorationGenerator.class);
 
     // Parameters
-    private final TraversalOrder nodeOrder;
+    private final TraversalOrder pointOrder;
     private final boolean breadthFirst;
     private final Function<Set<Fault>, PruneDecision> pruneFunction;
 
@@ -58,7 +58,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         super(store);
         this.breadthFirst = breadthFirst;
         this.pruneFunction = pruneFunction;
-        this.nodeOrder = traversalStrategy;
+        this.pointOrder = traversalStrategy;
 
         nodeIndex.put(root, 0);
     }
@@ -69,7 +69,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
     }
 
     public DynamicExplorationGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {
-        this(new DynamicAnalysisStore(modes), pruneFunction, TraversalOrder.BREADTH_FIRST);
+        this(new DynamicAnalysisStore(modes), pruneFunction, TraversalOrder.DEPTH_FIRST_POST_ORDER);
     }
 
     private void updateQueueSize() {
@@ -206,7 +206,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        List<FaultUid> observed = result.trace.getFaultUids(nodeOrder);
+        List<FaultUid> observed = result.trace.getFaultUids(pointOrder);
 
         for (var point : observed) {
             context.reportFaultUid(point);
@@ -216,7 +216,10 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         List<FaultUid> injectedPoints = injected.stream()
                 .map(Fault::uid)
                 .toList();
-        List<FaultUid> known = context.getFaultInjectionPoints();
+        List<FaultUid> known = context.getFaultInjectionPoints()
+                .stream()
+                .filter(x -> !x.isInitial())
+                .toList();
         List<FaultUid> toExplore = new ArrayList<>();
 
         for (var point : observed) {
@@ -303,7 +306,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 .toList();
         stats.put("failure_modes", modes.size());
 
-        details.put("node_order", nodeOrder.toString());
+        details.put("node_order", pointOrder.toString());
         details.put("breadth_first", breadthFirst);
         details.put("failure_modes", modes);
 

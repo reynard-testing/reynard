@@ -13,7 +13,6 @@ import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
 import io.github.delanoflipse.fit.suite.strategy.TrackedFaultload;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicExplorationGenerator;
-import io.github.delanoflipse.fit.suite.strategy.components.generators.TreeNode;
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsModel;
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsStore;
 import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;

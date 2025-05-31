@@ -97,11 +97,13 @@ public class FiTestExtension
         boolean onlyPersistantOrTransientRetries = annotation.optimizeForRetries();
         boolean pruneImpactless = annotation.optimizeForImpactless();
         int maxFaultloadSize = annotation.maxFaultloadSize();
-        TraversalOrder traversalStrategy = annotation.traversalOrder();
+        TraversalOrder traversalStrategy = annotation.nodeOrder();
+        boolean depthFirstSearchOrder = annotation.depthFirstSearchOrder();
 
         strategy = new StrategyRunner(modes);
         strategy
-                .withComponent(new DynamicExplorationGenerator(strategy.getStore(), strategy::prune, traversalStrategy))
+                .withComponent(new DynamicExplorationGenerator(strategy.getStore(), strategy::prune, traversalStrategy,
+                        !depthFirstSearchOrder))
                 // These components detect the necessairy info
                 // for the implications store
                 .withComponent(new HappyPathDetector())

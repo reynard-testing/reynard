@@ -173,6 +173,16 @@ public class StrategyRunner {
         return componentNames;
     }
 
+    public TrackedFaultload nextFaultload() {
+        Faultload faultload = getNextFaultload();
+
+        if (faultload == null) {
+            return null;
+        }
+
+        return toTracked(faultload);
+    }
+
     private Faultload getNextFaultload() {
         if (intialRun) {
             intialRun = false;
@@ -241,16 +251,6 @@ public class StrategyRunner {
         }
 
         return tracked;
-    }
-
-    public TrackedFaultload nextFaultload() {
-        Faultload faultload = getNextFaultload();
-
-        if (faultload == null) {
-            return null;
-        }
-
-        return toTracked(faultload);
     }
 
     public Faultload generateAndPruneTillNext() {
@@ -396,6 +396,9 @@ public class StrategyRunner {
             Pruner attributedPruner = Sets.getOnlyElement(attributed);
             String name = attributedPruner.getClass().getSimpleName();
             logger.debug("Pruner {} uniquely pruned ({}) the faultload {}", name, pruneDecision, faultload);
+            if (name.equals("DynamicReductionPruner")) {
+                var x = true;
+            }
             statistics.incrementPruner(name, 1);
         } else if (!attributed.isEmpty()) {
             String names = attributed.stream()

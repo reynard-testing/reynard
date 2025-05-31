@@ -41,5 +41,7 @@ public @interface FiTest {
 
     // TraversalOrder traversalOrder() default
     // TraversalOrder.DEPTH_FIRST_POST_ORDER;
-    TraversalOrder traversalOrder() default TraversalOrder.DEPTH_FIRST_REVERSE_POST_ORDER;
+    TraversalOrder nodeOrder() default TraversalOrder.DEPTH_FIRST_REVERSE_POST_ORDER;
+
+    boolean depthFirstSearchOrder() default true;
 }

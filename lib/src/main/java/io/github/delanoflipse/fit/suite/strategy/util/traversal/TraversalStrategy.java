@@ -30,7 +30,11 @@ public class TraversalStrategy<X> {
             }
 
             case BREADTH_FIRST -> {
-                return visitNodeBfs(root, edges);
+                return visitNodeBfs(root, edges, false);
+            }
+
+            case BREADTH_FIRST_REVERSE -> {
+                return visitNodeBfs(root, edges, true);
             }
 
             case RANDOM -> {
@@ -80,7 +84,7 @@ public class TraversalStrategy<X> {
         return children;
     }
 
-    private List<X> visitNodeBfs(X node, List<Pair<X, X>> edges) {
+    private List<X> visitNodeBfs(X node, List<Pair<X, X>> edges, boolean reversed) {
         List<X> result = new ArrayList<>();
         List<X> queue = new ArrayList<>();
 
@@ -98,6 +102,9 @@ public class TraversalStrategy<X> {
             result.add(currentNode);
 
             List<X> children = getChildren(currentNode, edges);
+            if (reversed) {
+                Collections.reverse(children); // Reverse the order of children if needed
+            }
             queue.addAll(children);
         }
 

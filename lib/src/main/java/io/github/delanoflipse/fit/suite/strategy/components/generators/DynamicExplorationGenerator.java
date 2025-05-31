@@ -1,13 +1,18 @@
 package io.github.delanoflipse.fit.suite.strategy.components.generators;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -33,52 +38,41 @@ import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 public class DynamicExplorationGenerator extends StoreBasedGenerator implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(DynamicExplorationGenerator.class);
 
-    private final TreeNode root = new TreeNode(Set.of());
-    private final List<TreeNode> toVisit = new ArrayList<>();
-    private final Set<TreeNode> visitedNodes = new LinkedHashSet<>();
-    private final Map<TreeNode, List<TreeNode>> expansionTree = new LinkedHashMap<>();
-    private int nodeCounter = 0;
-    private final Map<TreeNode, Integer> nodeIndex = new LinkedHashMap<>();
-    private final List<Integer> queueSize = new ArrayList<>();
+    // Parameters
     private final TraversalOrder nodeOrder;
-    private final boolean breadthFirst = false;
+    private final boolean breadthFirst;
     private final Function<Set<Fault>, PruneDecision> pruneFunction;
 
+    // Internal structures
+    private final TreeNode root = new TreeNode(List.of());
+    private final Deque<TreeNode> toVisit = new ArrayDeque<>();
+    private final Set<TreeNode> consideredNodes = new LinkedHashSet<>();
+    private final Set<TreeNode> prunedNodes = new HashSet<>();
+
+    // Logging and tracking
+    private int nodeCounter = 0;
+    private final Map<TreeNode, List<TreeNode>> expansionTree = new LinkedHashMap<>();
+    private final Map<TreeNode, Integer> nodeIndex = new LinkedHashMap<>();
+
+    private final List<Integer> queueSize = new ArrayList<>();
+
     public DynamicExplorationGenerator(DynamicAnalysisStore store, Function<Set<Fault>, PruneDecision> pruneFunction,
-            TraversalOrder traversalStrategy) {
+            TraversalOrder traversalStrategy, boolean breadthFirst) {
         super(store);
+        this.breadthFirst = breadthFirst;
         this.pruneFunction = pruneFunction;
         this.nodeOrder = traversalStrategy;
 
         nodeIndex.put(root, 0);
     }
 
-    public DynamicExplorationGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {
-        this(new DynamicAnalysisStore(modes), pruneFunction, TraversalOrder.BREADTH_FIRST);
+    public DynamicExplorationGenerator(DynamicAnalysisStore store, Function<Set<Fault>, PruneDecision> pruneFunction,
+            TraversalOrder traversalStrategy) {
+        this(store, pruneFunction, traversalStrategy, true);
     }
 
-    public record TreeNode(Set<Fault> value) {
-
-        // For equality, the list is a set
-        @Override
-        public final boolean equals(Object o) {
-            if (o == this) {
-                return true;
-            }
-
-            if (o instanceof TreeNode other) {
-                return value.equals(other.value);
-            }
-
-            return false;
-        }
-
-        // In the hashcode, we use the set representation
-        // So in a hashset, our equality check still works
-        @Override
-        public final int hashCode() {
-            return Objects.hash(value);
-        }
+    public DynamicExplorationGenerator(List<FailureMode> modes, Function<Set<Fault>, PruneDecision> pruneFunction) {
+        this(new DynamicAnalysisStore(modes), pruneFunction, TraversalOrder.BREADTH_FIRST);
     }
 
     private void updateQueueSize() {
@@ -87,7 +81,12 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
     private void addToTree(TreeNode parent, TreeNode node) {
         expansionTree.putIfAbsent(parent, new ArrayList<>());
-        expansionTree.get(parent).add(node);
+        var children = expansionTree.get(parent);
+        if (!children.contains(node)) {
+            children.add(node);
+        } else {
+            logger.debug("Node {} already exists in the tree under parent {}", node, parent);
+        }
     }
 
     private void expand(TreeNode node, List<FaultUid> expansion) {
@@ -102,8 +101,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         for (var i = 0; i < expansion.size(); i++) {
             var point = expansion.get(i);
             for (Fault newFault : Fault.allFaults(point, getFailureModes())) {
-                TreeNode newNode = new TreeNode(Sets.plus(node.value, newFault));
-                boolean expanded = addNode(newNode);
+                TreeNode newNode = new TreeNode(Lists.plus(node.value(), newFault));
+                boolean expanded = addNode(newNode, breadthFirst);
                 if (expanded) {
                     addToTree(node, newNode);
                 }
@@ -112,7 +111,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
     }
 
     private PruneDecision pruneFunction(TreeNode node) {
-        return PruneDecision.max(store.isRedundant(node.value), pruneFunction.apply(node.value));
+        Set<Fault> nodeSet = node.asSet();
+        return PruneDecision.max(store.isRedundant(nodeSet), pruneFunction.apply(nodeSet));
     }
 
     @Override
@@ -122,8 +122,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
         while (!toVisit.isEmpty()) {
             // 1. Get a new node to visit from the node queue
-            TreeNode node = toVisit.remove(0);
-            visitedNodes.add(node);
+            TreeNode node = toVisit.poll();
 
             long order = (long) Math.pow(10, orders);
             if (ops++ > order) {
@@ -134,21 +133,26 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             switch (pruneFunction(node)) {
                 case PRUNE_SUPERSETS -> {
                     logger.debug("Pruning node {} completely", node);
+                    prunedNodes.add(node);
                 }
 
                 case PRUNE -> {
                     logger.debug("Pruning node {} completely", node);
+                    prunedNodes.add(node);
                 }
 
                 case KEEP -> {
                     logger.info("Found a candidate after {} attempt(s)", ops);
                     nodeCounter++;
-                    nodeIndex.put(node, nodeCounter);
+                    if (nodeIndex.containsKey(node)) {
+                        logger.warn("Node {} already exists in the index! This is a bug!", node);
+                    } else {
+                        nodeIndex.put(node, nodeCounter);
+                    }
                     updateQueueSize();
-                    return new Faultload(node.value);
+                    return new Faultload(node.asSet());
                 }
             }
-
         }
 
         logger.info("Found no candidate after {} attempt(s)!", ops);
@@ -158,8 +162,9 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
     @Override
     public boolean exploreFrom(Collection<Fault> startingNode) {
-        TreeNode node = new TreeNode(Set.copyOf(startingNode));
-        boolean isNew = addNode(node);
+        TreeNode node = new TreeNode(List.copyOf(startingNode));
+        // Always explore the node immediately
+        boolean isNew = addNode(node, false);
 
         if (isNew) {
             addToTree(root, node);
@@ -169,28 +174,37 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         return isNew;
     }
 
-    private boolean addNode(TreeNode node) {
-        if (visitedNodes.contains(node) || toVisit.contains(node)) {
+    private boolean sameOrigin(TreeNode node) {
+        List<FaultUid> uids = node.value().stream()
+                .filter(x -> !x.uid().isInitial() && !x.uid().isRoot())
+                .map(Fault::uid)
+                .toList();
+
+        if (uids.isEmpty()) {
+            return true; // Root node
+        }
+
+        FaultUid firstUid = uids.get(0);
+
+        return uids.stream()
+                .allMatch(uid -> uid.getParent().matches(firstUid.getParent()));
+    }
+
+    private boolean addNode(TreeNode node, boolean addLast) {
+        if (consideredNodes.contains(node)) {
             return false;
         }
 
-        int insertionIndex = -1;
-        if (breadthFirst) {
-            // add before the first node that has a larger size
-            insertionIndex = Lists.addBefore(toVisit, node, x -> x.value.size() > node.value.size());
-        } else {
-            // explore new node first
-            insertionIndex = Lists.addBefore(toVisit, node, x -> x.value.size() <= node.value.size());
-        }
-
-        if (insertionIndex == -1) {
+        if (addLast) {
             logger.debug("Adding {} to end of the queue", node);
+            toVisit.addLast(node);
         } else {
-            logger.debug("Adding {} to queue at index {}", node, insertionIndex);
+            logger.debug("Adding {} to start of the dequeu", node);
+            toVisit.addFirst(node);
         }
 
+        consideredNodes.add(node);
         return true;
-
     }
 
     @Override
@@ -201,7 +215,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             context.reportFaultUid(point);
         }
 
-        Set<Fault> injected = result.trace.getInjectedFaults();
+        List<Fault> injected = result.trace.getInjectedFaults().stream().toList();
         List<FaultUid> injectedPoints = injected.stream()
                 .map(Fault::uid)
                 .toList();
@@ -219,7 +233,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             toExplore.addAll(relatedPoints);
         }
 
-        TreeNode currentNode = new TreeNode(Set.copyOf(injected));
+        TreeNode currentNode = new TreeNode(injected);
         expand(currentNode, toExplore);
     }
 
@@ -242,26 +256,20 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
     }
 
     private Object buildTreeReport(TreeNode node, TreeNode parent) {
-        if (!nodeIndex.containsKey(node)) {
-            return null;
-        }
-
         Map<String, Object> report = new LinkedHashMap<>();
-        report.put("index", nodeIndex.get(node));
+        boolean isPruned = prunedNodes.contains(node);
+        report.put("index", nodeIndex.getOrDefault(node, -(nodeCounter++)));
+        report.put("pruned", isPruned);
 
         if (parent == null) {
-            report.put("node", node.value.toString());
+            report.put("node", node.value().toString());
         } else {
-            var addition = Sets.difference(node.value, parent.value);
+            var addition = Sets.difference(node.value(), parent.value());
             if (addition.size() == 1) {
                 report.put("node", Sets.getOnlyElement(addition).toString());
             } else {
-                report.put("node", node.value.toString());
+                report.put("node", node.value().toString());
             }
-        }
-
-        if (nodeIndex.containsKey(node)) {
-            report.put("index", nodeIndex.get(node));
         }
 
         List<TreeNode> children = expansionTree.get(node);
@@ -295,6 +303,9 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 .map(FailureMode::toString)
                 .toList();
         stats.put("failure_modes", modes.size());
+
+        details.put("node_order", nodeOrder.toString());
+        details.put("breadth_first", breadthFirst);
         details.put("failure_modes", modes);
 
         stats.put("fault_injection_points", getFaultInjectionPoints().size());
@@ -309,7 +320,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
         stats.put("max_queue_size", getMaxQueueSize());
         stats.put("avg_queue_size", getAvgQueueSize());
-        stats.put("visited_nodes", visitedNodes.size());
+        stats.put("visited_nodes", consideredNodes.size());
 
         int queueSizeLeft = getQueuSize();
         if (queueSizeLeft > 0) {
@@ -355,9 +366,25 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             visitByFaults.add(causeReport);
         }
 
+        List<Object> visitedInOrder = new ArrayList<>();
+        for (var node : consideredNodes) {
+            if (prunedNodes.contains(node)) {
+                continue; // Skip pruned nodes
+            }
+
+            Map<String, Object> visitedNodeReport = new LinkedHashMap<>();
+            List<String> causeList = node.value().stream()
+                    .map(Fault::toString)
+                    .toList();
+            visitedNodeReport.put("faultload", causeList);
+            visitedNodeReport.put("index", nodeIndex.getOrDefault(node, -1));
+            visitedInOrder.add(visitedNodeReport);
+        }
+
         Map<String, Object> visitReport = new LinkedHashMap<>();
         visitReport.put("by_uid", visitByUid);
         visitReport.put("by_faults", visitByFaults);
+        visitReport.put("in_order", visitedInOrder);
 
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("stats", stats);
@@ -365,7 +392,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
         report.put("implications", store.getImplicationsReport());
         report.put("visited", visitReport);
-        report.put("tree", buildTreeReport(new TreeNode(Set.of()), null));
+        report.put("tree", buildTreeReport(root, null));
         return report;
     }
 }

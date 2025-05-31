@@ -1,7 +1,5 @@
 package io.github.delanoflipse.fit.suite.faultload;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;

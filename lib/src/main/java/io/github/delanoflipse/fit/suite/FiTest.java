@@ -39,9 +39,9 @@ public @interface FiTest {
 
     Class<?>[] additionalComponents() default {};
 
-    // TraversalOrder traversalOrder() default
-    // TraversalOrder.DEPTH_FIRST_POST_ORDER;
-    TraversalOrder nodeOrder() default TraversalOrder.DEPTH_FIRST_REVERSE_POST_ORDER;
+    /** The order in which points in the trace analysis are considered */
+    TraversalOrder pointOrder() default TraversalOrder.DEPTH_FIRST_POST_ORDER;
 
+    /** The order in which the search tree is visited */
     boolean depthFirstSearchOrder() default true;
 }

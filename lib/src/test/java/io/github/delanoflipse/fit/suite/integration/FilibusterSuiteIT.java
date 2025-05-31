@@ -66,12 +66,12 @@ public class FilibusterSuiteIT {
         testAudible(faultload);
     }
 
-    @FiTest(maxTestCases = 999, nodeOrder = TraversalOrder.BREADTH_FIRST)
+    @FiTest(maxTestCases = 999, pointOrder = TraversalOrder.BREADTH_FIRST)
     public void testAudibleBfs(TrackedFaultload faultload) throws IOException {
         testAudible(faultload);
     }
 
-    @FiTest(maxTestCases = 999, nodeOrder = TraversalOrder.RANDOM)
+    @FiTest(maxTestCases = 999, pointOrder = TraversalOrder.RANDOM)
     public void testAudibleRandomOrder(TrackedFaultload faultload) throws IOException {
         testAudible(faultload);
     }
@@ -114,18 +114,18 @@ public class FilibusterSuiteIT {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, nodeOrder = TraversalOrder.BREADTH_FIRST)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, pointOrder = TraversalOrder.BREADTH_FIRST)
     public void testNetflixBfs(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, nodeOrder = TraversalOrder.RANDOM)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, pointOrder = TraversalOrder.RANDOM)
     public void testNetflixRandomOrder(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
 
     // @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, nodeOrder = TraversalOrder.DEPTH_FIRST_POST_ORDER, depthFirstSearchOrder = false)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, pointOrder = TraversalOrder.DEPTH_FIRST_POST_ORDER, depthFirstSearchOrder = false)
     public void testNetflixFaults(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
@@ -207,7 +207,7 @@ public class FilibusterSuiteIT {
         testCinema3(faultload);
     }
 
-    @FiTest(maxTestCases = 500, nodeOrder = TraversalOrder.DEPTH_FIRST_REVERSE_POST_ORDER)
+    @FiTest(maxTestCases = 500, pointOrder = TraversalOrder.DEPTH_FIRST_REVERSE_POST_ORDER)
     public void testCinema3DfsRevPostOrder(TrackedFaultload faultload) throws IOException {
         testCinema3(faultload);
     }

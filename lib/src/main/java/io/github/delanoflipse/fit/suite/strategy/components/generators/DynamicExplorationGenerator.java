@@ -307,6 +307,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         stats.put("max_queue_size", getMaxQueueSize());
         stats.put("avg_queue_size", getAvgQueueSize());
         stats.put("visited_nodes", consideredNodes.size());
+        stats.put("pruned_nodes", prunedNodes.size());
 
         int queueSizeLeft = getQueuSize();
         if (queueSizeLeft > 0) {

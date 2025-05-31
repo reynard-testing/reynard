@@ -71,7 +71,6 @@ public class NondeterminismAndRetryIT {
         app.stop();
     }
 
-    @FiTest()
     public void testA(TrackedFaultload faultload) throws IOException {
         var traceparent = faultload.getTraceParent().toString();
         var tracestate = faultload.getTraceState().toString();
@@ -99,8 +98,15 @@ public class NondeterminismAndRetryIT {
             testA(faultload);
         } catch (AssertionError e) {
             // Due to the call stack icm parallel, the number of completed events varies
+            // Note: this test is flaky by design, as it tests nondeterminism
+            // and retries, which can lead to different outcomes.
             throw e;
         }
+    }
+
+    @FiTest()
+    public void testDefault(TrackedFaultload faultload) throws IOException {
+        testA(faultload);
     }
 
     @FiTest(optimizeForRetries = true)

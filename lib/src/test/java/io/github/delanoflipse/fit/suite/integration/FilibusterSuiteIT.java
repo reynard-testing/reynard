@@ -124,8 +124,7 @@ public class FilibusterSuiteIT {
         testNetflix(faultload);
     }
 
-    // @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, pointOrder = TraversalOrder.DEPTH_FIRST_POST_ORDER, depthFirstSearchOrder = false)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
     public void testNetflixFaults(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }

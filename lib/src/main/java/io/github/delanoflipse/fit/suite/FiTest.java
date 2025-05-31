@@ -29,6 +29,8 @@ public @interface FiTest {
 
     boolean optimizeForImpactless() default false;
 
+    boolean checkAllPruners() default false;
+
     long maxTestCases() default 0;
 
     long maxTimeS() default 0;

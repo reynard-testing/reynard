@@ -43,6 +43,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
     // Internal structures
     private final TreeNode root = new TreeNode(List.of());
     private final Deque<TreeNode> toVisit = new ArrayDeque<>();
+    private final List<TreeNode> visited = new ArrayList<>();
     private final Set<TreeNode> consideredNodes = new LinkedHashSet<>();
     private final Set<TreeNode> prunedNodes = new HashSet<>();
 
@@ -147,6 +148,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                         nodeIndex.put(node, nodeCounter);
                     }
                     updateQueueSize();
+                    visited.add(node);
                     return new Faultload(node.asSet());
                 }
             }
@@ -190,7 +192,10 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        List<FaultUid> observed = result.trace.getFaultUids(pointOrder);
+        List<FaultUid> observed = result.trace.getFaultUids(pointOrder)
+                .stream()
+                .filter(x -> !x.isInitial())
+                .toList();
 
         for (var point : observed) {
             context.reportFaultUid(point);
@@ -200,10 +205,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         List<FaultUid> injectedPoints = injected.stream()
                 .map(Fault::uid)
                 .toList();
-        List<FaultUid> known = context.getFaultInjectionPoints()
-                .stream()
-                .filter(x -> !x.isInitial())
-                .toList();
+        List<FaultUid> known = context.getFaultInjectionPoints();
         List<FaultUid> toExplore = new ArrayList<>();
 
         for (var point : observed) {
@@ -323,54 +325,25 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         details.put("queue_size", queueSize);
 
         // Report the visited faultloads
-        var faultloads = store.getHistoricResults().stream()
-                .map(x -> x.first())
-                .toList();
-
-        // Unique visited
-        List<Object> visitByUid = new ArrayList<>();
-        List<Object> visitByFaults = new ArrayList<>();
-
-        var simplified = Simplify.simplify(faultloads, getFailureModes());
-        var failureModesCount = getFailureModes().size();
-        for (Set<FaultUid> cause : simplified.second()) {
-            int increase = (int) Math.pow(failureModesCount, cause.size());
-            Map<String, Object> causeReport = new LinkedHashMap<>();
-            List<String> causeList = cause.stream()
-                    .map(FaultUid::toString)
-                    .toList();
-            causeReport.put("faultload", causeList);
-            causeReport.put("count", increase);
-            visitByUid.add(causeReport);
-        }
-
-        for (Set<Fault> cause : simplified.first()) {
-            Map<String, Object> causeReport = new LinkedHashMap<>();
-            List<String> causeList = cause.stream()
-                    .map(Fault::toString)
-                    .toList();
-            causeReport.put("faultload", causeList);
-            visitByFaults.add(causeReport);
-        }
-
-        List<Object> visitedInOrder = new ArrayList<>();
-        for (var node : consideredNodes) {
-            if (prunedNodes.contains(node)) {
-                continue; // Skip pruned nodes
-            }
+        ArrayList<Object> visitedInOrder = new ArrayList<>(visited.size());
+        for (var i = 0; i < visited.size(); i++) {
+            TreeNode node = visited.get(i);
 
             Map<String, Object> visitedNodeReport = new LinkedHashMap<>();
-            List<String> causeList = node.value().stream()
-                    .map(Fault::toString)
+            List<Object> faults = node.value().stream()
+                    .map(x -> {
+                        Map<String, Object> faultReport = new LinkedHashMap<>();
+                        faultReport.put("uid", x.uid().toString());
+                        faultReport.put("mode", x.mode());
+                        return (Object) faultReport;
+                    })
                     .toList();
-            visitedNodeReport.put("faultload", causeList);
-            visitedNodeReport.put("index", nodeIndex.getOrDefault(node, -1));
+            visitedNodeReport.put("faultload", faults);
+            visitedNodeReport.put("index", i);
             visitedInOrder.add(visitedNodeReport);
         }
 
         Map<String, Object> visitReport = new LinkedHashMap<>();
-        visitReport.put("by_uid", visitByUid);
-        visitReport.put("by_faults", visitByFaults);
         visitReport.put("in_order", visitedInOrder);
 
         Map<String, Object> report = new LinkedHashMap<>();

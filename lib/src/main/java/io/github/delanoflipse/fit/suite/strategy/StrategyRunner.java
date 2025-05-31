@@ -173,6 +173,16 @@ public class StrategyRunner {
         return componentNames;
     }
 
+    public TrackedFaultload nextFaultload() {
+        Faultload faultload = getNextFaultload();
+
+        if (faultload == null) {
+            return null;
+        }
+
+        return toTracked(faultload);
+    }
+
     private Faultload getNextFaultload() {
         if (intialRun) {
             intialRun = false;
@@ -241,16 +251,6 @@ public class StrategyRunner {
         }
 
         return tracked;
-    }
-
-    public TrackedFaultload nextFaultload() {
-        Faultload faultload = getNextFaultload();
-
-        if (faultload == null) {
-            return null;
-        }
-
-        return toTracked(faultload);
     }
 
     public Faultload generateAndPruneTillNext() {

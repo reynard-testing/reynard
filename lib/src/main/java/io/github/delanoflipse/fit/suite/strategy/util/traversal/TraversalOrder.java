@@ -7,6 +7,7 @@ public enum TraversalOrder {
     DEPTH_FIRST_REVERSE_POST_ORDER(NodeOrder.REVERSE_POST_ORDER),
 
     BREADTH_FIRST(null),
+    BREADTH_FIRST_REVERSE(null),
     RANDOM(null);
 
     private final NodeOrder nodeOrder;

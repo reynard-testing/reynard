@@ -26,7 +26,7 @@ import okhttp3.Response;
 
 @SuppressWarnings("resource")
 @Testcontainers(parallel = true)
-public class ResiliencePatterns {
+public class NondeterminismAndRetryIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
 
     // B is called with a retry (n=2)
@@ -34,39 +34,18 @@ public class ResiliencePatterns {
     private static final InstrumentedService serviceB = app.instrument("b-retry", 8080,
             MicroBenchmarkContainer.Leaf());
 
-    // C uses local fallbacks (both for C, and D)
     @Container
-    private static final InstrumentedService serviceD = app.instrument("d-leaf", 8080,
+    private static final InstrumentedService serviceC = app.instrument("c-leaf", 8080,
             MicroBenchmarkContainer.Leaf());
 
-    @Container
-    private static final InstrumentedService serviceC = app.instrument("c-fallback", 8080,
-            MicroBenchmarkContainer.PassThrough(MicroBenchmarkContainer.call(serviceD.getHostname()),
-                    "Default value for D"));
-
-    // E has error propagation from F, and has fallback to G
-    @Container
-    private static final InstrumentedService serviceF = app.instrument("f-leaf", 8080,
-            MicroBenchmarkContainer.Leaf());
-    @Container
-    private static final InstrumentedService serviceE = app.instrument("e-propagate", 8080,
-            MicroBenchmarkContainer.PassThrough(MicroBenchmarkContainer.call(serviceF.getHostname())));
-
-    @Container
-    private static final InstrumentedService serviceG = app.instrument("g-fallback-f", 8080,
-            MicroBenchmarkContainer.Leaf());
-
-    private static final ActionComposition action = ActionComposition.Sequential(
+    // In parallel: call B with retry || call C
+    private static final ActionComposition action = ActionComposition.Parallel(
             // Call B
             new ServerAction(MicroBenchmarkContainer.call(serviceB.getHostname()),
                     // With a Retry to B
                     new ServerAction(MicroBenchmarkContainer.call(serviceB.getHostname()))),
             // Call C
-            new ServerAction(MicroBenchmarkContainer.call(serviceC.getHostname()), "Default value for C"),
-            // Call E
-            new ServerAction(MicroBenchmarkContainer.call(serviceE.getHostname()),
-                    // Call H as fallback
-                    new ServerAction(MicroBenchmarkContainer.call(serviceG.getHostname()))));
+            new ServerAction(MicroBenchmarkContainer.call(serviceC.getHostname())));
 
     @Container
     private static final InstrumentedService serviceA = app.instrument("a-backend", 8080,
@@ -110,21 +89,22 @@ public class ResiliencePatterns {
             // assert that we do not inject redundant faults
             Set<Fault> injectedFaults = result.getInjectedFaults();
             assertEquals(faultload.getFaultload().faultSet(), injectedFaults);
+
         }
     }
 
     @FiTest(withCallStack = true)
     public void testCs(TrackedFaultload faultload) throws IOException {
-        testA(faultload);
+        try {
+            testA(faultload);
+        } catch (AssertionError e) {
+            // Due to the call stack icm parallel, the number of completed events varies
+            throw e;
+        }
     }
 
     @FiTest(optimizeForRetries = true)
     public void testOpt(TrackedFaultload faultload) throws IOException {
-        testA(faultload);
-    }
-
-    @FiTest(optimizeForRetries = true, withCallStack = true)
-    public void testCsOpt(TrackedFaultload faultload) throws IOException {
         testA(faultload);
     }
 

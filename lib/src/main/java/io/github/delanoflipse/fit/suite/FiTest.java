@@ -4,10 +4,11 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
 
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 
 @Target(ElementType.METHOD) // Apply to methods
 @Retention(RetentionPolicy.RUNTIME) // Retain at runtime so JUnit can read it
@@ -38,5 +39,9 @@ public @interface FiTest {
 
     Class<?>[] additionalComponents() default {};
 
-    TraversalStrategy traversalStrategy() default TraversalStrategy.DEPTH_FIRST;
+    /** The order in which points in the trace analysis are considered */
+    TraversalOrder pointOrder() default TraversalOrder.DEPTH_FIRST_POST_ORDER;
+
+    /** The order in which the search tree is visited */
+    boolean depthFirstSearchOrder() default true;
 }

@@ -10,7 +10,7 @@ import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 
 public class ParentChildDetector implements FeedbackHandler {
     private final Logger logger = LoggerFactory.getLogger(ParentChildDetector.class);
@@ -19,7 +19,7 @@ public class ParentChildDetector implements FeedbackHandler {
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         // --- Report upstream causes and effects ---
-        result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
+        result.trace.traverseReports(TraversalOrder.BREADTH_FIRST, true, report -> {
             FaultUid cause = report.faultUid;
             if (knownPoints.contains(cause)) {
                 return;

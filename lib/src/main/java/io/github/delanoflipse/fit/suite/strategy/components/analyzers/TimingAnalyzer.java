@@ -1,7 +1,5 @@
 package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,7 +15,7 @@ import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackHandler;
 import io.github.delanoflipse.fit.suite.strategy.components.PruneContext;
 import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis.TraversalStrategy;
+import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 
 public class TimingAnalyzer implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(TimingAnalyzer.class);
@@ -26,7 +24,7 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
 
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        result.trace.traverseReports(TraversalStrategy.BREADTH_FIRST, true, report -> {
+        result.trace.traverseReports(TraversalOrder.BREADTH_FIRST, true, report -> {
             var behaviour = report.getBehaviour();
             float timing = report.response.durationMs;
 

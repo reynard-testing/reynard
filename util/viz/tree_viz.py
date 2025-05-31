@@ -25,6 +25,43 @@ def simplify_signature(sig: str) -> str:
     return signature
 
 
+def parse_node(fault: dict):
+    mode = fault.get('mode', "")
+    uid = fault.get('uid', "")
+    uid, signature = simplify_uid(uid)
+    return uid, simplify_mode(mode), signature
+
+
+def simplify_mode(mode: str) -> str:
+    v = mode.replace("HTTP_ERROR(", "")
+    v = v.replace(")", "")
+    return v
+
+
+def simplify_uid(uid: str):
+    signature = ""
+    uid_parts = uid.split(">")
+    relevant_parts = []
+    for i in range(len(uid_parts)):
+        p_uid = re.sub(r"\{.*\}", "", uid_parts[i])
+        p1, count = p_uid.split("#")
+        if ":" in p1:
+            destination, signature = p1.split(":")
+        else:
+            destination = p1
+        name = f"{destination}"
+        is_relevant = i == len(uid_parts) - 1
+        if count != "0":
+            is_relevant = True
+            name += f"#{count}"
+
+        if is_relevant:
+            relevant_parts.append(name)
+
+    uid_str = ">\n".join(relevant_parts)
+    return uid_str, simplify_signature(signature)
+
+
 def simplify_name(name: str):
     if name == "[]":
         return "&empty;", "", ""
@@ -54,31 +91,8 @@ def simplify_name(name: str):
         return no_uid, "", ""
     uid, mode = no_uid.split(", mode=")
 
-    signature = ""
-    uid_parts = uid.split(">")
-    relevant_parts = []
-    for i in range(len(uid_parts)):
-        p_uid = re.sub(r"\{.*\}", "", uid_parts[i])
-        p1, count = p_uid.split("#")
-        if ":" in p1:
-            destination, signature = p1.split(":")
-        else:
-            destination = p1
-        name = f"{destination}"
-        is_relevant = i == len(uid_parts) - 1
-        if count != "0":
-            is_relevant = True
-            name += f"#{count}"
-
-        if is_relevant:
-            relevant_parts.append(name)
-
-    uid_str = ">\n".join(relevant_parts)
-
-    mode = mode.replace("HTTP_ERROR(", "")
-    mode = mode.replace(")", "")
-
-    return uid_str, mode, simplify_signature(signature)
+    uid, signature = simplify_uid(uid)
+    return uid, simplify_mode(mode), signature
 
 
 def get_node_label(node: SearchNode, needs_signature=False):
@@ -161,7 +175,16 @@ def parse_tree(tree: dict) -> tuple[SearchNode, list[SearchNode]]:
     nodes: list[SearchNode] = []
 
     if isinstance(tree, dict):
-        uid, mode, signature = simplify_name(tree['node'])
+        if isinstance(tree.get('node'), list):
+            nodes_list = list(map(parse_node, tree['node']))
+            # Unpack the results into separate lists for uid, mode, signature
+            uids, modes, signatures = zip(
+                *nodes_list) if nodes_list else (["&empty;"], [""], [""])
+            uid = ",".join(uids)
+            mode = ",".join(modes)
+            signature = ",".join(signatures)
+        else:
+            uid, mode, signature = simplify_name(tree['node'])
         children: list[SearchNode] = []
 
         for child in tree.get('children', []):

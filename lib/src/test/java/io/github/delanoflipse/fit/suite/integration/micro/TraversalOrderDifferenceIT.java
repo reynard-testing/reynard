@@ -110,23 +110,18 @@ public class TraversalOrderDifferenceIT {
         }
     }
 
-    // @FiTest(optimizeForRetries = true)
-    // public void testOpt(TrackedFaultload faultload) throws IOException {
-    // testA(faultload);
-    // }
-
-    // @FiTest(optimizeForRetries = true, withCallStack = true)
-    // public void testCsOpt(TrackedFaultload faultload) throws IOException {
-    // testA(faultload);
-    // }
-
-    @FiTest(optimizeForRetries = true, withCallStack = true, pointOrder = TraversalOrder.BREADTH_FIRST, depthFirstSearchOrder = true)
-    public void testCsOptBfs_Dfs(TrackedFaultload faultload) throws IOException {
+    @FiTest(optimizeForRetries = false, withCallStack = true, pointOrder = TraversalOrder.DEPTH_FIRST_POST_ORDER, depthFirstSearchOrder = true)
+    public void testCs_Dfs(TrackedFaultload faultload) throws IOException {
         testA(faultload);
     }
 
-    @FiTest(optimizeForRetries = false, withCallStack = true, pointOrder = TraversalOrder.BREADTH_FIRST, depthFirstSearchOrder = true)
-    public void testCsBfs_Dfs(TrackedFaultload faultload) throws IOException {
+    @FiTest(optimizeForRetries = false, withCallStack = true, pointOrder = TraversalOrder.DEPTH_FIRST_POST_ORDER, depthFirstSearchOrder = false)
+    public void testCs_Bfs(TrackedFaultload faultload) throws IOException {
+        testA(faultload);
+    }
+
+    @FiTest(optimizeForRetries = true, withCallStack = true, pointOrder = TraversalOrder.BREADTH_FIRST, depthFirstSearchOrder = true)
+    public void testCsOptBfs_Dfs(TrackedFaultload faultload) throws IOException {
         testA(faultload);
     }
 

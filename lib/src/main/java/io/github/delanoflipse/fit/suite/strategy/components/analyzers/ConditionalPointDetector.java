@@ -53,7 +53,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
 
         // Report newly found points
         for (var entry : rootByParent.entrySet()) {
-            handleAppeared(result, context, entry.getKey(), entry.getValue(), expectedBehaviours);
+            handleAppeared(result, context, entry.getKey(), entry.getValue());
         }
     }
 
@@ -86,8 +86,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
     }
 
     protected void handleAppeared(FaultloadResult result, FeedbackContext context, TraceReport parent,
-            List<TraceReport> newPoints,
-            Set<Behaviour> expectedBehaviours) {
+            List<TraceReport> newPoints) {
 
         Set<Fault> injected = result.trace.getInjectedFaults();
         List<FaultUid> newPointsUids = newPoints.stream()
@@ -96,25 +95,27 @@ public class ConditionalPointDetector implements FeedbackHandler {
 
         // determine which reports can cause the new point
         List<TraceReport> parentalCauses = result.trace.getChildren(parent);
-        List<Behaviour> directCauses = parentalCauses.stream()
+        List<Behaviour> relatededBehaviours = parentalCauses.stream()
                 .map(TraceReport::getBehaviour)
                 .filter(x -> x.isFault())
+                .collect(Collectors.toList());
+        List<Behaviour> potentialCauses = relatededBehaviours.stream()
                 .filter(x -> !FaultUid.contains(newPointsUids, x.uid()))
                 .collect(Collectors.toList());
 
         for (TraceReport point : newPoints) {
-            List<Behaviour> causes = getCauses(point.injectionPoint, directCauses, injected);
+            List<Behaviour> causes = getCauses(point.injectionPoint, potentialCauses, injected);
             boolean isNew = context.reportPreconditionOfFaultUid(causes, point.injectionPoint);
 
             if (isNew) {
-                logger.info("Found conditional point: {} given {}", point.injectionPoint, directCauses);
+                logger.info("Found conditional point: {} given {}", point.injectionPoint, causes);
             }
 
             if (!onlyPersistantOrTransientRetries) {
                 continue;
             }
 
-            Fault retriedPoint = getIsRetryOf(point.injectionPoint, expectedBehaviours, context);
+            Fault retriedPoint = getIsRetryOf(point.injectionPoint, relatededBehaviours, context);
 
             if (retriedPoint == null) {
                 continue;
@@ -135,7 +136,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
         }
     }
 
-    private Fault getIsRetryOf(FaultUid newFid, Set<Behaviour> expectedBehaviours, FeedbackContext context) {
+    private Fault getIsRetryOf(FaultUid newFid, List<Behaviour> observedBehaviours, FeedbackContext context) {
         // edge case: the happy path should only have one count
         // Otherwise, we cannot be sure which one is the retry, especially
         // in the presence of multiple faults.
@@ -150,7 +151,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
         // We are a retry of a point that has the same uid,
         // expect for a transient count
         // one less than ours
-        Behaviour retriedFault = expectedBehaviours.stream()
+        Behaviour retriedFault = observedBehaviours.stream()
                 .filter(f -> f.uid().matchesUpToCount(newFid))
                 .filter(f -> f.uid().isTransient())
                 .filter(f -> f.uid().count() == newFid.count() - 1)

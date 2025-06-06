@@ -1,7 +1,6 @@
 package io.github.delanoflipse.fit.suite.strategy.components.analyzers;
 
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,8 +34,8 @@ public class ConditionalPointDetector implements FeedbackHandler {
         Set<FaultUid> pointsInTrace = result.trace.getFaultUids();
 
         // -- New points in failure paths --
-        Set<FaultUid> expectedPoints = context.getExpectedPoints(result.trace.getInjectedFaults());
         Set<Behaviour> expectedBehaviours = context.getExpectedBehaviours(result.trace.getInjectedFaults());
+        Set<FaultUid> expectedPoints = Behaviour.getFaultUids(expectedBehaviours);
 
         // Analyse new paths that were not expected
         // but whose parent is expected
@@ -44,7 +43,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
         List<FaultUid> appearedPoints = Lists.difference(pointsInTrace, List.copyOf(expectedPoints));
         List<TraceReport> appearedReports = result.trace.getReports(appearedPoints);
         var rootAppeared = appearedReports.stream()
-                .filter(f -> expectedPoints.contains(result.trace.getParent(f.faultUid)))
+                .filter(f -> expectedPoints.contains(result.trace.getParent(f.injectionPoint)))
                 .toList();
 
         // group by their parent, as there might be multiple appeared points
@@ -54,45 +53,75 @@ public class ConditionalPointDetector implements FeedbackHandler {
 
         // Report newly found points
         for (var entry : rootByParent.entrySet()) {
-            handleAppeared(result, context, entry.getKey(), entry.getValue(), expectedBehaviours);
+            handleAppeared(result, context, entry.getKey(), entry.getValue());
         }
     }
 
+    private List<Behaviour> getCauses(FaultUid point, List<Behaviour> directCauses, Set<Fault> injected) {
+        Fault persistentFaultAtPoint = injected.stream()
+                .filter(x -> x.isPersistent())
+                .filter(x -> x.uid().matches(point))
+                .findFirst()
+                .orElse(null);
+
+        // Edge case: We injected a persistent fault (which means it must be a retry)
+        // Then its caused by its predecessor.
+        if (persistentFaultAtPoint != null && point.count() > 0) {
+            FaultUid predecessor = point.withCount(point.count() - 1);
+            return List.of(new Behaviour(predecessor, persistentFaultAtPoint.mode()));
+        }
+
+        List<Behaviour> causes = directCauses.stream()
+                .filter(x -> {
+                    // cause must be before event
+                    var isStrictlyBefore = x.uid().isBefore(point);
+                    if (isStrictlyBefore.isPresent()) {
+                        return isStrictlyBefore.get();
+                    }
+
+                    return true;
+                })
+                .collect(Collectors.toList());
+        return causes;
+    }
+
     protected void handleAppeared(FaultloadResult result, FeedbackContext context, TraceReport parent,
-            List<TraceReport> newPoints,
-            Set<Behaviour> expectedBehaviours) {
+            List<TraceReport> newPoints) {
 
         Set<Fault> injected = result.trace.getInjectedFaults();
         List<FaultUid> newPointsUids = newPoints.stream()
-                .map(x -> x.faultUid)
+                .map(x -> x.injectionPoint)
                 .collect(Collectors.toList());
 
         // determine which reports can cause the new point
         List<TraceReport> parentalCauses = result.trace.getChildren(parent);
-        List<Behaviour> directCauses = parentalCauses.stream()
+        List<Behaviour> relatededBehaviours = parentalCauses.stream()
                 .map(TraceReport::getBehaviour)
                 .filter(x -> x.isFault())
-                // Cannot cause itself
+                .collect(Collectors.toList());
+        List<Behaviour> potentialCauses = relatededBehaviours.stream()
                 .filter(x -> !FaultUid.contains(newPointsUids, x.uid()))
                 .collect(Collectors.toList());
 
-        for (var point : newPoints) {
-            boolean isNew = context.reportPreconditionOfFaultUid(directCauses, point.faultUid);
+        for (TraceReport point : newPoints) {
+            List<Behaviour> causes = getCauses(point.injectionPoint, potentialCauses, injected);
+            boolean isNew = context.reportPreconditionOfFaultUid(causes, point.injectionPoint);
+
             if (isNew) {
-                logger.info("Found conditional point: {} given {}", point.faultUid, directCauses);
+                logger.info("Found conditional point: {} given {}", point.injectionPoint, causes);
             }
 
             if (!onlyPersistantOrTransientRetries) {
                 continue;
             }
 
-            Fault retriedPoint = getIsRetryOf(point.faultUid, expectedBehaviours, context);
+            Fault retriedPoint = getIsRetryOf(point.injectionPoint, relatededBehaviours, context);
 
             if (retriedPoint == null) {
                 continue;
             }
 
-            Fault persistentFault = handleRetry(retriedPoint, point.faultUid, context);
+            Fault persistentFault = handleRetry(retriedPoint, point.injectionPoint, context);
 
             // Replace the retried point with the persistent fault
             // in the actual causes
@@ -107,12 +136,12 @@ public class ConditionalPointDetector implements FeedbackHandler {
         }
     }
 
-    private Fault getIsRetryOf(FaultUid newFid, Set<Behaviour> expectedBehaviours, FeedbackContext context) {
+    private Fault getIsRetryOf(FaultUid newFid, List<Behaviour> observedBehaviours, FeedbackContext context) {
         // edge case: the happy path should only have one count
         // Otherwise, we cannot be sure which one is the retry, especially
         // in the presence of multiple faults.
         boolean happyPathOnlyHasOne = context.getHappyPaths().stream()
-                .filter(f -> f.faultUid.matchesUpToCount(newFid))
+                .filter(f -> f.injectionPoint.matchesUpToCount(newFid))
                 .count() == 1;
 
         if (!happyPathOnlyHasOne) {
@@ -122,7 +151,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
         // We are a retry of a point that has the same uid,
         // expect for a transient count
         // one less than ours
-        Behaviour retriedFault = expectedBehaviours.stream()
+        Behaviour retriedFault = observedBehaviours.stream()
                 .filter(f -> f.uid().matchesUpToCount(newFid))
                 .filter(f -> f.uid().isTransient())
                 .filter(f -> f.uid().count() == newFid.count() - 1)

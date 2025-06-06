@@ -224,19 +224,24 @@ public class ImplicationsStore {
     return null;
   }
 
+  private Map<String, Object> reportOf(Behaviour b) {
+    Map<String, Object> report = new LinkedHashMap<>();
+    report.put("uid", reportOf(b.uid()));
+    if (b.mode() == null) {
+      report.put("mode", null);
+    } else {
+      report.put("mode", b.mode().toString());
+    }
+    return report;
+  }
+
+  private Object reportOf(FaultUid f) {
+    return f.toString();
+  }
+
   private Map<String, Object> reportOf(List<Substitution> substitutions, DynamicAnalysisStore store) {
     Map<String, Object> report = new LinkedHashMap<>();
     report.put("count", substitutions.size());
-
-    List<Map<String, Object>> fullList = substitutions.stream()
-        .map(x -> {
-          Map<String, Object> entry = new LinkedHashMap<>();
-          entry.put("causes_names", x.causes.stream().map(Behaviour::toString).toList());
-          entry.put("effect_name", x.effect.toString());
-          return entry;
-        })
-        .toList();
-    report.put("list", fullList);
 
     Map<FaultUid, List<Substitution>> grouped = inclusions.stream()
         .collect(Collectors.groupingBy(Substitution::effect));
@@ -244,28 +249,45 @@ public class ImplicationsStore {
     List<Map<String, Object>> simplifiedList = new ArrayList<>();
 
     for (var entry : grouped.entrySet()) {
-      List<Set<Behaviour>> causes = entry.getValue().stream()
+      List<Set<Behaviour>> allCauses = entry.getValue().stream()
           .map(x -> x.causes)
           .toList();
 
-      var simplified = Simplify.simplifyBehaviour(causes, store.getModes());
+      var simplified = Simplify.simplifyBehaviour(allCauses, store.getModes());
 
-      for (Set<FaultUid> cause : simplified.second()) {
+      for (Set<FaultUid> causes : simplified.second()) {
         Map<String, Object> causeReport = new LinkedHashMap<>();
         causeReport.put("any_failure_mode", true);
-        causeReport.put("effect_name", entry.getKey().toString());
-        causeReport.put("causes_name", cause.toString());
+        causeReport.put("effect_name", reportOf(entry.getKey()));
+        causeReport.put("causes_name", causes.stream()
+            .map(this::reportOf)
+            .toList());
         simplifiedList.add(causeReport);
       }
 
-      for (Set<Behaviour> cause : simplified.first()) {
+      for (Set<Behaviour> causes : simplified.first()) {
         Map<String, Object> causeReport = new LinkedHashMap<>();
-        causeReport.put("effect_name", entry.getKey().toString());
-        causeReport.put("causes_name", cause.toString());
+        causeReport.put("effect_name", reportOf(entry.getKey()));
+        causeReport.put("causes_name", causes.stream()
+            .map(this::reportOf)
+            .toList());
         simplifiedList.add(causeReport);
       }
     }
     report.put("simplified", simplifiedList);
+
+    List<Map<String, Object>> fullList = substitutions.stream()
+        .map(x -> {
+          Map<String, Object> entry = new LinkedHashMap<>();
+          entry.put("effect_name", reportOf(x.effect));
+          entry.put("causes_names", x.causes.stream()
+              .map(this::reportOf)
+              .toList());
+          return entry;
+        })
+        .toList();
+    report.put("list", fullList);
+
     return report;
   }
 
@@ -279,13 +301,15 @@ public class ImplicationsStore {
       List<Map<String, Object>> downstreams = downstreamRequests.stream()
           .map(x -> {
             Map<String, Object> entry = new LinkedHashMap<>();
-            entry.put("cause_name", x.cause.toString());
-            entry.put("effect_names", x.effects.stream().map(FaultUid::toString).toList());
+            entry.put("cause_name", reportOf(x.cause));
+            entry.put("effect_names", x.effects.stream()
+                .map(this::reportOf)
+                .toList());
             return entry;
           })
           .toList();
 
-      downstreamReport.put("all", downstreams);
+      downstreamReport.put("list", downstreams);
       report.put("downstream", downstreamReport);
     }
 
@@ -304,13 +328,15 @@ public class ImplicationsStore {
       List<Map<String, Object>> upstreams = upstreamResponses.stream()
           .map(x -> {
             Map<String, Object> entry = new LinkedHashMap<>();
-            entry.put("effect_name", x.effect.toString());
-            entry.put("causes_names", x.causes.stream().map(Behaviour::toString).toList());
+            entry.put("effect_name", reportOf(x.effect));
+            entry.put("causes_names", x.causes.stream()
+                .map(this::reportOf)
+                .toList());
             return entry;
           })
           .toList();
 
-      upstreamReport.put("all", upstreams);
+      upstreamReport.put("list", upstreams);
       report.put("upstream", upstreamReport);
     }
 

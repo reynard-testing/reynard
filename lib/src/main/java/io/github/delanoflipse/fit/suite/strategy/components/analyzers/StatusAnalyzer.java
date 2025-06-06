@@ -6,7 +6,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import io.github.delanoflipse.fit.suite.strategy.FaultloadResult;
 import io.github.delanoflipse.fit.suite.strategy.components.FeedbackContext;
@@ -28,7 +27,7 @@ public class StatusAnalyzer implements FeedbackHandler, Reporter {
                 continue;
             }
 
-            String downstream = report.faultUid.destination();
+            String downstream = report.injectionPoint.destination();
             int status = report.response.status;
             faultStatus.computeIfAbsent(downstream, k -> new LinkedHashSet<>()).add(status);
         }

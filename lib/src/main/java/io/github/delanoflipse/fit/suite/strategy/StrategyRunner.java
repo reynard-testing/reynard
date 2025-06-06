@@ -43,6 +43,7 @@ public class StrategyRunner {
     private boolean withLogHeader = false;
     private boolean withCallStack = false;
     private boolean withStopOnError = false;
+    private boolean withCheckAllPruners = false;
 
     private boolean stopDueToError = false;
 
@@ -72,6 +73,11 @@ public class StrategyRunner {
 
     public StrategyRunner withLogHeader() {
         withLogHeader = true;
+        return this;
+    }
+
+    public StrategyRunner withCheckAllPruners() {
+        withCheckAllPruners = true;
         return this;
     }
 
@@ -381,12 +387,16 @@ public class StrategyRunner {
                         pruneDecision = PruneDecision.PRUNE;
                     }
                     attributed.add(pruner);
-
                 }
+
                 case PRUNE_SUPERSETS -> {
                     pruneDecision = PruneDecision.PRUNE_SUPERSETS;
                     attributed.add(pruner);
+                    if (withCheckAllPruners) {
+                        break;
+                    }
                 }
+
                 case KEEP -> {
                 }
             }

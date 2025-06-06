@@ -67,6 +67,8 @@ def parse_point_str(name: str) -> tuple[Point]:
 
 
 def parse_point(p: dict) -> tuple[Point]:
+    if "mode" in p:
+        return parse_point_str(p['uid'])
     points: list[Point] = []
     for ip in p['stack']:
         if ip["count"] < 0:

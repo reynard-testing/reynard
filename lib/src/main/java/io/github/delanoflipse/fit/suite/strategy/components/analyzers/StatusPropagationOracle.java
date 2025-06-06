@@ -57,7 +57,7 @@ public class StatusPropagationOracle implements FeedbackHandler {
                 // Which is a systems bug
                 logger.warn("Found a fault of status code {} at {}, but no cause! This is highly likely a bug!",
                         statusCode,
-                        report.faultUid);
+                        report.injectionPoint);
             } else {
                 // Case 2: The node is sending weird error status codes
                 // Which is also not ideal
@@ -65,7 +65,7 @@ public class StatusPropagationOracle implements FeedbackHandler {
                         .map(r -> r.getBehaviour())
                         .toList();
                 logger.warn("Found a fault of status code {} at {}, which is caused by any of {}", statusCode,
-                        report.faultUid, causes);
+                        report.injectionPoint, causes);
                 logger.warn(
                         "This error code with a specific meaning can cause incorrect behaviour at the upstream node!");
             }
@@ -81,7 +81,8 @@ public class StatusPropagationOracle implements FeedbackHandler {
         }
 
         // Alert the user!
-        logger.warn("Found a propogated fault of status code {} at {}, cause by: {}.", statusCode, report.faultUid,
+        logger.warn("Found a propogated fault of status code {} at {}, cause by: {}.", statusCode,
+                report.injectionPoint,
                 resposibleStr);
         logger.warn(
                 "Forwarding error codes with specific meaning can cause incorrect behaviour at the upstream node!");

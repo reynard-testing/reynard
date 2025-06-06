@@ -22,7 +22,7 @@ public class TraceReport {
     public String spanId;
 
     @JsonProperty("uid")
-    public FaultUid faultUid;
+    public FaultUid injectionPoint;
 
     @JsonProperty("protocol")
     public String protocol;
@@ -50,10 +50,10 @@ public class TraceReport {
     public Behaviour getBehaviour() {
         Fault fault = getFault();
         if (fault == null) {
-            return new Behaviour(faultUid, null);
+            return new Behaviour(injectionPoint, null);
         }
 
-        return new Behaviour(faultUid, fault.mode());
+        return new Behaviour(injectionPoint, fault.mode());
     }
 
     public Fault getFault() {
@@ -66,6 +66,6 @@ public class TraceReport {
         }
 
         FailureMode faultMode = new FailureMode(ErrorFault.FAULT_TYPE, List.of("" + response.status));
-        return new Fault(faultUid, faultMode);
+        return new Fault(injectionPoint, faultMode);
     }
 }

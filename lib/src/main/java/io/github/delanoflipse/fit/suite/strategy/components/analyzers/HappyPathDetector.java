@@ -27,7 +27,7 @@ public class HappyPathDetector implements FeedbackHandler, Reporter {
                 continue;
             }
 
-            var happyPath = context.getHappyPath(report.faultUid);
+            var happyPath = context.getHappyPath(report.injectionPoint);
             if (happyPath != null) {
                 continue;
             }
@@ -51,7 +51,7 @@ public class HappyPathDetector implements FeedbackHandler, Reporter {
         for (var entry : happyPath) {
             Map<String, Object> reportEntry = new LinkedHashMap<>();
             var response = entry.response;
-            reportEntry.put("point", entry.faultUid.toString());
+            reportEntry.put("point", entry.injectionPoint.toString());
             String bodyLimited = response.body.replace("\n", "");
             if (response.body.length() > 200) {
                 bodyLimited = response.body.substring(0, 97) + "...";

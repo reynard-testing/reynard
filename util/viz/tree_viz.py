@@ -25,6 +25,43 @@ def simplify_signature(sig: str) -> str:
     return signature
 
 
+def parse_node(fault: dict):
+    mode = fault.get('mode', "")
+    uid = fault.get('uid', "")
+    uid, signature = simplify_uid(uid)
+    return uid, simplify_mode(mode), signature
+
+
+def simplify_mode(mode: str) -> str:
+    v = mode.replace("HTTP_ERROR(", "")
+    v = v.replace(")", "")
+    return v
+
+
+def simplify_uid(uid: str):
+    signature = ""
+    uid_parts = uid.split(">")
+    relevant_parts = []
+    for i in range(len(uid_parts)):
+        p_uid = re.sub(r"\{.*\}", "", uid_parts[i])
+        p1, count = p_uid.split("#")
+        if ":" in p1:
+            destination, signature = p1.split(":")
+        else:
+            destination = p1
+        name = f"{destination}"
+        is_relevant = i == len(uid_parts) - 1
+        if count != "0":
+            is_relevant = True
+            name += f"#{count}"
+
+        if is_relevant:
+            relevant_parts.append(name)
+
+    uid_str = ">\n".join(relevant_parts)
+    return uid_str, simplify_signature(signature)
+
+
 def simplify_name(name: str):
     if name == "[]":
         return "&empty;", "", ""
@@ -54,31 +91,8 @@ def simplify_name(name: str):
         return no_uid, "", ""
     uid, mode = no_uid.split(", mode=")
 
-    signature = ""
-    uid_parts = uid.split(">")
-    relevant_parts = []
-    for i in range(len(uid_parts)):
-        p_uid = re.sub(r"\{.*\}", "", uid_parts[i])
-        p1, count = p_uid.split("#")
-        if ":" in p1:
-            destination, signature = p1.split(":")
-        else:
-            destination = p1
-        name = f"{destination}"
-        is_relevant = i == len(uid_parts) - 1
-        if count != "0":
-            is_relevant = True
-            name += f"#{count}"
-
-        if is_relevant:
-            relevant_parts.append(name)
-
-    uid_str = ">\n".join(relevant_parts)
-
-    mode = mode.replace("HTTP_ERROR(", "")
-    mode = mode.replace(")", "")
-
-    return uid_str, mode, simplify_signature(signature)
+    uid, signature = simplify_uid(uid)
+    return uid, simplify_mode(mode), signature
 
 
 def get_node_label(node: SearchNode, needs_signature=False):
@@ -96,7 +110,9 @@ def id_to_indices(id: str) -> list[int]:
 
 
 def get_edge_label(node: SearchNode):
-    indices = [int(x) for x in node.id.split(",")]
+    indices = [int(x) for x in node.id.split(",") if not '-' in x]
+    if len(indices) == 0:
+        return f""
     if len(indices) == 1:
         return f"{node.index}"
 
@@ -116,7 +132,9 @@ def combine_tree(node: SearchNode):
 
     new_children: list[SearchNode] = []
     for key, children in grouped_by_key.items():
-        combined_id = ",".join([c.id for c in children])
+        ids = [c.id for c in children]
+        ids = ids[:20]  # Limit to  ids
+        combined_id = ",".join(ids)
         indices = [c.index for c in children]
         combined_index = min(indices)
         combined_mode = ""
@@ -137,7 +155,8 @@ def combine_tree(node: SearchNode):
         new_children.append(combine_tree(combined_child))
 
     new_node = replace(node)
-    new_node.children = sorted(new_children, key=lambda c: c.index)
+    new_node.children = sorted(
+        new_children, key=lambda c: c.index if c.index > -1 else float('inf'))
     return new_node
 
 
@@ -157,12 +176,26 @@ def render_tree_structure(dot: Digraph, node: SearchNode, needs_signature=False,
     return True
 
 
+pruned_counter = 0
+
+
 def parse_tree(tree: dict) -> tuple[SearchNode, list[SearchNode]]:
+    global pruned_counter
     nodes: list[SearchNode] = []
 
     if isinstance(tree, dict):
-        uid, mode, signature = simplify_name(tree['node'])
+        if isinstance(tree.get('node'), list):
+            nodes_list = list(map(parse_node, tree['node']))
+            # Unpack the results into separate lists for uid, mode, signature
+            uids, modes, signatures = zip(
+                *nodes_list) if nodes_list else (["&empty;"], [""], [""])
+            uid = ",".join(uids)
+            mode = ",".join(modes)
+            signature = ",".join(signatures)
+        else:
+            uid, mode, signature = simplify_name(tree['node'])
         children: list[SearchNode] = []
+        pruned = tree.get('pruned', True)
 
         for child in tree.get('children', []):
             child_node, child_nodes = parse_tree(child)
@@ -170,13 +203,18 @@ def parse_tree(tree: dict) -> tuple[SearchNode, list[SearchNode]]:
             nodes.append(child_node)
             nodes.extend(child_nodes)
 
+        index = tree.get('index', -1)
+        if pruned:
+            pruned_counter += 1
+            index = -pruned_counter
+
         node = SearchNode(
-            id=str(tree['index']),
-            index=tree['index'],
+            id=str(index),
+            index=index,
             mode=str(mode),
             signature=signature,
             uid=uid,
-            pruned=tree.get('pruned', False),
+            pruned=pruned,
             children=children
         )
 
@@ -187,10 +225,12 @@ def parse_tree(tree: dict) -> tuple[SearchNode, list[SearchNode]]:
 
 
 def needs_signature(nodes: list[SearchNode]):
+    per_uid: dict[str, str] = {}
     for node in nodes:
-        for other in nodes:
-            if node.uid == other.uid and node.signature != other.signature:
-                return True
+        if node.uid not in per_uid:
+            per_uid[node.uid] = node.signature
+        elif per_uid[node.uid] != node.signature:
+            return True
     return False
 
 

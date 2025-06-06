@@ -23,7 +23,7 @@ import io.github.delanoflipse.fit.suite.util.FailureModes;
 
 public class DynamicExplorationTest {
 
-    private FaultloadResult toResult(Faultload f, ImplicationsStore store) {
+    public static FaultloadResult toResult(Faultload f, ImplicationsStore store) {
         var root = store.getRootCause();
         List<TraceReport> reports = new ArrayList<>();
         var model = new ImplicationsModel(store);
@@ -39,11 +39,11 @@ public class DynamicExplorationTest {
         return new FaultloadResult(new TrackedFaultload(f), trace, true);
     }
 
-    private TraceReport asReport(Behaviour behaviour, Faultload f) {
+    public static TraceReport asReport(Behaviour behaviour, Faultload f) {
         TraceReport report = new TraceReport();
         report.traceId = "";
         report.spanId = "";
-        report.faultUid = behaviour.uid();
+        report.injectionPoint = behaviour.uid();
         report.concurrentTo = List.of();
         report.injectedFault = f.faultSet().stream()
                 .filter(x -> x.uid().matches(behaviour.uid()))

@@ -151,6 +151,10 @@ public class FiTestExtension
             strategy.withLogHeader();
         }
 
+        if (annotation.checkAllPruners()) {
+            strategy.withCheckAllPruners();
+        }
+
         if (annotation.withCallStack()) {
             strategy.withCallStack();
         }

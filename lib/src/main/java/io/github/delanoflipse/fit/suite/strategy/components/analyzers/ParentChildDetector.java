@@ -20,7 +20,7 @@ public class ParentChildDetector implements FeedbackHandler {
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
         // --- Report upstream causes and effects ---
         result.trace.traverseReports(TraversalOrder.BREADTH_FIRST, true, report -> {
-            FaultUid cause = report.faultUid;
+            FaultUid cause = report.injectionPoint;
             if (knownPoints.contains(cause)) {
                 return;
             }

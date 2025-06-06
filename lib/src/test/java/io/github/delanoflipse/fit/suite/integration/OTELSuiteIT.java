@@ -175,9 +175,9 @@ public class OTELSuiteIT {
                 // Get the number of relevant calls
                 List<FaultUid> uids = new ArrayList<>();
                 for (var report : result.trace.getReports()) {
-                    if (isProductCatalogueCall(report.faultUid)) {
-                        uids.add(report.faultUid);
-                        maxCount = Math.max(maxCount, report.faultUid.count());
+                    if (isProductCatalogueCall(report.injectionPoint)) {
+                        uids.add(report.injectionPoint);
+                        maxCount = Math.max(maxCount, report.injectionPoint.count());
                     }
                 }
 

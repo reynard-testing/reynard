@@ -29,7 +29,6 @@ import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
 import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
 import io.github.delanoflipse.fit.suite.strategy.util.Lists;
 import io.github.delanoflipse.fit.suite.strategy.util.Sets;
-import io.github.delanoflipse.fit.suite.strategy.util.Simplify;
 import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 
 public class DynamicExplorationGenerator extends StoreBasedGenerator implements FeedbackHandler, Reporter {
@@ -43,13 +42,12 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
     // Internal structures
     private final TreeNode root = new TreeNode(List.of());
     private final Deque<TreeNode> toVisit = new ArrayDeque<>();
+    private final List<TreeNode> visited = new ArrayList<>();
     private final Set<TreeNode> consideredNodes = new LinkedHashSet<>();
     private final Set<TreeNode> prunedNodes = new HashSet<>();
 
     // Logging and tracking
-    private int nodeCounter = 0;
     private final Map<TreeNode, List<TreeNode>> expansionTree = new LinkedHashMap<>();
-    private final Map<TreeNode, Integer> nodeIndex = new LinkedHashMap<>();
 
     private final List<Integer> queueSize = new ArrayList<>();
 
@@ -60,7 +58,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         this.pruneFunction = pruneFunction;
         this.pointOrder = traversalStrategy;
 
-        nodeIndex.put(root, 0);
+        visited.add(root);
     }
 
     public DynamicExplorationGenerator(DynamicAnalysisStore store, Function<Set<Fault>, PruneDecision> pruneFunction,
@@ -84,6 +82,23 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         } else {
             logger.debug("Node {} already exists in the tree under parent {}", node, parent);
         }
+    }
+
+    private boolean addNode(TreeNode node, boolean addLast) {
+        if (consideredNodes.contains(node)) {
+            return false;
+        }
+
+        if (addLast) {
+            logger.debug("Adding {} to end of the queue", node);
+            toVisit.addLast(node);
+        } else {
+            logger.debug("Adding {} to start of the dequeu", node);
+            toVisit.addFirst(node);
+        }
+
+        consideredNodes.add(node);
+        return true;
     }
 
     private void expand(TreeNode node, List<FaultUid> expansion) {
@@ -140,13 +155,8 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
                 case KEEP -> {
                     logger.info("Found a candidate after {} attempt(s)", ops);
-                    nodeCounter++;
-                    if (nodeIndex.containsKey(node)) {
-                        logger.warn("Node {} already exists in the index! This is a bug!", node);
-                    } else {
-                        nodeIndex.put(node, nodeCounter);
-                    }
                     updateQueueSize();
+                    visited.add(node);
                     return new Faultload(node.asSet());
                 }
             }
@@ -171,26 +181,12 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         return isNew;
     }
 
-    private boolean addNode(TreeNode node, boolean addLast) {
-        if (consideredNodes.contains(node)) {
-            return false;
-        }
-
-        if (addLast) {
-            logger.debug("Adding {} to end of the queue", node);
-            toVisit.addLast(node);
-        } else {
-            logger.debug("Adding {} to start of the dequeu", node);
-            toVisit.addFirst(node);
-        }
-
-        consideredNodes.add(node);
-        return true;
-    }
-
     @Override
     public void handleFeedback(FaultloadResult result, FeedbackContext context) {
-        List<FaultUid> observed = result.trace.getFaultUids(pointOrder);
+        List<FaultUid> observed = result.trace.getFaultUids(pointOrder)
+                .stream()
+                .filter(x -> !x.isInitial())
+                .toList();
 
         for (var point : observed) {
             context.reportFaultUid(point);
@@ -200,10 +196,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         List<FaultUid> injectedPoints = injected.stream()
                 .map(Fault::uid)
                 .toList();
-        List<FaultUid> known = context.getFaultInjectionPoints()
-                .stream()
-                .filter(x -> !x.isInitial())
-                .toList();
+        List<FaultUid> known = context.getFaultInjectionPoints();
         List<FaultUid> toExplore = new ArrayList<>();
 
         for (var point : observed) {
@@ -239,21 +232,27 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         return toVisit.size();
     }
 
-    private Object buildTreeReport(TreeNode node, TreeNode parent) {
+    private List<Object> reportOf(Collection<Fault> node) {
+        return node.stream().map(x -> {
+            Map<String, Object> faultReport = new LinkedHashMap<>();
+            faultReport.put("uid", x.uid().toString());
+            faultReport.put("mode", x.mode().toString());
+            return (Object) faultReport;
+        }).toList();
+    }
+
+    private Map<String, Object> buildTreeReport(TreeNode node, TreeNode parent) {
         Map<String, Object> report = new LinkedHashMap<>();
         boolean isPruned = prunedNodes.contains(node);
-        report.put("index", nodeIndex.getOrDefault(node, -(nodeCounter++)));
+        int index = visited.indexOf(node);
+        report.put("index", index);
         report.put("pruned", isPruned);
 
         if (parent == null) {
-            report.put("node", node.value().toString());
+            report.put("node", reportOf(node.value()));
         } else {
-            var addition = Sets.difference(node.value(), parent.value());
-            if (addition.size() == 1) {
-                report.put("node", Sets.getOnlyElement(addition).toString());
-            } else {
-                report.put("node", node.value().toString());
-            }
+            var addition = node.value().subList(parent.value().size(), node.value().size());
+            report.put("node", reportOf(addition));
         }
 
         List<TreeNode> children = expansionTree.get(node);
@@ -261,7 +260,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             return report;
         }
 
-        List<Object> childReports = new ArrayList<>();
+        List<Map<String, Object>> childReports = new ArrayList<>();
         for (var child : children) {
             var childReport = buildTreeReport(child, node);
             if (childReport == null) {
@@ -302,7 +301,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
 
         stats.put("redundant_faultloads", store.getRedundantFaultloads().size());
         stats.put("redundant_fault_points", store.getRedundantUidSubsets().size());
-        stats.put("Rredundant_fault_subsets", store.getRedundantFaultSubsets().size());
+        stats.put("redundant_fault_subsets", store.getRedundantFaultSubsets().size());
 
         stats.put("max_queue_size", getMaxQueueSize());
         stats.put("avg_queue_size", getAvgQueueSize());
@@ -323,54 +322,26 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         details.put("queue_size", queueSize);
 
         // Report the visited faultloads
-        var faultloads = store.getHistoricResults().stream()
-                .map(x -> x.first())
-                .toList();
-
-        // Unique visited
-        List<Object> visitByUid = new ArrayList<>();
-        List<Object> visitByFaults = new ArrayList<>();
-
-        var simplified = Simplify.simplify(faultloads, getFailureModes());
-        var failureModesCount = getFailureModes().size();
-        for (Set<FaultUid> cause : simplified.second()) {
-            int increase = (int) Math.pow(failureModesCount, cause.size());
-            Map<String, Object> causeReport = new LinkedHashMap<>();
-            List<String> causeList = cause.stream()
-                    .map(FaultUid::toString)
-                    .toList();
-            causeReport.put("faultload", causeList);
-            causeReport.put("count", increase);
-            visitByUid.add(causeReport);
-        }
-
-        for (Set<Fault> cause : simplified.first()) {
-            Map<String, Object> causeReport = new LinkedHashMap<>();
-            List<String> causeList = cause.stream()
-                    .map(Fault::toString)
-                    .toList();
-            causeReport.put("faultload", causeList);
-            visitByFaults.add(causeReport);
-        }
-
-        List<Object> visitedInOrder = new ArrayList<>();
-        for (var node : consideredNodes) {
-            if (prunedNodes.contains(node)) {
-                continue; // Skip pruned nodes
-            }
+        ArrayList<Object> visitedInOrder = new ArrayList<>(visited.size());
+        for (var i = 0; i < visited.size(); i++) {
+            TreeNode node = visited.get(i);
 
             Map<String, Object> visitedNodeReport = new LinkedHashMap<>();
-            List<String> causeList = node.value().stream()
-                    .map(Fault::toString)
+            List<Object> faults = node.value().stream()
+                    .map(x -> {
+                        Map<String, Object> faultReport = new LinkedHashMap<>();
+                        faultReport.put("uid", x.uid().toString());
+                        faultReport.put("mode", x.mode().toString());
+                        return (Object) faultReport;
+                    })
                     .toList();
-            visitedNodeReport.put("faultload", causeList);
-            visitedNodeReport.put("index", nodeIndex.getOrDefault(node, -1));
+
+            visitedNodeReport.put("index", i);
+            visitedNodeReport.put("faultload", faults);
             visitedInOrder.add(visitedNodeReport);
         }
 
         Map<String, Object> visitReport = new LinkedHashMap<>();
-        visitReport.put("by_uid", visitByUid);
-        visitReport.put("by_faults", visitByFaults);
         visitReport.put("in_order", visitedInOrder);
 
         Map<String, Object> report = new LinkedHashMap<>();

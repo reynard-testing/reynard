@@ -104,7 +104,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     }
 
     @JsonIgnore
-    public FaultUid asAnyCallstack() {
+    public FaultUid asAnyCallStack() {
         var head = getPoint();
         var tail = getTail();
 

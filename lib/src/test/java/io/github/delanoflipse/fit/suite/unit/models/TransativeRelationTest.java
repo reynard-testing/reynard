@@ -69,4 +69,24 @@ public class TransativeRelationTest {
         }
     }
 
+    @Test
+    public void testTopologicalSort() {
+        TransativeRelation<String> relation = new TransativeRelation<>();
+        relation.addRelation("A", "B");
+        relation.addRelation("A", "C");
+        relation.addRelation("C", "D");
+        relation.addRelation("B", "D");
+        relation.addRelation("B", "E");
+        relation.addRelation("E", "F");
+        relation.addRelation("D", "F");
+        var sorted = relation.topologicalOrder();
+        assertTrue(sorted.indexOf("A") < sorted.indexOf("B"));
+        assertTrue(sorted.indexOf("A") < sorted.indexOf("C"));
+        assertTrue(sorted.indexOf("B") < sorted.indexOf("D"));
+        assertTrue(sorted.indexOf("B") < sorted.indexOf("E"));
+        assertTrue(sorted.indexOf("C") < sorted.indexOf("D"));
+        assertTrue(sorted.indexOf("D") < sorted.indexOf("F"));
+        assertTrue(sorted.indexOf("E") < sorted.indexOf("F"));
+    }
+
 }

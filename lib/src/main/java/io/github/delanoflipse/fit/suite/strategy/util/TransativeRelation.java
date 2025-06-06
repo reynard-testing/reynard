@@ -1,17 +1,32 @@
 package io.github.delanoflipse.fit.suite.strategy.util;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+// TODO: seperate into relation and build transitive relation on top
 public class TransativeRelation<X> {
     private final Set<X> elements = new LinkedHashSet<>();
-    private final Map<X, X> inverseRelation = new LinkedHashMap<>();
+    private final Map<X, Set<X>> inverseRelation = new LinkedHashMap<>();
     private final Map<X, Set<X>> relation = new LinkedHashMap<>();
     private final Map<X, Set<X>> transitiveRelations = new LinkedHashMap<>();
+
+    public void setAddAll(Map<X, Set<X>> mapping, X key, Collection<X> elements) {
+        mapping.computeIfAbsent(key, k -> new LinkedHashSet<>());
+        Set<X> existing = mapping.get(key);
+        existing.addAll(elements);
+    }
+
+    public void setAdd(Map<X, Set<X>> mapping, X key, X element) {
+        setAddAll(mapping, key, List.of(element));
+    }
 
     public void addRelation(X parent, X child) {
         elements.add(parent);
@@ -26,48 +41,21 @@ public class TransativeRelation<X> {
             throw new IllegalArgumentException("Adding this relation would create a circular dependency.");
         }
 
-        inverseRelation.put(child, parent);
-        relation.computeIfAbsent(parent, k -> new LinkedHashSet<>());
-        relation.get(parent).add(child);
-        var root = getRoot(parent);
-        updateTransitiveRelations(root);
+        setAdd(relation, parent, child);
+        setAdd(inverseRelation, child, parent);
+        updateTransitiveRelations(parent, child);
     }
 
-    public void removeRelation(X parent, X child) {
-        if (!hasDirectRelation(parent, child)) {
-            throw new IllegalArgumentException("No such relation exists.");
+    private void updateTransitiveRelations(X parent, X child) {
+        Set<X> descendants = getDecendantsOf(child);
+        Set<X> descendantsAndChild = Sets.plus(descendants, child);
+        Set<X> predecessors = getPredecessorsOf(child);
+
+        // The children of the child
+        // Are now too the children of the childs's parents' parents
+        for (X predecessor : predecessors) {
+            setAddAll(transitiveRelations, predecessor, descendantsAndChild);
         }
-        X root = getRoot(parent);
-        clearTransativeRelation(root);
-
-        inverseRelation.remove(child);
-        relation.get(parent).remove(child);
-        if (relation.get(parent).isEmpty()) {
-            relation.remove(parent);
-        }
-
-        updateTransitiveRelations(root);
-    }
-
-    private void clearTransativeRelation(X root) {
-        transitiveRelations.remove(root);
-        for (X descendant : getChildren(root)) {
-            clearTransativeRelation(descendant);
-        }
-    }
-
-    private Set<X> updateTransitiveRelations(X root) {
-        // The children of the child are also transative children of the parent
-        Set<X> descendants = new LinkedHashSet<>();
-        for (X descendant : getChildren(root)) {
-            descendants.add(descendant);
-            descendants.addAll(updateTransitiveRelations(descendant));
-        }
-
-        // Add the transative relation
-        transitiveRelations.computeIfAbsent(root, k -> new LinkedHashSet<>());
-        transitiveRelations.get(root).addAll(descendants);
-        return descendants;
     }
 
     public boolean hasDirectRelation(X parent, X child) {
@@ -90,17 +78,8 @@ public class TransativeRelation<X> {
         return transitiveRelations.getOrDefault(parent, Set.of());
     }
 
-    public X getParent(X child) {
-        return inverseRelation.get(child);
-    }
-
-    public X getRootOf(X child) {
-        X parent = getParent(child);
-        if (parent == null) {
-            return child;
-        } else {
-            return getRootOf(parent);
-        }
+    public Set<X> getParentsOf(X child) {
+        return inverseRelation.getOrDefault(child, Set.of());
     }
 
     public List<Pair<X, X>> getRelations() {
@@ -123,31 +102,40 @@ public class TransativeRelation<X> {
         return relations;
     }
 
-    public List<X> getParents(X child) {
-        List<X> parents = new ArrayList<>();
-        X parent = getParent(child);
-        while (parent != null) {
-            parents.add(parent);
-            parent = getParent(parent);
+    private Set<X> getPredecessorsOf(X node) {
+        Set<X> predecessors = new LinkedHashSet<>();
+        Deque<X> toVisit = new ArrayDeque<>();
+
+        toVisit.addAll(getParentsOf(node));
+
+        while (!toVisit.isEmpty()) {
+            X parent = toVisit.poll();
+            if (predecessors.contains(parent)) {
+                continue; // Already visited this parent
+            }
+            predecessors.add(parent);
+            toVisit.addAll(getParentsOf(parent));
         }
 
-        return parents;
+        return predecessors;
     }
 
-    public X getFirstCommonAncestor(X child1, X child2) {
-        List<X> parents1 = getParents(child1);
-        List<X> parents2 = getParents(child2);
-        parents1.retainAll(parents2);
-        return parents1.stream().findFirst().orElse(null);
-    }
+    private Set<X> getDecendantsOf(X node) {
+        Set<X> predecessors = new LinkedHashSet<>();
+        Deque<X> toVisit = new ArrayDeque<>();
 
-    public X getRoot(X child) {
-        X parent = getParent(child);
-        if (parent == null) {
-            return child;
-        } else {
-            return getRoot(parent);
+        toVisit.addAll(getChildren(node));
+
+        while (!toVisit.isEmpty()) {
+            X parent = toVisit.poll();
+            if (predecessors.contains(parent)) {
+                continue; // Already visited this parent
+            }
+            predecessors.add(parent);
+            toVisit.addAll(getChildren(parent));
         }
+
+        return predecessors;
     }
 
     public Set<X> getElements() {
@@ -155,41 +143,47 @@ public class TransativeRelation<X> {
     }
 
     public List<X> topologicalOrder() {
-        // (this is Kahn's algorithm)
-        var roots = elements.stream()
-                .filter(x -> getParent(x) == null)
-                .toList();
+        Map<X, Integer> inDegreeByNode = new HashMap<>();
+        Map<X, List<X>> adjacentByNode = new HashMap<>();
 
-        var edges = getRelations();
-
-        var ordered = new ArrayList<X>();
-        var front = new ArrayList<>(roots);
-
-        // no roots, just return them all
-        if (roots.isEmpty()) {
-            return List.copyOf(elements);
+        for (X parent : relation.keySet()) {
+            for (X child : relation.get(parent)) {
+                // Add edge
+                adjacentByNode.computeIfAbsent(parent, k -> new ArrayList<>()).add(child);
+                // Set degree
+                int currentDegree = inDegreeByNode.getOrDefault(child, 0);
+                inDegreeByNode.put(child, currentDegree + 1);
+                // Ensure parent has a value in the degree map
+                inDegreeByNode.putIfAbsent(parent, inDegreeByNode.getOrDefault(parent, 0));
+            }
         }
 
-        while (!front.isEmpty()) {
-            X el = front.remove(0);
-            ordered.add(el);
+        var inOrder = new ArrayList<X>();
+        var queue = new ArrayDeque<X>();
 
-            var edgesFrom = edges.stream()
-                    .filter(x -> x.first().equals(el))
-                    .toList();
-            for (var edge : edgesFrom) {
-                var edgeDestination = edge.second();
-                edges.remove(edge);
-                var edgesLeft = edges.stream()
-                        .filter(x -> x.second().equals(edgeDestination))
-                        .count();
-                if (edgesLeft == 0) {
-                    front.add(edgeDestination);
+        // Find roots
+        for (X node : elements) {
+            if (inDegreeByNode.getOrDefault(node, 0) == 0) {
+                queue.add(node);
+            }
+        }
+
+        while (!queue.isEmpty()) {
+            X node = queue.poll();
+            inOrder.add(node);
+
+            for (X neighbor : adjacentByNode.getOrDefault(node, List.of())) {
+                // Remove edge
+                inDegreeByNode.put(neighbor, inDegreeByNode.get(neighbor) - 1);
+
+                // If in-degree is now zero, add to queue
+                if (inDegreeByNode.get(neighbor) == 0) {
+                    queue.add(neighbor);
                 }
             }
         }
 
-        return ordered;
+        return inOrder;
     }
 
 }

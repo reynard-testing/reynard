@@ -6,7 +6,7 @@ from unittest import loader
 import numpy as np
 
 from util import get_json, find_json
-from graphs import TIMINGS_OF_INTEREST, TIMINGS_OF_EXTRA_INTEREST
+from graphs import TIMINGS_OF_INTEREST, TIMINGS_OF_INTEREST_OVER_TIME
 from graphs import render_timing_over_index, render_distribution_of_timing
 from graphs import render_queue_size_graph, render_tree
 from call_graph import render_call_graph
@@ -141,7 +141,7 @@ def render_statistics(loader: DataLoader, directory: str, over_time: bool = Fals
                 timings_per_key[key] = []
             timings_per_key[key].extend(dataset)
 
-            if not over_time or key not in TIMINGS_OF_EXTRA_INTEREST:
+            if not over_time or key not in TIMINGS_OF_INTEREST_OVER_TIME:
                 continue
             if key not in timings_over_index:
                 timings_over_index[key] = []

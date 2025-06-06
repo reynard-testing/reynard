@@ -57,7 +57,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
         }
     }
 
-    private List<Behaviour> getCauses(FaultUid point, List<Behaviour> directCauses, Set<Fault> injected) {
+    private List<Behaviour> getCauses(FaultUid point, List<Behaviour> potentialCauses, Set<Fault> injected) {
         Fault persistentFaultAtPoint = injected.stream()
                 .filter(x -> x.isPersistent())
                 .filter(x -> x.uid().matches(point))
@@ -71,7 +71,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
             return List.of(new Behaviour(predecessor, persistentFaultAtPoint.mode()));
         }
 
-        List<Behaviour> causes = directCauses.stream()
+        List<Behaviour> causes = potentialCauses.stream()
                 .filter(x -> {
                     // cause must be before event
                     var isStrictlyBefore = x.uid().isBefore(point);
@@ -94,6 +94,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
                 .collect(Collectors.toList());
 
         // determine which reports can cause the new point
+        // which are only those directly related to the parent
         List<TraceReport> parentalCauses = result.trace.getChildren(parent);
         List<Behaviour> relatededBehaviours = parentalCauses.stream()
                 .map(TraceReport::getBehaviour)

@@ -110,15 +110,16 @@ def id_to_indices(id: str) -> list[int]:
 
 
 def get_edge_label(node: SearchNode):
-    indices = [int(x) for x in node.id.split(",") if not '-' in x]
-    if len(indices) == 0:
+    if not "," in node.id:
         return f""
-    if len(indices) == 1:
-        return f"{node.index}"
+    parts = [int(x) for x in node.id.split(",") if not '-' in x]
+    size = parts[0]
 
-    min_id = min(indices)
-    max_id = max(indices)
-    return f"{min_id} - {max_id} ({len(indices)})"
+    if size == 0:
+        size_pruned = parts[3]
+        return f"-{size_pruned}"
+
+    return f"+{size}"
 
 
 def combine_tree(node: SearchNode):
@@ -132,11 +133,15 @@ def combine_tree(node: SearchNode):
 
     new_children: list[SearchNode] = []
     for key, children in grouped_by_key.items():
-        ids = [c.id for c in children]
-        ids = ids[:20]  # Limit to  ids
-        combined_id = ",".join(ids)
-        indices = [c.index for c in children]
-        combined_index = min(indices)
+        ids = [int(c.id) for c in children]
+        non_pruned = [x for x in ids if x > -1]
+        seq_ids = [0] if len(non_pruned) == 0 else non_pruned
+        identifers = [len(non_pruned), min(
+            seq_ids), max(seq_ids), len(ids), min(ids), max(ids)]
+        combined_id = ",".join(map(str, identifers))
+
+        indices = [c.index for c in children if c.index > -1]
+        combined_index = min(indices) if len(indices) > 0 else -1
         combined_mode = ""
         combined_children = []
 

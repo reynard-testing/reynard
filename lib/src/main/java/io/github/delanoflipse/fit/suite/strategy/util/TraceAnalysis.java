@@ -218,11 +218,28 @@ public class TraceAnalysis {
     }
 
     public FaultUid getParent(FaultUid faultUid) {
-        return parentChildRelation.getParent(faultUid);
+        var parents = parentChildRelation.getParentsOf(faultUid);
+
+        if (parents.isEmpty()) {
+            return null; // No parent found
+        }
+
+        if (parents.size() > 1) {
+            // It should be a tree..
+            logger.warn("Multiple parents found for faultUid {}: {}", faultUid, parents);
+        }
+        // Return the first parent found
+        return Sets.getOnlyElement(parents);
     }
 
     public TraceReport getParent(TraceReport faultUid) {
-        return getReportByFaultUid(parentChildRelation.getParent(faultUid.injectionPoint));
+        var parent = getParent(faultUid.injectionPoint);
+
+        if (parent == null) {
+            return null; // No parent found
+        }
+
+        return getReportByFaultUid(parent);
     }
 
     public Set<FaultUid> getDecendants(FaultUid node) {
@@ -251,16 +268,6 @@ public class TraceAnalysis {
     public List<TraceReport> getNeighbours(TraceReport report) {
         Set<FaultUid> neighbours = getNeighbours(report.injectionPoint);
         return getReports(neighbours);
-    }
-
-    public List<FaultUid> getParents(FaultUid parent) {
-        List<FaultUid> parents = parentChildRelation.getParents(parent);
-        parents.add(null);
-        return parents;
-    }
-
-    public FaultUid getFirstCommonAncestor(FaultUid fault1, FaultUid fault2) {
-        return parentChildRelation.getFirstCommonAncestor(fault1, fault2);
     }
 
     public boolean isDecendantOf(FaultUid parent, FaultUid child) {

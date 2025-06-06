@@ -104,6 +104,14 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     }
 
     @JsonIgnore
+    public FaultUid asAnyCallstack() {
+        var head = getPoint();
+        var tail = getTail();
+
+        return new FaultUid(Lists.plus(tail, head.asAnyCallStack()));
+    }
+
+    @JsonIgnore
     public FaultUid withCount(int count) {
         var head = getPoint();
         var tail = getTail();

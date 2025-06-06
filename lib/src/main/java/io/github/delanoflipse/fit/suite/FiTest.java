@@ -45,5 +45,5 @@ public @interface FiTest {
     TraversalOrder pointOrder() default TraversalOrder.DEPTH_FIRST_POST_ORDER;
 
     /** The order in which the search tree is visited */
-    boolean depthFirstSearchOrder() default true;
+    boolean depthFirstSearchOrder() default false;
 }

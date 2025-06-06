@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,6 @@ import io.github.delanoflipse.fit.suite.strategy.components.PruneDecision;
 import io.github.delanoflipse.fit.suite.strategy.components.Reporter;
 import io.github.delanoflipse.fit.suite.strategy.store.DynamicAnalysisStore;
 import io.github.delanoflipse.fit.suite.strategy.util.Lists;
-import io.github.delanoflipse.fit.suite.strategy.util.Sets;
 import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 
 public class DynamicExplorationGenerator extends StoreBasedGenerator implements FeedbackHandler, Reporter {
@@ -84,8 +84,31 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
         }
     }
 
+    private boolean isConsistent(TreeNode node) {
+        Set<Fault> faultload = node.asSet();
+        Set<FaultUid> uids = faultload.stream()
+                .map(Fault::uid)
+                .collect(Collectors.toSet());
+
+        for (Fault f : faultload) {
+            if (uids.contains(f.uid().getParent())) {
+                logger.debug("Fault {} is inconsistent with its causaul dependency {}", f,
+                        f.uid().getParent());
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private boolean addNode(TreeNode node, boolean addLast) {
         if (consideredNodes.contains(node)) {
+            return false;
+        }
+
+        if (!isConsistent(node)) {
+            logger.debug("Node {} is inconsistent, not adding", node);
+            consideredNodes.add(node);
             return false;
         }
 
@@ -143,12 +166,7 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
             }
 
             switch (pruneFunction(node)) {
-                case PRUNE_SUPERSETS -> {
-                    logger.debug("Pruning node {} completely", node);
-                    prunedNodes.add(node);
-                }
-
-                case PRUNE -> {
+                case PRUNE_SUPERSETS, PRUNE -> {
                     logger.debug("Pruning node {} completely", node);
                     prunedNodes.add(node);
                 }

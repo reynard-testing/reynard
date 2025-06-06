@@ -16,7 +16,6 @@ import io.github.delanoflipse.fit.suite.strategy.components.analyzers.HappyPathD
 import io.github.delanoflipse.fit.suite.strategy.components.analyzers.ParentChildDetector;
 import io.github.delanoflipse.fit.suite.strategy.components.generators.DynamicExplorationGenerator;
 import io.github.delanoflipse.fit.suite.strategy.store.ImplicationsStore;
-import io.github.delanoflipse.fit.suite.strategy.util.TraceAnalysis;
 import io.github.delanoflipse.fit.suite.strategy.util.traversal.TraversalOrder;
 import io.github.delanoflipse.fit.suite.unit.generators.DynamicExplorationTest;
 import io.github.delanoflipse.fit.suite.util.EventBuilder;

@@ -23,8 +23,8 @@ ADDITIONAL_ENV = [
 
 IMAGES = {
     'jaeger': 'jaegertracing/jaeger:latest',
-    'controller': '${CONTROLLER_IMAGE:-dflipse/ds-fit-controller:latest}',
-    'proxy': '${PROXY_IMAGE:-dflipse/ds-fit-proxy:latest}',
+    'controller': '${CONTROLLER_IMAGE:-dflipse/reynard-controller:latest}',
+    'proxy': '${PROXY_IMAGE:-dflipse/reynard-proxy:latest}',
 }
 
 

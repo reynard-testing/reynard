@@ -19,9 +19,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: "{{defaultContext}}:./services/proxy"
+          context: "{{defaultContext}}:./instrumentation/proxy"
           push: true
-          tags: dflipse/ds-fit-proxy:latest
+          tags: dflipse/reynard-proxy:latest
   build-controller:
     runs-on: ubuntu-latest
     steps:
@@ -37,9 +37,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: "{{defaultContext}}:./services/controller"
+          context: "{{defaultContext}}:./instrumentation/controller"
           push: true
-          tags: dflipse/ds-fit-controller:latest
+          tags: dflipse/reynard-controller:latest
   publish-maven-central:
     runs-on: ubuntu-latest
     steps:

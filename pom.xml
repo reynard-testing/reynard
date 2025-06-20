@@ -4,14 +4,14 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.github.delanoflipse.fit</groupId>
+  <groupId>dev.reynard</groupId>
   <artifactId>project</artifactId>
   <version>0.1.1</version>
 
   <packaging>pom</packaging>
-  <name>Distributed Systems Fault Injection Testing Suite</name>
+  <name>Fault Injection Testing for Service-Oriented Distributed Systems</name>
   <description>Provides the tools to run fault injection tests.</description>
-  <url>https://github.com/delanoflipse/ds-fit-suite/</url>
+  <url>https://github.com/reynard-testing/reynard</url>
   <inceptionYear>2025</inceptionYear>
 
   <modules>
@@ -44,9 +44,9 @@
   </licenses>
 
   <scm>
-    <connection>scm:git:git://github.com/delanoflipse/ds-fit-suite.git</connection>
-    <developerConnection>scm:git:ssh://github.com/delanoflipse/ds-fit-suite.git</developerConnection>
-    <url>http://github.com/delanoflipse/ds-fit-suite/tree/main</url>
+    <connection>scm:git:git://github.com:reynard-testing/reynard.git</connection>
+    <developerConnection>scm:git:ssh://github.com:reynard-testing/reynard.git</developerConnection>
+    <url>https://github.com/reynard-testing/reynard/tree/main</url>
   </scm>
 
   <!-- <distributionManagement>

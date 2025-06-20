@@ -1,5 +1,5 @@
 FROM golang:1.23.4-bullseye
-WORKDIR /go/src/dflipse.nl/fit-proxy
+WORKDIR /go/src/ok-server
 
 COPY go.mod ./
 # COPY go.sum ./

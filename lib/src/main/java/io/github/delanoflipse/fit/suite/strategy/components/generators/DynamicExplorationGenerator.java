@@ -91,10 +91,15 @@ public class DynamicExplorationGenerator extends StoreBasedGenerator implements 
                 .collect(Collectors.toSet());
 
         for (Fault f : faultload) {
-            if (uids.contains(f.uid().getParent())) {
-                logger.debug("Fault {} is inconsistent with its causaul dependency {}", f,
-                        f.uid().getParent());
-                return false;
+            FaultUid uid = f.uid();
+            // Check if any parent is also in the faultload
+            while (uid.hasParent()) {
+                uid = uid.getParent();
+                if (uids.contains(uid)) {
+                    logger.debug("Fault {} is inconsistent with its causaul dependency {}", f,
+                            f.uid().getParent());
+                    return false;
+                }
             }
         }
 

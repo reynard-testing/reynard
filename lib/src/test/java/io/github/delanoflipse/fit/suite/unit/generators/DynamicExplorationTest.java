@@ -97,9 +97,9 @@ public class DynamicExplorationTest {
         DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
         var result = playout(generator, store);
 
-        // We explore the full space, because the generator visits the redundant
-        // cases too. ({B,D} -> we can reach C!)
-        assertEquals(8, result.size());
+        // We explore the full space
+        // (ignoring causual inconsistencies)
+        assertEquals(6, result.size());
     }
 
     @Test
@@ -120,9 +120,31 @@ public class DynamicExplorationTest {
         DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
         var result = playout(generator, store);
 
-        // We omit visiting B,C,D
-        // because at C,D we only inject C
-        assertEquals(7, result.size());
+        // Although we see the exclusion at B
+        // We naively still combine B&C from C
+        // (so only the tree shape changes, not the result)
+        assertEquals(6, result.size());
+    }
+
+    @Test
+    public void testNested() {
+        var modes = FailureModes.getModes(1);
+
+        var a = new EventBuilder("A");
+        var b = a.createChild("B");
+        var c = b.createChild("C");
+        var d = c.createChild("D");
+
+        ImplicationsStore store = new ImplicationsStore();
+        store.addDownstreamRequests(a.uid(), List.of(b.uid()));
+        store.addDownstreamRequests(b.uid(), List.of(c.uid()));
+        store.addDownstreamRequests(c.uid(), List.of(d.uid()));
+
+        DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
+        var result = playout(generator, store);
+
+        // Nested only, so explor null, and B,C,D
+        assertEquals(4, result.size());
     }
 
     @Test
@@ -144,9 +166,12 @@ public class DynamicExplorationTest {
         DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
         var result = playout(generator, store);
 
-        // We visit the full B,C,D space => 2^3=8
-        // And all {D,E} nodes 2^2=4
-        assertEquals(12, result.size());
+        // null
+        // C
+        // D -> D&E
+        // B -> B&C
+        // |--> B&D -> B&D&E
+        assertEquals(8, result.size());
     }
 
     @Test
@@ -170,8 +195,10 @@ public class DynamicExplorationTest {
         DynamicExplorationGenerator generator = new DynamicExplorationGenerator(modes, x -> PruneDecision.KEEP);
         var result = playout(generator, store);
 
-        // We omit B,C,D,E and B,C,D
-        assertEquals(10, result.size());
+        // Although we see the exclusion at B
+        // We naively still combine B&C from C
+        // (so only the tree shape changes, not the result)
+        assertEquals(8, result.size());
     }
 
     @Test

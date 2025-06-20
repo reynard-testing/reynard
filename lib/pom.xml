@@ -11,7 +11,7 @@
 
   <artifactId>junit</artifactId>
   <name>Automated Fault Injection Testing Library</name>
-  <version>0.1.2</version>
+  <version>0.1.3</version>
   <packaging>jar</packaging>
 
   <!-- <url>http://maven.apache.org</url> -->

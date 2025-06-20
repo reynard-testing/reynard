@@ -174,17 +174,15 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
             List<Object> causes = new ArrayList<>();
 
             var simplified = Simplify.simplify(store.getSets(), failureModes);
-            var i = 1;
+
             for (Set<Fault> cause : simplified.first()) {
                 Map<String, Object> failureReport = new LinkedHashMap<>();
-                failureReport.put("index", i++);
                 failureReport.put("causes", cause.stream().map(x -> x.toString()).toList());
                 causes.add(failureReport);
             }
 
             for (Set<FaultUid> cause : simplified.second()) {
                 Map<String, Object> failureReport = new LinkedHashMap<>();
-                failureReport.put("index", i++);
                 failureReport.put("causes", cause.stream().map(x -> x.toString()).toList());
                 causes.add(failureReport);
             }
@@ -206,16 +204,14 @@ public class BehaviorAnalyzer implements FeedbackHandler, Reporter {
 
             var simplified = Simplify.simplify(store.getSets(), failureModes);
 
-            var i = 1;
             for (Set<Fault> cause : simplified.first()) {
                 Map<String, Object> failureReport = new LinkedHashMap<>();
-                failureReport.put("index", i++);
                 failureReport.put("redundancy", cause.stream().map(x -> x.toString()).toList());
                 causes.add(failureReport);
             }
+
             for (Set<FaultUid> cause : simplified.second()) {
                 Map<String, Object> failureReport = new LinkedHashMap<>();
-                failureReport.put("index", i++);
                 failureReport.put("redundancy", cause.stream().map(x -> x.toString()).toList());
                 causes.add(failureReport);
             }

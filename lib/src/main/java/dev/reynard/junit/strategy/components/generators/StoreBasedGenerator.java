@@ -66,7 +66,7 @@ public abstract class StoreBasedGenerator extends Generator {
                 continue;
             }
 
-            FaultUid simplePoint = point.withoutCallStack();
+            FaultUid simplePoint = point.withoutPredecessors();
 
             boolean alreadyPresent = res.stream()
                     .anyMatch(p -> simplePoint.matches(p));

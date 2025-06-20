@@ -41,7 +41,7 @@ public class StrategyRunner {
     private boolean withPayloadMasking = false;
     private boolean withBodyHashing = false;
     private boolean withLogHeader = false;
-    private boolean withCallStack = false;
+    private boolean withPredecessors = false;
     private boolean withStopOnError = false;
     private boolean withCheckAllPruners = false;
 
@@ -81,8 +81,8 @@ public class StrategyRunner {
         return this;
     }
 
-    public StrategyRunner withCallStack() {
-        withCallStack = true;
+    public StrategyRunner withPredecessors() {
+        withPredecessors = true;
         return this;
     }
 
@@ -245,8 +245,8 @@ public class StrategyRunner {
             tracked.withHeaderLog();
         }
 
-        if (withCallStack) {
-            tracked.withCallStack();
+        if (withPredecessors) {
+            tracked.withPredecessors();
         }
 
         if (withGetDelayMs > 0) {

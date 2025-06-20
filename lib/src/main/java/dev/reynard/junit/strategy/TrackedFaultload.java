@@ -32,7 +32,7 @@ public class TrackedFaultload {
     }
 
     public TrackedFaultload withMaskPayload() {
-        traceState.set("mask", "1");
+        traceState.set("maskpyld", "1");
         return this;
     }
 
@@ -42,12 +42,12 @@ public class TrackedFaultload {
     }
 
     public TrackedFaultload withHeaderLog() {
-        traceState.set("headerlog", "1");
+        traceState.set("hdrlog", "1");
         return this;
     }
 
-    public TrackedFaultload withCallStack() {
-        traceState.set("use-cs", "1");
+    public TrackedFaultload withPredecessors() {
+        traceState.set("usepred", "1");
         return this;
     }
 

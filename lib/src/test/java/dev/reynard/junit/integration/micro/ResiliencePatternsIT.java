@@ -113,7 +113,7 @@ public class ResiliencePatternsIT {
                 }
         }
 
-        @FiTest(withCallStack = true)
+        @FiTest(withPredecessors = true)
         public void testCs(TrackedFaultload faultload) throws IOException {
                 testA(faultload);
         }
@@ -123,7 +123,7 @@ public class ResiliencePatternsIT {
                 testA(faultload);
         }
 
-        @FiTest(optimizeForRetries = true, withCallStack = true)
+        @FiTest(optimizeForRetries = true, withPredecessors = true)
         public void testCsOpt(TrackedFaultload faultload) throws IOException {
                 testA(faultload);
         }

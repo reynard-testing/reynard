@@ -155,8 +155,8 @@ public class FiTestExtension
             strategy.withCheckAllPruners();
         }
 
-        if (annotation.withCallStack()) {
-            strategy.withCallStack();
+        if (annotation.withPredecessors()) {
+            strategy.withPredecessors();
         }
 
         if (annotation.initialGetTraceDelay() > 0) {

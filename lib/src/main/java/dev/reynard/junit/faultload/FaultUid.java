@@ -104,11 +104,11 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     }
 
     @JsonIgnore
-    public FaultUid asAnyCallStack() {
+    public FaultUid asAnyPredecessors() {
         var head = getPoint();
         var tail = getTail();
 
-        return new FaultUid(Lists.plus(tail, head.asAnyCallStack()));
+        return new FaultUid(Lists.plus(tail, head.asAnyPredecessors()));
     }
 
     @JsonIgnore
@@ -120,9 +120,9 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     }
 
     @JsonIgnore
-    public FaultUid withoutCallStack() {
+    public FaultUid withoutPredecessors() {
         List<FaultInjectionPoint> without = stack.stream()
-                .map(x -> x.asAnyCallStack())
+                .map(x -> x.asAnyPredecessors())
                 .toList();
 
         return new FaultUid(without);
@@ -134,7 +134,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
             return this;
         }
 
-        FaultInjectionPoint origin = getOrigin().asAnyCount().asAnyCallStack();
+        FaultInjectionPoint origin = getOrigin().asAnyCount().asAnyPredecessors();
         FaultInjectionPoint destination = getPoint();
 
         return new FaultUid(List.of(origin, destination));
@@ -215,11 +215,11 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         }
 
         // cannot compare without call stack
-        if (pointSelf.isAnyCallStack() || pointOther.isAnyCallStack()) {
+        if (pointSelf.isAnyPredecessors() || pointOther.isAnyPredecessors()) {
             return Optional.empty();
         }
 
-        return Optional.of(FaultInjectionPoint.isBefore(pointSelf.callStack(), pointOther.callStack()));
+        return Optional.of(FaultInjectionPoint.isBefore(pointSelf.predecessors(), pointOther.predecessors()));
     }
 
     private boolean matches(List<FaultInjectionPoint> a, List<FaultInjectionPoint> b, boolean ignoreCount) {

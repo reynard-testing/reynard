@@ -13,13 +13,13 @@ import dev.reynard.junit.strategy.util.Sets;
 @JsonSerialize
 @JsonDeserialize
 public record FaultInjectionPoint(String destination, String signature, String payload,
-        @JsonProperty("call_stack") Map<String, Integer> callStack, int count) {
+        @JsonProperty("predecessors") Map<String, Integer> predecessors, int count) {
     private static final String ANY_WILDCARD = "*";
 
     public FaultInjectionPoint {
         // Ensure map is immutable
-        if (callStack != null) {
-            callStack = Map.copyOf(callStack);
+        if (predecessors != null) {
+            predecessors = Map.copyOf(predecessors);
         }
     }
 
@@ -33,8 +33,8 @@ public record FaultInjectionPoint(String destination, String signature, String p
     }
 
     @JsonIgnore
-    public boolean isAnyCallStack() {
-        return callStack == null;
+    public boolean isAnyPredecessors() {
+        return predecessors == null;
     }
 
     @JsonIgnore
@@ -49,23 +49,23 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     // Builder patterns
     public FaultInjectionPoint withDestination(String destination) {
-        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+        return new FaultInjectionPoint(destination, signature, payload, predecessors, count);
     }
 
     public FaultInjectionPoint withSignature(String signature) {
-        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+        return new FaultInjectionPoint(destination, signature, payload, predecessors, count);
     }
 
     public FaultInjectionPoint withPayload(String payload) {
-        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+        return new FaultInjectionPoint(destination, signature, payload, predecessors, count);
     }
 
-    public FaultInjectionPoint withCallStack(Map<String, Integer> callStack) {
-        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+    public FaultInjectionPoint withPredecessors(Map<String, Integer> predecessors) {
+        return new FaultInjectionPoint(destination, signature, payload, predecessors, count);
     }
 
     public FaultInjectionPoint withCount(int count) {
-        return new FaultInjectionPoint(destination, signature, payload, callStack, count);
+        return new FaultInjectionPoint(destination, signature, payload, predecessors, count);
     }
 
     @Override
@@ -75,8 +75,8 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
         // {key1:value1,key2:value2, ...}
         String csStr = "";
-        if (callStack != null) {
-            csStr = "{" + callStack.entrySet().stream()
+        if (predecessors != null) {
+            csStr = "{" + predecessors.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(e -> e.getKey() + ":" + e.getValue())
                     .reduce((a, b) -> a + "," + b).orElse("") + "}";
@@ -93,16 +93,16 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     @JsonIgnore
     public FaultInjectionPoint asAnyPayload() {
-        return new FaultInjectionPoint(destination, signature, "*", callStack, count);
+        return new FaultInjectionPoint(destination, signature, "*", predecessors, count);
     }
 
     @JsonIgnore
     public FaultInjectionPoint asAnyCount() {
-        return new FaultInjectionPoint(destination, signature, payload, callStack, -1);
+        return new FaultInjectionPoint(destination, signature, payload, predecessors, -1);
     }
 
     @JsonIgnore
-    public FaultInjectionPoint asAnyCallStack() {
+    public FaultInjectionPoint asAnyPredecessors() {
         return new FaultInjectionPoint(destination, signature, payload, null, count);
     }
 
@@ -183,7 +183,7 @@ public record FaultInjectionPoint(String destination, String signature, String p
     public boolean matchesUpToCount(FaultInjectionPoint other) {
         return matches(destination, other.destination) &&
                 matches(signature, other.signature) &&
-                matches(callStack, other.callStack) &&
+                matches(predecessors, other.predecessors) &&
                 matches(payload, other.payload);
     }
 }

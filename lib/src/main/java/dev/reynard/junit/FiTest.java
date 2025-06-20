@@ -15,60 +15,56 @@ import dev.reynard.junit.strategy.util.traversal.TraversalOrder;
 @TestTemplate // Mark this as a template for multiple executions
 @ExtendWith(FiTestExtension.class) // Link to the extension
 public @interface FiTest {
-    boolean maskPayload()
+    /** Ignore the payload field in the identifier */
+    boolean maskPayload() default false;
 
-    default false;
+    /** Include the predecessors field */
+    boolean withPredecessors() default false;
 
-    boolean hashBody()
+    /** Use a hash of the response body */
+    boolean hashBody() default false;
 
-    default false;
+    /** For debuggin purposes: instruct the proxies to log all headers */
+    boolean logHeaders() default false;
 
-    boolean logHeaders()
+    /** Do we when we find a failing test? */
+    boolean failStop() default true;
 
-    default false;
+    /**
+     * Assume that retries are implemented correctly, and reduce the search space
+     */
+    boolean optimizeForRetries() default false;
 
-    boolean withCallStack()
+    boolean optimizeForImpactless() default false;
 
-    default false;
+    /**
+     * Give all pruners the change to determine the redundancy of a faultload.
+     * Instead, if a pruner determine it redundant, we skip checking the others.
+     */
+    boolean checkAllPruners() default false;
 
-    boolean failStop()
+    /** The maximum number of test executions. 0 indicates no bound. */
+    long maxTestCases() default 0;
 
-    default true;
+    /** The maximum time the tests should take in seconds. 0 indicates no bound. */
+    long maxTimeS() default 0;
 
-    boolean optimizeForRetries()
+    /** Bound the size of the faultloads. 0 indicates no bound. */
+    int maxFaultloadSize() default 0;
 
-    default false;
+    /**
+     * Delay before retrieving the reports from the proxies. Useful to wait for
+     * asynchronous communication.
+     */
+    int initialGetTraceDelay() default 0;
 
-    boolean optimizeForImpactless()
-
-    default false;
-
-    boolean checkAllPruners()
-
-    default false;
-
-    long maxTestCases()
-
-    default 0;
-
-    long maxTimeS()
-
-    default 0;
-
-    int maxFaultloadSize()
-
-    default 0;
-
-    int initialGetTraceDelay()
-
-    default 0;
-
+    /**
+     * Add custom components to the search strategy, such as analyzers and pruners.
+     */
     Class<?>[] additionalComponents() default {};
 
-    /** The order in which points in the trace analysis are considered */
-    TraversalOrder pointOrder()
-
-    default TraversalOrder.DEPTH_FIRST_POST_ORDER;
+    /** The order in which points in the call graph are considered */
+    TraversalOrder pointOrder() default TraversalOrder.DEPTH_FIRST_POST_ORDER;
 
     /** The order in which the search tree is visited */
     boolean depthFirstSearchOrder() default false;

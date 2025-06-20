@@ -92,7 +92,7 @@ public class NondeterminismAndRetryIT {
         }
     }
 
-    @FiTest(withCallStack = true)
+    @FiTest(withPredecessors = true)
     public void testCs(TrackedFaultload faultload) throws IOException {
         try {
             testA(faultload);

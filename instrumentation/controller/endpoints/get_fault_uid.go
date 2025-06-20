@@ -66,7 +66,7 @@ func determineUid(data UidRequest) *faultload.FaultUid {
 	var predecessors *faultload.InjectionPointPredecessors
 	if data.IncludePredecessors {
 		predecessors = getCompletedEvents(parentReport)
-		// do not include the current span in the predecessors
+		// do not include the point in the predecessors
 		predecessors.Del(data.PartialPoint)
 	}
 

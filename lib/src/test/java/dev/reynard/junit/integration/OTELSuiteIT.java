@@ -263,7 +263,7 @@ public class OTELSuiteIT {
 
     }
 
-    @FiTest(maskPayload = true, withCallStack = true)
+    @FiTest(maskPayload = true, withPredecessors = true)
     public void testCheckoutWithCs(TrackedFaultload faultload)
             throws IOException {
         testCheckout(faultload);

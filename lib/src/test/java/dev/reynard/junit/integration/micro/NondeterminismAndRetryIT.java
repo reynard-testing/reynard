@@ -92,12 +92,12 @@ public class NondeterminismAndRetryIT {
         }
     }
 
-    @FiTest(withCallStack = true)
+    @FiTest(withPredecessors = true)
     public void testCs(TrackedFaultload faultload) throws IOException {
         try {
             testA(faultload);
         } catch (AssertionError e) {
-            // Due to the call stack icm parallel, the number of completed events varies
+            // Due to the predecessors icm parallel, the number of completed events varies
             // Note: this test is flaky by design, as it tests nondeterminism
             // and retries, which can lead to different outcomes.
             throw e;

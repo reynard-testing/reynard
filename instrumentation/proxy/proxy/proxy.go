@@ -25,10 +25,10 @@ const (
 	FIT_PARENT_KEY          = "fit-parent"
 	FIT_IS_INITIAL_KEY      = "init"
 	FIT_FLAG                = "fit"
-	FIT_MASK_PAYLOAD_FLAG   = "mask"
+	FIT_MASK_PAYLOAD_FLAG   = "maskpyld"
 	FIT_HASH_BODY_FLAG      = "hashbody"
-	FIT_USE_CALL_STACK      = "use-cs"
-	FIT_HEADER_LOGGING_FLAG = "headerlog"
+	FIT_USE_PREDECESSORS    = "usepred"
+	FIT_HEADER_LOGGING_FLAG = "hdrlog"
 
 	OTEL_PARENT_HEADER = "traceparent"
 	OTEL_STATE_HEADER  = "tracestate"
@@ -180,11 +180,11 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		partialPoint := faultload.PartialPointFromRequest(r, destination, shouldMaskPayload)
 		slog.Debug("Partial point", "partialPoint", partialPoint)
 
-		// determine if call stacks should be used
-		shouldUseCallStack := state.GetWithDefault(FIT_USE_CALL_STACK, "0") == "1"
+		// determine if predecessors should be used
+		shouldUsePredecessors := state.GetWithDefault(FIT_USE_PREDECESSORS, "0") == "1"
 		slog.Debug("Report parent ID", "reportParentId", reportParentId)
 
-		faultUid := tracing.GetUid(metadata, partialPoint, shouldUseCallStack)
+		faultUid := tracing.GetUid(metadata, partialPoint, shouldUsePredecessors)
 		metadata.FaultUid = &faultUid
 		slog.Debug("Determined ID", "faultUid", faultUid)
 		tracing.TrackFault(traceId, &faultUid)
@@ -193,9 +193,9 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		state.Set(FIT_PARENT_KEY, string(currentSpan.ParentID))
 		r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 
-		// Only directly forward the response if call stacks are not used
-		// Because for call stacks we want to ensure we have reports on all previous spans
-		directlyForward := !shouldUseCallStack
+		// Only directly forward the response if predecessors are not used
+		// Because for predecessors we want to ensure we have reports on all previous spans
+		directlyForward := !shouldUsePredecessors
 		capture := NewResponseCapture(w, directlyForward)
 
 		var proxyState ProxyState = ProxyState{

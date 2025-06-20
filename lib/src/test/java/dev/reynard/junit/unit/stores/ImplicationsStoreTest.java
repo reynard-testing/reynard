@@ -463,7 +463,7 @@ public class ImplicationsStoreTest {
   }
 
   @Test
-  @Disabled("This test illustrates an issue when not using call stacks")
+  @Disabled("This test illustrates an issue when not using predecessors")
   public void testContradiction() {
     ImplicationsStore testStore = new ImplicationsStore();
 

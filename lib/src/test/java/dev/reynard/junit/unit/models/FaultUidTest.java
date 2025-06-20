@@ -23,7 +23,7 @@ public class FaultUidTest {
     private static final FaultInjectionPoint point4 = new FaultInjectionPoint("z", "z", "x", Map.of(
             point1.asPartial().toString(), point1.count()),
             0);
-    private static final FaultInjectionPoint point5 = point1.asAnyCallStack();
+    private static final FaultInjectionPoint point5 = point1.asAnyPredecessors();
 
     public static Collection<Object[]> equalUids() {
         return Arrays.asList(new Object[][] {

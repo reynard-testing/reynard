@@ -54,8 +54,9 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
         service.withCreateContainerCmdModifier(cmd -> cmd.withName(hostname + "-original-" + randomId));
     }
 
-    public FaultInjectionPoint getPoint(String signature, String payload, Map<String, Integer> callStack, int count) {
-        return new FaultInjectionPoint(hostname, signature, payload, callStack, count);
+    public FaultInjectionPoint getPoint(String signature, String payload, Map<String, Integer> predecessors,
+            int count) {
+        return new FaultInjectionPoint(hostname, signature, payload, predecessors, count);
     }
 
     public FaultInjectionPoint getPoint() {

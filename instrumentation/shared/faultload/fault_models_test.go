@@ -28,16 +28,16 @@ func TestMatch(t *testing.T) {
 		Count: -1,
 	}}}
 
-	fCallStack := FaultUid{Stack: []InjectionPoint{{
-		CallStack: &InjectionPointCallStack{},
+	fPred := FaultUid{Stack: []InjectionPoint{{
+		Predecessors: &InjectionPointPredecessors{},
 	}}}
 
-	fCallStackWildcard := FaultUid{Stack: []InjectionPoint{{
-		CallStack: nil,
+	fPredWildcard := FaultUid{Stack: []InjectionPoint{{
+		Predecessors: nil,
 	}}}
 
-	fCallStackDifference := FaultUid{Stack: []InjectionPoint{{
-		CallStack: &InjectionPointCallStack{
+	fPredStackDiff := FaultUid{Stack: []InjectionPoint{{
+		Predecessors: &InjectionPointPredecessors{
 			"1": 1,
 		},
 	}}}
@@ -81,32 +81,32 @@ func TestMatch(t *testing.T) {
 		},
 		{
 			name:  "wildcard stack <> itself",
-			f1:    fCallStackWildcard,
-			f2:    fCallStackWildcard,
+			f1:    fPredWildcard,
+			f2:    fPredWildcard,
 			match: true,
 		},
 		{
 			name:  "wildcard stack <> empty stack",
-			f1:    fCallStackWildcard,
-			f2:    fCallStack,
+			f1:    fPredWildcard,
+			f2:    fPred,
 			match: true,
 		},
 		{
 			name:  "empty <> wildcard stack",
-			f1:    fCallStack,
-			f2:    fCallStackWildcard,
+			f1:    fPred,
+			f2:    fPredWildcard,
 			match: true,
 		},
 		{
 			name:  "wildcard stack <> some value",
-			f1:    fCallStackWildcard,
-			f2:    fCallStackDifference,
+			f1:    fPredWildcard,
+			f2:    fPredStackDiff,
 			match: true,
 		},
 		{
-			name:  "empyt call stack <> some value",
-			f1:    fCallStack,
-			f2:    fCallStackDifference,
+			name:  "empyt predecessors <> some value",
+			f1:    fPred,
+			f2:    fPredStackDiff,
 			match: false,
 		},
 	}

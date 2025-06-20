@@ -21,14 +21,14 @@ func (f PartialInjectionPoint) String() string {
 	return fmt.Sprintf("%s:%s%s", f.Destination, f.Signature, payloadStr)
 }
 
-type InjectionPointCallStack map[string]int
+type InjectionPointPredecessors map[string]int
 
 type InjectionPoint struct {
-	Destination string                   `json:"destination"`
-	Signature   string                   `json:"signature"`
-	Payload     string                   `json:"payload"`
-	CallStack   *InjectionPointCallStack `json:"call_stack"`
-	Count       int                      `json:"count"`
+	Destination  string                      `json:"destination"`
+	Signature    string                      `json:"signature"`
+	Payload      string                      `json:"payload"`
+	Predecessors *InjectionPointPredecessors `json:"predecessors"`
+	Count        int                         `json:"count"`
 }
 
 func (p InjectionPoint) AsPartial() PartialInjectionPoint {
@@ -87,7 +87,7 @@ func (f1 FaultUid) Matches(f2 FaultUid) bool {
 	return true
 }
 
-func (cs1 InjectionPointCallStack) Matches(cs2 *InjectionPointCallStack) bool {
+func (cs1 InjectionPointPredecessors) Matches(cs2 *InjectionPointPredecessors) bool {
 	if cs2 == nil {
 		return true
 	}
@@ -109,7 +109,7 @@ func (f1 InjectionPoint) Matches(f2 InjectionPoint) bool {
 	return stringMatches(f1.Destination, f2.Destination) &&
 		stringMatches(f1.Signature, f2.Signature) &&
 		stringMatches(f1.Payload, f2.Payload) &&
-		(f1.CallStack == nil || f1.CallStack.Matches(f2.CallStack)) &&
+		(f1.Predecessors == nil || f1.Predecessors.Matches(f2.Predecessors)) &&
 		intMatches(f1.Count, f2.Count)
 }
 
@@ -121,7 +121,7 @@ func (fid FaultUid) String() string {
 	return strings.Join(ip_strings, ">")
 }
 
-func (cs InjectionPointCallStack) String() string {
+func (cs InjectionPointPredecessors) String() string {
 	if len(cs) == 0 {
 		return ""
 	}
@@ -142,7 +142,7 @@ func (cs InjectionPointCallStack) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(csStrings, ","))
 }
 
-func (ips InjectionPointCallStack) Del(point PartialInjectionPoint) {
+func (ips InjectionPointPredecessors) Del(point PartialInjectionPoint) {
 	if len(ips) == 0 {
 		return
 	}
@@ -165,8 +165,8 @@ func (f InjectionPoint) String() string {
 	}
 
 	csStr := ""
-	if f.CallStack != nil {
-		csStr = f.CallStack.String()
+	if f.Predecessors != nil {
+		csStr = f.Predecessors.String()
 	}
 
 	return fmt.Sprintf("%s:%s%s%s%s", f.Destination, f.Signature, payloadStr, csStr, countStr)
@@ -182,18 +182,18 @@ type FaultMode struct {
 	Args []string `json:"args"`
 }
 
-func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, ips *InjectionPointCallStack, count int) FaultUid {
+func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, ips *InjectionPointPredecessors, count int) FaultUid {
 	fid := make([]InjectionPoint, len(parent.Stack)+1)
 	// Copy the existing stack
 	copy(fid, parent.Stack)
 
 	// Add the new injection point
 	fid[len(parent.Stack)] = InjectionPoint{
-		Destination: partial.Destination,
-		Signature:   partial.Signature,
-		Payload:     partial.Payload,
-		CallStack:   ips,
-		Count:       count,
+		Destination:  partial.Destination,
+		Signature:    partial.Signature,
+		Payload:      partial.Payload,
+		Predecessors: ips,
+		Count:        count,
 	}
 
 	return FaultUid{

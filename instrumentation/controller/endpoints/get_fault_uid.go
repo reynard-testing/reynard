@@ -11,21 +11,21 @@ import (
 )
 
 type UidRequest struct {
-	TraceId        faultload.TraceID               `json:"trace_id"`
-	SpanId         faultload.SpanID                `json:"span_id"`
-	ReportParentId faultload.SpanID                `json:"parent_span_id"`
-	PartialPoint   faultload.PartialInjectionPoint `json:"partial_point"`
-	IsInitial      bool                            `json:"is_initial"`
-	IncludeEvents  bool                            `json:"include_events"`
+	TraceId             faultload.TraceID               `json:"trace_id"`
+	SpanId              faultload.SpanID                `json:"span_id"`
+	ReportParentId      faultload.SpanID                `json:"parent_span_id"`
+	PartialPoint        faultload.PartialInjectionPoint `json:"partial_point"`
+	IsInitial           bool                            `json:"is_initial"`
+	IncludePredecessors bool                            `json:"include_events"`
 }
 
 type UidResponse struct {
 	Uid faultload.FaultUid `json:"uid"`
 }
 
-func getCompletedEvents(parentEvent *trace.TraceReport) *faultload.InjectionPointCallStack {
+func getCompletedEvents(parentEvent *trace.TraceReport) *faultload.InjectionPointPredecessors {
 	reports := store.Reports.GetByTraceId(parentEvent.TraceId)
-	completed := faultload.InjectionPointCallStack{}
+	completed := faultload.InjectionPointPredecessors{}
 
 	for _, report := range reports {
 		// Ignore the parent event itself and any incomplete reports.
@@ -63,16 +63,16 @@ func determineUid(data UidRequest) *faultload.FaultUid {
 		return nil
 	}
 
-	var callStack *faultload.InjectionPointCallStack
-	if data.IncludeEvents {
-		callStack = getCompletedEvents(parentReport)
-		// do not include the current span in the call stack
-		callStack.Del(data.PartialPoint)
+	var predecessors *faultload.InjectionPointPredecessors
+	if data.IncludePredecessors {
+		predecessors = getCompletedEvents(parentReport)
+		// do not include the point in the predecessors
+		predecessors.Del(data.PartialPoint)
 	}
 
-	invocationCount := store.InvocationCounter.GetCount(data.TraceId, parentReport.FaultUid, data.PartialPoint, callStack)
+	invocationCount := store.InvocationCounter.GetCount(data.TraceId, parentReport.FaultUid, data.PartialPoint, predecessors)
 
-	uid := faultload.BuildFaultUid(parentReport.FaultUid, data.PartialPoint, callStack, invocationCount)
+	uid := faultload.BuildFaultUid(parentReport.FaultUid, data.PartialPoint, predecessors, invocationCount)
 	return &uid
 
 }

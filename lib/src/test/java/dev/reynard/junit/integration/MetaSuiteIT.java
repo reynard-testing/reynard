@@ -169,18 +169,18 @@ public class MetaSuiteIT {
 
     }
 
-    @FiTest(maxTestCases = 999, optimizeForRetries = true, withCallStack = false, additionalComponents = {
+    @FiTest(maxTestCases = 999, optimizeForRetries = true, withPredecessors = false, additionalComponents = {
             Proxy3Ignorer.class })
     public void testRegisterWithCustomPruner(TrackedFaultload faultload) throws IOException {
         testRegister(faultload);
     }
 
-    @FiTest(maxTestCases = 99999, optimizeForRetries = false, withCallStack = false)
+    @FiTest(maxTestCases = 99999, optimizeForRetries = false, withPredecessors = false)
     public void testRegisterNoOpt(TrackedFaultload faultload) throws IOException {
         testRegister(faultload);
     }
 
-    @FiTest(maxTestCases = 999, optimizeForRetries = true, withCallStack = false)
+    @FiTest(maxTestCases = 999, optimizeForRetries = true, withPredecessors = false)
     public void testRegister(TrackedFaultload faultload) throws IOException {
         int port = controller.getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";

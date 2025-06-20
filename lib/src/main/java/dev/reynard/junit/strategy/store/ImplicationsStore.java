@@ -52,7 +52,7 @@ public class ImplicationsStore {
   }
 
   private FaultInjectionPoint getLookupKey(FaultInjectionPoint x) {
-    return x.asAnyCount().asAnyCallStack();
+    return x.asAnyCount().asAnyPredecessors();
   }
 
   // --- Normalisation ---

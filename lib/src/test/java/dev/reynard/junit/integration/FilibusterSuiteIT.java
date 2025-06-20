@@ -76,12 +76,12 @@ public class FilibusterSuiteIT {
         testAudible(faultload);
     }
 
-    @FiTest(maxTestCases = 999, withCallStack = true)
+    @FiTest(maxTestCases = 999, withPredecessors = true)
     public void testAudibleCs(TrackedFaultload faultload) throws IOException {
         testAudible(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withPredecessors = true)
     public void testNetflix(TrackedFaultload faultload) throws IOException {
 
         var traceparent = faultload.getTraceParent().toString();
@@ -114,17 +114,17 @@ public class FilibusterSuiteIT {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, pointOrder = TraversalOrder.BREADTH_FIRST)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withPredecessors = true, pointOrder = TraversalOrder.BREADTH_FIRST)
     public void testNetflixBfs(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true, pointOrder = TraversalOrder.RANDOM)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withPredecessors = true, pointOrder = TraversalOrder.RANDOM)
     public void testNetflixRandomOrder(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withCallStack = true)
+    @FiTest(maskPayload = true, maxTestCases = 9999, withPredecessors = true)
     public void testNetflixFaults(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }

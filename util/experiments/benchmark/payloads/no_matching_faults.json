@@ -8,12 +8,17 @@
             "destination": "target",
             "signature": "",
             "payload": "",
-            "call_stack": {},
+            "predecessors": {},
             "count": 0
           }
         ]
       },
-      "mode": { "type": "HTTP_ERROR", "args": ["500"] }
+      "mode": {
+        "type": "HTTP_ERROR",
+        "args": [
+          "500"
+        ]
+      }
     }
   ]
 }

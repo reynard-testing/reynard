@@ -104,7 +104,7 @@ func TestMatch(t *testing.T) {
 			match: true,
 		},
 		{
-			name:  "empyt call stack <> some value",
+			name:  "empyt predecessors <> some value",
 			f1:    fPred,
 			f2:    fPredStackDiff,
 			match: false,

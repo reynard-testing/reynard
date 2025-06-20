@@ -214,7 +214,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
             return Optional.of(isCountBefore);
         }
 
-        // cannot compare without call stack
+        // cannot compare without predecessors
         if (pointSelf.isAnyPredecessors() || pointOther.isAnyPredecessors()) {
             return Optional.empty();
         }

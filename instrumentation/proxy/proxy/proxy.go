@@ -180,7 +180,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		partialPoint := faultload.PartialPointFromRequest(r, destination, shouldMaskPayload)
 		slog.Debug("Partial point", "partialPoint", partialPoint)
 
-		// determine if call stacks should be used
+		// determine if predecessors should be used
 		shouldUsePredecessors := state.GetWithDefault(FIT_USE_PREDECESSORS, "0") == "1"
 		slog.Debug("Report parent ID", "reportParentId", reportParentId)
 
@@ -193,8 +193,8 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		state.Set(FIT_PARENT_KEY, string(currentSpan.ParentID))
 		r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 
-		// Only directly forward the response if call stacks are not used
-		// Because for call stacks we want to ensure we have reports on all previous spans
+		// Only directly forward the response if predecessors are not used
+		// Because for predecessors we want to ensure we have reports on all previous spans
 		directlyForward := !shouldUsePredecessors
 		capture := NewResponseCapture(w, directlyForward)
 

@@ -19,7 +19,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: "{{defaultContext}}:./instrumentation/proxy"
+          context: "{{defaultContext}}:./instrumentation/"
+          file: "proxy/Dockerfile"
           push: true
           tags: dflipse/reynard-proxy:latest
   build-controller:
@@ -37,7 +38,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: "{{defaultContext}}:./instrumentation/controller"
+          context: "{{defaultContext}}:./instrumentation/"
+          file: "controller/Dockerfile"
           push: true
           tags: dflipse/reynard-controller:latest
   publish-maven-central:

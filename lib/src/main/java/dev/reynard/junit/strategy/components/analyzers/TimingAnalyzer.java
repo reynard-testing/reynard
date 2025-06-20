@@ -44,16 +44,16 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
         return v.stream().mapToDouble(i -> i);
     }
 
-    private List<Object> getTimingReport(Map<Behaviour, List<Float>> timings) {
-        List<Object> report = new ArrayList<>();
+    private List<Map<String, Object>> getTimingReport(Map<Behaviour, List<Float>> timings) {
+        List<Map<String, Object>> report = new ArrayList<>();
 
         for (var entry : timings.entrySet()) {
             Map<String, Object> reportEntry = new LinkedHashMap<>();
             var point = entry.getKey();
             var values = entry.getValue();
-            var average = asDoubleStream(values).average().getAsDouble();
-            var max = asDoubleStream(values).max().getAsDouble();
-            var min = asDoubleStream(values).min().getAsDouble();
+            double average = asDoubleStream(values).average().getAsDouble();
+            double max = asDoubleStream(values).max().getAsDouble();
+            double min = asDoubleStream(values).min().getAsDouble();
 
             reportEntry.put("behaviour", point.toString());
             reportEntry.put("min_ms", min);
@@ -65,8 +65,13 @@ public class TimingAnalyzer implements FeedbackHandler, Reporter {
             report.add(reportEntry);
         }
 
-        return report;
+        report.sort((x, y) -> {
+            double xAvg = (double) x.get("average_ms");
+            double yAvg = (double) y.get("average_ms");
+            return Double.compare(yAvg, xAvg);
+        });
 
+        return report;
     }
 
     @Override

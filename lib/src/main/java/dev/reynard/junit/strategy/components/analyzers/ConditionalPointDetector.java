@@ -1,7 +1,11 @@
 package dev.reynard.junit.strategy.components.analyzers;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -11,15 +15,20 @@ import org.slf4j.LoggerFactory;
 import dev.reynard.junit.faultload.Behaviour;
 import dev.reynard.junit.faultload.Fault;
 import dev.reynard.junit.faultload.FaultUid;
+import dev.reynard.junit.faultload.modes.FailureMode;
 import dev.reynard.junit.instrumentation.trace.tree.TraceReport;
 import dev.reynard.junit.strategy.FaultloadResult;
 import dev.reynard.junit.strategy.components.FeedbackContext;
 import dev.reynard.junit.strategy.components.FeedbackHandler;
+import dev.reynard.junit.strategy.components.PruneContext;
+import dev.reynard.junit.strategy.components.Reporter;
 import dev.reynard.junit.strategy.util.Lists;
 
-public class ConditionalPointDetector implements FeedbackHandler {
+public class ConditionalPointDetector implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(ConditionalPointDetector.class);
     private final boolean onlyPersistantOrTransientRetries;
+
+    private final Map<Fault, Set<FaultUid>> knownRetries = new LinkedHashMap<>();
 
     public ConditionalPointDetector(boolean onlyPersistantOrTransientRetries) {
         this.onlyPersistantOrTransientRetries = onlyPersistantOrTransientRetries;
@@ -155,7 +164,7 @@ public class ConditionalPointDetector implements FeedbackHandler {
         Behaviour retriedFault = observedBehaviours.stream()
                 .filter(f -> f.uid().matchesUpToCount(newFid))
                 .filter(f -> f.uid().isTransient())
-                .filter(f -> f.uid().count() == newFid.count() - 1)
+                .filter(f -> f.uid().count() == 0)
                 .findFirst()
                 .orElse(null);
 
@@ -172,6 +181,8 @@ public class ConditionalPointDetector implements FeedbackHandler {
     }
 
     private Fault handleRetry(Fault retriedFault, FaultUid retryPoint, FeedbackContext context) {
+        knownRetries.computeIfAbsent(retriedFault, x -> new LinkedHashSet<>())
+                .add(retryPoint);
 
         // only distinguish between transient (once) or always
         Fault persistentFault = new Fault(retriedFault.uid().asAnyCount(), retriedFault.mode());
@@ -185,5 +196,36 @@ public class ConditionalPointDetector implements FeedbackHandler {
         context.pruneFaultUidSubset(Set.of(retriedFault.uid(), persistentFault.uid()));
         context.reportFaultUid(persistentFault.uid());
         return persistentFault;
+    }
+
+    @Override
+    public Object report(PruneContext context) {
+        List<Map<String, Object>> report = new ArrayList<>();
+
+        Map<FaultUid, Set<Fault>> byUid = new LinkedHashMap<>();
+
+        for (var entry : knownRetries.entrySet()) {
+            Fault f = entry.getKey();
+            FaultUid uid = f.uid();
+            byUid.computeIfAbsent(uid, x -> new LinkedHashSet<>())
+                    .add(f);
+        }
+
+        for (var entry : byUid.entrySet()) {
+            Map<String, Object> retryReport = new LinkedHashMap<>();
+            Map<String, Object> modes = new LinkedHashMap<>();
+
+            retryReport.put("uid", entry.getKey().toString());
+
+            for (var f : entry.getValue()) {
+                FailureMode mode = f.mode();
+                modes.put(mode.toString(), knownRetries.get(f).size());
+            }
+
+            retryReport.put("modes", modes);
+            report.add(retryReport);
+        }
+
+        return report;
     }
 }

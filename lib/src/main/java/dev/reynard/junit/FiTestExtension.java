@@ -28,6 +28,7 @@ import dev.reynard.junit.strategy.components.analyzers.BehaviorAnalyzer;
 import dev.reynard.junit.strategy.components.analyzers.ConcurrencyDetector;
 import dev.reynard.junit.strategy.components.analyzers.ConditionalPointDetector;
 import dev.reynard.junit.strategy.components.analyzers.ErrorPropagationDetector;
+import dev.reynard.junit.strategy.components.analyzers.FaultsWithoutCauseOracle;
 import dev.reynard.junit.strategy.components.analyzers.HappensBeforeNeighbourDetector;
 import dev.reynard.junit.strategy.components.analyzers.HappyPathDetector;
 import dev.reynard.junit.strategy.components.analyzers.ParentChildDetector;
@@ -118,6 +119,7 @@ public class FiTestExtension
                 .withComponent(new BehaviorAnalyzer())
                 .withComponent(new TimingAnalyzer())
                 .withComponent(new StatusPropagationOracle())
+                .withComponent(new FaultsWithoutCauseOracle())
                 .withComponent(new ConcurrencyDetector())
                 .withComponent(new UnreachabilityPruner())
                 .withComponent(new NoImpactPruner(pruneImpactless))

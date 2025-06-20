@@ -3,10 +3,10 @@ include .env
 .PHONY: test build-controller build-proxy build-all run-test install
 
 build-controller:
-	cd ./services/; docker build -t fit-controller:latest -f controller/Dockerfile .
+	cd ./instrumentation/; docker build -t fit-controller:latest -f controller/Dockerfile .
 
 build-proxy:
-	cd ./services/; docker build -t fit-proxy:latest -f proxy/Dockerfile .
+	cd ./instrumentation/; docker build -t fit-proxy:latest -f proxy/Dockerfile .
 
 build-all: build-controller build-proxy
 

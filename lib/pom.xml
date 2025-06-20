@@ -4,13 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.github.delanoflipse.fit</groupId>
+    <groupId>dev.reynard</groupId>
     <artifactId>project</artifactId>
     <version>0.1.1</version>
   </parent>
 
-  <artifactId>suite</artifactId>
-  <name>Distributed Fault Injection Library</name>
+  <artifactId>junit</artifactId>
+  <name>Automated Fault Injection Testing Library</name>
   <version>0.1.1</version>
   <packaging>jar</packaging>
 

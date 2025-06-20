@@ -1,4 +1,4 @@
-FROM golang:1.23.4-bullseye AS builder
+FROM golang:1.24.4-bullseye AS builder
 
 # Set workdir in container
 WORKDIR /go/src/go.reynard.dev/instrumentation

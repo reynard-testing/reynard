@@ -6,12 +6,12 @@
   <parent>
     <groupId>dev.reynard</groupId>
     <artifactId>project</artifactId>
-    <version>0.1.1</version>
+    <version>0.0.1</version>
   </parent>
 
   <artifactId>junit</artifactId>
   <name>Automated Fault Injection Testing Library</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <packaging>jar</packaging>
 
   <!-- <url>http://maven.apache.org</url> -->

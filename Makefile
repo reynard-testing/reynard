@@ -1,5 +1,3 @@
-include .env
-
 .PHONY: test build-controller build-proxy build-all run-test install
 
 build-controller:

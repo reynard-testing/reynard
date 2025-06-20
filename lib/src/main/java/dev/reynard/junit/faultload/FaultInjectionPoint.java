@@ -70,7 +70,7 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     @Override
     public String toString() {
-        String payloadStr = (payload.equals("*") || payload.equals("")) ? "" : "(" + payload + ")";
+        String payloadStr = (payload.equals("*") || payload.equals("")) ? "" : "(" + payload.substring(0, 8) + ")";
         String countStr = count < 0 ? "#∞" : ("#" + count);
 
         // {key1:value1,key2:value2, ...}

@@ -16,7 +16,7 @@ import dev.reynard.junit.strategy.components.FeedbackHandler;
 import dev.reynard.junit.strategy.components.PruneContext;
 import dev.reynard.junit.strategy.components.Reporter;
 
-public class StatusPropagationOracle implements FeedbackHandler, Reporter {
+public class FaultsWithoutCauseOracle implements FeedbackHandler, Reporter {
     private final Logger logger = LoggerFactory.getLogger(StatusPropagationOracle.class);
 
     private final Map<Fault, List<List<Fault>>> observations = new LinkedHashMap<>();
@@ -37,64 +37,25 @@ public class StatusPropagationOracle implements FeedbackHandler, Reporter {
             return;
         }
 
-        // Do we observe a fault we did not inject?
+        // Are we reporting a fault, that we did not inject?
         boolean isIndirectError = report.hasIndirectFaultBehaviour();
         if (!isIndirectError) {
             return;
         }
 
-        // Are we seeing a status code that has a specific meaning?
-        int statusCode = report.response.status;
-        if (statusCode <= 500) {
+        List<TraceReport> descendants = result.trace.getChildren(report);
+
+        boolean hasCause = descendants.stream().anyMatch(x -> x.hasFaultBehaviour());
+
+        if (hasCause) {
             return;
         }
 
         Fault fault = report.getFault();
-
-        var faultyChildren = result.trace.getChildren(report).stream()
-                .filter(r -> r.hasFaultBehaviour())
-                .toList();
-
-        // Find a list of potential culprits
-        var responsible = faultyChildren.stream()
-                .filter(r -> r.response.status == statusCode)
-                .map(r -> r.getFault())
-                .toList();
-
-        // Either the server has sent a
-        if (!responsible.isEmpty()) {
-            observations.computeIfAbsent(fault, x -> new ArrayList<>())
-                    .add(responsible);
-
-            // Alert the user!
-            logger.warn("Found a propogated fault of status code {} at {}, cause by: {}.", statusCode,
-                    report.injectionPoint);
-            logger.warn(
-                    "Forwarding error codes with specific meaning can cause incorrect behaviour at the upstream node!");
-            return;
-        }
-
-        // If there are no faulty children, then its a fault without cause
-        // (other oracle)
-        if (faultyChildren.isEmpty()) {
-            return;
-        }
-
-        // Or: The node is sending incorrect error status codes by default
-        // Which is also not ideal
-        var causes = faultyChildren.stream()
-                .map(r -> r.getFault())
-                .toList();
-
         observations.computeIfAbsent(fault, x -> new ArrayList<>())
-                .add(causes);
-
-        // Alert the user!
-        logger.warn("Found a fault of status code {} at {}, which is caused by any of {}", statusCode,
-                report.injectionPoint, causes);
-        logger.warn(
-                "This error code with a specific meaning can cause incorrect behaviour at the upstream node!");
-
+                .add(result.trace.getInjectedFaults().stream().toList());
+        logger.warn("Detected failure {} with no cause! This can be indicative of a bug!",
+                fault);
     }
 
     @Override
@@ -106,13 +67,14 @@ public class StatusPropagationOracle implements FeedbackHandler, Reporter {
 
             Map<String, Object> bugReport = new LinkedHashMap<>();
             // Log observed fault wihtout causes
-            bugReport.put("propagated_fault", Map.of(
+            bugReport.put("fault", Map.of(
                     "uid", fault.uid().toString(),
                     "mode", fault.mode().toString()));
             // Output all inteded causes
-            bugReport.put("causes", entry.getValue().stream()
+            bugReport.put("faultload", entry.getValue().stream()
                     .map(f -> f.stream()
                             .map(x -> x.toString()).toList()));
+
         }
 
         return report;

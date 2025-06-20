@@ -40,7 +40,7 @@ run_n_benchmark() {
 }
 
 if [ -z "${SKIP_CINEMA}" ]; then
-    # run_n_benchmark "cinema-1"
+    run_n_benchmark "cinema-1"
     run_n_benchmark "cinema-2"
     run_n_benchmark "cinema-3"
     run_n_benchmark "cinema-3" OPT_RETRIES=1
@@ -53,12 +53,9 @@ if [ -z "${SKIP_CINEMA}" ]; then
 fi
 
 if [ -z "${SKIP_INDUSTRY}" ]; then
-    run_n_benchmark "audible"
-    # run_n_benchmark "audible" "WITH_FAULTS=1 BAD_METADATA=1"
-
     run_n_benchmark "expedia"
+    run_n_benchmark "audible"
     run_n_benchmark "mailchimp"
-    # run_n_benchmark "mailchimp" "WITH_FAULTS=1 DB_READ_ONLY=1"
     run_n_benchmark "netflix"
     run_n_benchmark "netflix" "WITH_FAULTS=1 NETFLIX_FAULTS=1"
 fi

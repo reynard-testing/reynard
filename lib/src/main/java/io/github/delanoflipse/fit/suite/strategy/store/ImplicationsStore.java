@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.github.delanoflipse.fit.suite.faultload.Behaviour;
+import io.github.delanoflipse.fit.suite.faultload.Fault;
 import io.github.delanoflipse.fit.suite.faultload.FaultInjectionPoint;
 import io.github.delanoflipse.fit.suite.faultload.FaultUid;
 import io.github.delanoflipse.fit.suite.strategy.util.Simplify;
@@ -26,7 +27,8 @@ public class ImplicationsStore {
   private final List<DownstreamRequestEffect> downstreamRequests = new ArrayList<>();
   private final List<Substitution> inclusions = new ArrayList<>();
   private final List<Substitution> exclusions = new ArrayList<>();
-  private final List<UpstreamResponseEffect> upstreamResponses = new ArrayList<>();
+  private final LookupList<FaultInjectionPoint, UpstreamResponseEffect> upstreamResponses = new LookupList<>(
+      this::getLookupKey);
 
   public record DownstreamRequestEffect(FaultUid cause, Set<FaultUid> effects) {
   }
@@ -35,6 +37,22 @@ public class ImplicationsStore {
   }
 
   public record Substitution(Set<Behaviour> causes, FaultUid effect) {
+  }
+
+  private FaultInjectionPoint getLookupKey(UpstreamResponseEffect b) {
+    return getLookupKey(b.effect());
+  }
+
+  private FaultInjectionPoint getLookupKey(Behaviour b) {
+    return getLookupKey(b.uid());
+  }
+
+  private FaultInjectionPoint getLookupKey(FaultUid uid) {
+    return getLookupKey(uid.getPoint());
+  }
+
+  private FaultInjectionPoint getLookupKey(FaultInjectionPoint x) {
+    return x.asAnyCount().asAnyCallStack();
   }
 
   // --- Normalisation ---
@@ -96,7 +114,7 @@ public class ImplicationsStore {
 
   // --- Upstream Responses ---
   public boolean hasUpstreamResponse(Set<Behaviour> causes, Behaviour effect) {
-    return upstreamResponses.stream()
+    return upstreamResponses.get(getLookupKey(effect)).stream()
         .anyMatch(x -> x.effect.matches(effect) && Behaviour.isSubsetOf(x.causes, causes));
   }
 
@@ -193,8 +211,8 @@ public class ImplicationsStore {
         .orElse(null);
   }
 
-  public UpstreamResponseEffect findUpstream(Predicate<UpstreamResponseEffect> predicate) {
-    return upstreamResponses.stream()
+  public UpstreamResponseEffect findUpstream(FaultInjectionPoint k, Predicate<UpstreamResponseEffect> predicate) {
+    return upstreamResponses.get(getLookupKey(k)).stream()
         .filter(x -> predicate.test(x))
         .findFirst()
         .orElse(null);
@@ -321,11 +339,11 @@ public class ImplicationsStore {
       report.put("exclusions", reportOf(exclusions, store));
     }
 
-    if (!upstreamResponses.isEmpty()) {
+    if (!upstreamResponses.getAll().isEmpty()) {
       Map<String, Object> upstreamReport = new LinkedHashMap<>();
-      upstreamReport.put("count", upstreamResponses.size());
+      upstreamReport.put("count", upstreamResponses.getAll().size());
 
-      List<Map<String, Object>> upstreams = upstreamResponses.stream()
+      List<Map<String, Object>> upstreams = upstreamResponses.getAll().stream()
           .map(x -> {
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("effect_name", reportOf(x.effect));

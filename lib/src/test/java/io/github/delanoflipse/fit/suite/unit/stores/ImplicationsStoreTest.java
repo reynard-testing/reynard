@@ -1,6 +1,8 @@
 package io.github.delanoflipse.fit.suite.unit.stores;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -688,5 +690,37 @@ public class ImplicationsStoreTest {
 
     assertEquals(5, res3.size());
     assertEquals(2, faultyBehaviours(res3));
+  }
+
+  @Test
+  public void stressTest() {
+    ImplicationsStore testStore = new ImplicationsStore();
+    final int childrenCount = 1000;
+    var root = new EventBuilder().withPoint("R");
+    var r = root.uid();
+
+    var children = new ArrayList<EventBuilder>();
+    for (int i = 0; i < childrenCount; i++) {
+      var child = root.createChild().withPoint("N" + i);
+      var subChild = child.createChild().withPoint("S" + i);
+      testStore.addDownstreamRequests(child.uid(), List.of(subChild.uid()));
+      children.add(child);
+    }
+
+    // Happy path, include first child
+    testStore.addDownstreamRequests(r, List.of(children.get(0).uid()));
+    for (int i = 1; i < childrenCount; i++) {
+      // Each child includes the next one
+      testStore.addInclusionEffect(Set.of(new Behaviour(children.get(i - 1).uid(), mode1)), children.get(i).uid());
+    }
+
+    List<Fault> faults = new ArrayList<>();
+    for (int i = 0; i < childrenCount - 1; i++) {
+      faults.add(new Fault(children.get(i).uid(), mode1));
+    }
+
+    Set<Behaviour> res = new ImplicationsModel(testStore).getBehaviours(faults);
+
+    assertEquals(1 + childrenCount + 1, res.size());
   }
 }

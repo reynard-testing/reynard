@@ -204,8 +204,9 @@ public class ImplicationsModel {
     }
 
     private Behaviour getUpstream(FaultUid cause, Set<Behaviour> upstreams) {
-        UpstreamResponseEffect upstream = store.findUpstream(x -> matchesLocally(x.effect().uid(), cause) &&
-                Behaviour.isSubsetOf(x.causes(), upstreams));
+        UpstreamResponseEffect upstream = store.findUpstream(cause.getPoint(),
+                x -> matchesLocally(x.effect().uid(), cause) &&
+                        Behaviour.isSubsetOf(x.causes(), upstreams));
         if (upstream == null) {
             return null;
         }

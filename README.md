@@ -1,2 +1,2 @@
-# ds-fit-suite
-Fault Injection Testing for Distributed Systems
+# Reynard
+An automated Fault Injection Testing tool for Service-Oriented Distributed Systems

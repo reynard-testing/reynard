@@ -87,9 +87,11 @@ def render_timing_over_index(key, data, output_dir):
 
 
 TIMINGS_OF_INTEREST = ['nextFaultload', 'Per test', 'registerFaultload',
-                       'unregisterFautload', 'testMethod', 'getTraceWithDelay', 'handleResult', 'Total test time']
-TIMINGS_OF_EXTRA_INTEREST = ['nextFaultload',
-                             'handleResult', 'registerFaultload', 'Per test']
+                       # , 'DynamicReductionPruner.prune<Pruner>'
+                       'unregisterFautload', 'testMethod', 'getTraceWithDelay', 'handleResult', 'Total test time', 'getExpectedBehaviours', 'getExpectedPoints'
+                       ]
+TIMINGS_OF_INTEREST_OVER_TIME = ['nextFaultload',
+                                 'handleResult', 'registerFaultload', 'Per test', 'DynamicReductionPruner.prune<Pruner>', 'getExpectedBehaviours', 'getExpectedPoints']
 
 PLOT_NAMES_BY_KEY = {
     'nextFaultload': 'Next Faultload',
@@ -99,7 +101,8 @@ PLOT_NAMES_BY_KEY = {
     'testMethod': 'Test Method',
     'getTraceWithDelay': 'Get Trace With Delay',
     'handleResult': 'Handle Result',
-    'Total test time': 'Total Test Time'
+    'Total test time': 'Total Test Time',
+    'DynamicReductionPruner.prune<Pruner>': 'Dynamic Reduction Pruner',
 }
 
 
@@ -118,7 +121,7 @@ def render_for_dir(json_dir: str):
             continue
         dataset = np.array(timing_data['details'][key])
         timings.append((key, dataset))
-        if key in TIMINGS_OF_EXTRA_INTEREST:
+        if key in TIMINGS_OF_INTEREST_OVER_TIME:
             render_timing_over_index(key, dataset, json_dir)
     render_distribution_of_timing(timings, json_dir)
     print(f"Rendered {json_dir}")

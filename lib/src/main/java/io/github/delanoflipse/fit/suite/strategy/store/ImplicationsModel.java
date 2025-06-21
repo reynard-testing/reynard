@@ -130,6 +130,9 @@ public class ImplicationsModel {
 
         // Get substitutions related to origin
         FaultUid origin = downstreams.iterator().next().uid().getParent();
+
+        // Get related inclusions and exclusions
+        // Note: these are ordered from most complex to least complex
         List<Substitution> exclusionsToApply = getRelatedExclusions(origin);
         List<Substitution> inclusionsToApply = getRelatedInclusions(origin);
 
@@ -137,37 +140,46 @@ public class ImplicationsModel {
         var orderedPoints = evaluationOrder(origin, exclusionsToApply, inclusionsToApply);
         for (var point : orderedPoints) {
             // Are we already pretending to be including it?
-            boolean shouldInclude = downstreams.stream()
+            int excludeCausation = -1;
+            int includeCausation = -1;
+
+            boolean includedInHappyPath = downstreams.stream()
                     .anyMatch(x -> matchesLocally(x.uid(), point));
-
-            // If not, check if we have reasons to include it
-            if (!shouldInclude) {
-                for (var subst : inclusionsToApply) {
-                    if (!matchesLocally(subst.effect(), point)) {
-                        continue;
-                    }
-
-                    if (isLocalSubsetOf(subst.causes(), downstreams)) {
-                        shouldInclude = true;
-                        break;
-                    }
-                }
+            if (includedInHappyPath) {
+                includeCausation = 0;
             }
 
             // If we have reasons to include it
             // Check if there are better reasons to exclude it
-            if (shouldInclude) {
-                for (var subst : exclusionsToApply) {
-                    if (!matchesLocally(subst.effect(), point)) {
-                        continue;
-                    }
+            for (var subst : exclusionsToApply) {
+                if (!matchesLocally(subst.effect(), point)) {
+                    continue;
+                }
 
-                    if (isLocalSubsetOf(subst.causes(), downstreams)) {
-                        shouldInclude = false;
-                        break;
-                    }
+                if (isLocalSubsetOf(subst.causes(), downstreams)) {
+                    // Found the most complex reason to exclude it
+                    excludeCausation = subst.causes().size();
+                    break;
                 }
             }
+
+            // If we have reasons to include it
+            for (var subst : inclusionsToApply) {
+                if (!matchesLocally(subst.effect(), point)) {
+                    continue;
+                }
+
+                if (isLocalSubsetOf(subst.causes(), downstreams)) {
+                    // Found the most complex reason to include it
+                    includeCausation = subst.causes().size();
+                    break;
+                }
+            }
+
+            // If we have a reason to include it
+            // and it is not excluded by a more complex reason
+            boolean shouldInclude = includeCausation > -1 &&
+                    includeCausation >= excludeCausation;
 
             // We have reached a conclusion
             if (shouldInclude) {
@@ -216,14 +228,14 @@ public class ImplicationsModel {
         return new Behaviour(cause, upstreamEffect.mode());
     }
 
-    private List<Substitution> getRelatedInclusions(FaultUid rootCause) {
+    private List<Substitution> getRelatedInclusions(FaultUid root) {
         // all inclusions match weakly with the root cause
-        return store.findInclusions(x -> matchesLocally(x.effect().getParent(), rootCause));
+        return store.findInclusions(root.getPoint(), x -> matchesLocally(x.effect().getParent(), root));
     }
 
     private List<Substitution> getRelatedExclusions(FaultUid root) {
         // all exclusions match weakly with the root cause
-        return store.findExclusions(x -> matchesLocally(x.effect().getParent(), root));
+        return store.findExclusions(root.getPoint(), x -> matchesLocally(x.effect().getParent(), root));
     }
 
     private Pair<Behaviour, Set<Behaviour>> unfold(FaultUid cause, Collection<Fault> pertubations) {

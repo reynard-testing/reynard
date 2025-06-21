@@ -258,10 +258,12 @@ def render_call_graph(data: dict, output_name: str):
         return
     use_signature = should_use_signature(pts)
     dot = Digraph(comment='Call graph', format='pdf')
+    dot.attr(rankdir='LR')
     construct_call_graph(dot, tree, use_signature, False)
     dot.render(filename=output_name)
 
     dot_dep = Digraph(comment='Call graph with dependencies', format='pdf')
+    dot_dep.attr(rankdir='LR')
     construct_call_graph(dot_dep, tree, use_signature, True)
     dot_dep.render(filename=output_name + "_dependency")
 

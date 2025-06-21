@@ -84,11 +84,6 @@ if [ -z "$TEST" ] || [ "$TEST" = "proxy" ]; then
   run_experiment "proxy" http://localhost:8081/
 fi
 
-# init=1
-# mask
-# hashbody
-# headerlog
-# use-cs
 
 # ==== Unknown trace ====
 # --- unkown trace ---

@@ -36,13 +36,15 @@ echo "Service is available."
 trap "exit" INT
 cd ${project_path}
 echo "returning to ${project_path}"
-iterations=${N:-30}
+iterations=${N:-10}
 for ((i=1; i<=iterations; i++)); do
     echo "Running iteration ${i} of ${iterations}"
 
     OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh shipping
     OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh recommendations
+    OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh recommendationsWithPruner
     OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh checkout
+    OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh checkoutWithCs
 done
 
 cd ${otel_demo_path}; docker compose -f docker-compose.fit.yml down

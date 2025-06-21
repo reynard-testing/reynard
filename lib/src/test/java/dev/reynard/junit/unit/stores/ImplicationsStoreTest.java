@@ -415,6 +415,11 @@ public class ImplicationsStoreTest {
 
     // If A' is faulty, then B' is not called
     testStore.addExclusionEffect(Set.of(
+        new Behaviour(nA.uid(), mode1),
+        new Behaviour(nAprime.uid(), mode1)), nBprime.uid());
+
+    testStore.addExclusionEffect(Set.of(
+        new Behaviour(nB.uid(), mode1),
         new Behaviour(nAprime.uid(), mode1)), nBprime.uid());
 
     Set<Behaviour> result = new ImplicationsModel(testStore).getBehaviours(Set.of(
@@ -422,7 +427,7 @@ public class ImplicationsStoreTest {
         new Fault(nB.uid(), mode1),
         new Fault(nAprime.uid(), mode1)));
 
-    // Expect root, A, B, A' but not B'
+    // Expect root, A, B, A', but not B'
     assertEquals(4, result.size());
     assertEquals(3, faultyBehaviours(result));
   }

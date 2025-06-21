@@ -25,8 +25,10 @@ public class ImplicationsStore {
   private final Map<FaultInjectionPoint, TransativeRelation<FaultInjectionPoint>> implicationDependencies = new LinkedHashMap<>();
 
   private final List<DownstreamRequestEffect> downstreamRequests = new ArrayList<>();
-  private final List<Substitution> inclusions = new ArrayList<>();
-  private final List<Substitution> exclusions = new ArrayList<>();
+  private final LookupList<FaultInjectionPoint, Substitution> inclusions = new LookupList<>(
+      this::getLookupKey);
+  private final LookupList<FaultInjectionPoint, Substitution> exclusions = new LookupList<>(
+      this::getLookupKey);
   private final LookupList<FaultInjectionPoint, UpstreamResponseEffect> upstreamResponses = new LookupList<>(
       this::getLookupKey);
 
@@ -41,6 +43,10 @@ public class ImplicationsStore {
 
   private FaultInjectionPoint getLookupKey(UpstreamResponseEffect b) {
     return getLookupKey(b.effect());
+  }
+
+  private FaultInjectionPoint getLookupKey(Substitution x) {
+    return getLookupKey(x.effect.getParent());
   }
 
   private FaultInjectionPoint getLookupKey(Behaviour b) {
@@ -138,12 +144,16 @@ public class ImplicationsStore {
   }
 
   // --- Inclusions and Exclusions ---
-  private boolean hasEffect(Set<Behaviour> causes, FaultUid effect, List<Substitution> target) {
-    return target.stream()
+  private boolean hasEffect(Set<Behaviour> causes, FaultUid effect,
+      LookupList<FaultInjectionPoint, Substitution> target) {
+    return target
+        .get(getLookupKey(effect))
+        .stream()
         .anyMatch(x -> x.effect.matches(effect) && Behaviour.isSubsetOf(x.causes, causes));
   }
 
-  private boolean addEffect(Collection<Behaviour> causes, FaultUid effect, List<Substitution> target) {
+  private boolean addEffect(Collection<Behaviour> causes, FaultUid effect,
+      LookupList<FaultInjectionPoint, Substitution> target) {
     if (causes.isEmpty()) {
       throw new IllegalArgumentException("Must have at least one cause!");
     }
@@ -185,7 +195,7 @@ public class ImplicationsStore {
   }
 
   public boolean isInclusionEffect(FaultUid point) {
-    for (var inclusion : inclusions) {
+    for (var inclusion : inclusions.get(getLookupKey(point))) {
       if (inclusion.effect.matches(point)) {
         return true;
       }
@@ -195,7 +205,7 @@ public class ImplicationsStore {
   }
 
   public boolean isAnyInclusionCause(Behaviour point) {
-    for (var inclusion : inclusions) {
+    for (var inclusion : inclusions.get(getLookupKey(point))) {
       if (inclusion.causes.stream().anyMatch(x -> x.matches(point))) {
         return true;
       }
@@ -218,17 +228,19 @@ public class ImplicationsStore {
         .orElse(null);
   }
 
-  public List<Substitution> findInclusions(Predicate<Substitution> predicate) {
-    return inclusions.stream()
+  public List<Substitution> findInclusions(FaultInjectionPoint k, Predicate<Substitution> predicate) {
+    return inclusions.get(getLookupKey(k)).stream()
         .filter(x -> predicate.test(x))
-        .sorted((a, b) -> Integer.compare(a.causes.size(), b.causes.size()))
+        // TODO: ensure list is ordered by size of causes, instead of sorting here
+        .sorted((a, b) -> Integer.compare(b.causes.size(), a.causes.size()))
         .toList();
   }
 
-  public List<Substitution> findExclusions(Predicate<Substitution> predicate) {
-    return exclusions.stream()
+  public List<Substitution> findExclusions(FaultInjectionPoint k, Predicate<Substitution> predicate) {
+    return exclusions.get(getLookupKey(k)).stream()
         .filter(x -> predicate.test(x))
-        .sorted((a, b) -> Integer.compare(a.causes.size(), b.causes.size()))
+        // TODO: ensure list is ordered by size of causes, instead of sorting here
+        .sorted((a, b) -> Integer.compare(b.causes.size(), a.causes.size()))
         .toList();
   }
 
@@ -257,11 +269,12 @@ public class ImplicationsStore {
     return f.toString();
   }
 
-  private Map<String, Object> reportOf(List<Substitution> substitutions, DynamicAnalysisStore store) {
+  private Map<String, Object> reportOf(LookupList<FaultInjectionPoint, Substitution> substitutions,
+      DynamicAnalysisStore store) {
     Map<String, Object> report = new LinkedHashMap<>();
-    report.put("count", substitutions.size());
+    report.put("count", substitutions.getAll().size());
 
-    Map<FaultUid, List<Substitution>> grouped = inclusions.stream()
+    Map<FaultUid, List<Substitution>> grouped = inclusions.getAll().stream()
         .collect(Collectors.groupingBy(Substitution::effect));
 
     List<Map<String, Object>> simplifiedList = new ArrayList<>();
@@ -294,7 +307,7 @@ public class ImplicationsStore {
     }
     report.put("simplified", simplifiedList);
 
-    List<Map<String, Object>> fullList = substitutions.stream()
+    List<Map<String, Object>> fullList = substitutions.getAll().stream()
         .map(x -> {
           Map<String, Object> entry = new LinkedHashMap<>();
           entry.put("effect_name", reportOf(x.effect));
@@ -331,11 +344,11 @@ public class ImplicationsStore {
       report.put("downstream", downstreamReport);
     }
 
-    if (!inclusions.isEmpty()) {
+    if (!inclusions.getAll().isEmpty()) {
       report.put("inclusions", reportOf(inclusions, store));
     }
 
-    if (!exclusions.isEmpty()) {
+    if (!exclusions.getAll().isEmpty()) {
       report.put("exclusions", reportOf(exclusions, store));
     }
 

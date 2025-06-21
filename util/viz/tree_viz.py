@@ -21,7 +21,7 @@ def simplify_signature(sig: str) -> str:
     signature = re.sub(r"\{.*\}", "", signature)
     signature_parts = signature.split("/")
     if len(signature_parts) > 1:
-        return ".../" + signature_parts[-1]
+        return "/" + signature_parts[-1]
     return signature
 
 

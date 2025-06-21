@@ -84,8 +84,10 @@ def parse_point(p: dict) -> tuple[Point]:
 
 
 def to_identifier(node: tuple[Point]) -> str:
+    pred = node[:-1]
+    pred_str = "|".join(f"{p.destination}-{p.signature}" for p in pred)
     pt = node[-1]
-    return f"{len(node)}-{pt.signature}-{pt.destination}"
+    return f"{pred_str}|{pt.signature}-{pt.destination}-{pt.count}"
 
 
 def points_match(a: tuple[Point], b: tuple[Point]) -> bool:

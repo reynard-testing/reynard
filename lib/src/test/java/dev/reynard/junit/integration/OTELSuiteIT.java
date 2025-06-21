@@ -1,17 +1,12 @@
 package dev.reynard.junit.integration;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 import dev.reynard.junit.FiTest;
@@ -19,8 +14,6 @@ import dev.reynard.junit.faultload.Fault;
 import dev.reynard.junit.faultload.FaultUid;
 import dev.reynard.junit.faultload.Faultload;
 import dev.reynard.junit.faultload.modes.ErrorFault;
-import dev.reynard.junit.faultload.modes.FailureMode;
-import dev.reynard.junit.faultload.modes.HttpError;
 import dev.reynard.junit.faultload.modes.OmissionFault;
 import dev.reynard.junit.instrumentation.FaultController;
 import dev.reynard.junit.instrumentation.RemoteController;
@@ -58,28 +51,6 @@ public class OTELSuiteIT {
 
     public static FaultController getController() {
         return controller;
-    }
-
-    private void addItemToCart() throws IOException {
-        var obj = mapper.createObjectNode();
-        var itemNode = mapper.createObjectNode();
-        itemNode.put("productId", "0PUK6V6EV0");
-        itemNode.put("quantity", 1);
-        obj.set("item", itemNode);
-        obj.put("userId", USER_ID);
-
-        String endpoint = "http://localhost:" + PORT + "/api/cart?currencyCode=" + CURRENCY;
-
-        RequestBody body = RequestBody.create(mapper.writeValueAsBytes(obj), JSON);
-        Request request = new Request.Builder()
-                // .addHeader("Content-Type", "application/json")
-                .url(endpoint)
-                .post(body)
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            return;
-        }
     }
 
     @FiTest(maskPayload = true)
@@ -216,9 +187,62 @@ public class OTELSuiteIT {
         testRecommendations(f);
     }
 
+    private void clearCart() throws IOException {
+        var obj = mapper.createObjectNode();
+        obj.put("userId", USER_ID);
+
+        String endpoint = "http://localhost:" + PORT + "/api/cart";
+
+        RequestBody body = RequestBody.create(mapper.writeValueAsBytes(obj), JSON);
+        Request request = new Request.Builder()
+                .url(endpoint)
+                .delete(body)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            return;
+        }
+    }
+
+    private void addItemToCart(String productId, int quantity) throws IOException {
+        var obj = mapper.createObjectNode();
+        var itemNode = mapper.createObjectNode();
+        itemNode.put("productId", productId);
+        itemNode.put("quantity", quantity);
+        obj.set("item", itemNode);
+        obj.put("userId", USER_ID);
+
+        String endpoint = "http://localhost:" + PORT + "/api/cart?currencyCode=" + CURRENCY;
+
+        RequestBody body = RequestBody.create(mapper.writeValueAsBytes(obj), JSON);
+        Request request = new Request.Builder()
+                .url(endpoint)
+                .post(body)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            return;
+        }
+    }
+
     @FiTest(maskPayload = true)
-    public void testCheckout(TrackedFaultload faultload) throws IOException {
-        addItemToCart();
+    public void testCheckout3(TrackedFaultload faultload) throws IOException {
+        clearCart();
+        addItemToCart("0PUK6V6EV0", 2);
+        addItemToCart("LS4PSXUNUM", 1);
+        addItemToCart("66VCHSJNUP", 3);
+
+        checkout(faultload);
+    }
+
+    @FiTest(maskPayload = true)
+    public void testCheckout1(TrackedFaultload faultload) throws IOException {
+        clearCart();
+        addItemToCart("0PUK6V6EV0", 2);
+        checkout(faultload);
+    }
+
+    public void checkout(TrackedFaultload faultload) throws IOException {
 
         HttpUrl url = new HttpUrl.Builder()
                 .scheme("http")
@@ -264,30 +288,20 @@ public class OTELSuiteIT {
     }
 
     @FiTest(maskPayload = true, withPredecessors = true)
-    public void testCheckoutWithCs(TrackedFaultload faultload)
+    public void testCheckout1WithCs(TrackedFaultload faultload)
             throws IOException {
-        testCheckout(faultload);
+        clearCart();
+        addItemToCart("0PUK6V6EV0", 2);
+        checkout(faultload);
     }
 
-    // @Test
-    // public void testCounterExample() throws URISyntaxException, IOException {
-    // // checkout>email:/send_order_confirmation(*)#0(HTTP_ERROR
-    // // [502]),checkout>cart:oteldemo.CartService/EmptyCart(*)#0(HTTP_ERROR
-    // //
-    // [504]),frontend>product-catalog:oteldemo.ProductCatalogService/GetProduct(*)#0(HTTP_ERROR
-    // // [502])
-
-    // FailureMode mode1 = ErrorFault.fromError(HttpError.BAD_GATEWAY);
-    // FailureMode mode2 = ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT);
-
-    // Fault f1 = new Fault(fid1, mode1);
-    // Fault f2 = new Fault(fid2, mode2);
-    // Fault f3 = new Fault(fid3, mode1);
-
-    // Faultload faultload = new Faultload(Set.of(f1, f2, f3));
-    // TrackedFaultload trackedFaultload = new TrackedFaultload(faultload)
-    // .withMaskPayload();
-
-    // testCheckout(trackedFaultload);
-    // }
+    @FiTest(maskPayload = true, withPredecessors = true)
+    public void testCheckout3WithCs(TrackedFaultload faultload)
+            throws IOException {
+        clearCart();
+        addItemToCart("0PUK6V6EV0", 2);
+        addItemToCart("LS4PSXUNUM", 1);
+        addItemToCart("66VCHSJNUP", 3);
+        checkout(faultload);
+    }
 }

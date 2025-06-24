@@ -1,6 +1,6 @@
 #!/bin/bash
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
-project_path=$(realpath "${parent_path}/../..")
+project_path=$(realpath "${parent_path}/../../..")
 benchmark_id=$1
 benchmark_category="filibuster"
 result_tag=$2

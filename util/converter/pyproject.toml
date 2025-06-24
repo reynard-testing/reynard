@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "docker-compose-converter"
+name = "reynard_converter"
 version = "0.1.0"
 description = ""
 authors = ["Delano Flipse <delanoflipse@hotmail.com>"]

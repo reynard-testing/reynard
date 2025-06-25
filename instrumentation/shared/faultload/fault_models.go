@@ -7,15 +7,15 @@ import (
 )
 
 type PartialInjectionPoint struct {
-	Destination string `json:"destination"`
-	Signature   string `json:"signature"`
-	Payload     string `json:"payload"`
+	Destination *string `json:"destination"`
+	Signature   *string `json:"signature"`
+	Payload     *string `json:"payload"`
 }
 
 func (f PartialInjectionPoint) String() string {
 	payloadStr := ""
-	if f.Payload != "*" && f.Payload != "" {
-		payloadStr = fmt.Sprintf("(%s)", f.Payload)
+	if f.Payload != nil && *f.Payload != "" {
+		payloadStr = fmt.Sprintf("(%s)", *f.Payload)
 	}
 
 	return fmt.Sprintf("%s:%s%s", f.Destination, f.Signature, payloadStr)
@@ -24,9 +24,9 @@ func (f PartialInjectionPoint) String() string {
 type InjectionPointPredecessors map[string]int
 
 type InjectionPoint struct {
-	Destination  string                      `json:"destination"`
-	Signature    string                      `json:"signature"`
-	Payload      string                      `json:"payload"`
+	Destination  *string                     `json:"destination"`
+	Signature    *string                     `json:"signature"`
+	Payload      *string                     `json:"payload"`
 	Predecessors *InjectionPointPredecessors `json:"predecessors"`
 	Count        int                         `json:"count"`
 }
@@ -61,8 +61,8 @@ func (f FaultUid) Point() InjectionPoint {
 	return f.Stack[len(f.Stack)-1]
 }
 
-func stringMatches(v1, v2 string) bool {
-	return v1 == v2 || v1 == "*" || v2 == "*"
+func stringMatches(v1, v2 *string) bool {
+	return v1 == nil || v2 == nil || *v1 == *v2
 }
 
 func intMatches(v1, v2 int) bool {
@@ -153,7 +153,7 @@ func (ips InjectionPointPredecessors) Del(point PartialInjectionPoint) {
 
 func (f InjectionPoint) String() string {
 	payloadStr := ""
-	if f.Payload != "*" && f.Payload != "" {
+	if f.Payload != nil && *f.Payload != "" {
 		payloadStr = fmt.Sprintf("(%s)", f.Payload)
 	}
 

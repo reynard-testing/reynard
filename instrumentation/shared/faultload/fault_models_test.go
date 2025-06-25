@@ -14,10 +14,10 @@ func TestMatch(t *testing.T) {
 
 	fEmpty := FaultUid{Stack: []InjectionPoint{{}}}
 	fDest := FaultUid{Stack: []InjectionPoint{{
-		Destination: "x",
+		Destination: nil,
 	}}}
 	fDestWildcard := FaultUid{Stack: []InjectionPoint{{
-		Destination: "*",
+		Destination: nil,
 	}}}
 
 	fCount := FaultUid{Stack: []InjectionPoint{{

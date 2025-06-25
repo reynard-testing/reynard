@@ -28,14 +28,15 @@ func getEnvOrDefault(envVar, defaultValue string) string {
 func PartialPointFromRequest(r *http.Request, destination string, maskPayload bool) PartialInjectionPoint {
 	signature := getCallSignature(r)
 
-	payload := "*"
+	var payload *string
 	if !maskPayload {
-		payload = getPayloadHash(r)
+		payloadHash := getPayloadHash(r)
+		payload = &payloadHash
 	}
 
 	return PartialInjectionPoint{
-		Destination: destination,
-		Signature:   signature,
+		Destination: &destination,
+		Signature:   &signature,
 		Payload:     payload,
 	}
 }

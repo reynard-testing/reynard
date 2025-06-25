@@ -6,8 +6,8 @@
         "stack": [
           {
             "destination": "target",
-            "signature": "*",
-            "payload": "*",
+            "signature": null,
+            "payload": null,
             "predecessors": {},
             "count": -1
           }

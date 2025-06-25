@@ -48,6 +48,10 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(Arrays.asList((FaultInjectionPoint) null));
     }
 
+    public static FaultUid Any(FaultInjectionPoint point) {
+        return new FaultUid(Arrays.asList((FaultInjectionPoint) null, point));
+    }
+
     @JsonIgnore
     public int count() {
         return getPoint().count();

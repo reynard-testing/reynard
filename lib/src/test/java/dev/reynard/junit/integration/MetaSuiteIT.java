@@ -1,6 +1,7 @@
 package dev.reynard.junit.integration;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -14,8 +15,11 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import dev.reynard.junit.FiTest;
 import dev.reynard.junit.faultload.Fault;
+import dev.reynard.junit.faultload.FaultInjectionPoint;
 import dev.reynard.junit.faultload.FaultUid;
 import dev.reynard.junit.faultload.Faultload;
 import dev.reynard.junit.faultload.modes.ErrorFault;
@@ -26,6 +30,7 @@ import dev.reynard.junit.instrumentation.testcontainers.InstrumentedApp;
 import dev.reynard.junit.instrumentation.testcontainers.services.ControllerService;
 import dev.reynard.junit.instrumentation.testcontainers.services.InstrumentedService;
 import dev.reynard.junit.strategy.TrackedFaultload;
+import dev.reynard.junit.strategy.TrackedFaultloadSerializer;
 import dev.reynard.junit.strategy.components.PruneContext;
 import dev.reynard.junit.strategy.components.PruneDecision;
 import dev.reynard.junit.strategy.components.Pruner;
@@ -204,5 +209,31 @@ public class MetaSuiteIT {
             int actualResponse = response.code();
             assertEquals(expectedResponse, actualResponse);
         }
+    }
+
+    @Test
+    public void testGlobalFaultload() throws IOException {
+        int port = controller.getMappedPort(5000);
+        String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
+
+        FaultInjectionPoint proxy1Point = proxy1.getPoint().asAnyCount();
+        FaultUid uidProxy1 = FaultUid.Any(proxy1Point);
+        Fault proxy1Fault = new Fault(uidProxy1, ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE));
+
+        Faultload faults = new Faultload(Set.of(proxy1Fault));
+        app.registerGlobalFaultload(faults);
+
+        Request request = new Request.Builder()
+                .url(queryUrl)
+                .post(body)
+                .addHeader("traceparent", metaFaultload.getTraceParent().toString())
+                .addHeader("tracestate", metaFaultload.getTraceState().toString())
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            assertEquals(503, response.code());
+        }
+
+        app.unregisterGlobalFaultload();
     }
 }

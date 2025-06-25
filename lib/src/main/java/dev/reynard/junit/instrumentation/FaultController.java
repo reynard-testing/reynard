@@ -2,6 +2,7 @@ package dev.reynard.junit.instrumentation;
 
 import java.io.IOException;
 
+import dev.reynard.junit.faultload.Faultload;
 import dev.reynard.junit.strategy.TrackedFaultload;
 import dev.reynard.junit.strategy.util.TraceAnalysis;
 
@@ -10,5 +11,9 @@ public interface FaultController {
 
     public void registerFaultload(TrackedFaultload faultload) throws IOException;
 
+    public void registerGlobalFaultload(Faultload faultload) throws IOException;
+
     public void unregisterFaultload(TrackedFaultload faultload) throws IOException;
+
+    public void unregisterGlobalFaultload() throws IOException;
 }

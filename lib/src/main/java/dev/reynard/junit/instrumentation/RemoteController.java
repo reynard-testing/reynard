@@ -9,9 +9,11 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.reynard.junit.faultload.Faultload;
 import dev.reynard.junit.instrumentation.controller.ControllerResponse;
 import dev.reynard.junit.instrumentation.controller.LRUCache;
 import dev.reynard.junit.strategy.TrackedFaultload;
+import dev.reynard.junit.strategy.TrackedFaultloadSerializer;
 import dev.reynard.junit.strategy.util.TraceAnalysis;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -137,6 +139,34 @@ public class RemoteController implements FaultController {
     }
 
     @Override
+    public void registerGlobalFaultload(Faultload faultload) throws IOException {
+        if (apiHost == null) {
+            throw new IllegalStateException("Collector URL not set");
+        }
+
+        String queryUrl = apiHost + "/v1/faultload/register";
+        String jsonBody = TrackedFaultloadSerializer.serializeJson(faultload);
+        RequestBody body = RequestBody.create(jsonBody, JSON);
+        Request request = new Request.Builder()
+                // .addHeader("Content-Type", "application/json")
+                .url(queryUrl)
+                .post(body)
+                .build();
+
+        try (Response httpRes = client.newCall(request).execute()) {
+            if (!httpRes.isSuccessful()) {
+                throw new IOException("Failed to register faultload: " + httpRes.body().string());
+            }
+
+            String resBody = httpRes.body().string(); // Ensure the request is executed
+
+            if (!resBody.equals("OK")) {
+                throw new IOException("Failed to register faultload: " + resBody);
+            }
+        }
+    }
+
+    @Override
     public void unregisterFaultload(TrackedFaultload faultload) throws IOException {
         if (apiHost == null) {
             throw new IllegalStateException("Collector URL not set");
@@ -146,6 +176,39 @@ public class RemoteController implements FaultController {
         ObjectMapper mapper = new ObjectMapper();
         var node = mapper.createObjectNode();
         node.put("trace_id", faultload.getTraceId());
+
+        String jsonBody = node.toString();
+        ;
+        RequestBody body = RequestBody.create(jsonBody, JSON);
+        Request request = new Request.Builder()
+                // .addHeader("Content-Type", "application/json")
+                .url(queryUrl)
+                .post(body)
+                .build();
+
+        try (Response httpRes = client.newCall(request).execute()) {
+            if (!httpRes.isSuccessful()) {
+                throw new IOException("Failed to register faultload: " + httpRes.body().string());
+            }
+
+            String resBody = httpRes.body().string(); // Ensure the request is executed
+
+            if (!resBody.equals("OK")) {
+                throw new IOException("Failed to unregister faultload: " + resBody);
+            }
+        }
+    }
+
+    @Override
+    public void unregisterGlobalFaultload() throws IOException {
+        if (apiHost == null) {
+            throw new IllegalStateException("Collector URL not set");
+        }
+
+        String queryUrl = apiHost + "/v1/faultload/unregister";
+        ObjectMapper mapper = new ObjectMapper();
+        var node = mapper.createObjectNode();
+        node.set("trace_id", null);
 
         String jsonBody = node.toString();
         ;

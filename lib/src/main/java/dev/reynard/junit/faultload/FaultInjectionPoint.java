@@ -69,8 +69,8 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     @Override
     public String toString() {
-        String payloadStr = (payload == null || payload.equals("")) ? ""
-                : "(" + payload.substring(0, 8) + ")";
+        String payloadStr = (payload == null || payload.isEmpty()) ? ""
+                : "(" + payload.substring(0, Math.min(8, payload.length())) + ")";
         String signatureStr = signature == null ? "" : signature;
         String destinationStr = destination == null ? "" : destination;
         String countStr = count < 0 ? "#∞" : ("#" + count);
@@ -94,18 +94,28 @@ public record FaultInjectionPoint(String destination, String signature, String p
     }
 
     @JsonIgnore
-    public FaultInjectionPoint asAnyPayload() {
-        return new FaultInjectionPoint(destination, signature, null, predecessors, count);
+    public FaultInjectionPoint asAnySignature() {
+        return withSignature(null);
     }
 
     @JsonIgnore
-    public FaultInjectionPoint asAnyCount() {
-        return new FaultInjectionPoint(destination, signature, payload, predecessors, -1);
+    public FaultInjectionPoint asAnyDestination() {
+        return withDestination(null);
+    }
+
+    @JsonIgnore
+    public FaultInjectionPoint asAnyPayload() {
+        return withPayload(null);
     }
 
     @JsonIgnore
     public FaultInjectionPoint asAnyPredecessors() {
-        return new FaultInjectionPoint(destination, signature, payload, null, count);
+        return withPredecessors(null);
+    }
+
+    @JsonIgnore
+    public FaultInjectionPoint asAnyCount() {
+        return withCount(-1);
     }
 
     @JsonIgnore

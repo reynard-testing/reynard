@@ -1,5 +1,6 @@
 package dev.reynard.junit.faultload;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -14,9 +15,37 @@ import dev.reynard.junit.strategy.util.Lists;
 @JsonDeserialize
 public record FaultUid(List<FaultInjectionPoint> stack) {
     public FaultUid {
+        // Shape must be:
+        // [nil] -> any point
+        // [nil, point] -> point regardless of causal origin
+        // [point, point...] -> point with causal origin
         if (stack == null || stack.isEmpty()) {
             throw new IllegalArgumentException("Stack must not be null and must have at least one element.");
         }
+
+        if (stack.get(0) == null) {
+            if (stack.size() == 1) {
+                // [nil] is allowed
+            }
+            // [nil, point] is allowed
+            if (stack.size() > 2) {
+                throw new IllegalArgumentException("Stack must have at most two elements if first element is null.");
+            }
+
+            if (stack.size() == 2 && stack.get(1) == null) {
+                throw new IllegalArgumentException(
+                        "Second element of stack must not be null if first element is null.");
+            }
+        } else {
+            if (stack.stream().anyMatch(x -> x == null)) {
+                throw new IllegalArgumentException(
+                        "Only the first element of stack may be null to indicate a wildcard!");
+            }
+        }
+    }
+
+    public static FaultUid Any() {
+        return new FaultUid(Arrays.asList((FaultInjectionPoint) null));
     }
 
     @JsonIgnore
@@ -42,12 +71,35 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return new FaultUid(Lists.plus(tail, head.asAnyPayload()));
     }
 
+    @JsonIgnore
+    public boolean isAnyStack() {
+        if (stack == null || stack.isEmpty() || stack.size() == 1) {
+            return false;
+        }
+
+        if (stack.size() > 1) {
+            return stack.get(0) == null;
+        }
+
+        return false;
+    }
+
+    @JsonIgnore
+    public boolean isAny() {
+        return stack != null && stack.size() == 1 && stack.get(0) == null;
+    }
+
     /** Whether all points are without query */
     @JsonIgnore
     public boolean isNormalForm() {
+        if (isAny() || isAnyStack()) {
+            return false;
+        }
+
         var head = getPoint();
 
-        if (head.isPersistent()) {
+        // Note anyPredecessors() is allowed (as long it is used persistently)
+        if (head.isPersistent() || head.isAnyDestination() || head.isAnySignature() || head.isAnyPayload()) {
             return false;
         }
 
@@ -70,6 +122,10 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         }
 
         if (!includeRoot && stack.size() == 1) {
+            return false;
+        }
+
+        if (stack.get(0) == null) {
             return false;
         }
 
@@ -109,6 +165,29 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         var tail = getTail();
 
         return new FaultUid(Lists.plus(tail, head.asAnyPredecessors()));
+    }
+
+    @JsonIgnore
+    public FaultUid asAnySignature() {
+        var head = getPoint();
+        var tail = getTail();
+
+        return new FaultUid(Lists.plus(tail, head.asAnySignature()));
+    }
+
+    @JsonIgnore
+    public FaultUid asAnyDestination() {
+        var head = getPoint();
+        var tail = getTail();
+
+        return new FaultUid(Lists.plus(tail, head.asAnyDestination()));
+    }
+
+    @JsonIgnore
+    public FaultUid asAnyOrigin() {
+        var head = getPoint();
+
+        return new FaultUid(Arrays.asList(null, head.asAnyDestination()));
     }
 
     @JsonIgnore
@@ -168,7 +247,13 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         if (stack == null || stack.isEmpty()) {
             return null;
         }
-        return stack.get(stack.size() - 1);
+
+        FaultInjectionPoint point = stack.get(stack.size() - 1);
+        if (point == null) {
+            return FaultInjectionPoint.Any();
+        }
+
+        return point;
     }
 
     @JsonIgnore
@@ -222,6 +307,14 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return Optional.of(FaultInjectionPoint.isBefore(pointSelf.predecessors(), pointOther.predecessors()));
     }
 
+    private boolean matches(FaultInjectionPoint a, FaultInjectionPoint b, boolean ignoreCount) {
+        if (ignoreCount) {
+            return a.matchesUpToCount(b);
+        } else {
+            return a.matches(b);
+        }
+    }
+
     private boolean matches(List<FaultInjectionPoint> a, List<FaultInjectionPoint> b, boolean ignoreCount) {
         if (a == null || b == null) {
             return false;
@@ -232,15 +325,16 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         }
 
         for (int i = 0; i < a.size(); i++) {
-            if (ignoreCount) {
-                if (!a.get(i).matchesUpToCount(b.get(i))) {
-                    return false;
-                }
-            } else {
-                if (!a.get(i).matches(b.get(i))) {
-                    return false;
-                }
+            var ap = a.get(i);
+            var bp = b.get(i);
 
+            if (ap == null || bp == null) {
+                throw new IllegalArgumentException(
+                        "FaultUid stack must not contain null elements except for the first element.");
+            }
+
+            if (!matches(ap, bp, ignoreCount)) {
+                return false;
             }
         }
 
@@ -252,12 +346,36 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
             return false;
         }
 
+        if (isAny() || other.isAny()) {
+            return true; // Any uid matches any other uid
+        }
+
+        if (isAnyStack()) {
+            return matches(getPoint(), other.getPoint(), false);
+        }
+
+        if (other.isAnyStack()) {
+            return matches(getPoint(), other.getPoint(), false);
+        }
+
         return matches(stack, other.stack, false);
     }
 
     public boolean matchesUpToCount(FaultUid other) {
         if (other == null) {
             return false;
+        }
+
+        if (isAny() || other.isAny()) {
+            return true; // Any uid matches any other uid
+        }
+
+        if (isAnyStack()) {
+            return matches(getPoint(), other.getPoint(), true);
+        }
+
+        if (other.isAnyStack()) {
+            return matches(getPoint(), other.getPoint(), true);
         }
 
         return matches(stack, other.stack, true);

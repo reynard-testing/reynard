@@ -18,7 +18,7 @@ func (f PartialInjectionPoint) String() string {
 		payloadStr = fmt.Sprintf("(%s)", *f.Payload)
 	}
 
-	return fmt.Sprintf("%s:%s%s", f.Destination, f.Signature, payloadStr)
+	return fmt.Sprintf("%s:%s%s", safeString(f.Destination), safeString(f.Signature), payloadStr)
 }
 
 type InjectionPointPredecessors map[string]int
@@ -31,6 +31,56 @@ type InjectionPoint struct {
 	Count        int                         `json:"count"`
 }
 
+func (p InjectionPoint) WithDestination(v *string) InjectionPoint {
+	return InjectionPoint{
+		Destination:  v,
+		Signature:    p.Signature,
+		Payload:      p.Payload,
+		Predecessors: p.Predecessors,
+		Count:        p.Count,
+	}
+}
+
+func (p InjectionPoint) WithSignature(v *string) InjectionPoint {
+	return InjectionPoint{
+		Destination:  p.Destination,
+		Signature:    v,
+		Payload:      p.Payload,
+		Predecessors: p.Predecessors,
+		Count:        p.Count,
+	}
+}
+
+func (p InjectionPoint) WithPayload(v *string) InjectionPoint {
+	return InjectionPoint{
+		Destination:  p.Destination,
+		Signature:    p.Signature,
+		Payload:      v,
+		Predecessors: p.Predecessors,
+		Count:        p.Count,
+	}
+}
+
+func (p InjectionPoint) WithPredecessors(v *InjectionPointPredecessors) InjectionPoint {
+	return InjectionPoint{
+		Destination:  p.Destination,
+		Signature:    p.Signature,
+		Payload:      p.Payload,
+		Predecessors: v,
+		Count:        p.Count,
+	}
+}
+
+func (p InjectionPoint) WithCount(v int) InjectionPoint {
+	return InjectionPoint{
+		Destination:  p.Destination,
+		Signature:    p.Signature,
+		Payload:      p.Payload,
+		Predecessors: p.Predecessors,
+		Count:        v,
+	}
+}
+
 func (p InjectionPoint) AsPartial() PartialInjectionPoint {
 	return PartialInjectionPoint{
 		Destination: p.Destination,
@@ -40,7 +90,7 @@ func (p InjectionPoint) AsPartial() PartialInjectionPoint {
 }
 
 type FaultUid struct {
-	Stack []InjectionPoint `json:"stack"`
+	Stack []*InjectionPoint `json:"stack"`
 }
 
 func (f FaultUid) Parent() FaultUid {
@@ -53,12 +103,28 @@ func (f FaultUid) Parent() FaultUid {
 	}
 }
 
-func (f FaultUid) Point() InjectionPoint {
+func (f FaultUid) IsAny() bool {
+	return len(f.Stack) == 1 && f.Stack[0] == nil
+}
+
+func (f FaultUid) IsAnyOrigin() bool {
+	return len(f.Stack) >= 1 && f.Stack[0] == nil
+}
+
+func (f FaultUid) Point() *InjectionPoint {
 	if len(f.Stack) == 0 {
-		return InjectionPoint{}
+		return nil
 	}
 
 	return f.Stack[len(f.Stack)-1]
+}
+
+func safeString(s *string) string {
+	if s == nil {
+		return ""
+	}
+
+	return *s
 }
 
 func stringMatches(v1, v2 *string) bool {
@@ -74,12 +140,24 @@ func (f1 FaultUid) Matches(f2 FaultUid) bool {
 		return true
 	}
 
+	if f1.IsAny() || f2.IsAny() {
+		return true
+	}
+
+	if f1.IsAnyOrigin() || f2.IsAnyOrigin() {
+		return (*f1.Point()).Matches(*f2.Point())
+	}
+
 	if len(f1.Stack) != len(f2.Stack) {
 		return false
 	}
 
 	for i := range f1.Stack {
-		if !f1.Stack[i].Matches(f2.Stack[i]) {
+		if f1.Stack[i] == nil || f2.Stack[i] == nil {
+			continue
+		}
+
+		if !f1.Stack[i].Matches(*f2.Stack[i]) {
 			return false
 		}
 	}
@@ -154,7 +232,7 @@ func (ips InjectionPointPredecessors) Del(point PartialInjectionPoint) {
 func (f InjectionPoint) String() string {
 	payloadStr := ""
 	if f.Payload != nil && *f.Payload != "" {
-		payloadStr = fmt.Sprintf("(%s)", f.Payload)
+		payloadStr = fmt.Sprintf("(%s)", *f.Payload)
 	}
 
 	countStr := ""
@@ -169,7 +247,7 @@ func (f InjectionPoint) String() string {
 		csStr = f.Predecessors.String()
 	}
 
-	return fmt.Sprintf("%s:%s%s%s%s", f.Destination, f.Signature, payloadStr, csStr, countStr)
+	return fmt.Sprintf("%s:%s%s%s%s", safeString(f.Destination), safeString(f.Signature), payloadStr, csStr, countStr)
 }
 
 type Fault struct {
@@ -183,12 +261,12 @@ type FaultMode struct {
 }
 
 func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, ips *InjectionPointPredecessors, count int) FaultUid {
-	fid := make([]InjectionPoint, len(parent.Stack)+1)
+	fid := make([]*InjectionPoint, len(parent.Stack)+1)
 	// Copy the existing stack
 	copy(fid, parent.Stack)
 
 	// Add the new injection point
-	fid[len(parent.Stack)] = InjectionPoint{
+	fid[len(parent.Stack)] = &InjectionPoint{
 		Destination:  partial.Destination,
 		Signature:    partial.Signature,
 		Payload:      partial.Payload,

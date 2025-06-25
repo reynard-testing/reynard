@@ -24,8 +24,8 @@ public record PartialFaultInjectionPoint(String destination, String signature, S
 
     @Override
     public String toString() {
-        String payloadStr = (payload == null || payload.equals("")) ? ""
-                : "(" + payload.substring(0, 8) + ")";
+        String payloadStr = (payload == null || payload.isEmpty()) ? ""
+                : "(" + payload.substring(0, Math.min(8, payload.length())) + ")";
         String signatureStr = signature == null ? "" : signature;
         String destinationStr = destination == null ? "" : destination;
         return destinationStr + ":" + signatureStr + payloadStr;

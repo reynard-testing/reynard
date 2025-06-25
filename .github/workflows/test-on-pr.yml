@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  test-unit:
+  test-unit-java:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,3 +21,16 @@ jobs:
           cache: maven
       - name: Run the Maven verify phase
         run: mvn --batch-mode --update-snapshots verify
+
+  test-unit-go:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+        go-version: "1.24"
+      - name: Run Go tests
+        run: go test ./...
+        working-directory: ./instrumentation

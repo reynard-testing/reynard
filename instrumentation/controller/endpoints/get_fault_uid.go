@@ -53,8 +53,17 @@ func getCompletedEvents(parentEvent *trace.TraceReport) *faultload.InjectionPoin
 
 func determineUid(data UidRequest) *faultload.FaultUid {
 	if data.IsInitial {
-		uid := faultload.BuildFaultUid(faultload.FaultUid{}, data.PartialPoint, nil, 0)
-		return &uid
+		return &faultload.FaultUid{
+			Stack: []*faultload.InjectionPoint{
+				{
+					Destination:  data.PartialPoint.Destination,
+					Signature:    data.PartialPoint.Signature,
+					Payload:      data.PartialPoint.Payload,
+					Predecessors: nil,
+					Count:        0,
+				},
+			},
+		}
 	}
 
 	parentReport := store.Reports.GetByTraceAndSpanId(data.TraceId, data.ReportParentId)
@@ -74,7 +83,6 @@ func determineUid(data UidRequest) *faultload.FaultUid {
 
 	uid := faultload.BuildFaultUid(parentReport.FaultUid, data.PartialPoint, predecessors, invocationCount)
 	return &uid
-
 }
 
 func GetFaultUid(w http.ResponseWriter, r *http.Request) {

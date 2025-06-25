@@ -141,7 +141,11 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Registered faults", "faults", len(myFaults), "traceId", newFaultload.TraceId)
 	// Store the faultload for the given trace ID
-	RegisteredFaults.Register(newFaultload.TraceId, myFaults)
+	if newFaultload.TraceId == nil {
+		RegisteredFaults.RegisterGlobal(myFaults)
+	} else {
+		RegisteredFaults.Register(*newFaultload.TraceId, myFaults)
+	}
 
 	// Respond with a 200 OK
 	w.WriteHeader(http.StatusOK)
@@ -163,8 +167,12 @@ func unregisterFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Removed faults", "traceId", traceId)
 	// Store the faultload for the given trace ID
-	RegisteredFaults.Remove(traceId)
-	tracing.ClearTracked(traceId)
+	if traceId == nil {
+		RegisteredFaults.RemoveGlobal()
+	} else {
+		RegisteredFaults.Remove(*traceId)
+		tracing.ClearTracked(*traceId)
+	}
 
 	// Respond with a 200 OK
 	w.WriteHeader(http.StatusOK)

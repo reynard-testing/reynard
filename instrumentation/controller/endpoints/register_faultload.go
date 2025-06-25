@@ -81,7 +81,9 @@ func RegisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	store.TraceIds.Register(faultload.TraceId)
+	if faultload.TraceId != nil {
+		store.TraceIds.Register(*faultload.TraceId)
+	}
 
 	// Register the Faultload at the proxies
 	var wg sync.WaitGroup
@@ -116,7 +118,7 @@ func RegisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 }
 
 type UnregisterFaultloadRequest struct {
-	TraceId faultload.TraceID `json:"trace_id"`
+	TraceId *faultload.TraceID `json:"trace_id"`
 }
 
 func UnregisterFaultload(proxyAddr string, ctx context.Context, payload *UnregisterFaultloadRequest) error {
@@ -158,8 +160,10 @@ func UnregisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	store.TraceIds.Unregister(requestData.TraceId)
-	store.InvocationCounter.Clear(requestData.TraceId)
+	if requestData.TraceId != nil {
+		store.TraceIds.Unregister(*requestData.TraceId)
+		store.InvocationCounter.Clear(*requestData.TraceId)
+	}
 
 	// Register the Faultload at the proxies
 	var wg sync.WaitGroup

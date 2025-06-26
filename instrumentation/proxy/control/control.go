@@ -133,8 +133,8 @@ func registerFaultloadHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		lastIp := fault.Uid.Stack[len(fault.Uid.Stack)-1]
-		if lastIp.Destination == destination {
+		lastIp := fault.Uid.Point()
+		if lastIp.Destination == nil || *lastIp.Destination == destination {
 			myFaults = append(myFaults, fault)
 		}
 	}

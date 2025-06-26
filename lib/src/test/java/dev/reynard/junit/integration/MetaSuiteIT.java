@@ -59,7 +59,7 @@ public class MetaSuiteIT {
 
     static {
         PROXY_RETRY_COUNT = Integer.parseInt(Env.getEnv("PROXY_RETRY_COUNT", "3"));
-        LOG_LEVEL = Env.getEnv("LOG_LEVEL", "debug");
+        LOG_LEVEL = Env.getEnv("LOG_LEVEL", "info");
     }
 
     @Container

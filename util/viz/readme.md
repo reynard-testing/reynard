@@ -6,5 +6,5 @@
 ## Usage
 
 ```bash
-poetry run python graphs.py ../../results/dsfit/ --nested
+poetry run python graphs.py ../../results/tests/ --nested
 ```

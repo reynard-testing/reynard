@@ -62,8 +62,8 @@ func determineUid(data UidRequest) *faultload.FaultUid {
 		return &faultload.FaultUid{
 			Stack: []*faultload.InjectionPoint{
 				{
-					Destination:  data.PartialPoint.Destination,
-					Signature:    data.PartialPoint.Signature,
+					Destination:  &data.PartialPoint.Destination,
+					Signature:    &data.PartialPoint.Signature,
 					Payload:      data.PartialPoint.Payload,
 					Predecessors: pred,
 					Count:        0,

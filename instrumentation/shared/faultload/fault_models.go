@@ -7,9 +7,9 @@ import (
 )
 
 type PartialInjectionPoint struct {
-	Destination *string `json:"destination"`
-	Signature   *string `json:"signature"`
-	Payload     *string `json:"payload"`
+	Destination string  `json:"destination"`
+	Signature   string  `json:"signature"`
+	Payload     *string `json:"payload"` // Payload can be ignored
 }
 
 func (f PartialInjectionPoint) String() string {
@@ -18,7 +18,7 @@ func (f PartialInjectionPoint) String() string {
 		payloadStr = fmt.Sprintf("(%s)", *f.Payload)
 	}
 
-	return fmt.Sprintf("%s:%s%s", safeString(f.Destination), safeString(f.Signature), payloadStr)
+	return fmt.Sprintf("%s:%s%s", f.Destination, f.Signature, payloadStr)
 }
 
 type InjectionPointPredecessors map[string]int
@@ -83,8 +83,8 @@ func (p InjectionPoint) WithCount(v int) InjectionPoint {
 
 func (p InjectionPoint) AsPartial() PartialInjectionPoint {
 	return PartialInjectionPoint{
-		Destination: p.Destination,
-		Signature:   p.Signature,
+		Destination: safeString(p.Destination),
+		Signature:   safeString(p.Signature),
 		Payload:     p.Payload,
 	}
 }
@@ -259,8 +259,8 @@ func BuildFaultUid(parent FaultUid, partial PartialInjectionPoint, ips *Injectio
 
 	// Add the new injection point
 	fid[len(parent.Stack)] = &InjectionPoint{
-		Destination:  partial.Destination,
-		Signature:    partial.Signature,
+		Destination:  &partial.Destination,
+		Signature:    &partial.Signature,
 		Payload:      partial.Payload,
 		Predecessors: ips,
 		Count:        count,

@@ -1,7 +1,6 @@
 package dev.reynard.junit.integration;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -14,8 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.reynard.junit.FiTest;
 import dev.reynard.junit.faultload.Fault;
@@ -30,7 +27,6 @@ import dev.reynard.junit.instrumentation.testcontainers.InstrumentedApp;
 import dev.reynard.junit.instrumentation.testcontainers.services.ControllerService;
 import dev.reynard.junit.instrumentation.testcontainers.services.InstrumentedService;
 import dev.reynard.junit.strategy.TrackedFaultload;
-import dev.reynard.junit.strategy.TrackedFaultloadSerializer;
 import dev.reynard.junit.strategy.components.PruneContext;
 import dev.reynard.junit.strategy.components.PruneDecision;
 import dev.reynard.junit.strategy.components.Pruner;
@@ -63,7 +59,7 @@ public class MetaSuiteIT {
 
     static {
         PROXY_RETRY_COUNT = Integer.parseInt(Env.getEnv("PROXY_RETRY_COUNT", "3"));
-        LOG_LEVEL = Env.getEnv("LOG_LEVEL", "info");
+        LOG_LEVEL = Env.getEnv("LOG_LEVEL", "debug");
     }
 
     @Container
@@ -217,7 +213,7 @@ public class MetaSuiteIT {
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
 
         FaultInjectionPoint proxy1Point = proxy1.getPoint().asAnyCount();
-        FaultUid uidProxy1 = FaultUid.Any(proxy1Point);
+        FaultUid uidProxy1 = FaultUid.anyTo(proxy1Point);
         Fault proxy1Fault = new Fault(uidProxy1, ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE));
 
         Faultload faults = new Faultload(Set.of(proxy1Fault));

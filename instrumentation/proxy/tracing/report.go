@@ -15,13 +15,16 @@ import (
 )
 
 type RequestMetadata struct {
-	TraceId        faultload.TraceID
-	ParentId       faultload.SpanID
-	ReportParentId faultload.SpanID
-	SpanId         faultload.SpanID
-	Protocol       string
-	FaultUid       *faultload.FaultUid
-	IsInitial      bool
+	TraceId            faultload.TraceID
+	ParentId           faultload.SpanID
+	ReportParentId     faultload.SpanID
+	SpanId             faultload.SpanID
+	Protocol           string
+	FaultUid           *faultload.FaultUid
+	IsInitial          bool
+	DurationMs         float64
+	OverheadDurationMs float64
+	ConcurrentFaults   []*faultload.FaultUid
 }
 
 var (

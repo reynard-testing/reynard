@@ -45,8 +45,19 @@ func (fr *FaultRegister) Get(traceId faultload.TraceID) ([]faultload.Fault, bool
 	fr.RLock()
 	defer fr.RUnlock()
 	faults, exists := fr.m[traceId]
+	return faults, exists
+}
 
-	// Always include global faults in the returned slice
-	allFaults := append(fr.globalFaults, faults...)
-	return allFaults, exists
+func (fr *FaultRegister) GetGlobal() ([]faultload.Fault, bool) {
+	fr.RLock()
+	defer fr.RUnlock()
+
+	return fr.globalFaults, len(fr.globalFaults) > 0
+}
+
+func (fr *FaultRegister) Has(traceId faultload.TraceID) bool {
+	fr.RLock()
+	defer fr.RUnlock()
+	_, exists := fr.m[traceId]
+	return exists
 }

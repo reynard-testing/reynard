@@ -146,7 +146,7 @@ func ParseTraceParent(traceparent string) *TraceParentData {
 	}
 }
 
-func (parent *TraceParentData) GenerateNew() *TraceParentData {
+func (parent *TraceParentData) GenerateChildSpan() *TraceParentData {
 
 	newSpan := NewSpanID()
 

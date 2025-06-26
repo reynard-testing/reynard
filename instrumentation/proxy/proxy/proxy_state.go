@@ -11,19 +11,25 @@ import (
 
 type ProxyState struct {
 	InjectedFault      *faultload.Fault
-	ConcurrentFaults   []*faultload.FaultUid
 	Proxy              *httputil.ReverseProxy
 	ResponseWriter     *ResponseCapture
 	Request            *http.Request
 	ReponseOverwritten bool
-	DurationMs         float64
-	OverheadDurationMs float64
+}
+
+type ProxyFlags struct {
+	IsTarget        bool
+	IsInitial       bool
+	MaskPayload     bool
+	HashBody        bool
+	LogHeaders      bool
+	UsePredecessors bool
 }
 
 func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) trace.TraceReport {
 	response := s.ResponseWriter.GetResponseData(hashBody)
-	response.DurationMs = s.DurationMs
-	response.OverheadDurationMs = s.OverheadDurationMs
+	response.DurationMs = metadata.DurationMs
+	response.OverheadDurationMs = metadata.OverheadDurationMs
 
 	return trace.TraceReport{
 		TraceId:       metadata.TraceId,
@@ -33,6 +39,6 @@ func (s ProxyState) asReport(metadata tracing.RequestMetadata, hashBody bool) tr
 		Protocol:      metadata.Protocol,
 		InjectedFault: s.InjectedFault,
 		Response:      &response,
-		ConcurrentTo:  s.ConcurrentFaults,
+		ConcurrentTo:  metadata.ConcurrentFaults,
 	}
 }

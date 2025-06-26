@@ -23,7 +23,7 @@ public class TrackedFaultloadSerializer {
   public static String serializeJson(Faultload faultload) {
     var obj = mapper.createObjectNode();
     obj.set("faults", serializeFaults(faultload));
-    obj.set("trace_id", null);
+    // obj.set("trace_id", null);
 
     return obj.toString();
   }

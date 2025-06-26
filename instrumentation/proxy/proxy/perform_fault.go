@@ -23,9 +23,7 @@ func performHttpError(f faultload.Fault, s *ProxyState, omit bool) {
 	if omit {
 		slog.Debug("Forwarding response, before injecting fault")
 		noOpWriter := &NoOpResponseWriter{}
-		requestStart := time.Now()
 		s.Proxy.ServeHTTP(noOpWriter, s.Request)
-		s.DurationMs = time.Since(requestStart).Seconds() * 1000
 	}
 
 	headers := s.ResponseWriter.Header()

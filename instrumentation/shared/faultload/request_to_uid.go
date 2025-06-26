@@ -35,8 +35,8 @@ func PartialPointFromRequest(r *http.Request, destination string, maskPayload bo
 	}
 
 	return PartialInjectionPoint{
-		Destination: &destination,
-		Signature:   &signature,
+		Destination: destination,
+		Signature:   signature,
 		Payload:     payload,
 	}
 }

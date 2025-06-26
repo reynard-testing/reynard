@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class LookupList<X, Y> {
     private final List<Y> list;
@@ -30,6 +31,11 @@ public class LookupList<X, Y> {
     public List<Y> getByValue(Y related) {
         X key = keyExtractor.apply(related);
         return lookup.getOrDefault(key, java.util.Collections.emptyList());
+    }
+
+    public void removeIf(Predicate<Y> predicate) {
+        list.removeIf(predicate);
+        lookup.forEach((key, values) -> values.removeIf(predicate));
     }
 
     public List<Y> getAll() {

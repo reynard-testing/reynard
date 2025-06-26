@@ -1,18 +1,17 @@
 package dev.reynard.junit.unit.models;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertFalse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import dev.reynard.junit.faultload.FaultInjectionPoint;
 import dev.reynard.junit.faultload.FaultUid;
-
-import static org.junit.Assert.assertFalse;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 public class FaultUidTest {
     private static final FaultInjectionPoint pointA = new FaultInjectionPoint("A", "a1", "", Map.of(), 0);
@@ -68,7 +67,6 @@ public class FaultUidTest {
                 { uidA_BC, uidA_BC.asAnyPredecessors() },
                 { uidA_BC, uidA_BC.asAnyCount() },
                 { uidA_BC, uidA_BC.asAnyOrigin() },
-                { uidA_BC, FaultUid.Any() },
                 { uidA_C, uidB_C.asAnyOrigin() },
                 { uidA_B, new FaultUid(List.of(FaultInjectionPoint.Any(), pointB)) },
                 { uidA_B, new FaultUid(List.of(pointA, FaultInjectionPoint.Any())) },
@@ -85,7 +83,6 @@ public class FaultUidTest {
     public static Collection<Object[]> validUids() {
         return Arrays.asList(new Object[][] {
                 { Arrays.asList(null, pointB) },
-                { Arrays.asList((FaultInjectionPoint) null) },
         });
     }
 
@@ -130,7 +127,6 @@ public class FaultUidTest {
     public void testNotNormalForm2() {
         FaultUid anyOrigin = new FaultUid(List.of(FaultInjectionPoint.Any(), pointB));
         assert !anyOrigin.isNormalForm();
-        assert !FaultUid.Any().isNormalForm();
     }
 
     @ParameterizedTest

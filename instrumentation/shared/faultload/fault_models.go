@@ -103,10 +103,6 @@ func (f FaultUid) Parent() FaultUid {
 	}
 }
 
-func (f FaultUid) IsAny() bool {
-	return len(f.Stack) == 1 && f.Stack[0] == nil
-}
-
 func (f FaultUid) IsAnyOrigin() bool {
 	return len(f.Stack) >= 1 && f.Stack[0] == nil
 }
@@ -137,10 +133,6 @@ func intMatches(v1, v2 int) bool {
 
 func (f1 FaultUid) Matches(f2 FaultUid) bool {
 	if f1.Stack == nil || f2.Stack == nil {
-		return true
-	}
-
-	if f1.IsAny() || f2.IsAny() {
 		return true
 	}
 

@@ -13,7 +13,6 @@ func TestMatch(t *testing.T) {
 	}
 
 	fEmpty := FaultUid{Stack: []*InjectionPoint{}}
-	fAny := FaultUid{Stack: []*InjectionPoint{nil}}
 	emp := ""
 	iproot := InjectionPoint{
 		Destination:  &emp,
@@ -163,12 +162,6 @@ func TestMatch(t *testing.T) {
 			f1:    fAB,
 			f2:    fxC,
 			match: false,
-		},
-		{
-			name:  "match any",
-			f1:    fAny,
-			f2:    fAC,
-			match: true,
 		},
 		{
 			name:  "match origin",

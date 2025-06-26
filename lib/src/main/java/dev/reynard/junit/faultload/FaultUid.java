@@ -16,7 +16,6 @@ import dev.reynard.junit.strategy.util.Lists;
 public record FaultUid(List<FaultInjectionPoint> stack) {
     public FaultUid {
         // Shape must be:
-        // [nil] -> any point
         // [nil, point] -> point regardless of causal origin
         // [point, point...] -> point with causal origin
         if (stack == null || stack.isEmpty()) {
@@ -24,15 +23,12 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         }
 
         if (stack.get(0) == null) {
-            if (stack.size() == 1) {
-                // [nil] is allowed
-            }
             // [nil, point] is allowed
-            if (stack.size() > 2) {
-                throw new IllegalArgumentException("Stack must have at most two elements if first element is null.");
+            if (stack.size() != 2) {
+                throw new IllegalArgumentException("Stack must have two elements if first element is null.");
             }
 
-            if (stack.size() == 2 && stack.get(1) == null) {
+            if (stack.get(1) == null) {
                 throw new IllegalArgumentException(
                         "Second element of stack must not be null if first element is null.");
             }
@@ -44,8 +40,8 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         }
     }
 
-    public static FaultUid Any() {
-        return new FaultUid(Arrays.asList((FaultInjectionPoint) null));
+    public static FaultUid anyTo(FaultInjectionPoint p) {
+        return new FaultUid(Arrays.asList(null, p));
     }
 
     @JsonIgnore
@@ -84,15 +80,10 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         return false;
     }
 
-    @JsonIgnore
-    public boolean isAny() {
-        return stack != null && stack.size() == 1 && stack.get(0) == null;
-    }
-
     /** Whether all points are without query */
     @JsonIgnore
     public boolean isNormalForm() {
-        if (isAny() || isAnyStack()) {
+        if (isAnyStack()) {
             return false;
         }
 
@@ -187,7 +178,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     public FaultUid asAnyOrigin() {
         var head = getPoint();
 
-        return new FaultUid(Arrays.asList(null, head.asAnyDestination()));
+        return new FaultUid(Arrays.asList(null, head));
     }
 
     @JsonIgnore
@@ -346,15 +337,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
             return false;
         }
 
-        if (isAny() || other.isAny()) {
-            return true; // Any uid matches any other uid
-        }
-
-        if (isAnyStack()) {
-            return matches(getPoint(), other.getPoint(), false);
-        }
-
-        if (other.isAnyStack()) {
+        if (isAnyStack() || other.isAnyStack()) {
             return matches(getPoint(), other.getPoint(), false);
         }
 
@@ -366,15 +349,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
             return false;
         }
 
-        if (isAny() || other.isAny()) {
-            return true; // Any uid matches any other uid
-        }
-
-        if (isAnyStack()) {
-            return matches(getPoint(), other.getPoint(), true);
-        }
-
-        if (other.isAnyStack()) {
+        if (isAnyStack() || other.isAnyStack()) {
             return matches(getPoint(), other.getPoint(), true);
         }
 

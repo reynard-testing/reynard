@@ -14,7 +14,6 @@ import dev.reynard.junit.strategy.util.Sets;
 @JsonDeserialize
 public record FaultInjectionPoint(String destination, String signature, String payload,
         @JsonProperty("predecessors") Map<String, Integer> predecessors, int count) {
-    private static final String ANY_WILDCARD = "*";
 
     public FaultInjectionPoint {
         // Ensure map is immutable
@@ -24,12 +23,12 @@ public record FaultInjectionPoint(String destination, String signature, String p
     }
 
     public static FaultInjectionPoint Any() {
-        return new FaultInjectionPoint(ANY_WILDCARD, ANY_WILDCARD, ANY_WILDCARD, null, -1);
+        return new FaultInjectionPoint(null, null, null, null, -1);
     }
 
     @JsonIgnore
     public boolean isAnyDestination() {
-        return destination.equals(ANY_WILDCARD);
+        return destination == null;
     }
 
     @JsonIgnore
@@ -39,12 +38,12 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     @JsonIgnore
     public boolean isAnySignature() {
-        return signature.equals(ANY_WILDCARD);
+        return signature == null;
     }
 
     @JsonIgnore
     public boolean isAnyPayload() {
-        return payload.equals(ANY_WILDCARD);
+        return payload == null;
     }
 
     // Builder patterns
@@ -70,7 +69,10 @@ public record FaultInjectionPoint(String destination, String signature, String p
 
     @Override
     public String toString() {
-        String payloadStr = (payload.equals("*") || payload.equals("")) ? "" : "(" + payload.substring(0, 8) + ")";
+        String payloadStr = (payload == null || payload.isEmpty()) ? ""
+                : "(" + payload.substring(0, Math.min(8, payload.length())) + ")";
+        String signatureStr = signature == null ? "" : signature;
+        String destinationStr = destination == null ? "" : destination;
         String countStr = count < 0 ? "#∞" : ("#" + count);
 
         // {key1:value1,key2:value2, ...}
@@ -82,7 +84,7 @@ public record FaultInjectionPoint(String destination, String signature, String p
                     .reduce((a, b) -> a + "," + b).orElse("") + "}";
         }
 
-        return destination + ":" + signature + payloadStr + csStr + countStr;
+        return destinationStr + ":" + signatureStr + payloadStr + csStr + countStr;
     }
 
     @JsonIgnore
@@ -92,18 +94,28 @@ public record FaultInjectionPoint(String destination, String signature, String p
     }
 
     @JsonIgnore
-    public FaultInjectionPoint asAnyPayload() {
-        return new FaultInjectionPoint(destination, signature, "*", predecessors, count);
+    public FaultInjectionPoint asAnySignature() {
+        return withSignature(null);
     }
 
     @JsonIgnore
-    public FaultInjectionPoint asAnyCount() {
-        return new FaultInjectionPoint(destination, signature, payload, predecessors, -1);
+    public FaultInjectionPoint asAnyDestination() {
+        return withDestination(null);
+    }
+
+    @JsonIgnore
+    public FaultInjectionPoint asAnyPayload() {
+        return withPayload(null);
     }
 
     @JsonIgnore
     public FaultInjectionPoint asAnyPredecessors() {
-        return new FaultInjectionPoint(destination, signature, payload, null, count);
+        return withPredecessors(null);
+    }
+
+    @JsonIgnore
+    public FaultInjectionPoint asAnyCount() {
+        return withCount(-1);
     }
 
     @JsonIgnore
@@ -156,7 +168,7 @@ public record FaultInjectionPoint(String destination, String signature, String p
     }
 
     private boolean matches(String a, String b) {
-        return a == null || b == null || a.equals("*") || b.equals("*") || a.equals(b);
+        return a == null || b == null || a.equals(b);
     }
 
     private boolean matches(int a, int b) {

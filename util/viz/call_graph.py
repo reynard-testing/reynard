@@ -9,12 +9,12 @@ from tree_viz import simplify_signature
 
 @dataclass(frozen=True)
 class Point:
-    signature: str
-    destination: str
+    signature: str | None
+    destination: str | None
     count: int
 
     def any_sig(self) -> 'Point':
-        return Point("*", self.destination, self.count)
+        return Point(None, self.destination, self.count)
 
     def any_count(self) -> 'Point':
         return Point(self.signature, self.destination, -1)
@@ -55,7 +55,7 @@ def parse_point_str(name: str) -> tuple[Point]:
         n, c = part.split("#")
         count = int(c)
         parts = n.split(":")
-        signature = "*"
+        signature = None
         if len(parts) > 1:
             signature = simplify_signature(parts[1])
         points.append(Point(
@@ -96,7 +96,7 @@ def points_match(a: tuple[Point], b: tuple[Point]) -> bool:
     for i in range(len(a)):
         if a[i].destination != b[i].destination:
             return False
-        if a[i].signature != "*" and b[i].signature != "*":
+        if a[i].signature is not None and b[i].signature is not None:
             if a[i].signature != b[i].signature:
                 return False
     return True

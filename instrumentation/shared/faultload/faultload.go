@@ -10,8 +10,8 @@ type SpanID string
 type TraceID string
 
 type Faultload struct {
-	Faults  []Fault `json:"faults"`
-	TraceId TraceID `json:"trace_id"`
+	Faults  []Fault  `json:"faults"`
+	TraceId *TraceID `json:"trace_id"`
 }
 
 func ParseFaultloadRequest(r *http.Request) (*Faultload, error) {

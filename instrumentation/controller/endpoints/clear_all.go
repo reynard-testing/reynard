@@ -9,5 +9,4 @@ import (
 func ClearAll(w http.ResponseWriter, r *http.Request) {
 	store.Reports.Clear()
 	store.TraceIds.Clear()
-
 }

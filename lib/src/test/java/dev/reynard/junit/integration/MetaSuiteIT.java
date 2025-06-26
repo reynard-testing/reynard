@@ -16,6 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import dev.reynard.junit.FiTest;
 import dev.reynard.junit.faultload.Fault;
+import dev.reynard.junit.faultload.FaultInjectionPoint;
 import dev.reynard.junit.faultload.FaultUid;
 import dev.reynard.junit.faultload.Faultload;
 import dev.reynard.junit.faultload.modes.ErrorFault;
@@ -204,5 +205,31 @@ public class MetaSuiteIT {
             int actualResponse = response.code();
             assertEquals(expectedResponse, actualResponse);
         }
+    }
+
+    @Test
+    public void testGlobalFaultload() throws IOException {
+        int port = controller.getMappedPort(5000);
+        String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
+
+        FaultInjectionPoint proxy1Point = proxy1.getPoint().asAnyCount();
+        FaultUid uidProxy1 = FaultUid.anyTo(proxy1Point);
+        Fault proxy1Fault = new Fault(uidProxy1, ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE));
+
+        Faultload faults = new Faultload(Set.of(proxy1Fault));
+        app.registerGlobalFaultload(faults);
+
+        Request request = new Request.Builder()
+                .url(queryUrl)
+                .post(body)
+                .addHeader("traceparent", metaFaultload.getTraceParent().toString())
+                .addHeader("tracestate", metaFaultload.getTraceState().toString())
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            assertEquals(503, response.code());
+        }
+
+        app.unregisterGlobalFaultload();
     }
 }

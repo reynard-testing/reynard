@@ -27,11 +27,22 @@ def convert_filibuster(yaml_file: str, filibuster_project: str):
         converter.convert()
 
 
-def convert_compose(yaml_file: str):
+def convert_compose(yaml_file: str, hints_file: str):
+    hints = {}
+    if hints_file:
+        with open(hints_file, 'r') as file:
+            if hints_file.endswith('.yaml') or hints_file.endswith('.yml'):
+                hints = yaml.safe_load(file)
+            elif hints_file.endswith('.json'):
+                import json
+                hints = json.load(file)
+            else:
+                raise ValueError("Hints file must be in YAML or JSON format")
+
     with open(yaml_file, 'r') as file:
         data = yaml.safe_load(file)
         output_file = as_output_file_name(yaml_file)
-        converter = ComposeConverter(output_file, data)
+        converter = ComposeConverter(output_file, data, hints=hints)
         converter.convert()
 
 
@@ -60,6 +71,8 @@ if __name__ == '__main__':
         arg_parser.add_argument('yaml_file', type=str,
                                 help='Path to the Docker Compose YAML file')
 
+        arg_parser.add_argument('--hints-file', type=str, required=False,
+                                help='Path to a yaml or json file with hints for the converter')
         # Re-parse with the new argument
         args = arg_parser.parse_args()
-        convert_compose(args.yaml_file)
+        convert_compose(args.yaml_file, args.hints_file)

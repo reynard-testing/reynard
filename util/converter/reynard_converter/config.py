@@ -35,4 +35,7 @@ IGNORED_IMAGES = [
     'lighttpd',
     'envoyproxy',
     'istio',
+    'hashicorp/consul',
+    'memcached',
+    'jaegertracing',
 ]

@@ -1,29 +1,31 @@
 
 import yaml
 
-from reynard_converter.config import IGNORED_IMAGES, IMAGES
+from reynard_converter.config import IMAGES
 from reynard_converter.docker_compose.service_parser import ServiceDefinition, parse_service_definition
 from reynard_converter.docker_compose.service_builder import ServiceBuilder
 
 
 class ComposeConverter:
-    def __init__(self, output_path: str, input: dict = None):
+    def __init__(self, output_path: str, input: dict = None, hints: dict = {}):
         self.output_path = output_path
 
         self.input = input if input is not None else {
             "services": {},
         }
+
         self.output = {
             "services": {},
         }
 
         self.services: list[ServiceDefinition] = []
+        self.hints = {}
 
         service_keys = self.input.get('services', {}).keys()
         for service_name in service_keys:
             service_def = self.input['services'][service_name]
             self.services.append(
-                parse_service_definition(service_name, service_def))
+                parse_service_definition(service_name, service_def, hints))
 
         taken_names = set()
         taken_ports = set()
@@ -41,10 +43,11 @@ class ComposeConverter:
 
         self.public_ports = {
             'jaeger': self.get_nearest_available_port(16686, taken_ports),
-            'controller': self.get_nearest_available_port(6050, taken_ports),
+            'controller': self.get_nearest_available_port(6116, taken_ports),
         }
 
         self.controller_port = 5000
+        self.default_control_port = 5115
         self.proxy_list: list[str] = []
 
     def get_nearest_available_port(self, port: int, taken_ports: set[int]) -> int:
@@ -86,7 +89,6 @@ class ComposeConverter:
             .with_image(IMAGES['controller']) \
             .with_ports(self.public_ports['controller'], 5000) \
             .with_environment('PROXY_LIST', ",".join(self.proxy_list)) \
-            .with_environment('FLASK_DEBUG', None) \
             .build()
         service_name = self.service_names['controller']
         self.add_service_definition(service_name, service)
@@ -95,17 +97,17 @@ class ComposeConverter:
         self.add_jaeger()
         self.add_controller()
 
-    def should_not_be_instrumented(self, service: ServiceDefinition) -> bool:
-        image_name = service.definition.get('image', '')
-        for prefix in IGNORED_IMAGES:
-            if image_name.startswith(prefix):
-                return True
-        return False
+    def patch_depends_on(self, service_def: dict):
+        if not 'depends_on' in service_def:
+            return service_def
+
+        return service_def
 
     def convert_service(self, service: ServiceDefinition):
-        if self.should_not_be_instrumented(service):
+        print(f"Converting service: {service}")
+        if service.ignored:
             self.add_service_definition(
-                service.service_name, service.definition)
+                service.service_name, self.patch_depends_on(service.definition))
             return
 
         real_service = ServiceBuilder(service.definition)
@@ -113,9 +115,19 @@ class ComposeConverter:
         new_service_name = f'{service.hostname}-instrumented'
         proxy_service_name = f'{service.hostname}-proxy'
 
-        container_port = None
+        # Determine service ports
+        container_port = service.container_port
         host_port = None
-        proxy_control_port = None
+        for mapping in service.ports:
+            if mapping.container == container_port:
+                host_port = mapping.host
+                break
+        proxy_control_port = self.default_control_port
+        if container_port is not None and container_port == self.default_control_port:
+            proxy_control_port = self.default_control_port + 1
+
+        if container_port is None:
+            container_port = f"<!!!-port-of-{service.service_name}-!!!>"
 
         proxy_service = ServiceBuilder() \
             .with_image(IMAGES['proxy']) \
@@ -124,7 +136,9 @@ class ComposeConverter:
             .with_environment('SERVICE_NAME', service.service_name) \
             .with_environment('PROXY_HOST', f"0.0.0.0:{container_port}") \
             .with_environment('PROXY_TARGET', f"http://{new_service_hostname}:{container_port}") \
-            .with_ports(host_port, container_port)
+
+        if host_port is not None:
+            proxy_service.with_ports(host_port, container_port)
 
         # swap the hostnames, so the proxy is the one that gets the real hostname
         proxy_service.with_hostname(service.hostname)
@@ -135,14 +149,14 @@ class ComposeConverter:
             .with_environment("OTEL_TRACES_EXPORTER", "otlp")\
             .with_environment("OTEL_EXPORTER_OTLP_ENDPOINT", f"http://{self.service_names['jaeger']}:4317")\
             .with_environment("OTEL_LOGS_EXPORTER", "none")\
-            .with_environment("OTEL_METRICS_EXPORTER", "none")
+            .with_environment("OTEL_METRICS_EXPORTER", "none")\
+            .clear_ports()
 
         self.proxy_list.append(service.hostname + ":" +
                                str(proxy_control_port))
         self.add_service_definition(proxy_service_name, proxy_service.build())
-        self.add_service_definition(new_service_name, real_service.build())
-
-        # if 'depends_on' in service.definition:
+        self.add_service_definition(
+            new_service_name, self.patch_depends_on(real_service.build()))
 
     def convert(self):
         for service in self.services:

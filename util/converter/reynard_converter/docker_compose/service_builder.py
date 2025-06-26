@@ -29,6 +29,10 @@ class ServiceBuilder:
         self.service['ports'].append(f'{host}:{container}')
         return self
 
+    def clear_ports(self):
+        self.service.pop('ports', None)
+        return self
+
     def with_environment(self, key: str, value: str):
         if 'environment' not in self.service:
             self.service['environment'] = []

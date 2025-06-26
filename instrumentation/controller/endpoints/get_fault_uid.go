@@ -53,13 +53,19 @@ func getCompletedEvents(parentEvent *trace.TraceReport) *faultload.InjectionPoin
 
 func determineUid(data UidRequest) *faultload.FaultUid {
 	if data.IsInitial {
+		var pred *faultload.InjectionPointPredecessors = nil
+
+		if data.IncludePredecessors {
+			pred = &faultload.InjectionPointPredecessors{}
+		}
+
 		return &faultload.FaultUid{
 			Stack: []*faultload.InjectionPoint{
 				{
 					Destination:  data.PartialPoint.Destination,
 					Signature:    data.PartialPoint.Signature,
 					Payload:      data.PartialPoint.Payload,
-					Predecessors: nil,
+					Predecessors: pred,
 					Count:        0,
 				},
 			},

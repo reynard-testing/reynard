@@ -60,7 +60,8 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
     }
 
     public FaultInjectionPoint getPoint() {
-        return new FaultInjectionPoint(hostname, "*", "*", Map.of(), 0);
+        return FaultInjectionPoint.Any()
+                .withDestination(hostname);
     }
 
     public InstrumentedService withHttp2() {

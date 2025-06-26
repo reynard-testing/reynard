@@ -49,7 +49,7 @@ import dev.reynard.junit.util.TaggedTimer;
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
     private StrategyRunner strategy;
-    private static final String OUTPUT_DIR_KEY = "dsfit.output.dir";
+    private static final String OUTPUT_DIR_KEY = "reynard.output.dir";
     private final TaggedTimer totalTimer = new TaggedTimer();
     private static final Logger logger = LoggerFactory.getLogger(FiTestExtension.class);
 

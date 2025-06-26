@@ -116,7 +116,7 @@ func GetUid(metadata RequestMetadata, partial faultload.PartialInjectionPoint, i
 		slog.Warn("Failed to get UID from controller after retry.", "traceId", metadata.TraceId, "parentId", metadata.ReportParentId)
 
 		return faultload.FaultUid{
-			Stack: []faultload.InjectionPoint{},
+			Stack: []*faultload.InjectionPoint{},
 		}
 	}
 

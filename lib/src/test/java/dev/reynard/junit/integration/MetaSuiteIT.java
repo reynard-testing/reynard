@@ -2,13 +2,11 @@ package dev.reynard.junit.integration;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -131,7 +129,7 @@ public class MetaSuiteIT {
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
 
         // First call from the controller to proxy1
-        FaultUid uid = new FaultUid(List.of(controller.getPoint(), proxy1.getPoint()));
+        FaultUid uid = new FaultUid(List.of(controller.getPoint(), proxy1.getPoint().withCount(0)));
         FailureMode mode = ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE);
         Faultload faultload = new Faultload(Set.of(new Fault(uid, mode)));
         TrackedFaultload tracked = new TrackedFaultload(faultload);

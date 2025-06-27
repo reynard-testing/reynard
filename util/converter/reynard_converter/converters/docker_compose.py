@@ -16,6 +16,7 @@ class ComposeConverter:
 
         self.output = {
             "services": {},
+            **{k: v for k, v in self.input.items() if k != "services"},
         }
 
         self.services: list[ServiceDefinition] = []
@@ -89,6 +90,7 @@ class ComposeConverter:
             .with_image(IMAGES['controller']) \
             .with_ports(self.public_ports['controller'], 5000) \
             .with_environment('PROXY_LIST', ",".join(self.proxy_list)) \
+            .with_environment('LOG_LEVEL', None) \
             .build()
         service_name = self.service_names['controller']
         self.add_service_definition(service_name, service)
@@ -133,6 +135,7 @@ class ComposeConverter:
             .with_image(IMAGES['proxy']) \
             .with_environment('CONTROLLER_HOST', f"{self.service_names['controller']}:{self.controller_port}") \
             .with_environment('CONTROL_PORT', proxy_control_port) \
+            .with_environment('LOG_LEVEL', None) \
             .with_environment('SERVICE_NAME', service.service_name) \
             .with_environment('PROXY_HOST', f"0.0.0.0:{container_port}") \
             .with_environment('PROXY_TARGET', f"http://{new_service_hostname}:{container_port}") \

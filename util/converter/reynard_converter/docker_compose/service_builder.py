@@ -36,6 +36,13 @@ class ServiceBuilder:
     def with_environment(self, key: str, value: str):
         if 'environment' not in self.service:
             self.service['environment'] = []
+        
+        for env in self.service['environment']:
+            if env.startswith(f'{key}='):
+                # If the key already exists, update its value
+                self.service['environment'].remove(env)
+                break
+
         if value is None:
             self.service['environment'].append(f'{key}')
         else:

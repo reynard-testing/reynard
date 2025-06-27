@@ -1,6 +1,6 @@
 #!/bin/bash
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
-project_path=$(realpath "${parent_path}/../..")
+project_path=$(realpath "${parent_path}/../../..")
 suite_name=$1
 test_name=$2
 benchmark_category="micro"

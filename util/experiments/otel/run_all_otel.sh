@@ -1,6 +1,6 @@
 #!/bin/bash
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
-project_path=$(realpath "${parent_path}/../..")
+project_path=$(realpath "${parent_path}/../../..")
 result_tag=${1:+-$1}
 
 otel_demo_path=${OTEL_PATH:-"${project_path}/../../benchmarks/opentelemetry-demo-ds-fit"}

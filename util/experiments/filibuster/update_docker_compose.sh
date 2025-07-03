@@ -9,7 +9,7 @@ echo "Using corpus path: ${corpus_path}"
 convert_docker_compose() {
     local service_name=$1
     cd ${project_path}/util/converter/;
-    poetry run python ./converter.py --filibuster "${corpus_path}/${service_name}/docker-compose.yml"
+    poetry run python ./converter.py filibuster "${corpus_path}/${service_name}/docker-compose.yml"
 }
 
 # Convert all docker-compose files

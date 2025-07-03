@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.junit.jupiter.Container;
@@ -25,7 +24,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-@SuppressWarnings("resource")
 @Testcontainers(parallel = true)
 public class TraversalOrderDifferenceIT {
     public static final InstrumentedApp app = new InstrumentedApp().withJaeger();
@@ -81,23 +79,18 @@ public class TraversalOrderDifferenceIT {
     }
 
     @BeforeAll
-    public static void setupServices() {
+    static void setupServices() {
         app.start();
     }
 
     @AfterAll
-    static public void teardownServices() {
+    static void teardownServices() {
         app.stop();
     }
 
     public void testA(TrackedFaultload faultload) throws IOException {
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-
-        Request request = new Request.Builder()
+        Request request = faultload.newRequestBuilder()
                 .url("http://localhost:" + serviceA.getMappedPort(8080) + "/")
-                .addHeader("traceparent", traceparent)
-                .addHeader("tracestate", tracestate)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {

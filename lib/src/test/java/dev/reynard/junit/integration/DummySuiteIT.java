@@ -9,6 +9,11 @@ import org.junit.jupiter.api.BeforeAll;
 import dev.reynard.junit.instrumentation.FaultController;
 import dev.reynard.junit.instrumentation.testcontainers.InstrumentedApp;
 
+/**
+ * A dummy test suite that does nothing.
+ * This is used to ensure that the test infrastructure is working correctly.
+ * And can be used as a template for new testcontainer-based suites.
+ */
 public class DummySuiteIT {
     public static InstrumentedApp app;
 
@@ -17,20 +22,16 @@ public class DummySuiteIT {
     }
 
     @BeforeAll
-    static public void setupServices() {
+    static void setupServices() {
         app = new InstrumentedApp();
         app.start();
     }
 
     @AfterAll
-    static public void teardownServices() {
+    static void teardownServices() {
         app.stop();
     }
 
-    // @FiTest
-    // public void testApp(Faultload faultload) throws IOException {
-    // assertTrue(true);
-    // }
     @Test
     public void testNothing() {
         assertTrue(true);

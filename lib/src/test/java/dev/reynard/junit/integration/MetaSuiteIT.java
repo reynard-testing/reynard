@@ -1,12 +1,13 @@
 package dev.reynard.junit.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -135,11 +136,9 @@ public class MetaSuiteIT {
         TrackedFaultload tracked = new TrackedFaultload(faultload);
         String inspectUrl = app.controllerInspectUrl + "/v1/trace/" + tracked.getTraceId();
 
-        Request request = new Request.Builder()
+        Request request = tracked.newRequestBuilder()
                 .url(queryUrl)
                 .post(body)
-                .addHeader("traceparent", tracked.getTraceParent().toString())
-                .addHeader("tracestate", tracked.getTraceState().toString())
                 .build();
 
         app.registerFaultload(tracked);
@@ -183,11 +182,9 @@ public class MetaSuiteIT {
         int port = controller.getMappedPort(5000);
         String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
 
-        Request request = new Request.Builder()
+        Request request = faultload.newRequestBuilder()
                 .url(queryUrl)
                 .post(body)
-                .addHeader("traceparent", faultload.getTraceParent().toString())
-                .addHeader("tracestate", faultload.getTraceState().toString())
                 .build();
 
         String inspectUrl = app.controllerInspectUrl + "/v1/trace/" + faultload.getTraceId();

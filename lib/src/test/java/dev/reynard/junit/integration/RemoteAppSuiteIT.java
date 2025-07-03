@@ -1,8 +1,8 @@
 package dev.reynard.junit.integration;
 
-import java.io.IOException;
-
 import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
 
 import dev.reynard.junit.FiTest;
 import dev.reynard.junit.faultload.modes.ErrorFault;
@@ -15,7 +15,11 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 /**
- * FI test the app
+ * This is an older test suite for
+ * https://github.com/delanoflipse/go-micro-services-otel
+ * 
+ * It requires the project to be running on localhost:5000
+ * (this is the remote version of AppSuiteIT)
  */
 public class RemoteAppSuiteIT {
     public static final RemoteController controller = new RemoteController("http://localhost:5000");
@@ -30,10 +34,8 @@ public class RemoteAppSuiteIT {
         int frontendPort = 8080;
         String queryUrl = "http://localhost:" + frontendPort + "/hotels?inDate=2015-04-09&outDate=2015-04-10";
 
-        Request request = new Request.Builder()
+        Request request = faultload.newRequestBuilder()
                 .url(queryUrl)
-                .addHeader("traceparent", faultload.getTraceParent().toString())
-                .addHeader("tracestate", faultload.getTraceState().toString())
                 .build();
 
         String inspectUrl = "http://localhost:5000/v1/trace/" + faultload.getTraceId();

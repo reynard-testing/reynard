@@ -36,21 +36,23 @@ const (
 
 func StartProxy(config config.ProxyConfig) {
 	slog.Info("Starting proxy server", "host", config.Host, "target", config.Target)
-	slog.Info("HTTP/2", "enabled", config.UseHttp2)
 	slog.Info("Destination", "host", config.Destination)
+
+	var protocols http.Protocols
+	protocols.SetHTTP1(true)
+	protocols.SetHTTP2(true)
+	protocols.SetUnencryptedHTTP2(true)
 
 	// Start an HTTP/2 server with a custom reverse proxy handler
 	var httpServer *http.Server
-	var handler http.Handler = proxyHandler(config.Target, config.UseHttp2)
-
-	if config.UseHttp2 {
-		handler = h2c.NewHandler(handler, &http2.Server{})
-	}
+	var handler http.Handler = proxyHandler(config.Target, &protocols)
+	handler = h2c.NewHandler(handler, &http2.Server{})
 
 	httpServer = &http.Server{
 		Addr:        config.Host,
 		Handler:     handler,
 		IdleTimeout: 120 * time.Second,
+		Protocols:   &protocols,
 	}
 
 	destination = config.Destination
@@ -63,18 +65,16 @@ func StartProxy(config config.ProxyConfig) {
 }
 
 // Proxy handler that inspects and forwards HTTP requests and responses
-func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
+func proxyHandler(targetHost string, protocols *http.Protocols) http.Handler {
 	// Parse the target URL
 	targetURL, err := url.Parse(targetHost)
 	if err != nil {
 		log.Fatalf("Failed to parse target host: %v\n", err)
 	}
 
-	// Create the reverse proxy
-	proxy := httputil.NewSingleHostReverseProxy(targetURL)
-
-	// Fix issue with wrongly inferred content type if none set
-	proxy.ModifyResponse = func(resp *http.Response) error {
+	// Create a http1.1 proxy
+	proxy1 := httputil.NewSingleHostReverseProxy(targetURL)
+	proxy1.ModifyResponse = func(resp *http.Response) error {
 		if resp.Header.Get("content-type") == "" {
 			resp.Header.Set("content-type", "application/octet-stream")
 		}
@@ -82,21 +82,30 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		return nil
 	}
 
-	if useHttp2 {
-		proxy.Transport = &http2.Transport{
-			AllowHTTP: true,
-			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
-				return net.Dial(network, addr)
-			},
-		}
-	} else {
-		// Start with defaults
-		// customTransport.ExpectContinueTimeout = 1 * time.Second
-		proxy.Transport = util.GetDefaultTransport()
+	baseTransport := util.GetDefaultTransport()
+	baseTransport.Protocols = protocols
+	proxy1.Transport = baseTransport
+
+	// create a http2 proxy
+	proxy2 := httputil.NewSingleHostReverseProxy(targetURL)
+	proxy2.Transport = &http2.Transport{
+		AllowHTTP: true,
+		DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+			return net.Dial(network, addr)
+		},
 	}
 
 	// Wrap the proxy with a custom handler to inspect requests and responses
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var selectedProxy *httputil.ReverseProxy
+		if r.ProtoMajor == 2 {
+			selectedProxy = proxy2
+			slog.Debug("Using HTTP/2 proxy", "proto", r.Proto)
+		} else {
+			selectedProxy = proxy1
+			slog.Debug("Using HTTP/1.1 proxy", "proto", r.Proto)
+		}
+
 		fullStart := time.Now()
 		// Inspect request before forwarding
 
@@ -106,7 +115,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		// If no traceparent is found, forward the request without inspection
 		if parentSpan == nil {
-			proxy.ServeHTTP(w, r)
+			selectedProxy.ServeHTTP(w, r)
 			return
 		}
 
@@ -127,7 +136,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		if !ok {
 			// Forward the request to the target server
 			slog.Debug("No faults registered for trace ID", "traceId", traceId)
-			proxy.ServeHTTP(w, r)
+			selectedProxy.ServeHTTP(w, r)
 			return
 		}
 
@@ -138,7 +147,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// only forward the request if the "fit" flag is set in the tracestate
 		shouldInspect := state.GetWithDefault(FIT_FLAG, "0") == "1"
 		if !shouldInspect {
-			proxy.ServeHTTP(w, r)
+			selectedProxy.ServeHTTP(w, r)
 			return
 		}
 
@@ -200,7 +209,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 
 		var proxyState ProxyState = ProxyState{
 			InjectedFault:      nil,
-			Proxy:              proxy,
+			Proxy:              selectedProxy,
 			ResponseWriter:     capture,
 			Request:            r,
 			DurationMs:         0,
@@ -234,7 +243,7 @@ func proxyHandler(targetHost string, useHttp2 bool) http.Handler {
 		// Forward the request to the target server
 		if !proxyState.ReponseOverwritten {
 			requestStart := time.Now()
-			proxy.ServeHTTP(capture, r)
+			selectedProxy.ServeHTTP(capture, r)
 			proxyState.DurationMs = time.Since(requestStart).Seconds() * 1000
 			slog.Debug("Response forwarded")
 		}

@@ -1,13 +1,13 @@
 package dev.reynard.junit.integration;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static org.junit.Assert.assertEquals;
 
 import dev.reynard.junit.FiTest;
 import dev.reynard.junit.faultload.Fault;
@@ -68,13 +68,8 @@ public class OTELSuiteIT {
                         "{\"streetAddress\":\"1600+Amphitheatre+Parkway\",\"city\":\"Mountain+View\",\"state\":\"CA\",\"country\":\"United+States\",\"zipCode\":\"94043\"}")
                 .build();
 
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-
-        Request request = new Request.Builder()
+        Request request = faultload.newRequestBuilder()
                 .url(url)
-                .addHeader("traceparent", traceparent)
-                .addHeader("tracestate", tracestate)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -106,13 +101,8 @@ public class OTELSuiteIT {
                 .addQueryParameter("currencyCode", CURRENCY)
                 .build();
 
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-
-        Request request = new Request.Builder()
+        Request request = faultload.newRequestBuilder()
                 .url(url)
-                .addHeader("traceparent", traceparent)
-                .addHeader("tracestate", tracestate)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -258,14 +248,9 @@ public class OTELSuiteIT {
                 + "\",\"creditCard\":{\"creditCardCvv\":672,\"creditCardExpirationMonth\":1,\"creditCardExpirationYear\":2030,\"creditCardNumber\":\"4432-8015-6152-0454\"}}";
         RequestBody body = RequestBody.create(payload, JSON);
 
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-
-        Request request = new Request.Builder()
+        Request request = faultload.newRequestBuilder()
                 .url(url)
                 .post(body)
-                .addHeader("traceparent", traceparent)
-                .addHeader("tracestate", tracestate)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {

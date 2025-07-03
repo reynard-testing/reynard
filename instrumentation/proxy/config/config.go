@@ -11,7 +11,6 @@ type ProxyConfig struct {
 	Host        string
 	Target      string
 	Destination string
-	UseHttp2    bool
 }
 
 type ControlConfig struct {
@@ -21,9 +20,8 @@ type ControlConfig struct {
 }
 
 func GetProxyConfig() ProxyConfig {
-	proxyHost := os.Getenv("PROXY_HOST")         // Proxy server address
-	proxyTarget := os.Getenv("PROXY_TARGET")     // Target server address
-	useHttp2 := os.Getenv("USE_HTTP2") == "true" // Use HTTP/2?
+	proxyHost := os.Getenv("PROXY_HOST")     // Proxy server address
+	proxyTarget := os.Getenv("PROXY_TARGET") // Target server address
 
 	// Use either predefined service name or fallback to target host
 	destination := os.Getenv("SERVICE_NAME")
@@ -41,7 +39,6 @@ func GetProxyConfig() ProxyConfig {
 	return ProxyConfig{
 		Host:        proxyHost,
 		Target:      proxyTarget,
-		UseHttp2:    useHttp2,
 		Destination: destination,
 	}
 }

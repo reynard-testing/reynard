@@ -1,5 +1,5 @@
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
-project_path=$(realpath "${parent_path}/../..")
+project_path=$(realpath "${parent_path}/../../..")
 corpus_path=${1:-"${project_path}/../../benchmarks/filibuster-corpus"}
 corpus_path=$(realpath "${corpus_path}")
 
@@ -8,8 +8,8 @@ echo "Using corpus path: ${corpus_path}"
 
 convert_docker_compose() {
     local service_name=$1
-    cd ${project_path}/util/docker_compose_converter/;
-    poetry run python ./converter.py --filibuster "${corpus_path}/${service_name}/docker-compose.yml"
+    cd ${project_path}/util/converter/;
+    poetry run python ./converter.py filibuster "${corpus_path}/${service_name}/docker-compose.yml"
 }
 
 # Convert all docker-compose files

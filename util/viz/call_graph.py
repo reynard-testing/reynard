@@ -1,10 +1,12 @@
 import argparse
 import os
-from graphviz import Digraph
 import re
 from dataclasses import dataclass, field, replace
-from util import get_json, find_json
+
+from graphviz import Digraph
 from tree_viz import simplify_signature
+
+from util import find_json, get_json
 
 
 @dataclass(frozen=True)
@@ -128,7 +130,7 @@ def remove_transitive_dependencies(relations: list[tuple[str, str]]) -> list[tup
         if not is_transitive:
             simplified_relations.add((r_from, r_to))
 
-    return sorted(list(simplified_relations))
+    return sorted(simplified_relations)
 
 
 def build_tree_from_mapping(node: tuple[Point], parent_children: dict[tuple[Point], list[Point]], dependencies: list[Dependency]):
@@ -226,9 +228,8 @@ def should_use_signature(pts: list[tuple[Point]]) -> bool:
 
 def render_call_graph(data: dict, output_name: str):
     points = []
-    if 'details' in data:
-        if 'fault_injection_points' in data['details']:
-            points = data['details']['fault_injection_points']
+    if 'details' in data and 'fault_injection_points' in data['details']:
+        points = data['details']['fault_injection_points']
 
     points = [parse_pt(p) for p in points]
     points = [x for x in points if x != None]

@@ -46,12 +46,8 @@ public class HotelReservationSuiteIT {
                 .addQueryParameter("lon", "-122.4194")
                 .build();
 
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-
-        Request request = faultload.addHeaders(
-                new Request.Builder()
-                        .url(url))
+        Request request = faultload.newRequestBuilder()
+                .url(url)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -76,13 +72,8 @@ public class HotelReservationSuiteIT {
                 .addQueryParameter("require", "price")
                 .build();
 
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-
-        Request request = new Request.Builder()
+        Request request = faultload.newRequestBuilder()
                 .url(url)
-                .addHeader("traceparent", traceparent)
-                .addHeader("tracestate", tracestate)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -111,13 +102,8 @@ public class HotelReservationSuiteIT {
                 .addQueryParameter("customerName", "John Doe")
                 .build();
 
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-
-        Request request = new Request.Builder()
+        Request request = faultload.newRequestBuilder()
                 .url(url)
-                .addHeader("traceparent", traceparent)
-                .addHeader("tracestate", tracestate)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -139,13 +125,8 @@ public class HotelReservationSuiteIT {
                 .addQueryParameter("password", "0000000000")
                 .build();
 
-        var traceparent = faultload.getTraceParent().toString();
-        var tracestate = faultload.getTraceState().toString();
-
-        Request request = new Request.Builder()
+        Request request = faultload.newRequestBuilder()
                 .url(url)
-                .addHeader("traceparent", traceparent)
-                .addHeader("tracestate", tracestate)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {

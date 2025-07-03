@@ -95,6 +95,14 @@ public class TrackedFaultload {
                 .addHeader("tracestate", traceState.toString());
     }
 
+    public Request addHeaders(Request builder) {
+        return addHeaders(builder.newBuilder()).build();
+    }
+
+    public Request.Builder newRequestBuilder() {
+        return addHeaders(new Request.Builder());
+    }
+
     public int size() {
         return faultload.size();
     }

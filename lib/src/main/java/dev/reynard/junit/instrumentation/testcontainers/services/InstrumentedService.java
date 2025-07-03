@@ -64,11 +64,6 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
                 .withDestination(hostname);
     }
 
-    public InstrumentedService withHttp2() {
-        withEnv("USE_HTTP2", "true");
-        return this;
-    }
-
     public String getHostname() {
         return hostname;
     }

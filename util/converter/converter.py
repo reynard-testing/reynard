@@ -1,7 +1,8 @@
 
-import yaml
 import argparse
+import os
 
+import yaml
 from reynard_converter.converters.docker_compose import ComposeConverter
 from reynard_converter.converters.filibuster_compose import FilibusterConverter
 
@@ -19,11 +20,16 @@ def as_output_file_name(yaml_file: str) -> str:
     return f'{file_name}.fit.{file_extension}'
 
 
-def convert_filibuster(yaml_file: str, filibuster_project: str):
+def convert_filibuster(yaml_file: str):
+    # The project name is derived from the yaml file path.
+    yaml_path = os.path.abspath(yaml_file)
+    filibuster_project = os.path.basename(os.path.dirname(yaml_path))
+    print(f"Converting Filibuster project: {filibuster_project}")
+
     with open(yaml_file, 'r') as file:
         data = yaml.safe_load(file)
         output_file = as_output_file_name(yaml_file)
-        converter = FilibusterConverter(output_file, data, filibuster_project)
+        converter = FilibusterConverter(filibuster_project, output_file, data)
         converter.convert()
 
 
@@ -61,12 +67,10 @@ if __name__ == '__main__':
     if args.converter == 'filibuster':
         arg_parser.add_argument('yaml_file', type=str,
                                 help='Path to the YAML file')
-        arg_parser.add_argument('--project', type=str, required=False,
-                                help='Project name for filibuster converter')
 
         # Re-parse with the new argument
         args = arg_parser.parse_args()
-        convert_filibuster(args.yaml_file, args.project)
+        convert_filibuster(args.yaml_file)
     elif args.converter == 'compose':
         arg_parser.add_argument('yaml_file', type=str,
                                 help='Path to the Docker Compose YAML file')

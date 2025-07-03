@@ -1,11 +1,12 @@
 package dev.reynard.junit.unit.models;
 
+import static org.junit.Assert.assertFalse;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertFalse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -121,6 +122,7 @@ public class FaultUidTest {
     public void testNormalForm(FaultUid f) {
         assert f.isNormalForm();
         assert f.asAnyPredecessors().isNormalForm();
+        assert f.asAnyPayload().isNormalForm();
     }
 
     @Test
@@ -134,7 +136,6 @@ public class FaultUidTest {
     public void testNotNormalForm(FaultUid f) {
         assert !f.asAnyDestination().isNormalForm();
         assert !f.asAnySignature().isNormalForm();
-        assert !f.asAnyPayload().isNormalForm();
         assert !f.asAnyCount().isNormalForm();
         assert !f.asAnyOrigin().isNormalForm();
     }

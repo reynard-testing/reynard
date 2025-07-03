@@ -90,7 +90,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
         var head = getPoint();
 
         // Note anyPredecessors() is allowed (as long it is used persistently)
-        if (head.isPersistent() || head.isAnyDestination() || head.isAnySignature() || head.isAnyPayload()) {
+        if (head.isPersistent() || head.isAnyDestination() || head.isAnySignature()) {
             return false;
         }
 
@@ -223,7 +223,7 @@ public record FaultUid(List<FaultInjectionPoint> stack) {
     @Override
     public String toString() {
         List<String> stackStrings = getTail().stream()
-                .map(FaultInjectionPoint::toSimplifiedString)
+                .map(FaultInjectionPoint::toString)
                 .toList();
 
         if (stackStrings.isEmpty()) {

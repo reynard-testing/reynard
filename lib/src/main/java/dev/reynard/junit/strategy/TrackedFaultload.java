@@ -7,6 +7,7 @@ import dev.reynard.junit.faultload.Faultload;
 import dev.reynard.junit.instrumentation.trace.TraceParent;
 import dev.reynard.junit.instrumentation.trace.TraceState;
 import dev.reynard.junit.util.TaggedTimer;
+import okhttp3.Request;
 
 public class TrackedFaultload {
     private final Faultload faultload;
@@ -86,6 +87,12 @@ public class TrackedFaultload {
 
     public TraceState getTraceState() {
         return traceState;
+    }
+
+    public Request.Builder addHeaders(Request.Builder builder) {
+        return builder
+                .addHeader("traceparent", traceParent.toString())
+                .addHeader("tracestate", traceState.toString());
     }
 
     public int size() {

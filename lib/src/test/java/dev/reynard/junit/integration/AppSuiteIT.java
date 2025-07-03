@@ -1,10 +1,11 @@
 package dev.reynard.junit.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
 import org.junit.jupiter.api.AfterAll;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -34,26 +35,22 @@ public class AppSuiteIT {
     @Container
     private static final InstrumentedService geo = app.instrument("geo", 8080,
             new GenericContainer<>(BASE_IMAGE)
-                    .withCommand("go-micro-services geo"))
-            .withHttp2();
+                    .withCommand("go-micro-services geo"));
 
     @Container
     private static final InstrumentedService rate = app.instrument("rate", 8080,
             new GenericContainer<>(BASE_IMAGE)
-                    .withCommand("go-micro-services rate"))
-            .withHttp2();
+                    .withCommand("go-micro-services rate"));
 
     @Container
     private static final InstrumentedService search = app.instrument("search", 8080,
             new GenericContainer<>(BASE_IMAGE)
-                    .withCommand("go-micro-services search"))
-            .withHttp2();
+                    .withCommand("go-micro-services search"));
 
     @Container
     private static final InstrumentedService profile = app.instrument("profile", 8080,
             new GenericContainer<>(BASE_IMAGE)
-                    .withCommand("go-micro-services profile"))
-            .withHttp2();
+                    .withCommand("go-micro-services profile"));
 
     @Container
     private static final GenericContainer<?> frontend = new GenericContainer<>(BASE_IMAGE)

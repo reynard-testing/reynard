@@ -48,7 +48,7 @@ Reynard's instrumentation can precisely identify events in the system and inject
 
 ### Broad Applicablility
 
-Reynard can function in any system that supports modern distributed tracing, and be configured with a reverse-proxy side-card pattern (similar to another common tool in MA: service meshes).
+Reynard can function in any system that supports modern distributed tracing, can be configured with a reverse-proxy side-card pattern (similar to another common tool in MA: service meshes), and uses HTTP or gRPC for inter-service communication.
 
 ## Installation
 
@@ -60,27 +60,34 @@ In particular we require two types of instrumentation:
 - The addition of [OpenTelemetry](https://opentelemetry.io/) for each service of interest, or any tracing solution that allows for both the propagation of the `traceparent` and `tracecontext` headers [as defined by the W3C](https://www.w3.org/TR/trace-context/).
 - The addition of reverse proxies as a sidecar to each service of interest.
 - The addition of a fault injection controller process.
-- (Optionally) the addition of Jaeger to collect and visualize traces for debugging purposes.
+- (Optionally) the addition of [Jaeger](https://www.jaegertracing.io/) to collect and visualize traces for debugging purposes.
+
+**Distributed Tracing:**
 
 We recommend [OpenTelemetry](https://opentelemetry.io/) as a distributed tracing solution as, in many cases, it can be [automatically added](https://opentelemetry.io/docs/zero-code/). Keep in mind that adding distributed tracing will introduce some overhead. Our tooling does not require that every span is exported, but it does require that context is correctly propagated.
+Exporting spans to a tool like [Jaeger](https://www.jaegertracing.io/) will aid in debugging in case bugs are found using Reynard.
+
+**Proxies:**
 
 The reverse proxies are available as a [Docker image](https://hub.docker.com/r/dflipse/reynard-proxy). The exact deployment of the proxies depends on the system configuration. In most cases, you want to route traffic targeted to a service of interest through a proxy, without changing the services.
 We provide a [converter utility](util/converter/) for Docker compose.
 The supported communication protocols are HTTP1.1, HTTP2 and gRPC.
+
+**Controller:**
 
 The controller service is available as a [Docker image](https://hub.docker.com/r/dflipse/reynard-controller). It must be configured to be aware of all deployed proxies to function correctly.
 
 ## Using the Test Library
 
 The testing library is available as [a Maven package](https://central.sonatype.com/artifact/dev.reynard/junit) under the `dev.reynard.junit` namespace.
-To create a Reynard test suite, simply add the `@FiTest` to a function that has a single argument of type `TrackedFaultload`:
+To create a Reynard test suite, simply add the `@FiTest` to a test function that has a single argument of type `TrackedFaultload`:
 
 ```java
 @FiTest
 void testSuite(TrackedFaultload faultload) { ... }
 ```
 
-The faultload defines the current set of faults (starting with no faults), and headers required for the instrumentation to understand which events to target.
+The faultload defines the current set of faults (starting with no faults), and the headers required for the instrumentation to understand how to inject these faults.
 
 The test case must have the properties:
 
@@ -95,6 +102,7 @@ Reynard can work in a variety of scenarios, but is not complete or sound in the 
 - Reynard can handle **concurrency and asynchronicity** if each request is uniquely identifiable. Otherwise, two events might swap identifiers and their effects will be wrongly attributed.
 - Reynard assumes that the effect of an event is deterministic. For example, if a service performs two requests on an endpoint invocation, and Reynard observes that a failure of the first request omits the second request, then it assumes this always holds.
 - Reynard assumes that responses with the same status code will result in the same behaviour. Systems that use the response body to indicate specific failures will result in an unsound exploration.
+- Reynard does not correctly understand asynchronous communication (such as message queues), as it does not capture the creation of an event, nor when an event is fully consumed. It will only be able to reason about events that occurred during the synchronous request to the system.
 
 If a system does not conform to these limits, then Reynard can test combinations of faults that are infeasible to combine (hence redundant), or might omit cases. Still, it will be able to explore interesting combinations of faults.
 

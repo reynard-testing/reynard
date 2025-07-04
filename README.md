@@ -3,7 +3,7 @@
 ![GitHub License](https://img.shields.io/github/license/reynard-testing/reynard)
 ![GitHub Tag](https://img.shields.io/github/v/tag/reynard-testing/reynard)
 
-Reynard is an automated fault injection testing tool for Microservice or Service-Oriented Architecture. It allows for automatic exploration of the effect of partial failures on a system interaction.
+Reynard is an automated fault injection testing tool for Microservice or Service-Oriented Architectures. It allows for the automatic exploration of the effect of combinations of partial failures on a system interaction.
 
 Reynard consists of the following primary components:
 

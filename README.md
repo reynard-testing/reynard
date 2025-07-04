@@ -33,8 +33,7 @@ void testCheckout(TrackedFaultload faultload) throws IOException {
 
       // Then - either the user payed, and the order is shipped, or neither ocurred
       // Otherwise a user would be paying for nothing, or a order is shipped without payment
-      boolean valid = (paymentProcessed && orderShipped) || (!paymentProcessed && !orderShipped);
-      assertTrue(valid);
+      assertTrue((paymentProcessed && orderShipped) || (!paymentProcessed && !orderShipped));
   }
 }
 ```

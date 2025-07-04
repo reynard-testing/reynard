@@ -3,7 +3,7 @@
 ![GitHub License](https://img.shields.io/github/license/reynard-testing/reynard)
 ![GitHub Tag](https://img.shields.io/github/v/tag/reynard-testing/reynard)
 
-Reynard is an automated fault injection testing tool for Microservice or Service-Oriented Architecture. It allows the automatic exploration of the effect of partial failures on a system interaction.
+Reynard is an automated fault injection testing tool for Microservice or Service-Oriented Architecture. It allows for automatic exploration of the effect of partial failures on a system interaction.
 
 Reynard consists of the following primary components:
 
@@ -12,7 +12,7 @@ Reynard consists of the following primary components:
 
 ## Example
 
-Considere a webshop, designed as a Microservice Architecture. For a checkout endpoint, we want to ensure that failures do not cause a payment for an order that is never shipped. Using Reynard, we can create the following test suite:
+Considere a webshop designed as a Microservice Architecture. For a checkout endpoint, we want to ensure that failures do not cause a payment for an order that is never shipped. Using Reynard, we can create the following test suite:
 
 ```java
 @FiTest
@@ -27,11 +27,11 @@ void testCheckout(TrackedFaultload faultload) throws IOException {
 
   // When - we perform a checkout for the user
   try (Response response = client.newCall(request).execute()) {
-      // Given the system state after the interaction
+      // Given - the system state after the interaction
       boolean paymentProcessed = PaymentService.getPaymentProcessedFor(userId);
       boolean orderShipped = ShippingService.getOrderShippedFor(userId);
 
-      // Then - Either the user payed, and the order is shipped, or neither ocurred
+      // Then - either the user payed, and the order is shipped, or neither ocurred
       // Otherwise a user would be paying for nothing, or a order is shipped without payment
       boolean valid = (paymentProcessed && orderShipped) || (!paymentProcessed && !orderShipped);
       assertTrue(valid);
@@ -39,13 +39,17 @@ void testCheckout(TrackedFaultload faultload) throws IOException {
 }
 ```
 
-Reynard will automatically plan different combinations of faults to verify
+Reynard will automatically plan distinct combinations of faults to verify the system's behaviour.
 
 ## Capabilities
 
 ### Precise Fault Injection
 
-Reynard's instrumentation can precisely capture the
+Reynard's instrumentation can precisely identify events in the system and injection faults for those events. For example, we can inject faults based on temporal and causal relation, e.g., the event when service `X` sends a second request to a specific endpoint of service `Y` when called by service `Z`.
+
+### Broad Applicablility
+
+Reynard can function in any system that supports modern distributed tracing, and be configured with a reverse-proxy side-card pattern (similar to another common tool in MA: service meshes).
 
 ## Installation
 
@@ -84,3 +88,15 @@ The test case must have the properties:
 - It should be **repeatable**, as the test case is run repeatedly and it should be independent of previous executions.
 - An interaction that can be subject to faults must include the headers defined in the tracke faultload. If you use `okhttp`, you can use the utility function `TrackedFaultload.newRequestBuilder` to automatically add the right headers.
 - Only one system interaction should use the faultload headers, as not to confuse the testing library. The test suite can make multiple calls to the system to prepare the system state.
+
+## Limits
+
+Reynard can work in a variety of scenarios, but is not complete or sound in the general case. As Reynard performs dynamic grey-box testing, it builds an understanding of the system's interaction, observing the effect of events. As services can behave in any kind of way, there are limits to what Reynard can understand. Below are a number of known limitations:
+
+- Reynard can handle **concurrency and asynchronicity** if each request is uniquely identifiable. Otherwise, two events might swap identifiers and their effects will be wrongly attributed.
+- Reynard assumes that the effect of an event is deterministic. For example, if a service performs two requests on an endpoint invocation, and Reynard observes that a failure of the first request omits the second request, then it assumes this always holds.
+- Reynard assumes that responses with the same status code will result in the same behaviour. Systems that use the response body to indicate specific failures will result in an unsound exploration.
+
+If a system does not conform to these limits, then Reynard can test combinations of faults that are infeasible to combine (hence redundant), or might omit cases. Still, it will be able to explore interesting combinations of faults.
+
+Please see [the readme for the testing library](lib/) what can be configured to work around some of these limitations.

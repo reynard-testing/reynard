@@ -12,7 +12,7 @@ Reynard consists of the following primary components:
 
 ## Example
 
-Considere a webshop designed as a Microservice Architecture. For a checkout endpoint, we want to ensure that failures do not cause a payment for an order that is never shipped. Using Reynard, we can create the following test suite:
+Considere a webshop designed as a Microservice Architecture. In a test environment, we have added the required instrumentation of Reynard. For the checkout endpoint, we want to ensure that failures do not cause a payment for an order that is never shipped. Using Reynard, we can create the following test suite:
 
 ```java
 @FiTest

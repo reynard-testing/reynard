@@ -4,13 +4,12 @@ import os
 from unittest import loader
 
 import numpy as np
-
-from util import get_json, find_json
-from graphs import TIMINGS_OF_INTEREST, TIMINGS_OF_INTEREST_OVER_TIME
-from graphs import render_timing_over_index, render_distribution_of_timing
-from graphs import render_queue_size_graph, render_tree
+import reynard_viz.config as config
 from call_graph import render_call_graph
-import config
+from graphs import (TIMINGS_OF_INTEREST, TIMINGS_OF_INTEREST_OVER_TIME,
+                    render_distribution_of_timing, render_queue_size_graph,
+                    render_timing_over_index, render_tree)
+from reynard_viz.util import find_json, get_json
 
 
 class DataLoader:
@@ -223,7 +222,7 @@ def output_timing_stats(timings_per_key, directory: str):
 
 def is_dir_of_interest(directory: str):
     subdirs = os.listdir(directory)
-    is_multi = "1" in subdirs or any(
+    is_multi = "1" in subdirs or "default" in subdirs or any(
         subdir.endswith("-1") for subdir in subdirs)
     return is_multi
 

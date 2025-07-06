@@ -1,107 +1,28 @@
 import argparse
 import os
-import re
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 
 from graphviz import Digraph
-from tree_viz import simplify_signature
-
-from util import find_json, get_json
-
-
-@dataclass(frozen=True)
-class Point:
-    signature: str | None
-    destination: str | None
-    count: int
-
-    def any_sig(self) -> 'Point':
-        return Point(None, self.destination, self.count)
-
-    def any_count(self) -> 'Point':
-        return Point(self.signature, self.destination, -1)
+from reynard_viz.points import Call, Point
+from reynard_viz.util import find_json, get_json
 
 
 @dataclass
 class Dependency:
-    dependent: tuple[Point]
-    dependency: list['tuple[Point]'] = field(default_factory=list)
+    dependent: Point
+    dependency: list['Point'] = field(default_factory=list)
     inclusion: bool = True
 
 
 @dataclass(frozen=True)
 class CallGraphNode:
     id: str
-    stack: tuple[Point]
+    point: Point
     children: list['CallGraphNode'] = field(default_factory=list)
     inclusion_cond: list['Dependency'] = field(default_factory=list)
     exclusion_cond: list['Dependency'] = field(default_factory=list)
-
-
-def parse_pt(x) -> tuple[Point]:
-    if isinstance(x, str):
-        return parse_point_str(x)
-    return parse_point(x)
-
-
-def parse_point_str(name: str) -> tuple[Point]:
-    if name.startswith("Behaviour["):
-        name = re.sub(r"Behaviour\[(.+)\]", r"\1", name)
-        uid_name, _ = name.split(", mode=")
-        name = uid_name.replace("uid=", "")
-    name = re.sub(r"\{.+\}", "", name)
-    parts = name.split(">")
-
-    points: list[Point] = []
-    for part in parts:
-        n, c = part.split("#")
-        count = int(c)
-        parts = n.split(":")
-        signature = None
-        if len(parts) > 1:
-            signature = simplify_signature(parts[1])
-        points.append(Point(
-            count=count,
-            signature=signature,
-            destination=parts[0],
-        ))
-    return tuple(points)
-
-
-def parse_point(p: dict) -> tuple[Point]:
-    if "mode" in p:
-        return parse_point_str(p['uid'])
-    points: list[Point] = []
-    for ip in p['stack']:
-        if ip["count"] < 0:
-            return None
-        sig = ip["signature"]
-        sig = re.sub(r"\{.+\}", "", sig)
-        points.append(Point(
-            count=ip["count"],
-            signature=simplify_signature(sig),
-            destination=ip["destination"],
-        ))
-    return tuple(points)
-
-
-def to_identifier(node: tuple[Point]) -> str:
-    pred = node[:-1]
-    pred_str = "|".join(f"{p.destination}-{p.signature}" for p in pred)
-    pt = node[-1]
-    return f"{pred_str}|{pt.signature}-{pt.destination}-{pt.count}"
-
-
-def points_match(a: tuple[Point], b: tuple[Point]) -> bool:
-    if len(a) != len(b):
-        return False
-    for i in range(len(a)):
-        if a[i].destination != b[i].destination:
-            return False
-        if a[i].signature is not None and b[i].signature is not None:
-            if a[i].signature != b[i].signature:
-                return False
-    return True
+    exclusion_relation: list[tuple[str, str]] = field(default_factory=list)
+    inclusion_relation: list[tuple[str, str]] = field(default_factory=list)
 
 
 def remove_transitive_dependencies(relations: list[tuple[str, str]]) -> list[tuple[str, str]]:
@@ -133,132 +54,183 @@ def remove_transitive_dependencies(relations: list[tuple[str, str]]) -> list[tup
     return sorted(simplified_relations)
 
 
-def build_tree_from_mapping(node: tuple[Point], parent_children: dict[tuple[Point], list[Point]], dependencies: list[Dependency]):
-    lookup_key = tuple([x.any_sig().any_count() for x in node])
-    if lookup_key in parent_children:
-        children = [build_tree_from_mapping(
-            node + (x,), parent_children, dependencies) for x in parent_children[lookup_key]]
-    else:
-        children = []
+def to_minimal_dep(deps: list[Dependency]) -> list[tuple[str, str]]:
+    # [source,destination] = 1
+    rel: dict[tuple[str, str]] = {}
+    for d in deps:
+        to_id = to_identifier(d.dependent)
+        for dep in d.dependency:
+            from_id = to_identifier(dep)
+            key = (from_id, to_id)
+            if key in rel:
+                continue
+            rel[key] = 1
+    relation = list(rel.keys())
+    # remove transitive dependencies
+    return remove_transitive_dependencies(relation)
+
+
+def to_identifier(node: Point) -> str:
+    base_str = "|".join(
+        f"{p.destination}_{p.signature}#{p.count}" for p in node.call_stack)
+    safe_str = base_str.replace("/", "_").replace("\n", "")
+    return safe_str
+
+
+def as_rel_id(id: str) -> str:
+    return f"{id}_rel"
+
+
+def build_tree_from_mapping(node: Point, children_by_parent: dict[Point, list[Call]], dependencies: list[Dependency]):
+    child_calls = children_by_parent.get(node, [])
+    children = [build_tree_from_mapping(
+        Point.from_calls(list(node.call_stack) + [x]), children_by_parent, dependencies) for x in child_calls]
 
     related_dependencies = [
-        d for d in dependencies if points_match(d.dependent[:-1], node)]
+        d for d in dependencies if d.dependent.parent().matches(node)]
+
+    exclusion_cond = [x for x in related_dependencies if not x.inclusion]
+    inclusion_cond = [x for x in related_dependencies if x.inclusion]
+
+    min_inclusion_cond = to_minimal_dep(inclusion_cond)
+    min_exclusion_cond = [r for r in to_minimal_dep(
+        exclusion_cond) if r not in min_inclusion_cond]
 
     return CallGraphNode(
         id=to_identifier(node),
-        stack=node,
+        point=node,
         children=children,
-        inclusion_cond=[x for x in related_dependencies if x.inclusion],
-        exclusion_cond=[x for x in related_dependencies if not x.inclusion],
+        exclusion_cond=exclusion_cond,
+        inclusion_cond=inclusion_cond,
+        exclusion_relation=min_exclusion_cond,
+        inclusion_relation=min_inclusion_cond,
     )
 
 
-def build_call_graph(stacks: list[tuple[Point]], dependencies: list[Dependency]) -> tuple[CallGraphNode, list[tuple[Point]]]:
-    stacks.sort(key=lambda x: len(x))
-    parent_children: dict[tuple[Point], list[Point]] = {}
-    if len(stacks) == 0 or len(stacks[0]) == 0:
+def build_call_graph(points: list[Point], dependencies: list[Dependency]) -> tuple[CallGraphNode, list[Point]]:
+    # If there is no root point, return None
+    if len(points) == 0:
         print("No points found")
-        print(stacks)
+        print(points)
         return None, []
-    root = tuple([stacks[0][0].any_count()])
-    parent_children.setdefault(root, [])
 
-    for stack in stacks:
-        point = stack[-1]
-        parent_stack = stack[:-1]
-        parent_key = tuple([x.any_sig().any_count() for x in parent_stack])
-        parent_children.setdefault(parent_key, [])
-        if point not in parent_children[parent_key]:
-            parent_children[parent_key].append(point)
+    # Sort ports by the length of their call stack
+    root = Point.from_calls([points[0].call_stack[0]])
 
-    return build_tree_from_mapping(root, parent_children, dependencies), stacks
+    children_by_parent: dict[Point, list[Call]] = {}
+    children_by_parent.setdefault(root, [])
+
+    for point in points:
+        parent = point.parent()
+        if parent is None:
+            continue
+
+        final_call = point.head()
+        children_by_parent.setdefault(parent, [])
+        if point not in children_by_parent[parent]:
+            children_by_parent[parent].append(final_call)
+
+    return build_tree_from_mapping(root, children_by_parent, dependencies), points
 
 
 def construct_call_graph(dot: Digraph, node: CallGraphNode, use_signature: bool = True, use_dependency: bool = False):
-    point = node.stack[-1]
-    label_parts = [
-        point.destination,
-    ]
+    call = node.point.head()
+
+    dot.node(node.id, label=call.destination)
+    node_rel_id = as_rel_id(node.id)
+    dot.node(node_rel_id, label="",
+             shape="point",
+             fixedsize="true",
+             width="0",
+             style="invis"
+             )
+
+    edge_label = f"#{call.count}"
+
     if use_signature:
-        label_parts.append(point.signature)
-    label = "\n".join(label_parts)
-    dot.node(node.id, label=label)
+        edge_label = f"{call.signature}{edge_label}"
+
+    dot.edge(node_rel_id, node.id, label=edge_label)
 
     for child in node.children:
         construct_call_graph(dot, child, use_signature, use_dependency)
-        dot.edge(node.id, child.id,
-                 label=f"#{child.stack[-1].count}")
+        dot.edge(node.id, as_rel_id(child.id), arrowhead="none")
 
     if not use_dependency:
         return
 
-    exclusion_relations = []
-    for exc in node.exclusion_cond:
-        for dep in exc.dependency:
-            exclusion_relations.append(
-                (to_identifier(exc.dependent), to_identifier(dep)))
+    for (from_dep, to_dep) in node.exclusion_relation:
+        x = as_rel_id(from_dep)
+        y = as_rel_id(to_dep)
+        dot.edge(x, y, style='dashed', color="gray", constraint='false')
 
-    local_exclusions = remove_transitive_dependencies(exclusion_relations)
-    for (n, e) in local_exclusions:
-        dot.edge(e, n, style='dashed', constraint='false')
-
-    inclusion_relations = []
-    for inc in node.inclusion_cond:
-        for dep in inc.dependency:
-            relation = (to_identifier(inc.dependent), to_identifier(dep))
-            if relation in exclusion_relations:
-                continue
-            inclusion_relations.append(relation)
-
-    local_inclusions = remove_transitive_dependencies(inclusion_relations)
-    for (n, e) in local_inclusions:
-        dot.edge(e, n, style='dashed', color='red', constraint='false')
+    for (from_dep, to_dep) in node.inclusion_relation:
+        x = as_rel_id(from_dep)
+        y = as_rel_id(to_dep)
+        dot.edge(x, y, color='red', constraint='false')
 
 
-def should_use_signature(pts: list[tuple[Point]]) -> bool:
+def should_use_signature(pts: list[Point]) -> bool:
+    # if two calls share the same destination and count, but have different signatures,
+    # we need to use the signature to differentiate them
     ids: dict[str, str] = {}
+
     for p in pts:
-        identifier = p[-1].destination + str(p[-1].count)
-        if identifier in ids:
-            if ids[identifier] != p[-1].signature:
-                return True
-        ids[identifier] = p[-1].signature
+        final_call = p.head()
+        key = final_call.destination + str(final_call.count)
+
+        if key in ids and ids[key] != final_call.signature:
+            return True
+
+        ids[key] = final_call.signature
+
     return False
 
 
-def render_call_graph(data: dict, output_name: str):
+def get_points_from_data(data: dict) -> list[Point]:
     points = []
     if 'details' in data and 'fault_injection_points' in data['details']:
         points = data['details']['fault_injection_points']
 
-    points = [parse_pt(p) for p in points]
-    points = [x for x in points if x != None]
+    points = [Point.parse(p) for p in points]
+    return [x for x in points if x is not None]
 
+
+def get_dependencies_from_data(data: dict) -> list[Dependency]:
     dependencies: list[Dependency] = []
     if 'implications' in data:
         if 'inclusions' in data['implications']:
             for inc in data['implications']['inclusions']['list']:
-                effect = parse_pt(inc['effect_name'])
-                causes = [parse_pt(c) for c in inc['causes_names']]
+                effect = Point.parse(inc['effect_name'])
+                causes = [Point.parse(c) for c in inc['causes_names']]
                 dependencies.append(Dependency(
                     dependent=effect,
                     dependency=causes,
                     inclusion=True,
                 ))
+
         if 'exclusions' in data['implications']:
             for exc in data['implications']['exclusions']['list']:
-                effect = parse_pt(exc['effect_name'])
-                causes = [parse_pt(c) for c in exc['causes_names']]
+                effect = Point.parse(exc['effect_name'])
+                causes = [Point.parse(c) for c in exc['causes_names']]
                 dependencies.append(Dependency(
                     dependent=effect,
                     dependency=causes,
                     inclusion=False,
                 ))
 
+    return dependencies
+
+
+def render_call_graph(data: dict, output_name: str):
+    points = get_points_from_data(data)
+    dependencies = get_dependencies_from_data(data)
+
     tree, pts = build_call_graph(points, dependencies)
     if tree is None:
         print("No call graph found")
         return
+
     use_signature = should_use_signature(pts)
     dot = Digraph(comment='Call graph', format='pdf')
     dot.attr(rankdir='LR')
@@ -271,7 +243,7 @@ def render_call_graph(data: dict, output_name: str):
     dot_dep.render(filename=output_name + "_dependency")
 
 
-def get_args():
+if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('dir_name', type=str,
                             help='Path to the experiment directory')
@@ -279,12 +251,8 @@ def get_args():
                             help='Render all directories')
 
     args = arg_parser.parse_args()
-    return args
-
-
-if __name__ == '__main__':
-    args = get_args()
     directory = args.dir_name
+
     if args.nested:
         for root, dirs, filenames in os.walk(directory):
             dirname = os.path.basename(root)

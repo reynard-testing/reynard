@@ -1,12 +1,12 @@
 import argparse
 import os
 
-import numpy as np
 import matplotlib.pyplot as plt
-from tree_viz import render_tree
+import numpy as np
+import reynard_viz.config as config
 from call_graph import render_call_graph
-from util import get_json, find_json
-import config
+from reynard_viz.util import find_json, get_json
+from tree_viz import render_tree
 
 
 def get_args():

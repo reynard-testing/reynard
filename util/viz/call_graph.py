@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import os
 from dataclasses import dataclass, field
 
@@ -54,13 +55,17 @@ def remove_transitive_dependencies(relations: list[tuple[str, str]]) -> list[tup
     return sorted(simplified_relations)
 
 
-def to_minimal_dep(deps: list[Dependency]) -> list[tuple[str, str]]:
+def to_minimal_dep(root: Point, deps: list[Dependency]) -> list[tuple[str, str]]:
     # [source,destination] = 1
     rel: dict[tuple[str, str]] = {}
+
+    def from_root(p: Point) -> Point:
+        return Point.from_calls(list(root.call_stack) + [p.head()])
+
     for d in deps:
-        to_id = to_identifier(d.dependent)
+        to_id = to_identifier(from_root(d.dependent))
         for dep in d.dependency:
-            from_id = to_identifier(dep)
+            from_id = to_identifier(from_root(dep))
             key = (from_id, to_id)
             if key in rel:
                 continue
@@ -74,7 +79,8 @@ def to_identifier(node: Point) -> str:
     base_str = "|".join(
         f"{p.destination}_{p.signature}#{p.count}" for p in node.call_stack)
     safe_str = base_str.replace("/", "_").replace("\n", "")
-    return safe_str
+    hash_str = hashlib.sha256(safe_str.encode()).hexdigest()
+    return hash_str
 
 
 def as_rel_id(id: str) -> str:
@@ -92,9 +98,10 @@ def build_tree_from_mapping(node: Point, children_by_parent: dict[Point, list[Ca
     exclusion_cond = [x for x in related_dependencies if not x.inclusion]
     inclusion_cond = [x for x in related_dependencies if x.inclusion]
 
-    min_inclusion_cond = to_minimal_dep(inclusion_cond)
-    min_exclusion_cond = [r for r in to_minimal_dep(
-        exclusion_cond) if r not in min_inclusion_cond]
+    min_inclusion_cond = to_minimal_dep(node, inclusion_cond)
+    min_exclusion_cond = to_minimal_dep(node, exclusion_cond)
+    min_exclusion_cond = [
+        r for r in min_exclusion_cond if r not in min_inclusion_cond]
 
     return CallGraphNode(
         id=to_identifier(node),
@@ -133,7 +140,7 @@ def build_call_graph(points: list[Point], dependencies: list[Dependency]) -> tup
     return build_tree_from_mapping(root, children_by_parent, dependencies), points
 
 
-def construct_call_graph(dot: Digraph, node: CallGraphNode, use_signature: bool = True, use_dependency: bool = False):
+def construct_call_graph(dot: Digraph, node: CallGraphNode, use_dependency: bool = False):
     call = node.point.head()
 
     dot.node(node.id, label=call.destination)
@@ -145,15 +152,12 @@ def construct_call_graph(dot: Digraph, node: CallGraphNode, use_signature: bool 
              style="invis"
              )
 
-    edge_label = f"#{call.count}"
-
-    if use_signature:
-        edge_label = f"{call.signature}{edge_label}"
+    edge_label = f"{call.signature}#{call.count}"
 
     dot.edge(node_rel_id, node.id, label=edge_label)
 
     for child in node.children:
-        construct_call_graph(dot, child, use_signature, use_dependency)
+        construct_call_graph(dot, child, use_dependency)
         dot.edge(node.id, as_rel_id(child.id), arrowhead="none")
 
     if not use_dependency:
@@ -168,23 +172,6 @@ def construct_call_graph(dot: Digraph, node: CallGraphNode, use_signature: bool 
         x = as_rel_id(from_dep)
         y = as_rel_id(to_dep)
         dot.edge(x, y, color='red', constraint='false')
-
-
-def should_use_signature(pts: list[Point]) -> bool:
-    # if two calls share the same destination and count, but have different signatures,
-    # we need to use the signature to differentiate them
-    ids: dict[str, str] = {}
-
-    for p in pts:
-        final_call = p.head()
-        key = final_call.destination + str(final_call.count)
-
-        if key in ids and ids[key] != final_call.signature:
-            return True
-
-        ids[key] = final_call.signature
-
-    return False
 
 
 def get_points_from_data(data: dict) -> list[Point]:
@@ -231,15 +218,14 @@ def render_call_graph(data: dict, output_name: str):
         print("No call graph found")
         return
 
-    use_signature = should_use_signature(pts)
     dot = Digraph(comment='Call graph', format='pdf')
     dot.attr(rankdir='LR')
-    construct_call_graph(dot, tree, use_signature, False)
+    construct_call_graph(dot, tree, False)
     dot.render(filename=output_name)
 
     dot_dep = Digraph(comment='Call graph with dependencies', format='pdf')
     dot_dep.attr(rankdir='LR')
-    construct_call_graph(dot_dep, tree, use_signature, True)
+    construct_call_graph(dot_dep, tree, True)
     dot_dep.render(filename=output_name + "_dependency")
 
 

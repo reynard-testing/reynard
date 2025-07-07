@@ -4,24 +4,26 @@ import os
 from unittest import loader
 
 import numpy as np
-
-from util import get_json, find_json
-from graphs import TIMINGS_OF_INTEREST, TIMINGS_OF_INTEREST_OVER_TIME
-from graphs import render_timing_over_index, render_distribution_of_timing
-from graphs import render_queue_size_graph, render_tree
-from call_graph import render_call_graph
-import config
+import reynard_viz.config as config
+from reynard_viz.call_graph import render_call_graph
+from reynard_viz.graphs import (TIMINGS_OF_INTEREST,
+                                TIMINGS_OF_INTEREST_OVER_TIME,
+                                render_distribution_of_timing,
+                                render_queue_size_graph,
+                                render_timing_over_index, render_tree)
+from reynard_viz.util import find_json, get_json
 
 
 class DataLoader:
-    def get_sub_dirs(self):
-        sub_dirs = [os.path.join(self.root_dir, d) for d in os.listdir(
-            self.root_dir) if os.path.isdir(os.path.join(self.root_dir, d))]
+    @staticmethod
+    def get_sub_dirs(root_dir: str):
+        sub_dirs = [os.path.join(root_dir, d) for d in os.listdir(
+            root_dir) if os.path.isdir(os.path.join(root_dir, d))]
         return sub_dirs
 
     def __init__(self, root_dir: str):
         self.root_dir = root_dir
-        self.sub_dirs = self.get_sub_dirs()
+        self.sub_dirs = DataLoader.get_sub_dirs(self.root_dir)
         self.generator_data = []
         self.timing_data = []
         self.search_space_data = []
@@ -61,19 +63,6 @@ class DataLoader:
             f"Loaded {len(self.generator_data) + 1} entries from {self.root_dir}")
 
 
-def get_args():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('root_dir', type=str,
-                            help='Path to the experiment directory')
-    arg_parser.add_argument('--all', action='store_true')
-    arg_parser.add_argument('--format', type=str,
-                            default='svg', choices=['svg', 'png'],
-                            help='Output format for the graphs')
-
-    args = arg_parser.parse_args()
-    return args
-
-
 def determine_inconsistencies(loader: DataLoader) -> tuple[int, set]:
     generator_data = loader.reference_generator_data
     inconcistencies_found = 0
@@ -107,7 +96,7 @@ def determine_inconsistencies(loader: DataLoader) -> tuple[int, set]:
     return inconcistencies_found, errors
 
 
-def for_dir(directory: str):
+def viz_dir(directory: str):
     loader = DataLoader(directory)
     loader.load()
 
@@ -223,14 +212,27 @@ def output_timing_stats(timings_per_key, directory: str):
 
 def is_dir_of_interest(directory: str):
     subdirs = os.listdir(directory)
-    is_multi = "1" in subdirs or any(
+    is_multi = "1" in subdirs or "default" in subdirs or any(
         subdir.endswith("-1") for subdir in subdirs)
     return is_multi
 
 
 def handle_dir(directory: str):
     if is_dir_of_interest(directory):
-        for_dir(directory)
+        viz_dir(directory)
+
+
+def get_args():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('root_dir', type=str,
+                            help='Path to the experiment directory')
+    arg_parser.add_argument('--all', action='store_true')
+    arg_parser.add_argument('--format', type=str,
+                            default='svg', choices=['svg', 'png'],
+                            help='Output format for the graphs')
+
+    args = arg_parser.parse_args()
+    return args
 
 
 if __name__ == '__main__':
@@ -240,13 +242,16 @@ if __name__ == '__main__':
 
     if args.all:
         dirs_of_interest = []
+
         for root, dirs, _ in os.walk(root_dir):
             if is_dir_of_interest(root):
                 print(f"Found {root}")
-                dirs_of_interest.extend([os.path.join(root, x)
-                                        for x in get_dirs(root)])
+                dirs_of_interest.extend(DataLoader.get_sub_dirs(root))
+        dl = DataLoader(root_dir)
+        dl.sub_dirs = dirs_of_interest
+        dl.load()
         print(f"Found {len(dirs_of_interest)} iterations in {root_dir}")
-        render_statistics(dirs_of_interest, root_dir)
+        render_statistics(dl, root_dir)
         print(f"Rendered {root_dir}")
     else:
         handle_dir(root_dir)

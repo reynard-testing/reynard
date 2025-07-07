@@ -2,7 +2,7 @@
 import re
 from dataclasses import dataclass, field
 
-from tree_viz import simplify_signature
+from reynard_viz.tree_viz import simplify_signature
 
 
 @dataclass(frozen=True)

@@ -1,6 +1,6 @@
 # Visualisation tools for Reynard
 
-This directory contains python scripts to generate various figures from reynard output data.
+This directory contains python scripts to generate various figures from Reynard output data.
 
 ## Requirements
 

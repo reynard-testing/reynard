@@ -1,9 +1,12 @@
-import os
 import argparse
-from util import get_json, find_json
-from dataclasses import dataclass, replace, field
-from tree_viz import parse_tree, combine_tree, SearchNode, get_node_label, id_to_indices
+import os
+from dataclasses import dataclass, field, replace
+
 from graphviz import Digraph
+from reynard_viz.tree_viz import (SearchNode, combine_tree, get_node_label,
+                                  id_to_indices, parse_tree)
+
+from util import find_json, get_json
 
 
 @dataclass
@@ -12,10 +15,11 @@ class CompareNode:
     n1: SearchNode = None
     n2: SearchNode = None
     children: list['CompareNode'] = field(default_factory=list)
-    
+
 
 def match(t1: SearchNode, t2: SearchNode):
     return t1.uid == t2.uid and t1.signature == t2.signature and t1.mode == t2.mode
+
 
 def build_compare_trees(t1: SearchNode, t2: SearchNode) -> CompareNode:
     base_node = replace(t1)
@@ -47,15 +51,15 @@ def build_compare_trees(t1: SearchNode, t2: SearchNode) -> CompareNode:
             n2=child2,
             children=[]
         ))
-    
 
     base_node.children = children
     return CompareNode(
-        id= t1.id + "-" + t2.id,
+        id=t1.id + "-" + t2.id,
         n1=t1,
         n2=t2,
         children=children,
     )
+
 
 def get_tree_size(node: SearchNode, shallow=False) -> int:
     size = len(id_to_indices(node.id))
@@ -63,22 +67,26 @@ def get_tree_size(node: SearchNode, shallow=False) -> int:
         return size
     return size + sum([get_tree_size(x) for x in node.children])
 
+
 def render_cmp_tree(dot: Digraph, node: CompareNode):
     if node.n1 is None:
         size = get_tree_size(node.n2)
-        dot.node(node.id, get_node_label(node.n2, True) + f"\n+{size}", color="green")
+        dot.node(node.id, get_node_label(node.n2, True) +
+                 f"\n+{size}", color="green")
         return
     if node.n2 is None:
         size = get_tree_size(node.n1)
-        dot.node(node.id, get_node_label(node.n1, True) + f"\n-{size}", color="red")
+        dot.node(node.id, get_node_label(
+            node.n1, True) + f"\n-{size}", color="red")
         return
-    
-    shallow=False
+
+    shallow = False
     size_1 = get_tree_size(node.n1, shallow)
     size_2 = get_tree_size(node.n2, shallow)
     if size_1 != size_2:
         ch = "+" if size_2 > size_1 else ""
-        dot.node(node.id, get_node_label(node.n1, True) + f"\n{ch}{size_2 - size_1}")
+        dot.node(node.id, get_node_label(
+            node.n1, True) + f"\n{ch}{size_2 - size_1}")
     else:
         dot.node(node.id, "", shape="point")
 
@@ -109,7 +117,7 @@ if __name__ == '__main__':
         tree = combine_tree(tree)
         trees.append(tree)
     cmp_tree = build_compare_trees(trees[0], trees[1])
-    
+
     dot = Digraph(comment='Faultspace Search', format='pdf')
     render_cmp_tree(dot, cmp_tree)
     base_1 = os.path.basename(dir1)

@@ -40,7 +40,7 @@ There are more parameters, but these are for debugging and experimental purposes
 
 ## Manual experimentation
 
-In some cases, it might be usefull to perform manual experimentation. For example when encountering a counter-example, this could be stored as a seperate test case.
+In some cases, it might be usefull to perform manual experimentation. For example when dealing with a counter-example, this could be stored as a seperate test case.
 The `@FiTest` decorate handles registering and unregistering a faultload for a test case. Without it, this must be done manually.
 
 For example:

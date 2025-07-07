@@ -7,9 +7,13 @@ from graphviz import Digraph
 from reynard_viz.points import Call, Point
 from reynard_viz.util import find_json, get_json
 
+# This script can be used to render the call graph of a test scenario
+# It can be used standalone or as part of a larger visualization pipeline
+
 
 @dataclass
 class Dependency:
+    """ Represents a (logical) dependency between calls. """
     dependent: Point
     dependency: list['Point'] = field(default_factory=list)
     inclusion: bool = True
@@ -17,6 +21,7 @@ class Dependency:
 
 @dataclass(frozen=True)
 class CallGraphNode:
+    """ Represents a node in the call graph. """
     id: str
     point: Point
     children: list['CallGraphNode'] = field(default_factory=list)
@@ -24,9 +29,13 @@ class CallGraphNode:
     exclusion_cond: list['Dependency'] = field(default_factory=list)
     exclusion_relation: list[tuple[str, str]] = field(default_factory=list)
     inclusion_relation: list[tuple[str, str]] = field(default_factory=list)
+    causes_fallback: bool = False
+    is_fallback: bool = False
 
 
 def remove_transitive_dependencies(relations: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    """ Simplify a relation by removing transitive dependencies."""
+
     if not relations:
         return []
 
@@ -55,7 +64,8 @@ def remove_transitive_dependencies(relations: list[tuple[str, str]]) -> list[tup
     return sorted(simplified_relations)
 
 
-def to_minimal_dep(root: Point, deps: list[Dependency]) -> list[tuple[str, str]]:
+def get_sanitized_relation(root: Point, deps: list[Dependency]) -> list[tuple[str, str]]:
+    """ Sanitize and minify a dependency relation."""
     # [source,destination] = 1
     rel: dict[tuple[str, str]] = {}
 
@@ -71,11 +81,13 @@ def to_minimal_dep(root: Point, deps: list[Dependency]) -> list[tuple[str, str]]
                 continue
             rel[key] = 1
     relation = list(rel.keys())
+
     # remove transitive dependencies
     return remove_transitive_dependencies(relation)
 
 
 def to_identifier(node: Point) -> str:
+    """ Create a consistent dotgraph identifier for a node. """
     base_str = "|".join(
         f"{p.destination}_{p.signature}#{p.count}" for p in node.call_stack)
     safe_str = base_str.replace("/", "_").replace("\n", "")
@@ -84,24 +96,40 @@ def to_identifier(node: Point) -> str:
 
 
 def as_rel_id(id: str) -> str:
+    """ The identifier for the relation node in the dot graph. Used to draw arrows between edges. """
     return f"{id}_rel"
 
 
-def build_tree_from_mapping(node: Point, children_by_parent: dict[Point, list[Call]], dependencies: list[Dependency]):
+def build_tree_from_mapping(node: Point, children_by_parent: dict[Point, list[Call]], dependencies: list[Dependency]) -> CallGraphNode:
+    """ Recursively build a node in the call graph """
+
+    # Determine children of the current node
     child_calls = children_by_parent.get(node, [])
     children = [build_tree_from_mapping(
         Point.from_calls(list(node.call_stack) + [x]), children_by_parent, dependencies) for x in child_calls]
 
+    # Determine child dependency relations
     related_dependencies = [
-        d for d in dependencies if d.dependent.parent().matches(node)]
+        d for d in dependencies if d.dependent.parent() == node]
 
     exclusion_cond = [x for x in related_dependencies if not x.inclusion]
     inclusion_cond = [x for x in related_dependencies if x.inclusion]
 
-    min_inclusion_cond = to_minimal_dep(node, inclusion_cond)
-    min_exclusion_cond = to_minimal_dep(node, exclusion_cond)
+    min_inclusion_cond = get_sanitized_relation(node, inclusion_cond)
+    min_exclusion_cond = get_sanitized_relation(node, exclusion_cond)
     min_exclusion_cond = [
         r for r in min_exclusion_cond if r not in min_inclusion_cond]
+
+    # Determine type of node
+    causes_fallback = any(
+        x.inclusion and any(
+            dep == node for dep in x.dependency
+        ) for x in dependencies
+    )
+
+    is_fallback = any(
+        x.inclusion and x.dependent == node for x in dependencies
+    )
 
     return CallGraphNode(
         id=to_identifier(node),
@@ -111,6 +139,8 @@ def build_tree_from_mapping(node: Point, children_by_parent: dict[Point, list[Ca
         inclusion_cond=inclusion_cond,
         exclusion_relation=min_exclusion_cond,
         inclusion_relation=min_inclusion_cond,
+        causes_fallback=causes_fallback,
+        is_fallback=is_fallback,
     )
 
 
@@ -124,6 +154,9 @@ def build_call_graph(points: list[Point], dependencies: list[Dependency]) -> tup
     # Sort ports by the length of their call stack
     root = Point.from_calls([points[0].call_stack[0]])
 
+    # Create a mapping of parent points to their children
+    # This is to ensure the call grap nodes are precise
+    # As the data used can be incomplete in terms of call stack
     children_by_parent: dict[Point, list[Call]] = {}
     children_by_parent.setdefault(root, [])
 
@@ -140,26 +173,40 @@ def build_call_graph(points: list[Point], dependencies: list[Dependency]) -> tup
     return build_tree_from_mapping(root, children_by_parent, dependencies), points
 
 
-def construct_call_graph(dot: Digraph, node: CallGraphNode, use_dependency: bool = False):
+def draw_call_graph(dot: Digraph, node: CallGraphNode, use_dependency: bool = False):
+    """ Draw the call graph recursively using the graphviz library. """
     call = node.point.head()
 
+    # Create a dot node for the current call
     dot.node(node.id, label=call.destination)
+
+    # Create a dot node for the relation (between calls)
     node_rel_id = as_rel_id(node.id)
-    dot.node(node_rel_id, label="",
-             shape="point",
-             fixedsize="true",
-             width="0",
-             style="invis"
-             )
+    if node.causes_fallback and use_dependency:
+        dot.node(node_rel_id, label="", shape="diamond", fixedsize="true",
+                 width="0.25", height="0.25", color="red")
+    else:
+        dot.node(node_rel_id, label="", shape="point", fixedsize="true",
+                 width="0", style="filled", fillcolor="red")
 
-    edge_label = f"{call.signature}#{call.count}"
+    # Draw an edge from the relation node to the call node
+    edge_label = f"{call.signature} #{call.count}"
+    edge_color = 'red' if node.is_fallback and use_dependency else 'black'
+    dot.edge(node_rel_id, node.id, label=edge_label, color=edge_color)
 
-    dot.edge(node_rel_id, node.id, label=edge_label)
-
+    # Draw child nodes (recursively)
     for child in node.children:
-        construct_call_graph(dot, child, use_dependency)
-        dot.edge(node.id, as_rel_id(child.id), arrowhead="none")
+        draw_call_graph(dot, child, use_dependency)
 
+    # Draw edges to child nodes
+    for child in node.children:
+        if not child.is_fallback or not use_dependency:
+            dot.edge(node.id, as_rel_id(child.id), arrowhead="none")
+        else:
+            dot.edge(node.id, as_rel_id(child.id),
+                     arrowhead="none", style="invis")
+
+    # Draw inclusion and exclusion relations
     if not use_dependency:
         return
 
@@ -175,15 +222,22 @@ def construct_call_graph(dot: Digraph, node: CallGraphNode, use_dependency: bool
 
 
 def get_points_from_data(data: dict) -> list[Point]:
+    """ Extract point data from the provided JSON data. """
     points = []
     if 'details' in data and 'fault_injection_points' in data['details']:
         points = data['details']['fault_injection_points']
 
-    points = [Point.parse(p) for p in points]
-    return [x for x in points if x is not None]
+    pts = []
+    for p in points:
+        pt = Point.parse(p)
+        if pt is not None and pt not in pts:
+            pts.append(pt)
+
+    return pts
 
 
 def get_dependencies_from_data(data: dict) -> list[Dependency]:
+    """ Extract dependency data from the provided JSON data. """
     dependencies: list[Dependency] = []
     if 'implications' in data:
         if 'inclusions' in data['implications']:
@@ -210,22 +264,25 @@ def get_dependencies_from_data(data: dict) -> list[Dependency]:
 
 
 def render_call_graph(data: dict, output_name: str):
+    # Extract data
     points = get_points_from_data(data)
     dependencies = get_dependencies_from_data(data)
 
+    # Build a call graph
     tree, pts = build_call_graph(points, dependencies)
     if tree is None:
         print("No call graph found")
         return
 
+    # Draw the call graph
     dot = Digraph(comment='Call graph', format='pdf')
     dot.attr(rankdir='LR')
-    construct_call_graph(dot, tree, False)
+    draw_call_graph(dot, tree, False)
     dot.render(filename=output_name)
 
     dot_dep = Digraph(comment='Call graph with dependencies', format='pdf')
     dot_dep.attr(rankdir='LR')
-    construct_call_graph(dot_dep, tree, True)
+    draw_call_graph(dot_dep, tree, True)
     dot_dep.render(filename=output_name + "_dependency")
 
 

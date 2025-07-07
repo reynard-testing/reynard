@@ -66,7 +66,7 @@ def parse_point_str(name: str) -> Point:
         name = re.sub(r"Behaviour\[(.+)\]", r"\1", name)
         uid_name, _ = name.split(", mode=")
         name = uid_name.replace("uid=", "")
-    name = re.sub(r"\{.+\}", "", name)
+    name = re.sub(r"\{[^}]*\}", "", name)
     parts = name.split(">")
 
     points: list[Call] = []

@@ -701,6 +701,8 @@ public class ImplicationsStoreTest {
   @Test
   public void stressTest() {
     // TIP: Analyse using JFR
+    // mvn test -Dtest=ImplicationsStoreTest#stressTest
+    // -DargLine="-XX:StartFlightRecording=filename=recording.jfr,settings=profile,sampleinterval=10ms"
     ImplicationsStore testStore = new ImplicationsStore();
     final int childrenCount = Integer.parseInt(System.getenv().getOrDefault("N", "1000"));
     var root = new EventBuilder().withPoint("R");

@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -98,5 +99,16 @@ public class AppSuiteIT {
             boolean allRunning = app.allRunning();
             assertTrue(allRunning);
         }
+    }
+
+    @Test
+    public void testSpecificFaultload() throws Exception {
+        TrackedFaultload faultload = new TrackedFaultload();
+
+        // Check if the trace is available
+        app.withFaultload(faultload, () -> {
+            testApp(faultload);
+            return null;
+        });
     }
 }

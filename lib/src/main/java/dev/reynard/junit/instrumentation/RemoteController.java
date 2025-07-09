@@ -1,6 +1,7 @@
 package dev.reynard.junit.instrumentation;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -166,6 +167,20 @@ public class RemoteController implements FaultController {
             if (!resBody.equals("OK")) {
                 throw new IOException("Failed to unregister faultload: " + resBody);
             }
+        }
+    }
+
+    @Override
+    public void withFaultload(TrackedFaultload faultload, Callable<Void> runnable) throws Exception {
+        if (apiHost == null) {
+            throw new IllegalStateException("Collector URL not set");
+        }
+
+        try {
+            registerFaultload(faultload);
+            runnable.call();
+        } finally {
+            unregisterFaultload(faultload);
         }
     }
 }

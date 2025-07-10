@@ -198,8 +198,7 @@ public class MetaSuiteIT {
 
             int expectedResponse = containsPersistent ? 500 : 200;
             int actualResponse = response.code();
-            // assertEquals(expectedResponse, actualResponse);
-            assertEquals(200, actualResponse);
+            assertEquals(expectedResponse, actualResponse);
         }
     }
 }

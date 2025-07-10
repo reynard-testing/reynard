@@ -109,10 +109,11 @@ public class StatusPropagationOracle implements FeedbackHandler, Reporter {
             bugReport.put("propagated_fault", Map.of(
                     "uid", fault.uid().toString(),
                     "mode", fault.mode().toString()));
-            // Output all inteded causes
+            // Output all intended causes
             bugReport.put("causes", entry.getValue().stream()
                     .map(f -> f.stream()
                             .map(x -> x.toString()).toList()));
+            report.add(bugReport);
         }
 
         return report;

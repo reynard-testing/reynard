@@ -2,12 +2,11 @@ package dev.reynard.junit.strategy;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.LongStream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -220,11 +219,53 @@ public class StrategyReporter {
         }
     }
 
+    public Object reportFailures() {
+        List<Map<String, Object>> failures = new ArrayList<>();
+
+        for (var failure : statistics.getFailures()) {
+            Map<String, Object> failureReport = new LinkedHashMap<>();
+            List<Map<String, Object>> faultload = failure.trackedFaultload.getFaultload().faultSet().stream()
+                    .map(x -> {
+                        Map<String, Object> faultReport = new LinkedHashMap<>();
+                        faultReport.put("point", x.uid().toString());
+                        faultReport.put("mode", x.mode().toString());
+                        return faultReport;
+                    })
+                    .toList();
+            failureReport.put("faultload", faultload);
+
+            List<Map<String, Object>> behaviour = failure.trace.getReports().stream()
+                    .map(x -> {
+                        Map<String, Object> behaviourReport = new LinkedHashMap<>();
+                        behaviourReport.put("point", x.injectionPoint.toString());
+                        behaviourReport.put("response_status", x.response.status);
+
+                        if (x.injectedFault == null) {
+                            behaviourReport.put("response_duration_ms", x.response.durationMs);
+                            if (x.hasFaultBehaviour()) {
+                                behaviourReport.put("fault", x.getFault().mode().toString());
+                            }
+                        } else {
+                            behaviourReport.put("injected_fault", x.getFault().mode().toString());
+                        }
+
+                        return behaviourReport;
+                    })
+                    .toList();
+
+            failureReport.put("observed", behaviour);
+            failures.add(failureReport);
+        }
+
+        return failures;
+    }
+
     public void report() {
         reportOn(reportSearchSpace(), "search_space");
         reportOn(reportComponents(), "components");
         reportOn(reportPrunerStats(), "pruners");
         reportOn(reportTimingStats(), "timing");
+        reportOn(reportFailures(), "failures");
 
         for (var reporter : runner.getReporters()) {
             reportOnReporter(reporter);

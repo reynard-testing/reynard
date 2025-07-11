@@ -106,9 +106,7 @@ public class StatusPropagationOracle implements FeedbackHandler, Reporter {
 
             Map<String, Object> bugReport = new LinkedHashMap<>();
             // Log observed fault wihtout causes
-            bugReport.put("propagated_fault", Map.of(
-                    "uid", fault.uid().toString(),
-                    "mode", fault.mode().toString()));
+            bugReport.put("propagated_fault", fault.asReport());
             // Output all intended causes
             bugReport.put("causes", entry.getValue().stream()
                     .map(f -> f.stream()

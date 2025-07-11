@@ -3,6 +3,7 @@ package dev.reynard.junit.faultload;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -74,5 +75,12 @@ public record Fault(
         }
 
         return allSets;
+    }
+
+    @JsonIgnore
+    public Map<String, Object> asReport() {
+        return Map.of(
+                "uid", uid().toString(),
+                "mode", mode().toString());
     }
 }

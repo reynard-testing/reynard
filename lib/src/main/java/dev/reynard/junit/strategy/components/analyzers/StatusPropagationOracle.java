@@ -110,7 +110,8 @@ public class StatusPropagationOracle implements FeedbackHandler, Reporter {
             // Output all intended causes
             bugReport.put("causes", entry.getValue().stream()
                     .map(f -> f.stream()
-                            .map(x -> x.toString()).toList()));
+                            .map(x -> x.toString()).toList())
+                    .toList());
             report.add(bugReport);
         }
 

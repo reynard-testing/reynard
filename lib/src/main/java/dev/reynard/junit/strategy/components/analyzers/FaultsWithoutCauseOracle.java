@@ -70,7 +70,9 @@ public class FaultsWithoutCauseOracle implements FeedbackHandler, Reporter {
             bugReport.put("observed_fault", fault.asReport());
             // Output all intended causes
             bugReport.put("faultload", entry.getValue().stream()
-                    .map(f -> f.stream().map(x -> x.asReport()).toList()));
+                    .map(f -> f.stream().map(x -> x.asReport()).toList())
+                    .toList());
+
             report.add(bugReport);
         }
 

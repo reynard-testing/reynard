@@ -54,6 +54,13 @@ public record Faultload(Set<Fault> faultSet) {
         return false;
     }
 
+    public List<Map<String, Object>> asReport() {
+        if (faultSet == null) {
+            return List.of();
+        }
+        return faultSet.stream().map(x -> x.asReport()).toList();
+    }
+
     public int size() {
         return faultSet.size();
     }

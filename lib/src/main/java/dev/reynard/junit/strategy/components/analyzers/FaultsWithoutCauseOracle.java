@@ -68,7 +68,7 @@ public class FaultsWithoutCauseOracle implements FeedbackHandler, Reporter {
             Map<String, Object> bugReport = new LinkedHashMap<>();
             // Log observed fault wihtout causes
             bugReport.put("observed_fault", fault.asReport());
-            // Output all inteded causes
+            // Output all intended causes
             bugReport.put("faultload", entry.getValue().stream()
                     .map(f -> f.stream().map(x -> x.asReport()).toList()));
             report.add(bugReport);

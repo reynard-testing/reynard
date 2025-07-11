@@ -314,6 +314,10 @@ public class StrategyRunner {
 
         logger.info("Analyzing result of running faultload with traceId=" + result.trackedFaultload.getTraceId());
 
+        if (!result.passed) {
+            statistics.reportFailure(result);
+        }
+
         if (!result.passed && withStopOnError) {
             logger.error("Test case failed, stopping the test suite.");
             stopDueToError = true;

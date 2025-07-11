@@ -14,6 +14,7 @@ public class StrategyStatistics {
     private Map<String, Long> generatorCount = new LinkedHashMap<>();
     private Map<String, Long> prunerCount = new LinkedHashMap<>();
     private List<Pair<String, Long>> timings = new ArrayList<>();
+    private List<FaultloadResult> failures = new ArrayList<>();
     private Set<String> tags = new LinkedHashSet<>();
     private StrategyRunner runner;
 
@@ -37,6 +38,10 @@ public class StrategyStatistics {
 
     public void incrementPruned(long count) {
         totalPruned += count;
+    }
+
+    public void reportFailure(FaultloadResult f) {
+        failures.add(f);
     }
 
     public void setSize(long size) {
@@ -85,6 +90,10 @@ public class StrategyStatistics {
 
     public long getTotalPruned() {
         return totalPruned;
+    }
+
+    public List<FaultloadResult> getFailures() {
+        return failures;
     }
 
     public void report() {

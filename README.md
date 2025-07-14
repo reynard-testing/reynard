@@ -77,6 +77,12 @@ The supported communication protocols are HTTP1.1, HTTP2 and gRPC.
 
 The controller service is available as a [Docker image](https://hub.docker.com/r/dflipse/reynard-controller). It must be configured to be aware of all deployed proxies to function correctly.
 
+
+**Local development:**
+
+A local tagged version can be build using the `make build-all` command.
+This results in two images: `fit-controller:latest` and `fit-proxy:latest`.
+
 ## Using the Test Library
 
 The testing library is available as [a Maven package](https://central.sonatype.com/artifact/dev.reynard/junit) under the `dev.reynard.junit` namespace.

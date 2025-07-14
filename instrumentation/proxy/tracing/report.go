@@ -73,7 +73,7 @@ func ReportSpanUID(report trace.TraceReport) bool {
 }
 
 func attemptGetUid(req endpoints.UidRequest) *endpoints.UidResponse {
-	queryUrl := fmt.Sprintf("http://%s/v1/proxy/get-parent-uid", queryHost)
+	queryUrl := fmt.Sprintf("http://%s/v1/proxy/get-uid", queryHost)
 	resp, err := postJSON(queryUrl, req)
 	if err != nil {
 		slog.Warn("Failed to reach controller to get UID", "error", err)

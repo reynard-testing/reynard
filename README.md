@@ -102,7 +102,7 @@ The faultload defines the current set of faults (starting with no faults), and t
 The test case must have the properties:
 
 - It should be **repeatable**, as the test case is run repeatedly and it should be independent of previous executions.
-- An interaction that can be subject to faults must include the headers defined in the tracke faultload. If you use `okhttp`, you can use the utility function `TrackedFaultload.newRequestBuilder` to automatically add the right headers.
+- An interaction that can be subject to faults must include the headers defined in the tracked faultload. If you use `okhttp`, you can use the utility function `TrackedFaultload.newRequestBuilder` to automatically add the right headers.
 - Only one system interaction should use the faultload headers, as not to confuse the testing library. The test suite can make multiple calls to the system to prepare the system state.
 
 ## Limits

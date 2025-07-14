@@ -1,5 +1,7 @@
 package dev.reynard.junit.unit.stores;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -7,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -699,17 +700,26 @@ public class ImplicationsStoreTest {
 
   @Test
   public void stressTest() {
+    // TIP: Analyse using JFR
+    // mvn test -Dtest=ImplicationsStoreTest#stressTest
+    // -DargLine="-XX:StartFlightRecording=filename=recording.jfr,settings=profile,sampleinterval=10ms"
     ImplicationsStore testStore = new ImplicationsStore();
-    final int childrenCount = 1000;
+    final int childrenCount = Integer.parseInt(System.getenv().getOrDefault("N", "1000"));
     var root = new EventBuilder().withPoint("R");
     var r = root.uid();
 
+    // R -> NX - > SX
+    // (all as siblings of R)
     var children = new ArrayList<EventBuilder>();
+    var subchildren = new ArrayList<EventBuilder>();
     for (int i = 0; i < childrenCount; i++) {
       var child = root.createChild().withPoint("N" + i);
       var subChild = child.createChild().withPoint("S" + i);
       testStore.addDownstreamRequests(child.uid(), List.of(subChild.uid()));
+      // error propagation
+      testStore.addUpstreamResponse(Set.of(new Behaviour(subChild.uid(), mode1)), new Behaviour(child.uid(), mode1));
       children.add(child);
+      subchildren.add(subChild);
     }
 
     // Happy path, include first child
@@ -721,11 +731,11 @@ public class ImplicationsStoreTest {
 
     List<Fault> faults = new ArrayList<>();
     for (int i = 0; i < childrenCount - 1; i++) {
-      faults.add(new Fault(children.get(i).uid(), mode1));
+      faults.add(new Fault(subchildren.get(i).uid(), mode1));
     }
 
     Set<Behaviour> res = new ImplicationsModel(testStore).getBehaviours(faults);
 
-    assertEquals(1 + childrenCount + 1, res.size());
+    assertEquals(childrenCount * 2 + 1, res.size());
   }
 }

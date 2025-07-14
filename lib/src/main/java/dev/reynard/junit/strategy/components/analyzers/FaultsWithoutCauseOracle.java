@@ -78,5 +78,4 @@ public class FaultsWithoutCauseOracle implements FeedbackHandler, Reporter {
 
         return report;
     }
-
 }

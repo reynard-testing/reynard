@@ -46,7 +46,9 @@ def simplify_uid(uid: str):
         p_uid = re.sub(r"\{.*\}", "", uid_parts[i])
         p1, count = p_uid.split("#")
         if ":" in p1:
-            destination, signature = p1.split(":")
+            parts = p1.split(":")
+            destination = parts[0]
+            signature = ":".join(parts[:1])
         else:
             destination = p1
         name = f"{destination}"

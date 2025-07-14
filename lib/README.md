@@ -25,16 +25,16 @@ The decorator takes a wide variety of arguments:
 
 | Parameter            | Default | Explanation                                                                                           |
 | -------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| optimizeForRetries   | false   | Assume retries are implemented correctly to reduce the search space.                                  |
-| maskPayload          | false   | Ignore the payload field in the identifier.                                                           |
-| withPredecessors     | false   | Include the predecessors field in the identifier.                                                     |
-| hashBody             | false   | Use a hash of the response body for identification.                                                   |
-| failStop             | true    | Stop testing when a failing test is found.                                                            |
-| maxTestCases         | 0       | Maximum number of test executions (0 means no limit).                                                 |
-| maxTimeS             | 0       | Maximum time for tests in seconds (0 means no limit).                                                 |
-| maxFaultloadSize     | 0       | Maximum size of faultloads (0 means no limit).                                                        |
-| initialGetTraceDelay | 0       | Delay (in miliseconds) before retrieving reports from proxies, useful for asynchronous communication. |
-| additionalComponents | []      | Array of custom components (e.g., analyzers, pruners) to add to the search strategy.                  |
+| `optimizeForRetries`   | `false`   | Assume retries are implemented correctly to reduce the search space.                                  |
+| `maskPayload`          | `false`   | Ignore the payload field in the identifier.                                                           |
+| `withPredecessors`     | `false`   | Include the predecessors field in the identifier.                                                     |
+| `hashBody`             | `false`   | Use a hash of the response body for identification.                                                   |
+| `failStop`             | `true`    | Stop testing when a failing test is found.                                                            |
+| `maxTestCases`         | `0`       | Maximum number of test executions (0 means no limit).                                                 |
+| `maxTimeS`             | `0`       | Maximum time for tests in seconds (0 means no limit).                                                 |
+| `maxFaultloadSize`     | `0`       | Maximum size of faultloads (0 means no limit).                                                        |
+| `initialGetTraceDelay` | `0`       | Delay (in miliseconds) before retrieving reports from proxies, useful for asynchronous communication. |
+| `additionalComponents` | `[]`      | Array of custom components (e.g., analyzers, pruners) to add to the search strategy.                  |
 
 There are more parameters, but these are for debugging and experimental purposes.
 

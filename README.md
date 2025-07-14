@@ -109,10 +109,10 @@ The test case must have the properties:
 
 Reynard can work in a variety of scenarios, but is not complete or sound in the general case. As Reynard performs dynamic grey-box testing, it builds an understanding of the system's interaction, observing the effect of events. As services can behave in any kind of way, there are limits to what Reynard can understand. Below are a number of known limitations:
 
-- Reynard can handle **concurrency and asynchronicity** if each request is uniquely identifiable. Otherwise, two events might swap identifiers and their effects will be wrongly attributed.
-- Reynard assumes that the effect of an event is deterministic. For example, if a service performs two requests on an endpoint invocation, and Reynard observes that a failure of the first request omits the second request, then it assumes this always holds.
-- Reynard assumes that responses with the same status code will result in the same behaviour. Systems that use the response body to indicate specific failures will result in an unsound exploration.
-- Reynard does not correctly understand asynchronous communication (such as message queues), as it does not capture the creation of an event, nor when an event is fully consumed. It will only be able to reason about events that occurred during the synchronous request to the system.
+- Reynard can handle **concurrency and asynchronicity**, but only if each request is uniquely identifiable. Otherwise, two events might swap identifiers and their effects will be wrongly attributed.
+- Reynard assumes that the **effect of an event is deterministic**. For example, if a service performs two requests on an endpoint invocation, and Reynard observes that a failure of the first request omits the second request, then it assumes this always holds. Note that concurrency can result in nondeterministic behaviour of effects.
+- Reynard assumes that responses with the **same status code will result in the same behaviour**. Systems that use the response body to indicate specific failures will result in an unsound exploration.
+- Reynard does not correctly understand asynchronous communication patterns (such as message queues), as it does not capture the creation of an event, nor when an event is fully consumed. It will only be able to reason about events that occurred during the synchronous request to the system.
 
 If a system does not conform to these limits, then Reynard can test combinations of faults that are infeasible to combine (hence redundant), or might omit cases. Still, it will be able to explore interesting combinations of faults.
 

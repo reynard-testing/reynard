@@ -50,6 +50,10 @@ Reynard's instrumentation can precisely identify events in the system and inject
 
 Reynard can function in any system that supports modern distributed tracing, can be configured with a reverse-proxy side-card pattern (similar to another common tool in MA: service meshes), and uses HTTP or gRPC for inter-service communication.
 
+### Automated Exhaustive Testing
+
+Reynard is capable of automatically discovering all fault injection points, and dynamically analyzes the system behaviour to cover all distinct combinations of faults that can input the outcome of a test scenario.
+
 ## Installation
 
 ### Adding Instrumentation

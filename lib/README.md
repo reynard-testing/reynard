@@ -3,9 +3,9 @@
 This directory contains the Java testing library code.
 The directories within the project are structured as follows:
 
-- **faultload/** contains (data) classes related to the definition of simulated faults.
-- **instrumentation/** defines the interaction with the test library and the instrumentation. Additionally, it includes utility methods to use Reynard with [Testcontainers](https://testcontainers.com/).
-- **strategy/** contains the components related to the automated test strategy.
+- [faultload](./src/main/java/dev/reynard/junit/faultload/) contains (data) classes related to the definition of simulated faults.
+- [instrumentation](./src/main/java/dev/reynard/junit/instrumentation/) defines the interaction with the test library and the instrumentation. Additionally, it includes utility methods to use Reynard with [Testcontainers](https://testcontainers.com/).
+- [strategy](./src/main/java/dev/reynard/junit/strategy/) contains the components related to the automated test strategy.
 
 In the root directory, you will find `FiTest` and `FiTestExtension` which define the JUnit 5 decorator and corresponding JUnit extension.
 

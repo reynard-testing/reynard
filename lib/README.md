@@ -64,9 +64,6 @@ public void testCheckoutCounterexample() throws IOException, URISyntaxException 
 }
 ```
 
-## Using with Testcontainers
+<!-- ## Using with Testcontainers -->
 
-## Custom components
-
-<!-- Manual experimentation -->
-<!-- Writing custom components -->
+<!-- ## Custom components -->

@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Flipse
+    given-names: Delano
+    orcid: https://orcid.org/0009-0008-4163-4743
+title: "Reynard: Practical Network-Level Fault Injection Testing of Service-Oriented Distributed Systems"
+version: 0.1.3
+# identifiers:
+#   - type: doi
+#     value:
+# date-released:

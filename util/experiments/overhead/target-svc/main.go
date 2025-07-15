@@ -18,7 +18,7 @@ func main() {
 		fmt.Fprintln(w, "OK")
 	})
 
-	http.HandleFunc("/v1/proxy/get-parent-uid", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/v1/proxy/get-uid", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		response := map[string]interface{}{
 			"uid": map[string]interface{}{

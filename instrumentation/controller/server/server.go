@@ -16,10 +16,6 @@ import (
 	"go.reynard.dev/instrumentation/shared/util"
 )
 
-var (
-	DebugMode = os.Getenv("DEBUG") == "true"
-)
-
 func StartController(port int, useOTEL bool) (err error) {
 	logLevel := util.GetLogLevel()
 
@@ -34,7 +30,6 @@ func StartController(port int, useOTEL bool) (err error) {
 	slog.Info("Logging", "level", logLevel)
 
 	slog.Info("Registered proxies", "proxyList", endpoints.ProxyList)
-	slog.Info("Debug", "enabled", DebugMode)
 	slog.Info("OTEL", "enabled", useOTEL)
 
 	// Handle SIGINT (CTRL+C) gracefully.
@@ -97,7 +92,7 @@ func newHTTPHandler() http.Handler {
 
 	handleFunc("GET /v1/trace/{trace_id}", endpoints.GetReportsByTraceID)
 	handleFunc("POST /v1/proxy/report", endpoints.ReportSpanId)
-	handleFunc("POST /v1/proxy/get-parent-uid", endpoints.GetFaultUid)
+	handleFunc("POST /v1/proxy/get-uid", endpoints.GetFaultUid)
 	handleFunc("POST /v1/faultload/register", endpoints.RegisterFaultloadsAtProxies)
 	handleFunc("POST /v1/faultload/unregister", endpoints.UnregisterFaultloadsAtProxies)
 	handleFunc("GET /v1/clear", endpoints.ClearAll)

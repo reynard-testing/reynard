@@ -20,6 +20,7 @@ import dev.reynard.junit.integration.micro.setup.ActionComposition;
 import dev.reynard.junit.integration.micro.setup.MicroBenchmarkContainer;
 import dev.reynard.junit.integration.micro.setup.ServerAction;
 import dev.reynard.junit.strategy.TrackedFaultload;
+import dev.reynard.junit.strategy.components.generators.Generators;
 import dev.reynard.junit.strategy.util.TraceAnalysis;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -120,6 +121,11 @@ public class ResiliencePatternsIT {
 
     @FiTest(optimizeForRetries = true, withPredecessors = true)
     public void testCsOpt(TrackedFaultload faultload) throws IOException {
+        testA(faultload);
+    }
+
+    @FiTest(generator = Generators.GUIDED, optimizeForRetries = true)
+    public void testGuided(TrackedFaultload faultload) throws IOException {
         testA(faultload);
     }
 

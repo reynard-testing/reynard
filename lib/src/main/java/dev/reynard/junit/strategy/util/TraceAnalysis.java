@@ -1,7 +1,6 @@
 package dev.reynard.junit.strategy.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -132,6 +131,14 @@ public class TraceAnalysis {
 
     public List<Behaviour> getBehaviours() {
         return behaviours;
+    }
+
+    public Behaviour getBehaviourByPoint(FaultUid faultUid) {
+        TraceReport report = getReportByFaultUid(faultUid);
+        if (report != null) {
+            return report.getBehaviour();
+        }
+        return null;
     }
 
     public Set<Fault> getReportedFaults() {

@@ -37,6 +37,8 @@ import dev.reynard.junit.strategy.components.analyzers.StatusAnalyzer;
 import dev.reynard.junit.strategy.components.analyzers.StatusPropagationOracle;
 import dev.reynard.junit.strategy.components.analyzers.TimingAnalyzer;
 import dev.reynard.junit.strategy.components.generators.DynamicExplorationGenerator;
+import dev.reynard.junit.strategy.components.generators.Generators;
+import dev.reynard.junit.strategy.components.generators.GuidedExplorationGenerator;
 import dev.reynard.junit.strategy.components.pruners.DynamicReductionPruner;
 import dev.reynard.junit.strategy.components.pruners.FaultloadSizePruner;
 import dev.reynard.junit.strategy.components.pruners.NoImpactPruner;
@@ -103,8 +105,6 @@ public class FiTestExtension
 
         strategy = new StrategyRunner(modes);
         strategy
-                .withComponent(new DynamicExplorationGenerator(strategy.getStore(), strategy::prune, traversalStrategy,
-                        !depthFirstSearchOrder))
                 // These components detect the necessairy info
                 // for the implications store
                 .withComponent(new HappyPathDetector())
@@ -124,6 +124,22 @@ public class FiTestExtension
                 .withComponent(new UnreachabilityPruner())
                 .withComponent(new NoImpactPruner(pruneImpactless))
                 .withComponent(new DynamicReductionPruner());
+
+        Generators generatorClass = annotation.generator();
+        switch (generatorClass) {
+            case DYNAMIC:
+                strategy.withComponent(
+                        new DynamicExplorationGenerator(strategy.getStore(), strategy::prune, traversalStrategy,
+                                !depthFirstSearchOrder));
+                break;
+            case GUIDED:
+                strategy.withComponent(
+                        new GuidedExplorationGenerator(strategy.getStore(), strategy::prune, traversalStrategy,
+                                !depthFirstSearchOrder));
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown generator type: " + generatorClass);
+        }
 
         if (annotation.maxTestCases() > 0) {
             strategy.withMaxTestCases(annotation.maxTestCases());

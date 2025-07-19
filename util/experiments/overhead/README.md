@@ -21,7 +21,7 @@ To minimize the influence of the proxied service, we provide minimal golang-base
   This introduces additional overhead, as an identifier must be determined using the controller.
 
 - _Known trace, no fault, mocked controller_ The controller is mocked.
-  Indicates the overhead introduced by the controller. \bko{?} \defc{in the sense that, when you compare it to the non-mocked version, you can see the difference}
+  Indicates the overhead introduced by the controller.
 
 - _Matching fault_ Requests contain headers for a known trace, for which there is a fault injection instruction.
   Measure the overhead of injecting faults.

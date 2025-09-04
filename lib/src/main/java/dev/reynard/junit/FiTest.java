@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import dev.reynard.junit.strategy.components.generators.Generators;
 import dev.reynard.junit.strategy.util.traversal.TraversalOrder;
 
 @Target(ElementType.METHOD) // Apply to methods
@@ -65,6 +66,9 @@ public @interface FiTest {
 
     /** The order in which points in the call graph are considered */
     TraversalOrder pointOrder() default TraversalOrder.DEPTH_FIRST_POST_ORDER;
+
+    /** Exploration generator */
+    Generators generator() default Generators.DYNAMIC;
 
     /** The order in which the search tree is visited */
     boolean depthFirstSearchOrder() default false;

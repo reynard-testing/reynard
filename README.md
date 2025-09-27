@@ -5,10 +5,14 @@
 
 Reynard is an automated fault injection testing tool for Microservice or Service-Oriented Architectures. It allows for the automatic exploration of the effect of combinations of partial failures on a system interaction.
 
-Reynard consists of the following primary components:
+Reynard consists of the following components:
 
 - [Instrumentation](instrumentation/) to allow deterministic fault injection and inspect inter-service communication: a reverse proxy is placed as a side-car to services of interest, while a controller exposes an API for fault injection testing.
 - A [testing library](lib/) to automatically explore relevant combinations of faults. This is implemented as a Java JUnit 5 decorator.
+
+#### Experiments
+
+To reproduce the experiments, please follow the steps [described here](util/experiments/README.md).
 
 ## Example
 
@@ -80,7 +84,6 @@ The supported communication protocols are HTTP1.1, HTTP2 and gRPC.
 **Controller:**
 
 The controller service is available as a [Docker image](https://hub.docker.com/r/dflipse/reynard-controller). It must be configured to be aware of all deployed proxies to function correctly.
-
 
 **Local development:**
 

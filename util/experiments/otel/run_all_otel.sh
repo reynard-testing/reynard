@@ -44,17 +44,17 @@ echo "Service is available."
 
 
 trap "exit" INT
-cd ${project_path}
+cd ${project_path}/util/experiments/otel/
 echo "returning to ${project_path}"
 
 for ((i=1; i<=iterations; i++)); do
     echo "Running iteration ${i} of ${iterations}"
 
-    OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh shipping
-    OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh recommendations
-    OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh recommendationsWithPruner
-    OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh checkout
-    OUTPUT_TAG=${i} SKIP_RESTART=1 ./util/experiments/run_full_otel.sh checkoutWithCs
+    OUTPUT_TAG=${i} SKIP_RESTART=1 ./run_full_otel.sh shipping
+    OUTPUT_TAG=${i} SKIP_RESTART=1 ./run_full_otel.sh recommendations
+    OUTPUT_TAG=${i} SKIP_RESTART=1 ./run_full_otel.sh recommendationsWithPruner
+    OUTPUT_TAG=${i} SKIP_RESTART=1 ./run_full_otel.sh checkout
+    OUTPUT_TAG=${i} SKIP_RESTART=1 ./run_full_otel.sh checkoutWithCs
 done
 
 cd ${otel_demo_path}; docker compose -f docker-compose.fit.yml down

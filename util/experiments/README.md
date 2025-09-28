@@ -83,6 +83,10 @@ cd path/to/some/dir
 # Clone Reynard
 git clone https://github.com/reynard-testing/reynard.git reynard
 
+# Setup reynard
+make build-all
+make install
+
 # Clone patched Corpus
 mkdir benchmarks
 git clone https://github.com/delanoflipse/filibuster-corpus.git benchmarks/filibuster-corpus
@@ -91,6 +95,7 @@ cd benchmarks/filibuster-corpus; git checkout reynard-changes; git pull; cd ../.
 # Run Experiments
 cd reynard
 N=10 ./util/experiments/filibuster/run_all_filibuster_n.sh <optional tag>
+USER_SER=false N=10 ./run_experiments_n.sh <tag> # For ablation
 ```
 
 Tip: for debugging purposes, you can also follow the steps to start a microbenchmark and then debug a corresponding test suite in your IDE.
@@ -98,9 +103,27 @@ Tip: for debugging purposes, you can also follow the steps to start a microbench
 #### Post-processing
 
 This will result in a number of logs placed into `results/tests/<benchmark>/<run-id>/..`.
+If you ran the results with different tags, put them into seperate directories, as the post-processing expects all subfolders to be for seperate runs of the same test scenario.
 At the end of this file is a description how these can be further processed.
 
 ## Other benchmark systems
+
+The process for the other benchmarks is similar to the Filibuster Corpus.
+We expect a same directory structure with a neighbouring benchmark directory to reynard.
+
+### Astronomy shop
+
+```sh
+# Clone Astronomy shop
+mkdir benchmarks
+git clone https://github.com/delanoflipse/opentelemetry-demo-ds-fit benchmarks/astronomy-shop
+cd benchmarks/astronomy-shop; git checkout track-changes; git pull; cd ../../
+
+# Run Experiments
+cd reynard
+N=10 ./util/experiments/otel/run_all_otel.sh <optional tag>
+USER_SER=false N=10 ./util/experiments/otel/run_all_otel.sh <tag> # For ablation
+```
 
 ## Overhead Benchmark
 

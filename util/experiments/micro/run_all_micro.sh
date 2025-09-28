@@ -7,10 +7,12 @@
 #   N: Optional, number of iterations to run (default: 10)
 # ------------------------------------------------------------------
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 base_tag=${1:-""}
 iterations=${N:-10}
 
 trap "exit" INT
+cd ${SCRIPT_DIR}
 for ((i=1; i<=iterations; i++)); do
     OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testA
     OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testCs

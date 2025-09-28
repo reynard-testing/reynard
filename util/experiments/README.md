@@ -116,13 +116,27 @@ We expect a same directory structure with a neighbouring benchmark directory to 
 ```sh
 # Clone Astronomy shop
 mkdir benchmarks
-git clone https://github.com/delanoflipse/opentelemetry-demo-ds-fit benchmarks/astronomy-shop
+git clone https://github.com/delanoflipse/opentelemetry-demo-ds-fit.git benchmarks/astronomy-shop
 cd benchmarks/astronomy-shop; git checkout track-changes; git pull; cd ../../
 
 # Run Experiments
 cd reynard
 N=10 ./util/experiments/otel/run_all_otel.sh <optional tag>
 USER_SER=false N=10 ./util/experiments/otel/run_all_otel.sh <tag> # For ablation
+```
+
+### DeathStarBench
+
+```sh
+# Clone DeathStarBench
+mkdir benchmarks
+git clone https://github.com/delanoflipse/DeathStarBench.git benchmarks/DeathStarBench
+cd benchmarks/DeathStarBench; git checkout fit-instrumentation; git pull; cd ../../
+
+# Run Experiments
+cd reynard
+N=10 ./util/experiments/hotelreservation/run_all_n.sh <optional tag>
+USER_SER=false N=10 ./util/experiments/hotelreservation/run_all_n.sh <tag> # For ablation
 ```
 
 ## Overhead Benchmark

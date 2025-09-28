@@ -1,4 +1,15 @@
 #!/bin/bash
+# ------------------------------------------------------------------
+# This script runs a single otel experiment for the astronomy-shop benchmark.
+#
+# Usage: ./run_full_otel.sh <benchmark_id> [result_tag]
+# Env:
+#   OTEL_PATH: Optional, path to the otel benchmark directory.
+#   BUILD_BEFORE: Optional, if set, rebuilds the docker images before running.
+#   SKIP_RESTART: Optional, if set, skips restarting the stack.
+#   STOP_AFTER: Optional, if set, stops the stack after the test.
+# ------------------------------------------------------------------
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../../..")
 benchmark_id=$1
@@ -7,7 +18,7 @@ result_tag=${2:+-$2}
 result_path="${project_path}/results/${benchmark_category}/${benchmark_id}"
 output_file="${result_path}/${benchmark_id}${result_tag}.log"
 
-otel_demo_path=${OTEL_PATH:-"${project_path}/../../benchmarks/opentelemetry-demo-ds-fit"}
+otel_demo_path=${OTEL_PATH:-"${project_path}/../benchmarks/astronomy-shop"}
 otel_demo_path=$(realpath "${otel_demo_path}")
 otel_demo_path=${otel_demo_path}
 

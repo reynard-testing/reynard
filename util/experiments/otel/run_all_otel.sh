@@ -1,12 +1,22 @@
 #!/bin/bash
+# ------------------------------------------------------------------
+# This script runs all otel experiments for the astronomy-shop benchmark.
+#
+# Usage: ./run_all_otel.sh [result_tag]
+# Env:
+#   OTEL_PATH: Optional, path to the otel benchmark directory.
+#   N: Optional, number of iterations to run (default: 10).
+# ------------------------------------------------------------------
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../../..")
 result_tag=${1:+-$1}
 
-otel_demo_path=${OTEL_PATH:-"${project_path}/../../benchmarks/opentelemetry-demo-ds-fit"}
+otel_demo_path=${OTEL_PATH:-"${project_path}/../benchmarks/astronomy-shop"}
 otel_demo_path=$(realpath "${otel_demo_path}")
 otel_demo_path=${otel_demo_path}
 
+iterations=${N:-10}
 
 echo "Storing in ${output_file}"
 echo "Using corpus path: ${otel_demo_path}"
@@ -36,7 +46,7 @@ echo "Service is available."
 trap "exit" INT
 cd ${project_path}
 echo "returning to ${project_path}"
-iterations=${N:-10}
+
 for ((i=1; i<=iterations; i++)); do
     echo "Running iteration ${i} of ${iterations}"
 

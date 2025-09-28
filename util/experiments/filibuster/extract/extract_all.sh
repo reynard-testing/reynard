@@ -1,7 +1,9 @@
 #!/bin/bash
-
+# ------------------------------------------------------------------
 # This script extracts all results from running Filibuster experiments
+# 
 # Usage: ./extract_all.sh <target_path>
+# ------------------------------------------------------------------
 
 # Check if a folder argument is provided
 if [ -z "$1" ]; then

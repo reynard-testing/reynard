@@ -1,4 +1,12 @@
 #!/bin/bash
+# ------------------------------------------------------------------
+# This script runs a single meta experiment.
+#
+# Usage: ./run_full_meta.sh <benchmark_id> [result_tag]
+# Env:
+#   BUILD_BEFORE: Optional, if set, builds all images before running.
+# ------------------------------------------------------------------
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../../..")
 benchmark_id=$1

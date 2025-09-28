@@ -11,6 +11,7 @@ This directory contains scripts to ease the process iteratively running Reynard 
 
 - All experiments require an installation of Docker and Docker compose.
 - All script require bash. Use either a linux distro or bash for windows.
+- Some script use [poetry](https://python-poetry.org/) as a python package manager.
 
 ## Comparison with Filibuster
 
@@ -38,15 +39,17 @@ cd path/to/some/dir
 
 # Clone patched Filibuster into ./filibuster
 git clone https://github.com/delanoflipse/filibuster-comparison.git filibuster
-cd filibuster; git checkout track-changes; git pull
+cd filibuster; git checkout track-changes; git pull; cd ../
 
 # Clone patched Corpus into ./corpus
 git clone https://github.com/delanoflipse/filibuster-corpus.git corpus
-cd corpus; git checkout baseline; git pull
+cd corpus; git checkout baseline; git pull; cd ../
 
 # Run Experiments
 cd filibuster
+poetry install
 N=10 ./run_experiments_n.sh <optional tag>
+DISABLE_DR=1 N=10 ./run_experiments_n.sh <tag> # For ablation
 ```
 
 #### Post-processing
@@ -59,11 +62,11 @@ At the bottom of this log is a summary of the results (cases and runtime). To av
 #### Setup
 
 To run Reynard on the corpus, we have to tweak the corpus to enable our instrumentation.
-The required setup and branch [is found here](https://github.com/delanoflipse/filibuster-corpus/pull/5).
+The required setup and branch [is found here](https://github.com/delanoflipse/filibuster-corpus/pull/7).
 The scripts in this repository expect this file structure:
 
 ```sh
-|- projects/reynard # (this repository)
+|- reynard # (this repository)
 |- benchmarks/filibuster # (the adjusted corpus)
 ```
 
@@ -75,13 +78,16 @@ We can then use the benchmarks in [FilibusterSuiteIT](/lib/src/test/java/dev/rey
 For ease of use (by automatically building, starting and stopping the benchmarks), we can use [the provided scripts](./filibuster/).
 
 ```sh
-cd path/to/reynard/installation
+cd path/to/some/dir
 
-# Clone patched Corpus into ./corpus
-cd ../../
+# Clone Reynard
+mkdir projects
+git clone https://github.com/reynard-testing/reynard.git projects/reynard
+
+# Clone patched Corpus
 mkdir benchmarks
-git clone https://github.com/delanoflipse/filibuster-corpus.git filibuster
-cd filibuster; git checkout ds-fit-benchmark-changes; git pull
+git clone https://github.com/delanoflipse/filibuster-corpus.git benchmarks/filibuster
+cd filibuster; git checkout reynard-changes; git pull; cd ../
 
 # Run Experiments
 cd path/to/reynard/installation

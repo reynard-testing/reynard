@@ -1,3 +1,12 @@
+#!/bin/bash
+# ------------------------------------------------------------------
+# This script runs all meta experiments in sequence.
+#
+# Usage: ./run_all_meta.sh [base_tag]
+# Env:
+#   N: Optional, number of iterations to run (default: 30)
+# ------------------------------------------------------------------
+
 base_tag=${1:-""}
 iterations=${N:-30}
 

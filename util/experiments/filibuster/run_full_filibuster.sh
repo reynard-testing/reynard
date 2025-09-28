@@ -1,4 +1,14 @@
 #!/bin/bash
+# ------------------------------------------------------------------
+# This script runs all Filibuster experiments once
+#
+# Usage: ./run_all_filibuster.sh <result_tag>
+# Env: SKIP_CINEMA (if set, skips cinema benchmarks)
+# Env: SKIP_INDUSTRY (if set, skips industry benchmarks)
+# Env: BUILD_BEFORE (if set to 1, builds before each run, default 1)
+# ------------------------------------------------------------------
+
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../../..")
 benchmark_id=$1
@@ -6,7 +16,7 @@ benchmark_category="filibuster"
 result_tag=$2
 result_path="${project_path}/results/${benchmark_category}/${benchmark_id}"
 
-corpus_path=${CORPUS_PATH:-"${project_path}/../../benchmarks/filibuster-corpus"}
+corpus_path=${CORPUS_PATH:-"${project_path}/../benchmarks/filibuster-corpus"}
 corpus_path=$(realpath "${corpus_path}")
 corpus_path=${corpus_path}/${benchmark_id}
 

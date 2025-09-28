@@ -1,4 +1,10 @@
 #!/bin/bash
+# ------------------------------------------------------------------
+# This script runs a single micro benchmark experiment.
+#
+# Usage: ./run_full_micro.sh <suite_name> <test_name> [result_tag]
+# ------------------------------------------------------------------
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../../..")
 suite_name=$1

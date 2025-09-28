@@ -1,3 +1,12 @@
+#!/bin/bash
+# ------------------------------------------------------------------
+# This script runs all micro experiments in sequence.
+#
+# Usage: ./run_all_micro.sh [base_tag]
+# Env:
+#   N: Optional, number of iterations to run (default: 10)
+# ------------------------------------------------------------------
+
 base_tag=${1:-""}
 iterations=${N:-10}
 

@@ -81,16 +81,15 @@ For ease of use (by automatically building, starting and stopping the benchmarks
 cd path/to/some/dir
 
 # Clone Reynard
-mkdir projects
-git clone https://github.com/reynard-testing/reynard.git projects/reynard
+git clone https://github.com/reynard-testing/reynard.git reynard
 
 # Clone patched Corpus
 mkdir benchmarks
-git clone https://github.com/delanoflipse/filibuster-corpus.git benchmarks/filibuster
-cd filibuster; git checkout reynard-changes; git pull; cd ../
+git clone https://github.com/delanoflipse/filibuster-corpus.git benchmarks/filibuster-corpus
+cd benchmarks/filibuster-corpus; git checkout reynard-changes; git pull; cd ../../
 
 # Run Experiments
-cd path/to/reynard/installation
+cd reynard
 N=10 ./util/experiments/filibuster/run_all_filibuster_n.sh <optional tag>
 ```
 

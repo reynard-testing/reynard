@@ -8,6 +8,7 @@ public class Env {
         OUTPUT_DIR(""),
         // Image definition for testcontainers tests
         USE_REMOTE("false"),
+        USE_SER("true"),
         CONTROLLER_IMAGE("dflipse/reynard-controller:latest"),
         PROXY_IMAGE("dflipse/reynard-proxy:latest"),
         LOG_LEVEL("info");

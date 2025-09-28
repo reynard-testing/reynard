@@ -290,7 +290,6 @@ public class FiTestExtension
             }
 
             String displayName = context.getDisplayName();
-            System.out.println();
             logger.info("Test " + displayName);
 
             faultload.timer.start("Per test");

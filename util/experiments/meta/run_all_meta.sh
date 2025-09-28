@@ -5,6 +5,7 @@
 # Usage: ./run_all_meta.sh [base_tag]
 # Env:
 #   N: Optional, number of iterations to run (default: 30)
+#   PROXY_RETRY_COUNT: Optional, number of times to retry proxy requests (default: 3)
 # ------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

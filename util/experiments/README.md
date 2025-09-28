@@ -139,9 +139,38 @@ N=10 ./util/experiments/hotelreservation/run_all_n.sh <optional tag>
 USER_SER=false N=10 ./util/experiments/hotelreservation/run_all_n.sh <tag> # For ablation
 ```
 
-## Overhead Benchmark
+### "Meta" (Reynard) and Micro Benchmarks
+
+```sh
+cd path/to/reynard
+
+# Meta
+PROXY_RETRY_COUNT=2 N=10 ./util/experiments/meta/run_all_meta.sh <optional tag>
+USER_SER=false N=10 ./util/experiments/meta/run_all_meta.sh <tag> # For ablation
+
+# Micro
+N=10 ./util/experiments/meta/run_all_meta.sh <optional tag>
+USER_SER=false N=10 ./util/experiments/meta/run_all_meta.sh <tag> # For ablation
+```
 
 # Post-processing
 
-To process the raw data for both visualisation and analytics, we provide a number of post-processing scripts in `util/viz`.
+To process the raw data for both visualisation and analytics of a Reynard run, we provide a number of post-processing scripts in `util/viz`.
 A description can be found [here](../viz/README.md).
+
+# Artifacts
+
+The [artifacts directory](./artifacts/) contains the raw logs used in the results, as well as relevant post-processing results.
+
+# Overhead Benchmark
+
+A detailed description of the overhead benchmarks can be found [in its directory](./overhead/).
+
+To run:
+
+```sh
+cd path/to/reynard
+./util/experiments/overhead/service_overhead.sh
+```
+
+This logs the output of wrk, which tracks all related results.

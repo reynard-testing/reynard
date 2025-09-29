@@ -160,7 +160,9 @@ A description can be found [here](../viz/README.md).
 
 # Artifacts
 
-The [artifacts directory](./artifacts/) contains the raw logs used in the results, as well as relevant post-processing results.
+The [artifacts repository](https://github.com/reynard-testing/experiment-artifacts) contains the raw logs used in the results, as well as relevant post-processing results.
+For ease of finding files, we've renamed some files or extracted them outside their folders.
+For example, the overhead are renamed to the single files in order of the experiments.
 
 # Overhead Benchmark
 
@@ -171,6 +173,9 @@ To run:
 ```sh
 cd path/to/reynard
 ./util/experiments/overhead/service_overhead.sh
+
+# Or run a single test
+TEST=<test-name> ./util/experiments/overhead/service_overhead.sh
 ```
 
-This logs the output of wrk, which tracks all related results.
+This logs the output of wrk in `results/overhead/<scenario>/wrk.log` files, which tracks all related results.

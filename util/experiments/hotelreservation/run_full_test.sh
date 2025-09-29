@@ -17,7 +17,7 @@ project_path=$(realpath "${parent_path}/../../..")
 benchmark_id=$1
 benchmark_category="hotelreservation"
 result_tag=$2
-result_path="${project_path}/results/${benchmark_category}/${benchmark_id}"
+result_path="${project_path}/results/logs/${benchmark_category}/${benchmark_id}"
 test_name=$benchmark_id
 
 benchmark_path=${BENCHMARK_PATH:-"${project_path}/../benchmarks/DeathStarBench/hotelReservation"}

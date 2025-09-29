@@ -15,7 +15,7 @@ parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../../..")
 benchmark_category="overhead"
 result_tag=${1:-default}
-result_path="${project_path}/results/${benchmark_category}"
+result_path="${project_path}/results/logs/${benchmark_category}"
 
 echo "Running service overhead benchmark"
 echo "Storing in ${result_path}"
@@ -82,109 +82,106 @@ sudo sysctl -w net.ipv4.tcp_tw_reuse=1
 echo "Adjusted sysctl settings for ephemeral ports"
 
 
-# --- Service overhead ---
-if [ -z "$TEST" ] || [ "$TEST" = "only_service" ]; then
+# --- 01. Direct to service, omitting proxy ---
+if [ -z "$TEST" ] || [ "$TEST" = "direct_to_service" ]; then
   start_experiment
-  # run_experiment "only_service_close" -H 'Connection: close' http://localhost:8080/
-  run_experiment "only_service" http://localhost:8080/
+  run_experiment "direct_to_service" http://localhost:8080/
 fi
 
-# --- Service overhead with proxy ---
-if [ -z "$TEST" ] || [ "$TEST" = "proxy" ]; then
+# --- 02. Direct to proxy, no headers ---
+if [ -z "$TEST" ] || [ "$TEST" = "no_headers" ]; then
   start_experiment
-  # run_experiment "proxy_close" -H 'Connection: close' http://localhost:8081/
-  run_experiment "proxy" http://localhost:8081/
+  run_experiment "no_headers" http://localhost:8081/
 fi
 
 
 # ==== Unknown trace ====
-# --- unkown trace ---
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_other_trace" ]; then
+# --- 03. Unknown trace ---
+if [ -z "$TEST" ] || [ "$TEST" = "unknown_trace" ]; then
   start_experiment
   register_payload payloads/no_matching_faults.json
-  run_experiment "proxy_other_trace" http://localhost:8081/ -H "traceparent: 00-00cbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
+  run_experiment "unknown_trace" http://localhost:8081/ -H "traceparent: 00-00cbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
 fi
 
 
 # ==== No matching faults to inject ====
-# --- No faults to inject ---
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_no_faults" ]; then
+# --- 04. No faults to inject ---
+if [ -z "$TEST" ] || [ "$TEST" = "no_matching_faults" ]; then
   start_experiment
   register_payload payloads/no_matching_faults.json
   report_parent_event
-  run_experiment "proxy_no_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
+  run_experiment "no_matching_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
 fi
 
 # --- no fault, init=1 ---
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_no_faults_init" ]; then
+if [ -z "$TEST" ] || [ "$TEST" = "no_matching_faults_init" ]; then
   start_experiment
   register_payload payloads/no_matching_faults.json
   report_parent_event
-  run_experiment "proxy_no_faults_init" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,init=1"
+  run_experiment "no_matching_faults_init" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,init=1"
+fi
+
+# --- 05. No faults to inject, dummy ---
+if [ -z "$TEST" ] || [ "$TEST" = "no_matching_faults_mocked" ]; then
+  start_experiment dummy
+  register_payload payloads/no_matching_faults.json 8050
+  run_experiment "no_matching_faults_mocked" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1"
 fi
 
 # --- No faults to inject, dummy ---
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_no_faults_dummy" ]; then
+if [ -z "$TEST" ] || [ "$TEST" = "no_matching_faults_mocked_init" ]; then
   start_experiment dummy
   register_payload payloads/no_matching_faults.json 8050
-  run_experiment "proxy_no_faults_dummy" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1"
-fi
-
-# --- No faults to inject, dummy ---
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_no_faults_dummy_init" ]; then
-  start_experiment dummy
-  register_payload payloads/no_matching_faults.json 8050
-  run_experiment "proxy_no_faults_dummy_init" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,init=1"
+  run_experiment "no_matching_faults_mocked_init" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,init=1"
 fi
 
 
 
 # ==== With faults to inject ====
-# --- With faults to inject ---
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_faults" ]; then
+# --- 06. With faults to inject ---
+if [ -z "$TEST" ] || [ "$TEST" = "matching_faults" ]; then
   start_experiment
   register_payload payloads/matching_fault.json
   report_parent_event
-  run_experiment "proxy_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
+  run_experiment "matching_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
 fi
-
 
 
 
 # ==== With numerous faults to inject ====
-# --- With faults to inject ---
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_many_faults" ]; then
+# --- 07. With faults to inject ---
+if [ -z "$TEST" ] || [ "$TEST" = "many_faults" ]; then
   start_experiment
   register_payload payloads/large_faultload.json
   report_parent_event
-  run_experiment "proxy_many_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
+  run_experiment "many_faults" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
 fi
 
-
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_no_faults_t15" ]; then
+# ==== No matching faults, different durations ====
+if [ -z "$TEST" ] || [ "$TEST" = "no_matching_faults_t15" ]; then
   export TEST_DURATION=15s
   start_experiment
   register_payload payloads/no_matching_faults.json
   report_parent_event
-  run_experiment "proxy_no_faults_t15" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
+  run_experiment "no_matching_faults_t15" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
 fi
 
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_no_faults_t30" ]; then
+if [ -z "$TEST" ] || [ "$TEST" = "no_matching_faults_t30" ]; then
   export TEST_DURATION=30s
   start_experiment
   register_payload payloads/no_matching_faults.json
   report_parent_event
-  run_experiment "proxy_no_faults_t30" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
+  run_experiment "no_matching_faults_t30" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
 fi
 
-if [ -z "$TEST" ] || [ "$TEST" = "proxy_no_faults_t120" ]; then
+if [ -z "$TEST" ] || [ "$TEST" = "no_matching_faults_t120" ]; then
   export TEST_DURATION=2m
   start_experiment
   register_payload payloads/no_matching_faults.json
   report_parent_event
-  run_experiment "proxy_no_faults_t120" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
+  run_experiment "no_matching_faults_t120" http://localhost:8081/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,fit-parent=ce086bebffb14783"
 fi
 
 
 # # --- cleanup ---
-# cleanup_experiment
+cleanup_experiment

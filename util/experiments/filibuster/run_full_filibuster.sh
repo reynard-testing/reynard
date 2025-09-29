@@ -14,7 +14,7 @@ project_path=$(realpath "${parent_path}/../../..")
 benchmark_id=$1
 benchmark_category="filibuster"
 result_tag=$2
-result_path="${project_path}/results/${benchmark_category}/${benchmark_id}"
+result_path="${project_path}/results/logs/${benchmark_category}/${benchmark_id}"
 
 corpus_path=${CORPUS_PATH:-"${project_path}/../benchmarks/filibuster-corpus"}
 corpus_path=$(realpath "${corpus_path}")
@@ -24,12 +24,12 @@ test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
 
 if [ -n "${OPT_RETRIES}" ]; then
   test_name="${test_name}Retries"
-  result_path="${project_path}/results/${benchmark_category}/${benchmark_id}-retries"
+  result_path="${project_path}/results/logs/${benchmark_category}/${benchmark_id}-retries"
 fi
 
 if [ -n "${WITH_FAULTS}" ]; then
   test_name="${test_name}Faults"
-  result_path="${project_path}/results/${benchmark_category}/${benchmark_id}-faults"
+  result_path="${project_path}/results/logs/${benchmark_category}/${benchmark_id}-faults"
 fi
 
 output_file="${result_path}/${benchmark_id}${result_tag}.log"

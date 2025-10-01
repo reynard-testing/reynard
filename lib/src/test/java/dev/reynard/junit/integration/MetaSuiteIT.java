@@ -202,4 +202,34 @@ public class MetaSuiteIT {
             assertEquals(expectedResponse, actualResponse);
         }
     }
+
+    // This is just to give a seperate name to the test with 2 retries
+    @FiTest(maxTestCases = 999, optimizeForRetries = true, withPredecessors = false)
+    public void testRegister2(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    // This is just to give a seperate name to the test with 4 retries
+    @FiTest(maxTestCases = 999, optimizeForRetries = true, withPredecessors = false)
+    public void testRegister4(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    // This is just to give a seperate name to the test with 4 retries
+    @FiTest(optimizeForRetries = false, withPredecessors = false)
+    public void testRegisterNoOpt1(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    // This is just to give a seperate name to the test with 4 retries
+    @FiTest(optimizeForRetries = false, withPredecessors = false)
+    public void testRegisterNoOpt2(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    // This is just to give a seperate name to the test with 4 retries
+    @FiTest(optimizeForRetries = false, withPredecessors = false)
+    public void testRegisterNoOpt4(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
 }

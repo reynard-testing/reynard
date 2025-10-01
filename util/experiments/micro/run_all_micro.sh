@@ -14,8 +14,8 @@ iterations=${N:-10}
 trap "exit" INT
 cd ${SCRIPT_DIR}
 for ((i=1; i<=iterations; i++)); do
-    OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testA
-    OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testCs
-    OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testOpt
-    OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testCsOpt
+    OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testA ${base_tag}${i}
+    OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testCs ${base_tag}${i}
+    OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testOpt ${base_tag}${i}
+    OUTPUT_TAG=${base_tag}${i} ./run_full_micro.sh ResiliencePatternsIT testCsOpt ${base_tag}${i}
 done

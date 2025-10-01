@@ -118,7 +118,7 @@ public class FilibusterSuiteIT {
         testNetflix(faultload);
     }
 
-    @FiTest(maskPayload = true, maxTestCases = 9999, withPredecessors = true)
+    @FiTest(maskPayload = true, maxTestCases = 99999, withPredecessors = true)
     public void testNetflixFaults(TrackedFaultload faultload) throws IOException {
         testNetflix(faultload);
     }

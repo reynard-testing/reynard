@@ -226,7 +226,7 @@ public class OTELSuiteIT {
     }
 
     @FiTest(maskPayload = true)
-    public void testCheckout1(TrackedFaultload faultload) throws IOException {
+    public void testCheckout(TrackedFaultload faultload) throws IOException {
         clearCart();
         addItemToCart("0PUK6V6EV0", 2);
         checkout(faultload);
@@ -273,7 +273,7 @@ public class OTELSuiteIT {
     }
 
     @FiTest(maskPayload = true, withPredecessors = true)
-    public void testCheckout1WithCs(TrackedFaultload faultload)
+    public void testCheckoutWithCs(TrackedFaultload faultload)
             throws IOException {
         clearCart();
         addItemToCart("0PUK6V6EV0", 2);

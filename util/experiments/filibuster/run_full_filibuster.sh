@@ -2,7 +2,7 @@
 # ------------------------------------------------------------------
 # This script runs all Filibuster experiments once
 #
-# Usage: ./run_all_filibuster.sh <result_tag>
+# Usage: ./run_all_filibuster.sh <benchmark_id> <result_tag>
 # Env: SKIP_CINEMA (if set, skips cinema benchmarks)
 # Env: SKIP_INDUSTRY (if set, skips industry benchmarks)
 # Env: BUILD_BEFORE (if set to 1, builds before each run, default 1)

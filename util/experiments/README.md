@@ -161,8 +161,8 @@ A description can be found [here](../viz/README.md).
 # Artifacts
 
 The [artifacts repository](https://github.com/reynard-testing/experiment-artifacts) contains the raw logs used in the results, as well as relevant post-processing results.
-For ease of finding files, we've renamed some files or extracted them outside their folders.
-For example, the overhead are renamed to the single files in order of the experiments.
+In particular, [this branch](https://github.com/reynard-testing/experiment-artifacts/tree/update-artifacts) contains the latest results.
+For ease of finding files, we've renamed or moved a small number files.
 
 # Overhead Benchmark
 

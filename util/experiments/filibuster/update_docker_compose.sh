@@ -1,10 +1,18 @@
+#!/bin/bash
+# ------------------------------------------------------------------
+# This script updates docker-compose files for Filibuster experiments.
+#
+# Usage: ./update_docker_compose.sh [corpus_path]
+#   corpus_path: Optional. Path to the Filibuster corpus directory.
+#                Defaults to ../filibuster-corpus relative to project root.
+# ------------------------------------------------------------------
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../../..")
-corpus_path=${1:-"${project_path}/../../benchmarks/filibuster-corpus"}
+corpus_path=${CORPUS_PATH:-"${project_path}/../filibuster-corpus"}
 corpus_path=$(realpath "${corpus_path}")
 
 echo "Using corpus path: ${corpus_path}"
-
 
 convert_docker_compose() {
     local service_name=$1

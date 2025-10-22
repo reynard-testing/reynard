@@ -1,12 +1,22 @@
 #!/bin/bash
+# ------------------------------------------------------------------
+# This script runs all Filibuster experiments once
+#
+# Usage: ./run_all_filibuster.sh <benchmark_id> <result_tag>
+# Env: SKIP_CINEMA (if set, skips cinema benchmarks)
+# Env: SKIP_INDUSTRY (if set, skips industry benchmarks)
+# Env: BUILD_BEFORE (if set to 1, builds before each run, default 1)
+# ------------------------------------------------------------------
+
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../../..")
 benchmark_id=$1
 benchmark_category="filibuster"
 result_tag=$2
-result_path="${project_path}/results/${benchmark_category}/${benchmark_id}"
+result_path="${project_path}/results/logs/${benchmark_category}/${benchmark_id}"
 
-corpus_path=${CORPUS_PATH:-"${project_path}/../../benchmarks/filibuster-corpus"}
+corpus_path=${CORPUS_PATH:-"${project_path}/../benchmarks/filibuster-corpus"}
 corpus_path=$(realpath "${corpus_path}")
 corpus_path=${corpus_path}/${benchmark_id}
 
@@ -14,12 +24,12 @@ test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
 
 if [ -n "${OPT_RETRIES}" ]; then
   test_name="${test_name}Retries"
-  result_path="${project_path}/results/${benchmark_category}/${benchmark_id}-retries"
+  result_path="${project_path}/results/logs/${benchmark_category}/${benchmark_id}-retries"
 fi
 
 if [ -n "${WITH_FAULTS}" ]; then
   test_name="${test_name}Faults"
-  result_path="${project_path}/results/${benchmark_category}/${benchmark_id}-faults"
+  result_path="${project_path}/results/logs/${benchmark_category}/${benchmark_id}-faults"
 fi
 
 output_file="${result_path}/${benchmark_id}${result_tag}.log"

@@ -1,11 +1,17 @@
 #!/bin/bash
+# ------------------------------------------------------------------
+# This script runs a single micro benchmark experiment.
+#
+# Usage: ./run_full_micro.sh <suite_name> <test_name> [result_tag]
+# ------------------------------------------------------------------
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}/../../..")
 suite_name=$1
 test_name=$2
 benchmark_category="micro"
 result_tag=${3:+-$3}
-result_path="${project_path}/results/${benchmark_category}/${suite_name}#${test_name}"
+result_path="${project_path}/results/logs/${benchmark_category}/${suite_name}#${test_name}"
 output_file="${result_path}/${suite_name}#${test_name}${result_tag}.log"
 
 echo "Running ${benchmark_category} benchmark: ${benchmark_id} (${test_name})"

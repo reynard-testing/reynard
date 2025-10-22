@@ -1,9 +1,20 @@
 #!/bin/bash
+# ------------------------------------------------------------------
+# This script runs all hotel reservation benchmarks multiple times.
+#
+# Usage: ./run_all_n.sh <result_tag>
+# Env: N (number of iterations, default 10)
+# Env: BUILD_BEFORE (if set to 1, builds before running, default 0)
+# Env: BENCHMARK_PATH (path to benchmarks, optional)
+# Env: PROXY_IMAGE (proxy image to use, default "fit-proxy:latest")
+# Env: CONTROLLER_IMAGE (controller image to use, default "fit-controller:latest")
+# ------------------------------------------------------------------
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}")
 project_root_path=$(realpath "${parent_path}/../../..")
 
-benchmark_path=${CORPUS_PATH:-"${project_root_path}/../../benchmarks/DeathStarBench/hotelReservation"}
+benchmark_path=${BENCHMARK_PATH:-"${project_root_path}/../benchmarks/DeathStarBench/hotelReservation"}
 benchmark_path=$(realpath "${benchmark_path}")
 
 result_tag=${1:+-$1}

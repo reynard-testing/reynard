@@ -1,15 +1,18 @@
 #!/bin/bash
+# ------------------------------------------------------------------
+# This script runs all Filibuster experiments
+# 
+# Usage: ./run_all_filibuster_n.sh <result_tag>
+# Env: N (number of iterations, default 30)
+# Env: SKIP_CINEMA (if set, skips cinema benchmarks)
+# Env: SKIP_INDUSTRY (if set, skips industry benchmarks)
+# ------------------------------------------------------------------
+
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 project_path=$(realpath "${parent_path}")
 
 result_tag=${1:+-$1}
 iterations=${N:-30}
-
-export STOP_AFTER=1
-export BUILD_BEFORE=${BUILD_BEFORE:-1}
-
-cd ${project_path}
-trap "exit" INT
 
 run_n_benchmark() {
     local benchmark_id=$1
@@ -38,6 +41,9 @@ run_n_benchmark() {
         env ${extra_env} OUTPUT_TAG="${iteration_tag}" SKIP_RESTART=${skip_restart} BUILD_BEFORE=${build_before} STOP_AFTER=${stop_after} ./run_full_filibuster.sh ${benchmark_id} ${iteration_tag}
     done
 }
+
+cd ${project_path}
+trap "exit" INT
 
 if [ -z "${SKIP_CINEMA}" ]; then
     run_n_benchmark "cinema-1"

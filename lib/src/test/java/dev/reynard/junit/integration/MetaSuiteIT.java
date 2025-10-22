@@ -1,12 +1,13 @@
 package dev.reynard.junit.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -200,5 +201,35 @@ public class MetaSuiteIT {
             int actualResponse = response.code();
             assertEquals(expectedResponse, actualResponse);
         }
+    }
+
+    // This is just to give a seperate name to the test with 2 retries
+    @FiTest(maxTestCases = 999, optimizeForRetries = true, withPredecessors = false)
+    public void testRegister2(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    // This is just to give a seperate name to the test with 4 retries
+    @FiTest(maxTestCases = 999, optimizeForRetries = true, withPredecessors = false)
+    public void testRegister4(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    // This is just to give a seperate name to the test with 4 retries
+    @FiTest(optimizeForRetries = false, withPredecessors = false)
+    public void testRegisterNoOpt1(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    // This is just to give a seperate name to the test with 4 retries
+    @FiTest(optimizeForRetries = false, withPredecessors = false)
+    public void testRegisterNoOpt2(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
+    }
+
+    // This is just to give a seperate name to the test with 4 retries
+    @FiTest(optimizeForRetries = false, withPredecessors = false)
+    public void testRegisterNoOpt4(TrackedFaultload faultload) throws IOException {
+        testRegister(faultload);
     }
 }

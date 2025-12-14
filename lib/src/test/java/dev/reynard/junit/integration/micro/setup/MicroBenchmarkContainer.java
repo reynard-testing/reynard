@@ -77,7 +77,7 @@ public class MicroBenchmarkContainer extends GenericContainer<MicroBenchmarkCont
     }
 
     public MicroBenchmarkContainer(ServiceType serviceType) {
-        super(new ImageFromDockerfile("fit-microbenchmark-" + serviceType.getServiceName())
+        super(new ImageFromDockerfile("local/fit-microbenchmark-" + serviceType.getServiceName())
                 .withFileFromPath(IMAGE_BUILD_CONTEXT, IMAGE_PATH)
                 .withBuildArg("SERVICE_NAME", serviceType.getServiceName()));
         withExposedPorts(8080);

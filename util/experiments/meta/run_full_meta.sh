@@ -30,4 +30,7 @@ fi
 # Run tests
 cd ${project_path}
 mkdir -p ${result_path}
-mvn clean test -Dtest=MetaSuiteIT#test${test_name} | tee ${output_file}
+
+PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
+CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
+PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} mvn clean test -Dtest=MetaSuiteIT#test${test_name} | tee ${output_file}

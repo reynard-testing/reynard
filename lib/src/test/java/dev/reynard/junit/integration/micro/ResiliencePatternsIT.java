@@ -65,7 +65,7 @@ public class ResiliencePatternsIT {
             new ServerAction(MicroBenchmarkContainer.call(serviceC.getHostname()), "Default value for C"),
             // Call E
             new ServerAction(MicroBenchmarkContainer.call(serviceE.getHostname()),
-                    // Call H as fallback
+                    // Call G as fallback
                     new ServerAction(MicroBenchmarkContainer.call(serviceG.getHostname()))));
 
     @Container

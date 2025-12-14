@@ -25,6 +25,7 @@ public class InstrumentedApp extends RemoteController {
     public Jaeger jaeger = null;
     public String jaegerHost = "fit-jaeger";
     public int jaegerPort = 16686;
+    public String jaegerInspectUrl;
 
     @SuppressWarnings("resource")
     public InstrumentedApp() {
@@ -68,6 +69,17 @@ public class InstrumentedApp extends RemoteController {
         var newProxy = new InstrumentedService(service, hostname, port, this);
         this.proxies.add(newProxy);
         controller.withEnv("PROXY_LIST", String.join(",", getProxyList()));
+
+        if (jaeger != null) {
+            // Add OTEL environment variables to the instrumented service
+            service.withEnv("OTEL_TRACES_EXPORTER", "otlp");
+            service.withEnv("OTEL_LOGS_EXPORTER", "none");
+            service.withEnv("OTEL_METRICS_EXPORTER", "none");
+            service.withEnv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc");
+            service.withEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://" + jaegerHost + ":4317");
+            service.withEnv("OTEL_SERVICE_NAME", hostname);
+        }
+
         return newProxy;
     }
 
@@ -98,6 +110,12 @@ public class InstrumentedApp extends RemoteController {
 
         int localControllerPort = controller.getMappedPort(5000);
         controllerInspectUrl = "http://localhost:" + localControllerPort;
+
+        if (jaeger != null) {
+            int localJaegerPort = jaeger.getMappedPort(16686);
+            jaegerInspectUrl = "http://localhost:" + localJaegerPort;
+        }
+
         this.apiHost = controllerInspectUrl;
     }
 

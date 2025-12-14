@@ -8,12 +8,7 @@ public class ControllerService extends GenericContainer<ControllerService> {
     public static final String IMAGE;
 
     static {
-        boolean useHosted = Env.getEnvBool(Env.Keys.USE_REMOTE);
-        if (useHosted) {
-            IMAGE = Env.getEnv(Env.Keys.CONTROLLER_IMAGE);
-        } else {
-            IMAGE = "fit-controller:latest";
-        }
+        IMAGE = Env.getEnv(Env.Keys.CONTROLLER_IMAGE);
     }
 
     public ControllerService() {

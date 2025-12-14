@@ -10,6 +10,7 @@ This directory contains scripts to ease the process iteratively running Reynard 
 - All experiments require an installation of Docker and Docker compose.
 - All script require bash. Use either a linux distro or bash for windows.
 - Some script use [poetry](https://python-poetry.org/) as a python package manager.
+- The experiments use the local images of the proxy and controller. Run `make build-all` in the project root to generate them.
 
 ## Artifacts
 
@@ -166,6 +167,7 @@ USER_SER=false N=1 ./util/experiments/meta/run_all_meta.sh <tag> # For ablation
 N=10 ./util/experiments/meta/run_all_meta.sh <optional tag>
 USER_SER=false N=1 ./util/experiments/meta/run_all_meta.sh <tag> # For ablation
 ```
+
 Tip: these benchmarks can also be run using
 
 ## Overhead Benchmark

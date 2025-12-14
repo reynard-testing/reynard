@@ -6,8 +6,6 @@ public class Env {
         // Tag for the image
         OUTPUT_TAG("default"),
         OUTPUT_DIR(""),
-        // Image definition for testcontainers tests
-        USE_REMOTE("false"),
         USE_SER("true"),
         CONTROLLER_IMAGE("dflipse/reynard-controller:latest"),
         PROXY_IMAGE("dflipse/reynard-proxy:latest"),

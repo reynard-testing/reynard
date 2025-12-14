@@ -1,0 +1,83 @@
+{
+  "@context": "https://w3id.org/codemeta/3.0",
+  "type": "SoftwareSourceCode",
+  "author": [
+    {
+      "id": "https://orcid.org/0009-0008-4163-4743",
+      "type": "Person",
+      "affiliation": {
+        "type": "Organization",
+        "name": "Delft University of Technology"
+      },
+      "email": "d.e.flipse@student.tudelft.nl",
+      "familyName": "Flipse",
+      "givenName": "Delano",
+      "address": {
+        "addressLocality": "Delft",
+        "addressCountry": "Netherlands"
+      }
+    },
+    {
+      "id": "https://orcid.org/0009-0009-8170-3181",
+      "type": "Person",
+      "affiliation": {
+        "type": "Organization",
+        "name": "ASML"
+      },
+      "email": "hakan.simsek@asml.com",
+      "familyName": "Simsek",
+      "givenName": "Hakan",
+      "address": {
+        "addressLocality": "Veldhoven",
+        "addressCountry": "Netherlands"
+      }
+    },
+    {
+      "id": "https://orcid.org/0000-0001-9143-3984",
+      "type": "Person",
+      "affiliation": {
+        "type": "Organization",
+        "name": "Delft University of Technology"
+      },
+      "email": "j.decouchant@tudelft.nl",
+      "familyName": "Decouchant",
+      "givenName": "Jérémie",
+      "address": {
+        "addressLocality": "Delft",
+        "addressCountry": "Netherlands"
+      }
+    },
+    {
+      "id": "https://orcid.org/0000-0002-7038-165X",
+      "type": "Person",
+      "affiliation": {
+        "type": "Organization",
+        "name": "Delft University of Technology"
+      },
+      "email": "b.ozkan@tudelft.nl",
+      "familyName": "Kulahcioglu Ozkan",
+      "givenName": "Burcu",
+      "address": {
+        "addressLocality": "Delft",
+        "addressCountry": "Netherlands"
+      }
+    }
+  ],
+  "codeRepository": "https://github.com/reynard-testing/reynard",
+  "dateCreated": "2025-01-22",
+  "dateModified": "2025-10-22",
+  "datePublished": "2025-07-15",
+  "description": "Automated Network-Level Fault Injection Testing of Microservice Architectures",
+  "downloadUrl": "https://github.com/reynard-testing/reynard/releases/tag/v0.2.1-experiments",
+  "keywords": [
+    "microservice architectures",
+    "automated testing",
+    "fault injection"
+  ],
+  "license": "https://spdx.org/licenses/Apache-2.0",
+  "name": "Reynard",
+  "programmingLanguage": ["Java", "Go", "Python"],
+  "relatedLink": "http://reynard.dev/",
+  "releaseNotes": "Minor patches and tweaks, and improved documentation",
+  "version": "0.2.1"
+}

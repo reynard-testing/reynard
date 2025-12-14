@@ -4,8 +4,33 @@ authors:
   - family-names: Flipse
     given-names: Delano
     orcid: https://orcid.org/0009-0008-4163-4743
-title: "Reynard: Practical Network-Level Fault Injection Testing of Service-Oriented Distributed Systems"
-version: 0.1.3
+    email: d.e.flipse@student.tudelft.nl
+    affiliation: Delft University of Technology
+    city: Delft
+    country: Netherlands
+  - family-names: Simsek
+    given-names: Hakan
+    orcid: https://orcid.org/0009-0009-8170-3181
+    email: hakan.simsek@asml.com
+    affiliation: ASML
+    city: Veldhoven
+    country: Netherlands
+  - family-names: Decouchant
+    given-names: Jérémie
+    orcid: https://orcid.org/0000-0001-9143-3984
+    email: j.decouchant@tudelft.nl
+    affiliation: Delft University of Technology
+    city: Delft
+    country: Netherlands
+  - family-names: Kulahcioglu Ozkan
+    given-names: Burcu
+    orcid: https://orcid.org/0000-0002-7038-165X
+    email: b.ozkan@tudelft.nl
+    affiliation: Delft University of Technology
+    city: Delft
+    country: Netherlands
+title: "Automated Network-Level Fault Injection Testing of Microservice Architectures"
+version: 0.2.1
 url: "https://github.com/reynard-testing/reynard"
 date-released: 2025-07-15
 #preferred-citation:

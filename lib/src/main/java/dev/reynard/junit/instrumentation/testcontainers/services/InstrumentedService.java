@@ -19,12 +19,7 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
     private final int randomId;
 
     static {
-        boolean useHosted = Env.getEnvBool(Env.Keys.USE_REMOTE);
-        if (useHosted) {
-            IMAGE = Env.getEnv(Env.Keys.PROXY_IMAGE);
-        } else {
-            IMAGE = "fit-proxy:latest";
-        }
+        IMAGE = Env.getEnv(Env.Keys.PROXY_IMAGE);
     }
 
     public InstrumentedService(GenericContainer<?> service, String hostname, int port, InstrumentedApp app) {
@@ -38,7 +33,6 @@ public class InstrumentedService extends GenericContainer<InstrumentedService> {
         this.service = service;
 
         this.dependsOn(service)
-                .dependsOn(service)
                 .withEnv("PROXY_HOST", "0.0.0.0:" + port)
                 .withEnv("PROXY_TARGET", "http://" + this.serviceHostname + ":" + port)
                 .withEnv("CONTROLLER_HOST", app.controllerHost + ":" + app.controllerPort)

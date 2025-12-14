@@ -7,10 +7,21 @@ This directory contains scripts to ease the process iteratively running Reynard 
 
 ## Requirements
 
-- All experiments require an installation of Docker and Docker compose.
-- All script require bash. Use either a linux distro or bash for windows.
+### Software Requirements
+
+- All experiments require an installation of `Docker` and `Docker Compose`.
+- All script require `bash`. Use a linux distro or bash for windows.
 - Some script use [poetry](https://python-poetry.org/) as a python package manager.
 - The experiments use the local images of the proxy and controller. Run `make build-all` in the project root to generate them.
+
+### Hardware Requirements
+
+As the benchmarks require running a (benchmark) microservice application on a single machine there are hardware requirements, especially for the Astronomy Shop benchmark. We were able to reproduce the experiments on the following hardware specs:
+
+| CPU                                  | Memory    | Used in experiments: |
+| ------------------------------------ | --------- | -------------------- |
+| AMD Ryzen 7 3700X (8 cores @3.6 GHz) | 32GB DDR4 | ✔                   |
+| Intel i7-6700HQ (4 cores @3.4 GHz)   | 16GB DDR4 |                      |
 
 ## Artifacts
 

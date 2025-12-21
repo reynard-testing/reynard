@@ -10,6 +10,9 @@ This directory contains scripts to ease the process iteratively running Reynard 
 ### Software Requirements
 
 - All experiments require an installation of `Docker` and `Docker Compose`.
+
+The following are required if you don't use the provided docker files:
+
 - All script require `bash`. Use a linux distro or bash for windows.
 - Some script use [poetry](https://python-poetry.org/) as a python package manager.
 - The experiments use the local images of the proxy and controller. Run `make build-all` in the project root to generate them.
@@ -55,18 +58,24 @@ As the logs by Filibuster are quite hefty, we ran them as minimal logs as possib
 
 #### Experiments
 
-To run the whole Filibuster suite, run:
+To run filibuster on the complete corpus, either run the docker image:
 
-```sh
+```bash
+cd ./util/experiments/filibuster/baseline
+docker build -t filibuster-baseline .
+docker run --privileged -v ${PWD}/results:/comparison/filibuster/results filibuster-baseline
+```
+
+Or run it locally:
+
+```bash
 cd path/to/some/empty/dir
 
 # Clone patched Filibuster into ./filibuster
-git clone https://github.com/delanoflipse/filibuster-comparison.git filibuster
-cd filibuster; git checkout track-changes; git pull; cd ../
+git clone -b track-changes --single-branch https://github.com/delanoflipse/filibuster-comparison.git filibuster
 
 # Clone patched Corpus into ./corpus
-git clone https://github.com/delanoflipse/filibuster-corpus.git corpus
-cd corpus; git checkout baseline; git pull; cd ../
+git clone -b baseline --single-branch https://github.com/delanoflipse/filibuster-corpus.git corpus
 
 # Run Experiments
 cd filibuster
@@ -81,6 +90,16 @@ As a result, this will create a dump of logs from the Filibuster runs in the for
 At the bottom of this log is a summary of the results (cases and runtime). To avoid having to extract these values manually, we include a small extract script that extracts these values. These are found [here](./filibuster/extract/).
 
 ### Running Reynard on the Corpus
+
+To run Reynard on the complete corpus (and all other benchmarks), you can use the docker image as follows:
+
+```bash
+cd ./util/experiments/
+docker build -t reynard-experiments .
+docker run --privileged -v ${PWD}/results:/experiments/reynard/results reynard-experiments
+```
+
+Alternatively, in order to run Reynard locally, follow the steps below.
 
 #### Setup
 

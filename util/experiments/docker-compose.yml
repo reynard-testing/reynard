@@ -1,0 +1,30 @@
+services:
+  runner:
+    build: .
+    privileged: true
+    cgroup: host
+    profiles:
+      - reynard
+    volumes:
+      - docker-root:/var/lib/docker
+      - ./results:/results
+      - benchmark-data:/experiments/benchmarks/
+      - ./docker-entrypoint.sh:/experiments/docker-entrypoint.sh
+    environment:
+      - N=10
+      # - TAG=experiment1
+  baseline-runner:
+    profiles:
+      - filibuster-comparison
+    build: ./filibuster/baseline/
+    privileged: true
+    cgroup: host
+    volumes:
+      - docker-root:/var/lib/docker
+      - ./filibuster/baseline/results:/comparison/filibuster/results
+    environment:
+      - N=10
+      # - TAG=experiment1
+volumes:
+  benchmark-data:
+  docker-root:

@@ -15,8 +15,6 @@ poetry install
 
 ## Usage
 
-Use `poetry shell` to enter the virtual env.
-
 ```bash
-python converter.py <path/to/docker.compose.yml>
+poetry run converter.py <path/to/docker.compose.yml>
 ```

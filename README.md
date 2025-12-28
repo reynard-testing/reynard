@@ -8,7 +8,7 @@ Reynard is an automated fault injection testing tool for Microservice or Service
 Reynard consists of the following components:
 
 - [Instrumentation](instrumentation/) to allow deterministic fault injection and inspect inter-service communication: a reverse proxy is placed as a side-car to services of interest, while a controller exposes an API for fault injection testing.
-- A [testing library](lib/) to automatically explore relevant combinations of faults. This is implemented as a Java JUnit 5 decorator.
+- A [testing library](library/) to automatically explore relevant combinations of faults. This is implemented as a Java JUnit 5 decorator.
 
 ### Experiments
 
@@ -46,7 +46,7 @@ Reynard will automatically plan distinct combinations of faults to verify the sy
 
 ### Trying it out
 
-The simplest way to see Reynard in action is to run the [ExampleSuiteIT.java](lib/src/test/java/dev/reynard/junit/integration/micro/ExampleSuiteIT.java). Check out [the directory's readme](./lib/src/test/java/dev/reynard/junit/integration/micro/) with instructions on how to run it.
+The simplest way to see Reynard in action is to run the [ExampleSuiteIT.java](/library/src/test/java/dev/reynard/junit/integration/micro/ExampleSuiteIT.java). Check out [the directory's readme](/library/src/test/java/dev/reynard/junit/integration/micro/README.md) with instructions on how to run it.
 
 ## Capabilities
 
@@ -95,7 +95,7 @@ The exploration algorithm is implemented in Java.
 You can apply Reynard even if your microservice system is not build Java.
 The testing library is available as a [Maven package](https://central.sonatype.com/artifact/dev.reynard/junit) under the `dev.reynard.junit` namespace.
 
-More details can be found in the [`/lib` directory](./lib/).
+More details can be found in the [`/library` directory](/library/).
 
 ### 2.1 Enabling Fault Injection
 
@@ -130,8 +130,8 @@ Reynard can work in a variety of scenarios, but is not complete or sound in the 
 
 ### Expected effects of limitations
 
-- If request identifiers the system is non-deterministic, then Reynard will try to search an ever growing number of fault injection points, and will never inject the right faults. To resolve this, Reynard [can be configured](./lib/README.md#configuration) to be less precise in its identifiers.
+- If request identifiers the system is non-deterministic, then Reynard will try to search an ever growing number of fault injection points, and will never inject the right faults. To resolve this, Reynard [can be configured](/library/README.md#configuration) to be less precise in its identifiers.
 - If the effects of requests are non-deterministic. Reynard will wrongly infer the effects of an event. As a result, it will visit either combinations of faults that cannot be combined (false-positives), or omit combinations of faults that it inferred to be redundant (false-negatives). Hence, Reynard can be slower, and/or inexhaustive.
 - If te responses with the same status code have different meanings, this will cause non-deterministic effects, which results in the behavior as described above.
 
-Please see [the readme for the testing library](lib/) what can be configured to work around some of these limitations.
+Please see [the readme for the testing library](/library/) what can be configured to work around some of these limitations.

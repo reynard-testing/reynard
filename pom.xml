@@ -15,7 +15,7 @@
   <inceptionYear>2025</inceptionYear>
 
   <modules>
-    <module>lib</module>
+    <module>library</module>
   </modules>
 
   <properties>

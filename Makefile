@@ -9,7 +9,7 @@ build-proxy:
 build-all: build-controller build-proxy
 
 run-test:
-	cd ./lib; mvn test
+	cd ./library; mvn test
 
 install:
 	mvn install -Dmaven.test.skip

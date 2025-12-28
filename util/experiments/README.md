@@ -31,7 +31,7 @@ As the benchmarks require running a (benchmark) microservice application on a si
 
 If you are only interested in the raw data used to generate the results, please look at the [artifacts repository](https://github.com/reynard-testing/experiment-artifacts).
 It contains the raw logs used in the results, as well as relevant post-processing results.
-Not that, for ease of finding files, we've renamed or moved a small number of files.
+Note that, for ease of finding files, we've renamed or moved a small number of files.
 
 ## Post-processing
 
@@ -48,14 +48,14 @@ We have three experiments that we use in the results, which we detail in the fol
 
 ## 1. Running Reynard on different benchmarks
 
-The scripts in this experiment repository expect this file structure:
+### 1.1. Setup Reynard
+
+The experiment scripts in this repository expect this file structure:
 
 ```sh
 |- reynard # (this repository)
 |- benchmarks/ # (the different benchmark systems)
 ```
-
-### 1.1. Setup Reynard
 
 To use Reynard for the experiments, ensure this repository is checked out locally, and that its built and installed:
 

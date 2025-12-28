@@ -1,11 +1,11 @@
 # Micro benchmarks
 
-This directory contains (micro) services that can be composed to create micro benchmarks.
-They are made in Typescript to be dynamic yet simple, and because OpenTelemetry supports zero-code instrumentation.
+This directory contains benchmark microservices that can be composed to create micro benchmarks.
+They are made in Typescript to be dynamic yet simple, and because OpenTelemetry supports zero-code instrumentation for Node.
 
-All services have a single endpoint `GET /` running on port defined by the env variable `PORT`.
+All services have a single endpoint `GET /` running on port defined by the environment variable `PORT`.
 
-There are four types:
+There are four types of services:
 
 - **Leaf** - Only outputs a pre-defined response. The response can be configured.
 - **Pass-through** - Has a single dependency on another service. Can be configured to use an internall fallback value in case of errors.
@@ -39,3 +39,5 @@ type ActionComposition = {
 // Do actions in the composition run in parallel or sequential?
 type ActionOrder = "parallel" | "sequential";
 ```
+
+_Note: in theory every other type of service could be composed as a "complex" service_

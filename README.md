@@ -63,9 +63,9 @@ Reynard can function in any system that supports modern distributed tracing, tha
 Given an interaction with a single service's endpoint, Reynard can automatically detect all related fault injection points (requests), and dynamically analyzes the system behaviour to generate test scenarios covering all distinct combinations of faults that can influence the outcome of a service interaction.
 It is able to do this for common communication patterns, but do note that there are [limitations](#limits) to what Reynard can detect and comprehend.
 
-## Installation
+# Using Reynard
 
-### 1. Adding Instrumentation
+## 1. Installing Instrumentation
 
 To use Reynard, we require the addition of the following instrumentation to the the system's runtime (in a local or test environment):
 

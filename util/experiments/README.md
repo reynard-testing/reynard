@@ -15,7 +15,7 @@ This includes scripts to simplify the experimentation process, as well as this d
 - All experiments require an installation of `Docker` and `Docker Compose`.
 - Reynard requires `Java JDK 17` and `Maven`.
 - All script require `bash`. Use a linux distribution, or bash for windows.
-- Some scripts use [poetry](https://python-poetry.org/) as a python package manager.
+- Our patched version of Filibuster uses [poetry](https://python-poetry.org/) as a python package manager. Some post-processing scripts in this repository use this too.
 - The experiments use the local images of the proxy and controller (so they are up-to-date). Run `make build-all` in the project root to generate them.
 
 ### Hardware Requirements
@@ -186,9 +186,11 @@ git clone -b track-changes --single-branch https://github.com/delanoflipse/filib
 # Clone patched Corpus into ./corpus
 git clone -b baseline --single-branch https://github.com/delanoflipse/filibuster-corpus.git corpus
 
-# Run Experiments
+# Install filibuster CLI
 cd filibuster
 poetry install
+
+# Run Experiments
 N=10 USE_COLOR=false ./run_experiments_n.sh <optional tag>
 
 # Run Experiments once without SER(=DR) for ablation

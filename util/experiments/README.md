@@ -3,7 +3,7 @@ This directory contains scripts to ease the process iteratively running Reynard 
 ## General notes
 
 - Be carefull in the relative location and naming of checked out repositories. Most scripts expect dependent projects to be present at a specific path relative to their own.
-- The file [junit-platform.properties](/lib/src/test/resources/junit-platform.properties) defines _where_ the Reynard results are put.
+- The file [junit-platform.properties](/library/src/test/resources/junit-platform.properties) defines _where_ the Reynard results are put.
 
 ## Requirements
 
@@ -97,7 +97,7 @@ Most scripts accept setting a `CORPUS_PATH` environment variable if the file str
 
 #### Experiments
 
-We can then use the benchmarks in [FilibusterSuiteIT](/lib/src/test/java/dev/reynard/junit/integration/FilibusterSuiteIT.java).
+We can then use the benchmarks in [FilibusterSuiteIT](/library/src/test/java/dev/reynard/junit/integration/FilibusterSuiteIT.java).
 For ease of use (by automatically building, starting and stopping the benchmarks), we can use [the provided scripts](./filibuster/).
 
 ```sh

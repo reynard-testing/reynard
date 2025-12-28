@@ -1,0 +1,14 @@
+services:
+  reynard-experiments:
+    build: .
+    container_name: reynard-experiments
+    privileged: true
+    cgroup: host
+    entrypoint: /experiments/entrypoint.sh
+    volumes:
+      - ./entrypoint.sh:/experiments/entrypoint.sh
+      - ./results:/results
+      - docker-root:/var/lib/docker
+
+volumes:
+  docker-root:

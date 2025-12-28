@@ -20,7 +20,6 @@ output_file="${result_path}/${benchmark_id}${result_tag}.log"
 
 otel_demo_path=${OTEL_PATH:-"${project_path}/../benchmarks/astronomy-shop"}
 otel_demo_path=$(realpath "${otel_demo_path}")
-otel_demo_path=${otel_demo_path}
 
 test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
 

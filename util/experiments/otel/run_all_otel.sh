@@ -50,11 +50,11 @@ echo "returning to ${project_path}"
 for ((i=1; i<=iterations; i++)); do
     echo "Running iteration ${i} of ${iterations}"
 
-    OUTPUT_TAG=${result_tag}${i} SKIP_RESTART=1 ./run_full_otel.sh shipping ${result_tag}${i}
-    OUTPUT_TAG=${result_tag}${i} SKIP_RESTART=1 ./run_full_otel.sh recommendations ${result_tag}${i}
-    OUTPUT_TAG=${result_tag}${i} SKIP_RESTART=1 ./run_full_otel.sh recommendationsWithPruner ${result_tag}${i}
-    OUTPUT_TAG=${result_tag}${i} SKIP_RESTART=1 ./run_full_otel.sh checkout ${result_tag}${i}
-    OUTPUT_TAG=${result_tag}${i} SKIP_RESTART=1 ./run_full_otel.sh checkoutWithCs ${result_tag}${i}
+    OUTPUT_TAG=${i}${result_tag} SKIP_RESTART=1 ./run_full_otel.sh shipping ${i}${result_tag}
+    OUTPUT_TAG=${i}${result_tag} SKIP_RESTART=1 ./run_full_otel.sh recommendations ${i}${result_tag}
+    OUTPUT_TAG=${i}${result_tag} SKIP_RESTART=1 ./run_full_otel.sh recommendationsWithPruner ${i}${result_tag}
+    OUTPUT_TAG=${i}${result_tag} SKIP_RESTART=1 ./run_full_otel.sh checkout ${i}${result_tag}
+    OUTPUT_TAG=${i}${result_tag} SKIP_RESTART=1 ./run_full_otel.sh checkoutWithCs ${i}${result_tag}
 done
 
 cd ${otel_demo_path}; docker compose -f docker-compose.fit.yml down

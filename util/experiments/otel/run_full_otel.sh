@@ -20,6 +20,7 @@ output_file="${result_path}/${benchmark_id}${result_tag}.log"
 
 otel_demo_path=${OTEL_PATH:-"${project_path}/../benchmarks/astronomy-shop"}
 otel_demo_path=$(realpath "${otel_demo_path}")
+otel_demo_path=${otel_demo_path}
 
 test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
 
@@ -34,8 +35,6 @@ if [ ! -d "${otel_demo_path}" ]; then
 fi
 
 # Build images
-PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
-CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
 cd ${otel_demo_path}
 if [ -n "${BUILD_BEFORE}" ]; then
     docker compose -f docker-compose.fit.yml build
@@ -60,14 +59,9 @@ echo "Service is available."
 # Run tests
 cd ${project_path}
 mkdir -p ${result_path}
-if [ -n "${USE_DOCKER}" ]; then
-  echo "Running tests inside Docker as USE_DOCKER is set."
-  docker run \
-    fit-library:latest \
-    mvn clean test -Dtest=OTELSuiteIT#test${test_name} | tee ${output_file}
-else
-  mvn clean test -Dtest=OTELSuiteIT#test${test_name} | tee ${output_file}
-fi
+PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
+CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
+PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} mvn clean test -Dtest=OTELSuiteIT#test${test_name} | tee ${output_file}
 
 if [ -n "${STOP_AFTER}" ]; then
     cd ${otel_demo_path}

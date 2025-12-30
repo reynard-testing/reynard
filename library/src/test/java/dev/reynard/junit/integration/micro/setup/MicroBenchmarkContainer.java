@@ -37,9 +37,9 @@ public class MicroBenchmarkContainer extends GenericContainer<MicroBenchmarkCont
 
     static {
         LOG_LEVEL = Env.getEnv("LOG_LEVEL", "info");
-        Path projectRootPath = Path.of("../").toAbsolutePath();
+        Path projectRootPath = Path.of(System.getProperty("user.dir"));
         IMAGE_BUILD_CONTEXT = ".";
-        IMAGE_PATH = projectRootPath.resolve("util/micro-benchmarks/services/").toAbsolutePath();
+        IMAGE_PATH = projectRootPath.resolve("../util/micro-benchmarks/services/").toAbsolutePath();
     }
 
     public static MicroBenchmarkContainer Leaf() {

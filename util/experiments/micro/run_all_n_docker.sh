@@ -1,0 +1,82 @@
+#!/bin/bash
+# ------------------------------------------------------------------
+# This script runs all experiments for the astronomy-shop benchmark using Docker.
+#
+# Usage: ./run_all_n_docker.sh
+# Env:
+#   TAG: Optional, tag to identify the experiment runs.       (default: "").
+#   OUT_DIR: Optional, directory to store results             (default: ./results).
+#   USE_SER: Optional, whether to use SER                     (default: true).
+#   APP_PATH: Optional, path to the application directory.   (default: ../benchmarks/astronomy-shop).
+#   N: Optional, number of iterations to run                  (default: 10).
+# ------------------------------------------------------------------
+
+# Optional environment variables
+result_tag=${TAG:-"default"}
+iterations=${N:-10}
+use_ser=${USE_SER:-true}
+results_dir=${OUT_DIR:-"./results"}
+
+PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
+CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
+
+# Constants
+suite_name="ResiliencePatternsIT"
+application_name="micro"
+
+# Path setup
+parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+reynard_path=$(realpath "${parent_path}/../../..")
+
+results_dir=$(realpath "${results_dir}")
+output_dir="${results_dir}/runs/${application_name}/${result_tag}"
+log_dir="${results_dir}/logs/${application_name}/${result_tag}"
+
+# Log and create directories
+echo "Storing results in: ${output_dir}"
+echo "Storing logs in: ${log_dir}"
+echo "Using application path: ${application_path}"
+
+mkdir -p "${log_dir}"
+mkdir -p "${output_dir}"
+
+# Function to run a single benchmark
+run_benchmark() {
+  local benchmark_id=$1
+  local tag=$2
+
+  run_log_dir="${log_dir}/${benchmark_id}"
+  mkdir -p "${run_log_dir}"
+  log_file="${run_log_dir}/${tag}.log"
+
+  echo "Running test: ${benchmark_id} with tag: ${tag}, logging to ${log_file}"
+  
+  test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
+
+  docker run \
+    --rm \
+    --network host \
+    -v ${output_dir}/:/results/tests \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    --add-host host.docker.internal:host-gateway \
+    -e OUTPUT_TAG=${tag} \
+    -e USE_SER=${use_ser} \
+    -e PROXY_IMAGE=${PROXY_IMAGE} \
+    -e CONTROLLER_IMAGE=${CONTROLLER_IMAGE} \
+    -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal \
+    fit-library-dind:latest \
+    /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
+}
+
+trap "exit" INT
+
+# Run benchmarks
+for ((i=1; i<=iterations; i++)); do
+  echo "Running iteration ${i} of ${iterations}"
+  run_tag="${result_tag:+${result_tag}-}${i}"
+
+  run_benchmark A ${run_tag}
+  run_benchmark Cs ${run_tag}
+  run_benchmark Opt ${run_tag}
+  run_benchmark CsOpt ${run_tag}
+done

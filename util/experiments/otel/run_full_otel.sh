@@ -34,6 +34,8 @@ if [ ! -d "${otel_demo_path}" ]; then
 fi
 
 # Build images
+PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
+CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
 cd ${otel_demo_path}
 if [ -n "${BUILD_BEFORE}" ]; then
     docker compose -f docker-compose.fit.yml build
@@ -58,9 +60,14 @@ echo "Service is available."
 # Run tests
 cd ${project_path}
 mkdir -p ${result_path}
-PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
-CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
-PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} mvn clean test -Dtest=OTELSuiteIT#test${test_name} | tee ${output_file}
+if [ -n "${USE_DOCKER}" ]; then
+  echo "Running tests inside Docker as USE_DOCKER is set."
+  docker run \
+    fit-library:latest \
+    mvn clean test -Dtest=OTELSuiteIT#test${test_name} | tee ${output_file}
+else
+  mvn clean test -Dtest=OTELSuiteIT#test${test_name} | tee ${output_file}
+fi
 
 if [ -n "${STOP_AFTER}" ]; then
     cd ${otel_demo_path}

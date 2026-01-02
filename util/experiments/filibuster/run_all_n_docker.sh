@@ -16,6 +16,10 @@ result_tag=${TAG:-"default"}
 iterations=${N:-10}
 use_ser=${USE_SER:-true}
 results_dir=${OUT_DIR:-"./results"}
+use_docker=${USE_DOCKER:-true}
+
+PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
+CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
 
 # Constants
 suite_name="FilibusterSuiteIT"
@@ -47,32 +51,45 @@ echo "Using application path: ${application_path}"
 mkdir -p "${log_dir}"
 mkdir -p "${output_dir}"
 
+base_env="PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE}"
+
 # Function to run a single benchmark
 run_benchmark() {
   local benchmark_id=$1
-  local tag=$2
+  local test_name=$2
+  local tag=$3
 
   run_log_dir="${log_dir}/${benchmark_id}"
   mkdir -p "${run_log_dir}"
   log_file="${run_log_dir}/${tag}.log"
 
-  echo "Running test: ${benchmark_id} with tag: ${tag}, logging to ${log_file}"
-  
-  test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
+  echo "Running test: ${test_name} for ${benchmark_id} with tag: ${tag}, logging to ${log_file}"
 
-  docker run \
-    --rm \
-    -v ${output_dir}/:/results/tests \
-    --network="host" \
-    -e OUTPUT_TAG=${tag} \
-    -e USE_SER=${use_ser} \
-    fit-library:latest \
-    /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
+  if [ "${use_docker}" = true ]; then
+    docker run \
+      --rm \
+      -v ${output_dir}/:/results/tests \
+      --network="host" \
+      -e OUTPUT_TAG=${tag} \
+      -e USE_SER=${use_ser} \
+      fit-library:latest \
+      /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
+    return
+  else
+    cd ${reynard_path}; \
+    OUTPUT_TAG=${tag} \
+    USE_SER=${use_ser} \
+    OUTPUT_DIR=${output_dir} \
+    mvn test -Dtest=${suite_name}#test${test_name} | tee ${log_file}
+  fi
 }
 
 run_benchmark_n() {
   local application_id=$1
-  local extra_env=$2
+  local test_name=$2
+  local extra_env=$3
+
+  envs="$base_env ${extra_env}"
 
   if [ -n "${extra_env}" ]; then
       env_tag=$(echo "${extra_env}" | tr ' ' '_' | tr '=' '__' | tr '-' '_')
@@ -81,31 +98,36 @@ run_benchmark_n() {
       env_tag=""
   fi
 
-# TODO start
+  corpus_path="${application_path}/${application_id}"
+  echo "Using corpus path: ${corpus_path}"
+  echo "Using envs: ${envs}"
+
+  cd ${corpus_path}; env ${envs} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
   
   for ((i=1; i<=iterations; i++)); do
     iteration_tag="${result_tag}${env_tag}${i}"
-    run_benchmark ${application_id} ${iteration_tag}
+    run_benchmark ${application_id} ${test_name} ${iteration_tag}
   done
-  # TODO stop
+
+  cd ${corpus_path}; env ${envs} docker compose -f docker-compose.fit.yml down
 }
 
 trap "exit" INT
 
 # Run benchmarks
-run_benchmark_n cinema-1
-run_benchmark_n cinema-2
-run_benchmark_n cinema-3
-run_benchmark_n cinema-3 OPT_RETRIES=1
-run_benchmark_n cinema-4
-run_benchmark_n cinema-5
-run_benchmark_n cinema-6
-run_benchmark_n cinema-7
-run_benchmark_n cinema-8
-run_benchmark_n cinema-8 OPT_RETRIES=1
+run_benchmark_n cinema-1 Cinema1
+run_benchmark_n cinema-2 Cinema2
+run_benchmark_n cinema-3 Cinema3
+run_benchmark_n cinema-3 Cinema3Retries
+run_benchmark_n cinema-4 Cinema4
+run_benchmark_n cinema-5 Cinema5
+run_benchmark_n cinema-6 Cinema6
+run_benchmark_n cinema-7 Cinema7
+run_benchmark_n cinema-8 Cinema8
+run_benchmark_n cinema-8 Cinema8Retries
 
-run_benchmark_n expedia
-run_benchmark_n audible
-run_benchmark_n mailchimp
-run_benchmark_n netflix
-run_benchmark_n "netflix" "WITH_FAULTS=1 NETFLIX_FAULTS=1"
+run_benchmark_n expedia Expedia
+run_benchmark_n audible Audible
+run_benchmark_n mailchimp Mailchimp
+run_benchmark_n netflix Netflix
+run_benchmark_n netflix NetflixFaults "NETFLIX_FAULTS=1"

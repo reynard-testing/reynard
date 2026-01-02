@@ -16,6 +16,7 @@ result_tag=${TAG:-"default"}
 iterations=${N:-10}
 use_ser=${USE_SER:-true}
 results_dir=${OUT_DIR:-"./results"}
+use_docker=${USE_DOCKER:-true}
 
 PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
 CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
@@ -75,14 +76,22 @@ run_benchmark() {
   
   test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
 
-  docker run \
-    --rm \
-    -v ${output_dir}/:/results/tests \
-    --network="host" \
-    -e OUTPUT_TAG=${tag} \
-    -e USE_SER=${use_ser} \
-    fit-library:latest \
-    /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
+  if [ "${use_docker}" = true ]; then
+    docker run \
+      --rm \
+      -v ${output_dir}/:/results/tests \
+      --network="host" \
+      -e OUTPUT_TAG=${tag} \
+      -e USE_SER=${use_ser} \
+      fit-library:latest \
+      /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
+  else
+    cd ${reynard_path}; \
+    OUTPUT_DIR=${output_dir} \
+    OUTPUT_TAG=${tag} \
+    USE_SER=${use_ser} \
+    mvn test -Dtest=${suite_name}#test${test_name} | tee ${log_file}
+  fi
 }
 
 trap "exit" INT

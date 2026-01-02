@@ -1,13 +1,12 @@
 #!/bin/sh
 base_path=$(dirname "$0")
 base_path=$(realpath "$base_path")
+trap "exit" INT
 
 cd ${base_path}/reynard; (make build-all && make install)
 
 export PROXY_IMAGE=${PROXY_IMAGE}
 export CONTROLLER_IMAGE=${CONTROLLER_IMAGE}
-
-trap "exit" INT
 
 cd ${base_path}/benchmarks/astronomy-shop; (docker compose -f docker-compose.fit.yml build)
 cd ${base_path}/benchmarks/DeathStarBench/hotelReservation; (docker compose -f docker-compose.fit.yml build)

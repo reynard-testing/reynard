@@ -19,6 +19,7 @@ import dev.reynard.junit.instrumentation.FaultController;
 import dev.reynard.junit.instrumentation.testcontainers.InstrumentedApp;
 import dev.reynard.junit.instrumentation.testcontainers.services.InstrumentedService;
 import dev.reynard.junit.strategy.TrackedFaultload;
+import dev.reynard.junit.strategy.util.Env;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -80,7 +81,8 @@ public class AppSuiteIT {
     @FiTest
     public void testApp(TrackedFaultload faultload) throws IOException {
         int frontendPort = frontend.getMappedPort(8080);
-        String queryUrl = "http://localhost:" + frontendPort + "/hotels?inDate=2015-04-09&outDate=2015-04-10";
+        String host = Env.getEnv(Env.Keys.LOCAL_HOST);
+        String queryUrl = "http://" + host + ":" + frontendPort + "/hotels?inDate=2015-04-09&outDate=2015-04-10";
 
         Request request = faultload.newRequestBuilder()
                 .url(queryUrl)

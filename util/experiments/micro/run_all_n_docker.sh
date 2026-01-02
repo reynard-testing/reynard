@@ -16,13 +16,14 @@ result_tag=${TAG:-"default"}
 iterations=${N:-10}
 use_ser=${USE_SER:-true}
 results_dir=${OUT_DIR:-"./results"}
+use_docker=${USE_DOCKER:-true}
 
 PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
 CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
 
 # Constants
-suite_name="ResiliencePatternsIT"
-application_name="micro"
+suite_name="MetaSuiteIT"
+application_name="meta"
 
 # Path setup
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
@@ -44,6 +45,7 @@ mkdir -p "${output_dir}"
 run_benchmark() {
   local benchmark_id=$1
   local tag=$2
+  local retry_count=$3
 
   run_log_dir="${log_dir}/${benchmark_id}"
   mkdir -p "${run_log_dir}"
@@ -53,19 +55,29 @@ run_benchmark() {
   
   test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
 
+  if [ "${use_docker}" = true ]; then
   docker run \
     --rm \
     --network host \
     -v ${output_dir}/:/results/tests \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    --add-host host.docker.internal:host-gateway \
+    --add-host host.docker.internal=host-gateway \
     -e OUTPUT_TAG=${tag} \
     -e USE_SER=${use_ser} \
     -e PROXY_IMAGE=${PROXY_IMAGE} \
+    -e PROXY_RETRY_COUNT=${retry_count} \
     -e CONTROLLER_IMAGE=${CONTROLLER_IMAGE} \
+    -e LOCAL_HOST=host.docker.internal \
     -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal \
     fit-library-dind:latest \
     /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
+  else
+    cd ${reynard_path}; \
+    OUTPUT_DIR=${output_dir} \
+    OUTPUT_TAG=${tag} \
+    USE_SER=${use_ser} \
+    mvn test -Dtest=${suite_name}#test${test_name} | tee ${log_file}
+  fi
 }
 
 trap "exit" INT
@@ -75,8 +87,7 @@ for ((i=1; i<=iterations; i++)); do
   echo "Running iteration ${i} of ${iterations}"
   run_tag="${result_tag:+${result_tag}-}${i}"
 
-  run_benchmark A ${run_tag}
-  run_benchmark Cs ${run_tag}
-  run_benchmark Opt ${run_tag}
-  run_benchmark CsOpt ${run_tag}
+  run_benchmark register ${run_tag} 1
+  run_benchmark register2 ${run_tag} 3
+  run_benchmark register4 ${run_tag} 5
 done

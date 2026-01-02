@@ -20,6 +20,7 @@ import dev.reynard.junit.integration.micro.setup.ActionComposition;
 import dev.reynard.junit.integration.micro.setup.MicroBenchmarkContainer;
 import dev.reynard.junit.integration.micro.setup.ServerAction;
 import dev.reynard.junit.strategy.TrackedFaultload;
+import dev.reynard.junit.strategy.util.Env;
 import dev.reynard.junit.strategy.util.TraceAnalysis;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -108,8 +109,9 @@ public class ExampleSuiteIT {
   @FiTest(optimizeForRetries = true)
   public void testA(TrackedFaultload faultload) throws IOException {
     // Given - The presence of the faults introduced by the faultload
+    String host = Env.getEnv(Env.Keys.LOCAL_HOST);
     Request request = faultload.newRequestBuilder()
-        .url("http://localhost:" + serviceA.getMappedPort(8080) + "/")
+        .url("http://" + host + ":" + serviceA.getMappedPort(8080) + "/")
         .build();
 
     // Given - A request to service A

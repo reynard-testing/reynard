@@ -9,6 +9,7 @@ public class Env {
         USE_SER("true"),
         CONTROLLER_IMAGE("dflipse/reynard-controller:latest"),
         PROXY_IMAGE("dflipse/reynard-proxy:latest"),
+        LOCAL_HOST("localhost"),
         LOG_LEVEL("info");
 
         private final String defaultValue;

@@ -6,7 +6,6 @@ repeat_count="${N:-10}"
 use_docker=${USE_DOCKER:-true}
 output_dir=${OUTPUT_DIR:-"./results"}
 
-
 mkdir -p ${output_dir}
 results_dir=$(realpath "${output_dir}")
 

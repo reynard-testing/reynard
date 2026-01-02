@@ -4,7 +4,7 @@ base_path=$(dirname "$0")
 base_path=$(realpath "$base_path"/../../../..)
 trap "exit" INT
 
-cd ${base_path}/reynard; (make build-all && make install)
+cd ${base_path}/reynard; make build-all
 
 export PROXY_IMAGE=${PROXY_IMAGE}
 export CONTROLLER_IMAGE=${CONTROLLER_IMAGE}

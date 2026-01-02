@@ -42,6 +42,8 @@ application_path=${APP_PATH:-"${reynard_path}/../benchmarks/astronomy-shop"}
 application_path=$(realpath "${application_path}")
 application_path=${application_path}
 
+test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
+
 # Check if the application path exists
 if [ ! -d "${application_path}" ]; then
   echo "Error: application path ${application_path} does not exist."

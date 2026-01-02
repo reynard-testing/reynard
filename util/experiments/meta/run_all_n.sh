@@ -63,8 +63,8 @@ run_benchmark() {
       --add-host host.docker.internal=host-gateway \
       -e OUTPUT_TAG=${tag} \
       -e USE_SER=${use_ser} \
-      -e PROXY_IMAGE=${PROXY_IMAGE} \
       -e PROXY_RETRY_COUNT=${retry_count} \
+      -e PROXY_IMAGE=${PROXY_IMAGE} \
       -e CONTROLLER_IMAGE=${CONTROLLER_IMAGE} \
       -e LOCAL_HOST=host.docker.internal \
       -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal \
@@ -76,6 +76,8 @@ run_benchmark() {
     OUTPUT_TAG=${tag} \
     USE_SER=${use_ser} \
     PROXY_RETRY_COUNT=${retry_count} \
+    PROXY_IMAGE=${PROXY_IMAGE} \
+    CONTROLLER_IMAGE=${CONTROLLER_IMAGE} \
     mvn test -Dtest=${suite_name}#test${test_name} | tee ${log_file}
   fi
 }

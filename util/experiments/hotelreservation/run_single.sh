@@ -62,6 +62,7 @@ mkdir -p "${output_dir}"
 mkdir -p "${run_log_dir}"
 
 compose_envs="PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE}"
+test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
 
 # Build images
 cd ${application_path}

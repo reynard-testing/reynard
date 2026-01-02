@@ -1,6 +1,7 @@
 #!/bin/sh
+# Note: this script assumes that Reynard and the benchmarks are already cloned.
 base_path=$(dirname "$0")
-base_path=$(realpath "$base_path")
+base_path=$(realpath "$base_path"/../../..)
 trap "exit" INT
 
 cd ${base_path}/reynard; (make build-all && make install)

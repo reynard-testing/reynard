@@ -103,7 +103,7 @@ cd reynard
 N=10 ./util/experiments/filibuster/run_all_filibuster_n.sh <optional tag>
 
 # Run Experiments once without SER for ablation
-USER_SER=false N=1 ./util/experiments/filibuster/run_all_filibuster_n.sh WITHOUT-SER<-optional tag>
+USE_SER=false N=1 ./util/experiments/filibuster/run_all_filibuster_n.sh WITHOUT-SER<-optional tag>
 ```
 
 Tip: for debugging purposes, you can also follow the steps to start one of the corpus benchmarks and then debug the corresponding test method in your IDE.
@@ -121,7 +121,7 @@ cd reynard
 N=10 ./util/experiments/otel/run_all_otel.sh <optional tag>
 
 # Run Experiments once without SER for ablation
-USER_SER=false N=1 ./util/experiments/otel/run_all_otel.sh WITHOUT-SER<-optional tag>
+USE_SER=false N=1 ./util/experiments/otel/run_all_otel.sh WITHOUT-SER<-optional tag>
 ```
 
 ### 1.5. DeathStarBench
@@ -137,7 +137,7 @@ cd reynard
 N=10 ./util/experiments/hotelreservation/run_all_n.sh <optional tag>
 
 # Run Experiments once without SER for ablation
-USER_SER=false N=1 ./util/experiments/hotelreservation/run_all_n.sh WITHOUT-SER<-optional tag>
+USE_SER=false N=1 ./util/experiments/hotelreservation/run_all_n.sh WITHOUT-SER<-optional tag>
 ```
 
 ### 1.6. "Meta" and Micro Benchmarks
@@ -150,11 +150,11 @@ cd <experimentation directory>/reynard
 
 # Meta
 PROXY_RETRY_COUNT=2 N=10 ./util/experiments/meta/run_all_meta.sh <optional tag>
-USER_SER=false N=1 ./util/experiments/meta/run_all_meta.sh WITHOUT-SER<-optional tag> # For ablation
+USE_SER=false N=1 ./util/experiments/meta/run_all_meta.sh WITHOUT-SER<-optional tag> # For ablation
 
 # Micro
 N=10 ./util/experiments/micro/run_all_micro.sh <optional tag>
-USER_SER=false N=1 ./util/experiments/micro/run_all_micro.sh WITHOUT-SER<-optional tag> # For ablation
+USE_SER=false N=1 ./util/experiments/micro/run_all_micro.sh WITHOUT-SER<-optional tag> # For ablation
 ```
 
 Tip: These benchmarks can be debugged directly using your IDE.

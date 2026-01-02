@@ -1,6 +1,6 @@
 #!/bin/bash
 # ------------------------------------------------------------------
-# This script runs all Filibuster experiments once
+# This script runs a Filibuster experiment once
 #
 # Usage: ./run_single.sh <benchmark_id>
 # Env: BUILD_BEFORE (if set to 1, builds before each run, default 1)
@@ -119,5 +119,4 @@ fi
 if [ "${STOP_AFTER:-1}" == "1" ]; then
     cd ${application_path}
     env ${compose_envs} docker compose -f docker-compose.fit.yml down
-    exit 0
 fi

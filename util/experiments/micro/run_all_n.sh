@@ -4,11 +4,10 @@
 #
 # Usage: ./run_all_n_docker.sh
 # Env:
-#   TAG: Optional, tag to identify the experiment runs.       (default: "").
-#   OUT_DIR: Optional, directory to store results             (default: ./results).
-#   USE_SER: Optional, whether to use SER                     (default: true).
-#   APP_PATH: Optional, path to the application directory.   (default: ../benchmarks/astronomy-shop).
-#   N: Optional, number of iterations to run                  (default: 10).
+#   TAG: Optional, tag to identify the experiment runs.       (default: "")
+#   OUT_DIR: Optional, directory to store results             (default: ./results)
+#   USE_SER: Optional, whether to use SER                     (default: true)
+#   N: Optional, number of iterations to run                  (default: 10)
 # ------------------------------------------------------------------
 
 # Optional environment variables
@@ -22,7 +21,7 @@ PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
 CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
 
 # Constants
-suite_name="MicroSuiteIT"
+suite_name="ResiliencePatternsIT"
 application_name="micro"
 
 # Path setup
@@ -87,7 +86,8 @@ for ((i=1; i<=iterations; i++)); do
   echo "Running iteration ${i} of ${iterations}"
   run_tag="${result_tag:+${result_tag}-}${i}"
 
-  run_benchmark register ${run_tag} 1
-  run_benchmark register2 ${run_tag} 3
-  run_benchmark register4 ${run_tag} 5
+  run_benchmark testA ${run_tag}
+  run_benchmark testCs ${run_tag}
+  run_benchmark testOpt ${run_tag}
+  run_benchmark testCsOpt ${run_tag}
 done

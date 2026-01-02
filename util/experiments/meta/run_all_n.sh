@@ -1,13 +1,12 @@
 #!/bin/bash
 # ------------------------------------------------------------------
-# This script runs all experiments for the astronomy-shop benchmark.
+# This script runs all experiments for the meta benchmarks.
 #
 # Usage: ./run_all_n_docker.sh
 # Env:
 #   TAG: Optional, tag to identify the experiment runs.       (default: "").
 #   OUT_DIR: Optional, directory to store results             (default: ./results).
 #   USE_SER: Optional, whether to use SER                     (default: true).
-#   APP_PATH: Optional, path to the application directory.   (default: ../benchmarks/astronomy-shop).
 #   N: Optional, number of iterations to run                  (default: 10).
 # ------------------------------------------------------------------
 
@@ -54,7 +53,6 @@ run_benchmark() {
   echo "Running test: ${benchmark_id} with tag: ${tag}, logging to ${log_file}"
   
   test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
-
 
   if [ "${use_docker}" = true ]; then
     docker run \

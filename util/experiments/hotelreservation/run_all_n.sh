@@ -53,8 +53,6 @@ mkdir -p "${output_dir}"
 
 # # Build images and start containers
 cd ${application_path}; PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
-
-
 # Wait for the health check to pass
 echo "Waiting for http://localhost:5000/ to be available..."
 until  curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/ | grep -qv '^5';  do

@@ -1,70 +1,105 @@
 #!/bin/bash
 # ------------------------------------------------------------------
-# This script runs a single otel experiment for the astronomy-shop benchmark.
+# This script runs a astronomy-shop experiments
 #
-# Usage: ./run_full_otel.sh <benchmark_id> [result_tag]
+# Usage: ./run_single.sh <benchmark_id>
+# Env: BUILD_BEFORE (if set to 1, builds before each run, default 1)
+
 # Env:
-#   OTEL_PATH: Optional, path to the otel benchmark directory.
-#   BUILD_BEFORE: Optional, if set, rebuilds the docker images before running.
-#   SKIP_RESTART: Optional, if set, skips restarting the stack.
-#   STOP_AFTER: Optional, if set, stops the stack after the test.
+#   TAG: Optional, tag to identify the experiment runs.       (default: "")
+#   OUT_DIR: Optional, directory to store results             (default: ./results)
+#   USE_SER: Optional, whether to use SER                     (default: true)
+#   APP_PATH: Optional, path to the application directory.    (default: ../benchmarks/filibuster-corpus)
+#   USE_DOCKER: Optional, whether to use Docker               (default: true)
+#   BUILD_BEFORE: Optional, whether to build before each run  (default: unset)
+#   SKIP_START: Optional, whether to start the benchmark.     (default: unset)
+#   STOP_AFTER: Optional, whether to stop the benchmark after (default: unset)
 # ------------------------------------------------------------------
 
-parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
-project_path=$(realpath "${parent_path}/../../..")
+# Required argument
 benchmark_id=$1
-benchmark_category="otel-demo"
-result_tag=${2:+-$2}
-result_path="${project_path}/results/logs/${benchmark_category}/${benchmark_id}"
-output_file="${result_path}/${benchmark_id}${result_tag}.log"
 
-otel_demo_path=${OTEL_PATH:-"${project_path}/../benchmarks/astronomy-shop"}
-otel_demo_path=$(realpath "${otel_demo_path}")
-otel_demo_path=${otel_demo_path}
+# Optional environment variables
+result_tag=${TAG:-"default"}
+iterations=${N:-10}
+use_ser=${USE_SER:-true}
+results_dir=${OUT_DIR:-"./results"}
+use_docker=${USE_DOCKER:-true}
 
-test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
+# Constants
+suite_name="OTELSuiteIT"
+application_name="astronomy-shop"
 
-echo "Running ${benchmark_category} benchmark: ${benchmark_id} (${test_name})"
-echo "Storing in ${output_file}"
-echo "Using corpus path: ${otel_demo_path}"
+# Path setup
+parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+reynard_path=$(realpath "${parent_path}/../../..")
 
-# Check if the corpus path exists
-if [ ! -d "${otel_demo_path}" ]; then
-  echo "Error: Corpus path ${otel_demo_path} does not exist."
+results_dir=$(realpath "${results_dir}")
+output_dir="${results_dir}/runs/${application_name}/${result_tag}"
+log_dir="${results_dir}/logs/${application_name}/${result_tag}"
+
+application_path=${APP_PATH:-"${reynard_path}/../benchmarks/astronomy-shop"}
+application_path=$(realpath "${application_path}")
+application_path=${application_path}
+
+# Check if the application path exists
+if [ ! -d "${application_path}" ]; then
+  echo "Error: application path ${application_path} does not exist."
   exit 1
 fi
 
+# Log and create directories
+echo "Storing results in: ${output_dir}"
+echo "Storing logs in: ${log_dir}"
+echo "Using application path: ${application_path}"
+
+mkdir -p "${log_dir}"
+mkdir -p "${output_dir}"
+
 # Build images
-cd ${otel_demo_path}
+cd ${application_path}
 if [ -n "${BUILD_BEFORE}" ]; then
-    docker compose -f docker-compose.fit.yml build
+  docker compose -f docker-compose.fit.yml build
 fi
 
 # Start containers
-if [ -z "${SKIP_RESTART}" ]; then
+if [ -z "${SKIP_START}" ]; then
   make start-fit
-else
-  echo "Skipping stack startup as SKIP_RESTART is set."
-fi
 
-# Wait for containers to be healthy
-# Wait for the health check to pass
-echo "Waiting for http://localhost:8080/ to be available..."
-until curl -s http://localhost:8080/ > /dev/null; do
-  echo "Service not available yet. Retrying in 5 seconds..."
-  sleep 5
-done
-echo "Service is available."
+  # Wait for containers to be healthy
+  echo "Waiting for http://localhost:8080/ to be available..."
+  until curl -s http://localhost:8080/ > /dev/null; do
+    echo "Service not available yet. Retrying in 5 seconds..."
+    sleep 5
+  done
+
+  echo "Service is available."
+else
+  echo "Skipping stack startup as SKIP_START is set."
+fi
 
 # Run tests
 cd ${project_path}
-mkdir -p ${result_path}
-PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
-CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
-PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} mvn clean test -Dtest=OTELSuiteIT#test${test_name} | tee ${output_file}
 
-if [ -n "${STOP_AFTER}" ]; then
-    cd ${otel_demo_path}
-    docker compose -f docker-compose.fit.yml down
-    exit 0
+if [ "${use_docker}" = true ]; then
+  docker run \
+    --rm \
+    -v ${output_dir}/:/results/tests \
+    --network="host" \
+    -e OUTPUT_TAG=${tag} \
+    -e USE_SER=${use_ser} \
+    fit-library:latest \
+    /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
+else
+  cd ${reynard_path}; \
+    OUTPUT_DIR=${output_dir} \
+    OUTPUT_TAG=${tag} \
+    USE_SER=${use_ser} \
+    mvn test -Dtest=${suite_name}#test${test_name} | tee ${log_file}
+fi
+
+# Stop containers
+if [ "${STOP_AFTER:-1}" == "1" ]; then
+    cd ${application_path}
+     docker compose -f docker-compose.fit.yml down
 fi

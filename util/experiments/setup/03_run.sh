@@ -3,9 +3,10 @@ tag="${TAG:-}"
 ser_tag="${tag:+$tag-}NO-SER"
 repeat_count="${N:-10}"
 use_docker=${USE_DOCKER:-true}
+output_dir=${OUTPUT_DIR:-"./results"}
 
-mkdir -p results
-results_dir=$(realpath results)
+mkdir -p ${output_dir}
+results_dir=$(realpath "${output_dir}")
 
 cd reynard
 

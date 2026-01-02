@@ -86,8 +86,8 @@ for ((i=1; i<=iterations; i++)); do
   echo "Running iteration ${i} of ${iterations}"
   run_tag="${result_tag:+${result_tag}-}${i}"
 
-  run_benchmark testA ${run_tag}
-  run_benchmark testCs ${run_tag}
-  run_benchmark testOpt ${run_tag}
-  run_benchmark testCsOpt ${run_tag}
+  run_benchmark a ${run_tag}
+  run_benchmark cs ${run_tag}
+  run_benchmark opt ${run_tag}
+  run_benchmark csOpt ${run_tag}
 done

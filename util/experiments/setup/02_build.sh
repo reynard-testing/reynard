@@ -7,8 +7,8 @@ trap "exit" INT
 cd ${base_path}/reynard; make build-all
 
 # Most of the docker compose files use these environment variables, so provide them
-export PROXY_IMAGE=${PROXY_IMAGE}
-export CONTROLLER_IMAGE=${CONTROLLER_IMAGE}
+export PROXY_IMAGE=${PROXY_IMAGE:-fit-proxy:latest}
+export CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-fit-controller:latest}
 
 # Astronomy shop
 cd ${base_path}/benchmarks/astronomy-shop; (docker compose -f docker-compose.fit.yml build)

@@ -5,7 +5,7 @@ This includes scripts to simplify the experimentation process, as well as this d
 
 ### General notes
 
-- Be careful in the relative location and naming of checked out repositories. Most scripts expect dependent projects to be present at a _specific_ path relative to their own.
+- Most experiment scripts expect dependent projects to be present at a _specific_ path relative to their own. Be careful in the relative location and naming of checked out repositories.
 - The file [junit-platform.properties](/library/src/test/resources/junit-platform.properties) defines _where_ the Reynard results are put. Alternatively, you can run reynard with a `OUTPUT_DIR` environment variable set.
 
 ## Requirements
@@ -13,14 +13,14 @@ This includes scripts to simplify the experimentation process, as well as this d
 ### Software Requirements
 
 - All experiments require an installation of `Docker` and `Docker Compose`.
-- Reynard requires `Java JDK 17` and `Maven`.
 - All script require `bash`. Use a linux distribution, or bash for windows.
 - Our patched version of Filibuster uses [poetry](https://python-poetry.org/) as a python package manager. Some post-processing scripts in this repository use poetry too.
 - The experiments use the local images of the proxy and controller (so they are up-to-date). Run `make build-all` in the project root to generate them.
+- (Optional) To run reynard locally requires `Java JDK 17` and `Maven`. We offer a dockerised version too.
 
 ### Hardware Requirements
 
-As the benchmarks require running a (benchmark) microservice application on a single machine, there are hardware requirements, especially for the Astronomy Shop benchmark. We were able to reproduce the experiments on the following hardware specs:
+The benchmarks require running a (benchmark) microservice application on a single machine. Therefore, they need to be run on machines with enough resources, especially for the Astronomy Shop benchmark. As a reference, we were able to reproduce the experiments on the following hardware specs:
 
 | CPU                                  | Memory    | Used in results: |
 | ------------------------------------ | --------- | ---------------- |
@@ -42,13 +42,15 @@ A description can be found [here](../viz/README.md).
 
 We have three experiments that we use in the results, which we detail in the following sections:
 
-1. Running Reynard on different benchmark systems (including the filibuster corpus)
-2. Running Filibuster on its corpus with a configuration that matches Reynard
-3. A stress-test on the Reynard instrumentation
+1. Running Reynard on different benchmark systems (including the Filibuster Corpus).
+2. Running Filibuster on its corpus with a configuration that matches Reynard.
+3. A stress-test on the Reynard instrumentation.
+
+These will be detailed below.
 
 ## 1. Running Reynard on different benchmarks
 
-This experiment requires both reynard to be build, as well as the numerous benchmark systems it should run on. These benchmark systems are:
+This experiment requires Reynard, as well as the benchmark systems it should run on. These benchmark systems are (based on):
 
 1. [Filibuster Corpus](https://github.com/filibuster-testing/filibuster-corpus)' set of microbenchmarks
 1. [DeathStarBench](https://github.com/delimitrou/DeathStarBench)'s hotelReservation
@@ -84,9 +86,9 @@ git clone -b fit-instrumentation --single-branch https://github.com/delanoflipse
 
 #### 1.1.2. Building Docker images
 
-All benchmarks are large docker-based microservice applicatons.
-Furthermore, we want to build the last version of the reynard instrumentation.
-To build _all_ required docker images, run the following [script](./setup/02_clone.sh) in an empty directory:
+All benchmarks are _large_ docker-based microservice applicatons.
+We want to build the last version of them, and run them with reynard instrumentation.
+To build _all_ required docker images, run the following [script](./setup/02_clone.sh) in an the experiment directory:
 
 ```bash
 cd <experimentation directory>
@@ -95,8 +97,8 @@ cd <experimentation directory>
 cd ./reynard; make build-all
 
 # Most docker compose files use these environment variables, so provide them
-export PROXY_IMAGE=${PROXY_IMAGE}
-export CONTROLLER_IMAGE=${CONTROLLER_IMAGE}
+export PROXY_IMAGE=${PROXY_IMAGE:-fit-proxy:latest}
+export CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-fit-controller:latest}
 
 # Astronomy shop
 cd ./benchmarks/astronomy-shop; (docker compose -f docker-compose.fit.yml build)
@@ -119,30 +121,30 @@ cd ./benchmarks/filibuster-corpus/expedia; (docker compose -f docker-compose.fit
 cd ./benchmarks/filibuster-corpus/mailchimp; (docker compose -f docker-compose.fit.yml build)
 ```
 
-Note: This will take **a long time** to complete.
-If you are only interested in a particular benchmark, you can omit the corresponding build steps.
+Note: This will take **a long time** to complete (in the order of tens of minutes).
+If you are only interested in a particular benchmark, you can pick and choose the corresponding build steps.
 
 #### 1.1.3. Building Reynard (optional)
 
 We offer a dockerised runtime for reynard.
-However, for our results we ran the experiments locally to minimise any potential overhead.
+However, for the results we ran the experiments locally to minimise any potential overhead.
 For this, you need Java JDK 17, maven, and you need to install Reynard using the following command:
 
 ```sh
 cd <experimentation directory>/reynard
-make install # Build and install library
+make install # Build library
 ```
 
 #### 1.1.4. Running all experiments at once (optional)
 
 If you want to regenerate _all_ experimental results, you can use the following [script](./setup/03_run.sh).
-Below, we will detail each individual benchmark.
+We will detail each individual benchmark below.
 
 ### 1.2. Post-processing
 
 Each test suite will result in several logs placed into `<results-dir>/<benchmark>/<run-id>/..`.
-The post-processing scripts expect all subfolders to be for separate runs of the same test scenario.
-Hence, if you used tags, please move the related runs into a separate folder.
+By default, the results directory is `<working-directory>/results`.
+The post-processing scripts assumes that all folders for different iterations of the same test scenario to be next to each other.
 
 After all benchmarks have been run, you can use the `util/viz` scripts to post-process the results, as [described here](/util/viz/).
 
@@ -154,16 +156,15 @@ We can use [the provided scripts](./filibuster/) to automatically build, start, 
 To run the whole suite, run:
 
 ```sh
-cd <experimentation directory>/reynard
-export OUT_DIR=<absolute-path>
+cd <experimentation directory>
 
 # Uncomment if you intent to use your local maven installation
 # export USE_DOCKER=false
 
-N=10 ./util/experiments/filibuster/run_all_n.sh
+N=10 ./reynard/util/experiments/filibuster/run_all_n.sh
 
 # Run experiments once without SER for ablation
-TAG="NO-SER" USE_SER=false N=1 ./util/experiments/filibuster/run_all_n.sh
+TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/filibuster/run_all_n.sh
 ```
 
 Tip: if you want to debug an execution, you can follow the steps to start one of the benchmarks and then debug the corresponding test method in your IDE if you use reynard locally.
@@ -177,10 +178,10 @@ cd <experimentation directory>/reynard
 # export USE_DOCKER=false
 
 # Run Experiments
-N=10 ./util/experiments/otel/run_all_n.sh
+N=10 ./reynard/util/experiments/otel/run_all_n.sh
 
 # Run experiments once without SER for ablation
-TAG="NO-SER" USE_SER=false N=1 ./util/experiments/otel/run_all_n.sh
+TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/otel/run_all_n.sh
 ```
 
 ### 1.5. DeathStarBench
@@ -192,16 +193,17 @@ cd <experimentation directory>/reynard
 # export USE_DOCKER=false
 
 # Run Experiments
-N=10 ./util/experiments/hotelreservation/run_all_n.sh
+N=10 ./reynard/util/experiments/hotelreservation/run_all_n.sh
 
 # Run experiments once without SER for ablation
-TAG="NO-SER" USE_SER=false N=1 ./util/experiments/hotelreservation/run_all_n.sh
+TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/hotelreservation/run_all_n.sh
 ```
 
 ### 1.6. "Meta" and Micro Benchmarks
 
 These benchmarks are contained in this repository.
 They are run using [testcontainers](https://testcontainers.com/) and require Docker.
+To run them dockerised, we use a Docker out of Docker setup, where the test runner has access to the _outer_ docker service.
 
 ```sh
 cd <experimentation directory>/reynard
@@ -210,19 +212,19 @@ cd <experimentation directory>/reynard
 # export USE_DOCKER=false
 
 # Meta
-N=10 ./util/experiments/meta/run_all_n.sh
-TAG="NO-SER" USE_SER=false N=1 ./util/experiments/meta/run_all_n.sh # For ablation
+N=10 ./reynard/util/experiments/meta/run_all_n.sh
+TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/meta/run_all_n.sh # For ablation
 
 # Micro
-N=10 ./util/experiments/micro/run_all_n.sh
-TAG="NO-SER" USE_SER=false N=1 ./util/experiments/micro/run_all_n.sh # For ablation
+N=10 ./reynard/util/experiments/micro/run_all_n.sh
+TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/micro/run_all_n.sh # For ablation
 ```
 
 Tip: These benchmarks can be debugged directly using your IDE if you use reynard locally.
 
 ## 2. Comparison with Filibuster
 
-We can compare Reynard with Filibuster using the Filibuster Corpus, a set of microbenchmarks that correspond to common system interactions in microservices. To generate a baseline, we need to run filibuster on its corresponding set of microbenchmarks (_corpus_) with a configuration that matches that of Reynard.
+We can compare Reynard with Filibuster using the Filibuster Corpus, a set of microbenchmarks that correspond to common system interactions in microservices. To generate a baseline, we need to run Filibuster on its corresponding set of microbenchmarks (_corpus_) with a configuration that matches that of Reynard.
 
 ### 2.1. Setup
 
@@ -268,14 +270,14 @@ To avoid having to extract these values manually, we include a small extract scr
 
 A detailed description of the overhead benchmarks can be found [in its directory](./overhead/).
 
-To run:
+To run all test scenarios, use:
 
 ```sh
 cd <experimentation directory>/reynard
-N=10 ./util/experiments/overhead/service_overhead_n.sh
+N=10 ./reynard/util/experiments/overhead/service_overhead_n.sh
 
 # Or, to run a single test:
-TEST=<test-name> ./util/experiments/overhead/service_overhead.sh
+TEST=<test-name> ./reynard/util/experiments/overhead/service_overhead.sh
 ```
 
 ### 3.1. Post-processing

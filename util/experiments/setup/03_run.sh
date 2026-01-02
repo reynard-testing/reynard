@@ -1,14 +1,19 @@
 #!/bin/sh
+
 tag="${TAG:-}"
 ser_tag="${tag:+$tag-}NO-SER"
 repeat_count="${N:-10}"
 use_docker=${USE_DOCKER:-true}
 output_dir=${OUTPUT_DIR:-"./results"}
 
+
 mkdir -p ${output_dir}
 results_dir=$(realpath "${output_dir}")
 
-cd reynard
+# Note: this script assumes that Reynard and the benchmarks are already cloned.
+base_path=$(dirname "$0")
+base_path=$(realpath "$base_path"/../../..)
+cd ${base_path}/reynard
 
 # With SER
 envs="USE_DOCKER=${use_docker} OUT_DIR=${results_dir} TAG=${tag} N=${repeat_count}"

@@ -12,7 +12,7 @@ results_dir=$(realpath "${output_dir}")
 
 # Note: this script assumes that Reynard and the benchmarks are already cloned.
 base_path=$(dirname "$0")
-base_path=$(realpath "$base_path"/../../..)
+base_path=$(realpath "$base_path"/../../../..)
 cd ${base_path}/reynard
 
 # With SER

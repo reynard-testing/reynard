@@ -14,7 +14,7 @@
 benchmark_id=$1
 
 # Optional environment variables
-result_tag=${TAG:-"default"}
+tag=${TAG:-"default"}
 use_ser=${USE_SER:-true}
 results_dir=${OUT_DIR:-"./results"}
 use_docker=${USE_DOCKER:-true}
@@ -30,8 +30,8 @@ parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 reynard_path=$(realpath "${parent_path}/../../..")
 
 results_dir=$(realpath "${results_dir}")
-output_dir="${results_dir}/runs/${application_name}/${result_tag}"
-log_dir="${results_dir}/logs/${application_name}/${result_tag}"
+output_dir="${results_dir}/runs/${application_name}/${tag}"
+log_dir="${results_dir}/logs/${application_name}/${tag}"
 
 # Log and create directories
 echo "Storing results in: ${output_dir}"

@@ -75,7 +75,6 @@ run_benchmark() {
       -e USE_SER=${use_ser} \
       fit-library:latest \
       /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
-    return
   else
     cd ${reynard_path}; \
     OUTPUT_TAG=${tag} \

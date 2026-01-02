@@ -22,8 +22,8 @@ PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
 CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
 
 # Constants
-suite_name="MetaSuiteIT"
-application_name="meta"
+suite_name="MicroSuiteIT"
+application_name="micro"
 
 # Path setup
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )

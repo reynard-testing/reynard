@@ -1,13 +1,13 @@
 #!/bin/bash
 # ------------------------------------------------------------------
-# This script runs all experiments for the astronomy-shop benchmark using Docker.
+# This script runs all experiments for the astronomy-shop benchmark.
 #
 # Usage: ./run_all_n_docker.sh
 # Env:
 #   TAG: Optional, tag to identify the experiment runs.       (default: "").
 #   OUT_DIR: Optional, directory to store results             (default: ./results).
 #   USE_SER: Optional, whether to use SER                     (default: true).
-#   APP_PATH: Optional, path to the application directory.   (default: ../benchmarks/DeathStarBench/hotelReservation).
+#   APP_PATH: Optional, path to the application directory.   (default: ../benchmarks/astronomy-shop).
 #   N: Optional, number of iterations to run                  (default: 10).
 # ------------------------------------------------------------------
 
@@ -18,12 +18,9 @@ use_ser=${USE_SER:-true}
 results_dir=${OUT_DIR:-"./results"}
 use_docker=${USE_DOCKER:-true}
 
-PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
-CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
-
 # Constants
-suite_name="HotelReservationSuiteIT"
-application_name="hotelreservation"
+suite_name="OTELSuiteIT"
+application_name="astronomy-shop"
 
 # Path setup
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
@@ -33,7 +30,7 @@ results_dir=$(realpath "${results_dir}")
 output_dir="${results_dir}/runs/${application_name}/${result_tag}"
 log_dir="${results_dir}/logs/${application_name}/${result_tag}"
 
-application_path=${APP_PATH:-"${reynard_path}/../benchmarks/DeathStarBench/hotelReservation"}
+application_path=${APP_PATH:-"${reynard_path}/../benchmarks/astronomy-shop"}
 application_path=$(realpath "${application_path}")
 application_path=${application_path}
 
@@ -52,12 +49,12 @@ mkdir -p "${log_dir}"
 mkdir -p "${output_dir}"
 
 # # Build images and start containers
-cd ${application_path}; PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
+cd ${application_path}; make start-fit
 
 
 # Wait for the health check to pass
-echo "Waiting for http://localhost:5000/ to be available..."
-until  curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/ | grep -qv '^5';  do
+echo "Waiting for http://localhost:8080/ to be available..."
+until curl -s http://localhost:8080/ > /dev/null; do
   echo "Service not available yet. Retrying in 5 seconds..."
   sleep 5
 done
@@ -77,14 +74,14 @@ run_benchmark() {
   test_name=$(echo "$benchmark_id" | sed -E 's/(^|-)([a-z])/\U\2/g' | tr -d '-')
 
   if [ "${use_docker}" = true ]; then
-    docker run \
-      --rm \
-      -v ${output_dir}/:/results/tests \
-      --network="host" \
-      -e OUTPUT_TAG=${tag} \
-      -e USE_SER=${use_ser} \
-      fit-library:latest \
-      /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
+  docker run \
+    --rm \
+    -v ${output_dir}/:/results/tests \
+    --network="host" \
+    -e OUTPUT_TAG=${tag} \
+    -e USE_SER=${use_ser} \
+    fit-library:latest \
+    /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
   else
     cd ${reynard_path}; \
     OUTPUT_DIR=${output_dir} \
@@ -92,6 +89,7 @@ run_benchmark() {
     USE_SER=${use_ser} \
     mvn test -Dtest=${suite_name}#test${test_name} | tee ${log_file}
   fi
+
 }
 
 trap "exit" INT
@@ -101,12 +99,12 @@ for ((i=1; i<=iterations; i++)); do
   echo "Running iteration ${i} of ${iterations}"
   run_tag="${result_tag:+${result_tag}-}${i}"
 
-  run_benchmark SearchHotels ${run_tag}
-  run_benchmark Recommend ${run_tag}
-  run_benchmark Recommend ${run_tag}
-  run_benchmark Reserve ${run_tag}
-  run_benchmark Login ${run_tag}
+  run_benchmark shipping ${run_tag}
+  run_benchmark recommendations ${run_tag}
+  run_benchmark recommendationsWithPruner ${run_tag}
+  run_benchmark checkout ${run_tag}
+  run_benchmark checkoutWithCs ${run_tag}
 done
 
 # Stop containers
-cd ${application_path}; PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml down
+cd ${application_path}; docker compose -f docker-compose.fit.yml down

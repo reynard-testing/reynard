@@ -1,14 +1,15 @@
 #!/bin/bash
 # ------------------------------------------------------------------
-# This script runs all experiments for the astronomy-shop benchmark using Docker.
+# This script runs all experiments for the filibuster corpus.
 #
 # Usage: ./run_all_n_docker.sh
 # Env:
 #   TAG: Optional, tag to identify the experiment runs.       (default: "").
 #   OUT_DIR: Optional, directory to store results             (default: ./results).
 #   USE_SER: Optional, whether to use SER                     (default: true).
-#   APP_PATH: Optional, path to the application directory.   (default: ../benchmarks/astronomy-shop).
+#   APP_PATH: Optional, path to the application directory.    (default: ../benchmarks/filibuster-corpus).
 #   N: Optional, number of iterations to run                  (default: 10).
+#   USE_DOCKER: Optional, whether to use Docker               (default: true).
 # ------------------------------------------------------------------
 
 # Optional environment variables

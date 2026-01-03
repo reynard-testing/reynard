@@ -1,15 +1,24 @@
+x-common-configs:
+  sysctls-setup: &sysctls-common
+    sysctls:
+      - net.ipv4.tcp_tw_reuse=1
+      - net.ipv4.tcp_max_tw_buckets=65536
+      - net.ipv4.ip_local_port_range=1024 65535
+      - net.ipv4.tcp_synack_retries=2
+      - net.ipv4.tcp_fin_timeout=15
+
 services:
   target:
+    <<: *sysctls-common
     build: ./target-svc
-    ports:
-      - "8080:8080"
+    networks:
+      - external_benchmark_net
 
   proxy:
+    <<: *sysctls-common
     image: "${PROXY_IMAGE:-fit-proxy:latest}"
     ports:
-      - "8081:8080"
-      - "8050:8050"
-      # - "6060:6060"
+      - "8050:8050" # Expose control port
     environment:
       - OTEL_SDK_ENABLED=false
       - PROXY_HOST=0.0.0.0:8080
@@ -20,22 +29,28 @@ services:
       - LOG_LEVEL
       # - USE_PPROF=true
       - USE_OTEL=false
-
-    # Ensure the proxy is not running out of ephemeral ports
-    sysctls:
-      - net.ipv4.tcp_tw_reuse=1
-      - net.ipv4.tcp_max_tw_buckets=65536
-      - net.ipv4.ip_local_port_range=1024 65535
-    cap_add:
-      - NET_ADMIN
+    networks:
+      - external_benchmark_net
 
   controller:
-    image: "${CONTROLLER_IMAGE:-fit-controller:latest}"
+    <<: *sysctls-common
     ports:
-      - "5050:5000"
+      - "5050:5000"  # Expose control port
+    image: "${CONTROLLER_IMAGE:-fit-controller:latest}"
     environment:
       - PROXY_LIST=proxy:8050
       - OTEL_SDK_ENABLED=false
       - LOG_LEVEL
+    networks:
+      - external_benchmark_net
+
   controller-dummy:
+    <<: *sysctls-common
     build: ./target-svc
+    networks:
+      - external_benchmark_net
+
+networks:
+  external_benchmark_net:
+    external: true
+    name: reynard_benchmark_net

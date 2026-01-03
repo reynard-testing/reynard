@@ -18,6 +18,7 @@ import dev.reynard.junit.integration.micro.setup.ActionComposition;
 import dev.reynard.junit.integration.micro.setup.MicroBenchmarkContainer;
 import dev.reynard.junit.integration.micro.setup.ServerAction;
 import dev.reynard.junit.strategy.TrackedFaultload;
+import dev.reynard.junit.strategy.util.Env;
 import dev.reynard.junit.strategy.util.TraceAnalysis;
 import dev.reynard.junit.strategy.util.traversal.TraversalOrder;
 import okhttp3.OkHttpClient;
@@ -89,8 +90,9 @@ public class TraversalOrderDifferenceIT {
     }
 
     public void testA(TrackedFaultload faultload) throws IOException {
+        String host = Env.getEnv(Env.Keys.LOCAL_HOST);
         Request request = faultload.newRequestBuilder()
-                .url("http://localhost:" + serviceA.getMappedPort(8080) + "/")
+                .url("http://" + host + ":" + serviceA.getMappedPort(8080) + "/")
                 .build();
 
         try (Response response = client.newCall(request).execute()) {

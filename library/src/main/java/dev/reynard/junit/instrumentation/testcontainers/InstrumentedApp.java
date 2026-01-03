@@ -11,6 +11,7 @@ import dev.reynard.junit.instrumentation.RemoteController;
 import dev.reynard.junit.instrumentation.testcontainers.services.ControllerService;
 import dev.reynard.junit.instrumentation.testcontainers.services.InstrumentedService;
 import dev.reynard.junit.instrumentation.testcontainers.services.Jaeger;
+import dev.reynard.junit.strategy.util.Env;
 
 public class InstrumentedApp extends RemoteController {
     public Network network;
@@ -109,11 +110,12 @@ public class InstrumentedApp extends RemoteController {
         }
 
         int localControllerPort = controller.getMappedPort(5000);
-        controllerInspectUrl = "http://localhost:" + localControllerPort;
+        String networkHost = Env.getEnv(Env.Keys.LOCAL_HOST);
+        controllerInspectUrl = "http://" + networkHost + ":" + localControllerPort;
 
         if (jaeger != null) {
             int localJaegerPort = jaeger.getMappedPort(16686);
-            jaegerInspectUrl = "http://localhost:" + localJaegerPort;
+            jaegerInspectUrl = "http://" + networkHost + ":" + localJaegerPort;
         }
 
         this.apiHost = controllerInspectUrl;

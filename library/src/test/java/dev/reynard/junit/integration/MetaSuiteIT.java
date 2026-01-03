@@ -1,7 +1,7 @@
 package dev.reynard.junit.integration;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
@@ -127,7 +127,8 @@ public class MetaSuiteIT {
     @Test
     public void testShouldRetry() throws IOException {
         int port = controller.getMappedPort(5000);
-        String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
+        String host = Env.getEnv(Env.Keys.LOCAL_HOST);
+        String queryUrl = "http://" + host + ":" + port + "/v1/faultload/register";
 
         // First call from the controller to proxy1
         FaultUid uid = new FaultUid(List.of(controller.getPoint(), proxy1.getPoint().withCount(0)));
@@ -180,7 +181,8 @@ public class MetaSuiteIT {
     @FiTest(maxTestCases = 999, optimizeForRetries = true, withPredecessors = false)
     public void testRegister(TrackedFaultload faultload) throws IOException {
         int port = controller.getMappedPort(5000);
-        String queryUrl = "http://localhost:" + port + "/v1/faultload/register";
+        String host = Env.getEnv(Env.Keys.LOCAL_HOST);
+        String queryUrl = "http://" + host + ":" + port + "/v1/faultload/register";
 
         Request request = faultload.newRequestBuilder()
                 .url(queryUrl)
@@ -188,7 +190,7 @@ public class MetaSuiteIT {
                 .build();
 
         String inspectUrl = app.controllerInspectUrl + "/v1/trace/" + faultload.getTraceId();
-        String traceUrl = "http://localhost:" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/"
+        String traceUrl = "http://" + host + ":" + app.jaeger.getMappedPort(app.jaegerPort) + "/trace/"
                 + faultload.getTraceId();
 
         try (Response response = client.newCall(request).execute()) {

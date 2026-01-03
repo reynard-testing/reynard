@@ -1,14 +1,13 @@
 #!/bin/bash
 # ------------------------------------------------------------------
-# This script runs all experiments for the hotelreservation benchmark.
+# This script runs all experiments for the micro benchmarks.
 #
 # Usage: ./run_all_n_docker.sh
 # Env:
-#   TAG: Optional, tag to identify the experiment runs.       (default: "").
-#   OUT_DIR: Optional, directory to store results             (default: ./results).
-#   USE_SER: Optional, whether to use SER                     (default: true).
-#   APP_PATH: Optional, path to the application directory.   (default: ../benchmarks/DeathStarBench/hotelReservation).
-#   N: Optional, number of iterations to run                  (default: 10).
+#   TAG: Optional, tag to identify the experiment runs.       (default: "")
+#   OUT_DIR: Optional, directory to store results             (default: ./results)
+#   USE_SER: Optional, whether to use SER                     (default: true)
+#   N: Optional, number of iterations to run                  (default: 10)
 # ------------------------------------------------------------------
 
 # Optional environment variables
@@ -22,8 +21,8 @@ PROXY_IMAGE=${PROXY_IMAGE:-"fit-proxy:latest"}
 CONTROLLER_IMAGE=${CONTROLLER_IMAGE:-"fit-controller:latest"}
 
 # Constants
-suite_name="HotelReservationSuiteIT"
-application_name="hotelreservation"
+suite_name="ResiliencePatternsIT"
+application_name="micro"
 
 # Path setup
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
@@ -33,16 +32,6 @@ results_dir=$(realpath "${results_dir}")
 output_dir="${results_dir}/runs/${application_name}/${result_tag}"
 log_dir="${results_dir}/logs/${application_name}/${result_tag}"
 
-application_path=${APP_PATH:-"${reynard_path}/../benchmarks/DeathStarBench/hotelReservation"}
-application_path=$(realpath "${application_path}")
-application_path=${application_path}
-
-# Check if the application path exists
-if [ ! -d "${application_path}" ]; then
-  echo "Error: application path ${application_path} does not exist."
-  exit 1
-fi
-
 # Log and create directories
 echo "Storing results in: ${output_dir}"
 echo "Storing logs in: ${log_dir}"
@@ -51,20 +40,11 @@ echo "Using application path: ${application_path}"
 mkdir -p "${log_dir}"
 mkdir -p "${output_dir}"
 
-# # Build images and start containers
-cd ${application_path}; PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml up -d --force-recreate --remove-orphans
-# Wait for the health check to pass
-echo "Waiting for http://localhost:5000/ to be available..."
-until  curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/ | grep -qv '^5';  do
-  echo "Service not available yet. Retrying in 5 seconds..."
-  sleep 5
-done
-echo "Service is available."
-
 # Function to run a single benchmark
 run_benchmark() {
   local benchmark_id=$1
   local tag=$2
+  local retry_count=$3
 
   run_log_dir="${log_dir}/${benchmark_id}"
   mkdir -p "${run_log_dir}"
@@ -77,17 +57,25 @@ run_benchmark() {
   if [ "${use_docker}" = true ]; then
     docker run \
       --rm \
+      --network host \
       -v ${output_dir}/:/results/tests \
-      --network="host" \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      --add-host host.docker.internal=host-gateway \
       -e OUTPUT_TAG=${tag} \
       -e USE_SER=${use_ser} \
-      fit-library:latest \
+      -e PROXY_IMAGE=${PROXY_IMAGE} \
+      -e CONTROLLER_IMAGE=${CONTROLLER_IMAGE} \
+      -e LOCAL_HOST=host.docker.internal \
+      -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal \
+      fit-library-dind:latest \
       /bin/bash -c "mvn test -Dtest=${suite_name}#test${test_name}" | tee ${log_file}
   else
     cd ${reynard_path}; \
     OUTPUT_DIR=${output_dir} \
     OUTPUT_TAG=${tag} \
     USE_SER=${use_ser} \
+    PROXY_IMAGE=${PROXY_IMAGE} \
+    CONTROLLER_IMAGE=${CONTROLLER_IMAGE} \
     mvn test -Dtest=${suite_name}#test${test_name} | tee ${log_file}
   fi
 }
@@ -99,12 +87,8 @@ for ((i=1; i<=iterations; i++)); do
   echo "Running iteration ${i} of ${iterations}"
   run_tag="${result_tag:+${result_tag}-}${i}"
 
-  run_benchmark SearchHotels ${run_tag}
-  run_benchmark Recommend ${run_tag}
-  run_benchmark Recommend ${run_tag}
-  run_benchmark Reserve ${run_tag}
-  run_benchmark Login ${run_tag}
+  run_benchmark a ${run_tag}
+  run_benchmark cs ${run_tag}
+  run_benchmark opt ${run_tag}
+  run_benchmark csOpt ${run_tag}
 done
-
-# Stop containers
-cd ${application_path}; PROXY_IMAGE=${PROXY_IMAGE} CONTROLLER_IMAGE=${CONTROLLER_IMAGE} docker compose -f docker-compose.fit.yml down

@@ -19,7 +19,6 @@ result_tag=${1:-default}
 iterations=${N:-10}
 
 trap "exit" INT
-cd ${parent_path}
 for ((i=1; i<=iterations; i++)); do
-    ./service_overhead.sh ${result_tag}${i}
+    TAG=${result_tag}${i} "${parent_path}/service_overhead.sh"
 done

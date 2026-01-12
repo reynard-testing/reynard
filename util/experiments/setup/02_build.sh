@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 # Note: this script assumes that Reynard and the benchmarks are already cloned.
-base_path=$(dirname "$0")
+base_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 base_path=$(realpath "$base_path"/../../../..)
 trap "exit" INT
 

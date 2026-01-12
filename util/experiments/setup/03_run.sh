@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 tag="${TAG:-}"
 ser_tag="${tag:+$tag-}NO-SER"
@@ -10,7 +10,7 @@ mkdir -p ${output_dir}
 results_dir=$(realpath "${output_dir}")
 
 # Note: this script assumes that Reynard and the benchmarks are already cloned.
-base_path=$(dirname "$0")
+base_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 base_path=$(realpath "$base_path"/../../../..)
 cd ${base_path}/reynard
 

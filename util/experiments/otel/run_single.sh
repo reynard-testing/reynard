@@ -21,7 +21,6 @@ benchmark_id=$1
 
 # Optional environment variables
 tag=${TAG:-"default"}
-iterations=${N:-10}
 use_ser=${USE_SER:-true}
 results_dir=${OUT_DIR:-"./results"}
 use_docker=${USE_DOCKER:-true}

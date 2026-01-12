@@ -83,7 +83,7 @@ git clone -b track-changes --single-branch  https://github.com/delanoflipse/open
 git clone -b fit-instrumentation --single-branch https://github.com/delanoflipse/DeathStarBench.git benchmarks/DeathStarBench
 ```
 
-_(This will take roughly 30 seconds, depending on your internet speed)_
+Note: This will take roughly 30 seconds, depending on your internet speed
 
 #### 1.1.2. Building Docker images
 

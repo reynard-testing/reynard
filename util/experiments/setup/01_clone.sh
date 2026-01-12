@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Clone Reynard repository
 git clone --single-branch https://github.com/reynard-testing/reynard.git reynard

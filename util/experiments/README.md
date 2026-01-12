@@ -86,7 +86,7 @@ git clone -b fit-instrumentation --single-branch https://github.com/delanoflipse
 
 All benchmarks are _large_ docker-based microservice applicatons.
 We want to build the last version of them, and run them with reynard instrumentation.
-To build _all_ required docker images, run the following [script](./setup/02_clone.sh) in an the experiment directory:
+To build _all_ required docker images, run the following [script](./setup/02_build.sh) in an the experiment directory:
 
 ```bash
 cd <experimentation directory>

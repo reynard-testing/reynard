@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 tag="${TAG:-}"
 ser_tag="${tag:+$tag-}NO-SER"

@@ -5,7 +5,7 @@ This includes scripts to simplify the experimentation process, as well as this d
 
 ### General notes
 
-- Most experiment scripts expect dependent projects to be present at a _specific_ path relative to their own. Be careful in the relative location and naming of checked out repositories.
+- Most experiment scripts expect dependent projects to be present at a _specific_ path relative to their own. Be careful in the relative location and naming of checked out repositories. Moreover, do not move scripts, as they will use paths relative to their location.
 - The file [junit-platform.properties](/library/src/test/resources/junit-platform.properties) defines _where_ the Reynard results are put. Alternatively, you can run reynard with a `OUTPUT_DIR` environment variable set.
 
 ## Requirements
@@ -14,6 +14,7 @@ This includes scripts to simplify the experimentation process, as well as this d
 
 - All experiments require an installation of `Docker` and `Docker Compose`.
 - All script require `bash`. Use a linux distribution, or bash for windows.
+- Most build processes make use of `make` (Makefiles).
 - (Optional) To run reynard locally requires `Java JDK 17` and `Maven`. We offer a dockerised version too.
 
 ### Hardware Requirements
@@ -46,6 +47,9 @@ We have three experiments that we use in the results, which we detail in the fol
 
 These will be detailed below.
 
+Note that reproducing all results takes a long time: the main results take around 6 hours to reproduce, it takes around 5 hours for the comparison with filibuster, and around 2.5 hours for the overhead experiments (for n=10). Even taking n=1 will take hours, as building steps take a significant amount of time.
+To verify if you can run the experiments, we recommend reproducing a single iteration of the "Reynard Register" test scenario. This can be done by following the steps in [section 1.1.0](#110-running-a-minimal-setup-optional).
+
 ## 1. Running Reynard on the benchmarks
 
 This experiment requires Reynard, as well as the benchmark systems it should run on. These benchmark systems are (based on):
@@ -57,6 +61,15 @@ This experiment requires Reynard, as well as the benchmark systems it should run
 1. Reynard itself (we refer to these tests as "meta" tests)
 
 ### 1.1. Installation
+
+#### 1.1.0. Running a minimal setup (optional)
+
+To verify if you can run the experiments, we recommend reproducing a single iteration of the "Reynard Register" test scenario. This can be done by performing the following:
+
+- Clone the repository in an empty directory: `git clone --single-branch https://github.com/reynard-testing/reynard.git reynard` (similar to [1.1.1.](#111-cloning-repositories))
+- Change directory to the reynard folder (`cd reynard`) and build the instrumentation images and the testing library in docker images using `make build-all`. This takes roughly 3-4 minutes to build.
+- Run the following script to perform a single execution of the register benchmark: `./util/experiments/meta/run_single.sh register`. This should take roughly one minute to execute, and should result in “729 tests run”.
+- The results should now be present in the `results` directory relative to where you ran the script from.
 
 #### 1.1.1. Cloning repositories
 
@@ -83,7 +96,7 @@ git clone -b track-changes --single-branch  https://github.com/delanoflipse/open
 git clone -b fit-instrumentation --single-branch https://github.com/delanoflipse/DeathStarBench.git benchmarks/DeathStarBench
 ```
 
-Note: This will take roughly 30 seconds, depending on your internet speed
+Note: This will take roughly 30 seconds, depending on your internet speed.
 
 #### 1.1.2. Building Docker images
 
@@ -223,6 +236,8 @@ TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/meta/run_all_n.sh # Fo
 N=10 ./reynard/util/experiments/micro/run_all_n.sh # (~5m per iteration)
 TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/micro/run_all_n.sh # For ablation (~12m per iteration)
 ```
+
+Note: For the "meta" test, the images used are already built when we ran `make build-all`, but the micro benchmark docker images have to be built the first time they are executed (and will be reused after), so this will take a while (1-2 minutes) during which the script seems unresponsive.
 
 Tip: These benchmarks can be debugged directly using your IDE if you use reynard locally.
 

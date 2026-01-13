@@ -2,6 +2,7 @@
 
 ![GitHub License](https://img.shields.io/github/license/reynard-testing/reynard)
 ![GitHub Tag](https://img.shields.io/github/v/tag/reynard-testing/reynard)
+[![SWH](https://archive.softwareheritage.org/badge/origin/https://github.com/reynard-testing/reynard/)](https://archive.softwareheritage.org/browse/origin/?origin_url=https://github.com/reynard-testing/reynard)
 
 Reynard is an automated fault injection testing tool for Microservice or Service-Oriented Architectures. It allows for the automatic exploration of the effect of combinations of partial failures on a system interaction.
 
@@ -10,9 +11,9 @@ Reynard consists of the following components:
 - [Instrumentation](instrumentation/) to allow deterministic fault injection and inspect inter-service communication: a reverse proxy is placed as a side-car to services of interest, while a controller exposes an API for fault injection testing.
 - A [testing library](library/) to automatically explore relevant combinations of faults. This is implemented as a Java JUnit 5 decorator.
 
-### Experiments
+## Experiments/Artifact Instruction
 
-To reproduce the experiments, please follow the steps [described here](util/experiments/README.md).
+We have documented all steps needed to reproduce our results in [this readme](util/experiments/README.md).
 
 ## Example Usage
 

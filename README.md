@@ -13,7 +13,7 @@ Reynard consists of the following components:
 
 ## Experiments/Artifact Instruction
 
-We have documented all steps needed to reproduce our results in [this readme](./util/experiments/).
+We have documented all steps needed to reproduce our results in [this readme](util/experiments/).
 
 ## Example Usage
 
@@ -88,7 +88,7 @@ The supported communication protocols are HTTP1.1, HTTP2 and gRPC. We currently 
 
 #### 1.3. Controller:
 
-The controller service is available as a [Docker image](https://hub.docker.com/r/dflipse/reynard-controller). It must be [configured](./instrumentation/controller/README.md#configuration) to be aware of all deployed proxies to function correctly.
+The controller service is available as a [Docker image](https://hub.docker.com/r/dflipse/reynard-controller). It must be [configured](/instrumentation/controller/README.md#configuration) to be aware of all deployed proxies to function correctly.
 
 ## 2. Using the Test Library
 

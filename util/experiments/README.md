@@ -70,6 +70,7 @@ To verify if you can run the experiments, we recommend reproducing a single iter
 - Change directory to the reynard folder (`cd reynard`) and build the instrumentation images and the testing library in docker images using `make build-all`. This takes roughly 3-4 minutes to build.
 - Run the following script to perform a single execution of the register benchmark: `./util/experiments/meta/run_single.sh register`. This should take roughly one minute to execute, and should result in “729 tests run”.
 - The results should now be present in the `results` directory relative to where you ran the script from.
+- Make sure this results directory is not the same as the directory where the complete results are stored, as they might influence each other if they end up in the same run directory. Optionally, you can remove the results directory to be sure.
 
 #### 1.1.1. Cloning repositories
 

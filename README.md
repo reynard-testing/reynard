@@ -13,7 +13,7 @@ Reynard consists of the following components:
 
 ## Experiments/Artifact Instruction
 
-We have documented all steps needed to reproduce our results in [this readme](util/experiments/README.md).
+We have documented all steps needed to reproduce our results in [this readme](./util/experiments/).
 
 ## Example Usage
 

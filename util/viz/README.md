@@ -40,7 +40,10 @@ Some of these can be rendered stand-alone (see scripts).
 ### Search Tree Comparison
 
 Compare two search trees for analytical purposes.
+The input is: 
+- Two directories that correspond to a single execution. These are the folders directly containing the `.json` files corresponding to a single execution of a Reynard test case, i.e. `"./results/runs/meta/default/MetaSuiteIT#testRegister/default-1"`
+- An output directory
 
 ```bash
-python compare_tree.py <rel-dir-1> <rel-dir-2> <rel-output-dir>
+python compare_tree.py <path-to-json-dir-1> <path-to-json-dir-2> <path-to-output-dir>
 ```

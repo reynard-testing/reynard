@@ -35,7 +35,7 @@ Note that, for ease of finding files, we've renamed or moved a small number of f
 ## Post-processing
 
 To process the raw data for both visualisation and analytics of a Reynard run, we provide a number of post-processing scripts in `util/viz`.
-A description can be found [here](../viz/README.md).
+A description can be found [here](../viz/).
 
 # Experiments
 
@@ -161,7 +161,7 @@ Each test suite will result in several logs placed into `<results-dir>/<benchmar
 By default, the results directory is `<working-directory>/results`.
 The post-processing scripts assumes that all folders for different iterations of the same test scenario to be next to each other.
 
-After all benchmarks have been run, you can use the `util/viz` scripts to post-process the results, as [described here](/util/viz/).
+After all benchmarks have been run, you can use the `util/viz` scripts to post-process the results, as [described here](../viz/).
 
 ### 1.3 Filibuster Corpus
 

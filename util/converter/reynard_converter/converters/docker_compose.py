@@ -1,8 +1,12 @@
 
 import yaml
+
 from reynard_converter.config import IGNORED_IMAGES, IMAGES
 from reynard_converter.docker_compose.compose_builder import (
-    ComposeBuilder, PortManager, ServiceNameManager)
+    ComposeBuilder,
+    PortManager,
+    ServiceNameManager,
+)
 from reynard_converter.docker_compose.service_builder import ServiceBuilder
 
 
@@ -56,12 +60,8 @@ class ComposeConverter:
 
         # Configuration parameters
         self.controller_port = 5000
-        self.proxy_control_port = 5115
         self.instrumented_suffix = '-instrumented'
         self.proxy_suffix = '-proxy'
-
-        # List of proxies (service_name:control-port)
-        self.proxy_list: list[str] = []
 
         # Define the passes to apply to the services
         # Each is a conversion from list[ServiceBuilder] -> list[ServiceBuilder]
@@ -172,11 +172,6 @@ class ComposeConverter:
         # Determine service ports
         container_port = self._get_container_port(service)
 
-        # Set the control port, making sure it does not conflict with the container port
-        proxy_control_port = self.proxy_control_port
-        if container_port is not None and container_port == self.proxy_control_port:
-            proxy_control_port = self.proxy_control_port + 1
-
         # If the container port is not defined, use a placeholder
         # This is to ensure that the proxy can still be created
         if container_port is None:
@@ -186,7 +181,6 @@ class ComposeConverter:
         proxy_service = ServiceBuilder(proxy_service_name) \
             .with_image(IMAGES['proxy']) \
             .with_environment('CONTROLLER_HOST', f"{self.service_names['controller']}:{self.controller_port}") \
-            .with_environment('CONTROL_PORT', proxy_control_port) \
             .with_environment('LOG_LEVEL', None) \
             .with_environment('SERVICE_NAME', service.name) \
             .with_environment('PROXY_HOST', f"0.0.0.0:{container_port}") \
@@ -215,9 +209,6 @@ class ComposeConverter:
             .with_environment("OTEL_LOGS_EXPORTER", "none")\
             .with_environment("OTEL_METRICS_EXPORTER", "none")
 
-        self.proxy_list.append(service_hostname + ":" +
-                               str(proxy_control_port))
-
         return (proxy_service, instrumented_service)
 
     def _add_jaeger(self):
@@ -233,7 +224,6 @@ class ComposeConverter:
         service = ServiceBuilder(service_name) \
             .with_image(IMAGES['controller']) \
             .with_ports(self.public_ports['controller'], 5000) \
-            .with_environment('PROXY_LIST', ",".join(self.proxy_list)) \
             .with_environment('LOG_LEVEL', None)
         self.services.append(service)
 

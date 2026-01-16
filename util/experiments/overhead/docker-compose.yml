@@ -18,27 +18,23 @@ services:
     <<: *sysctls-common
     image: "${PROXY_IMAGE:-fit-proxy:latest}"
     ports:
-      - "8050:8050" # Expose control port
     environment:
       - OTEL_SDK_ENABLED=false
       - PROXY_HOST=0.0.0.0:8080
       - PROXY_TARGET=http://target:8080
       - SERVICE_NAME=target
       - CONTROLLER_HOST
-      - CONTROL_PORT=8050
       - LOG_LEVEL
       # - USE_PPROF=true
-      - USE_OTEL=false
     networks:
       - external_benchmark_net
 
   controller:
     <<: *sysctls-common
     ports:
-      - "5050:5000"  # Expose control port
+      - "5050:5000" # Expose control port
     image: "${CONTROLLER_IMAGE:-fit-controller:latest}"
     environment:
-      - PROXY_LIST=proxy:8050
       - OTEL_SDK_ENABLED=false
       - LOG_LEVEL
     networks:

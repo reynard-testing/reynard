@@ -72,8 +72,8 @@ func ReportSpanUID(report trace.TraceReport) bool {
 	return success
 }
 
-func attemptGetUid(req endpoints.UidRequest) *endpoints.UidResponse {
-	queryUrl := fmt.Sprintf("http://%s/v1/proxy/get-uid", queryHost)
+func attemptGetUid(req endpoints.InitRequest) *endpoints.InitResponse {
+	queryUrl := fmt.Sprintf("http://%s/v1/proxy/init", queryHost)
 	resp, err := postJSON(queryUrl, req)
 	if err != nil {
 		slog.Warn("Failed to reach controller to get UID", "error", err)
@@ -87,7 +87,7 @@ func attemptGetUid(req endpoints.UidRequest) *endpoints.UidResponse {
 		return nil
 	}
 
-	var response endpoints.UidResponse
+	var response endpoints.InitResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		slog.Warn("Failed to decode response from controller", "error", err)
 		return nil
@@ -96,8 +96,8 @@ func attemptGetUid(req endpoints.UidRequest) *endpoints.UidResponse {
 	return &response
 }
 
-func GetUid(metadata RequestMetadata, partial faultload.PartialInjectionPoint, includeEvents bool) faultload.FaultUid {
-	req := endpoints.UidRequest{
+func GetUidAndFaultFromController(metadata RequestMetadata, partial faultload.PartialInjectionPoint, includeEvents bool) (faultload.FaultUid, *faultload.Fault) {
+	req := endpoints.InitRequest{
 		TraceId:             metadata.TraceId,
 		ReportParentId:      metadata.ReportParentId,
 		SpanId:              metadata.SpanId,
@@ -117,8 +117,8 @@ func GetUid(metadata RequestMetadata, partial faultload.PartialInjectionPoint, i
 
 		return faultload.FaultUid{
 			Stack: []*faultload.InjectionPoint{},
-		}
+		}, nil
 	}
 
-	return res.Uid
+	return res.Uid, res.Fault
 }

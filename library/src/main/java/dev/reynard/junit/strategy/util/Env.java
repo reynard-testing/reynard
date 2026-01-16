@@ -7,10 +7,8 @@ public class Env {
         OUTPUT_TAG("default"),
         OUTPUT_DIR(""),
         USE_SER("true"),
-        CONTROLLER_IMAGE("fit-controller:latest"),
-        PROXY_IMAGE("fit-proxy:latest"),
-        // CONTROLLER_IMAGE("dflipse/reynard-controller:latest"),
-        // PROXY_IMAGE("dflipse/reynard-proxy:latest"),
+        CONTROLLER_IMAGE("dflipse/reynard-controller:latest"),
+        PROXY_IMAGE("dflipse/reynard-proxy:latest"),
         LOCAL_HOST("localhost"),
         LOG_LEVEL("info");
 

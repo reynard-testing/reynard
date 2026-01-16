@@ -57,3 +57,7 @@ jobs:
         run: make build-all
       - name: Run integration test
         run: mvn test -Dtest=ExampleSuiteIT#testA
+        env:
+          # Use local images built in the build-all step
+          CONTROLLER_IMAGE: fit-controller:latest
+          PROXY_IMAGE: fit-proxy:latest

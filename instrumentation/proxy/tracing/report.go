@@ -96,14 +96,14 @@ func attemptGetUid(req endpoints.InitRequest) *endpoints.InitResponse {
 	return &response
 }
 
-func GetUidAndFaultFromController(metadata RequestMetadata, partial faultload.PartialInjectionPoint, includeEvents bool) (faultload.FaultUid, *faultload.Fault) {
+func GetUidAndFaultFromController(metadata RequestMetadata, partial faultload.PartialInjectionPoint, IncludePredecessors bool) (faultload.FaultUid, *faultload.Fault) {
 	req := endpoints.InitRequest{
 		TraceId:             metadata.TraceId,
 		ReportParentId:      metadata.ReportParentId,
 		SpanId:              metadata.SpanId,
 		IsInitial:           metadata.IsInitial,
 		PartialPoint:        partial,
-		IncludePredecessors: includeEvents,
+		IncludePredecessors: IncludePredecessors,
 	}
 
 	res := attemptGetUid(req)

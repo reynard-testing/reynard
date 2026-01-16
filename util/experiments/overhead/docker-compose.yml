@@ -17,7 +17,6 @@ services:
   proxy:
     <<: *sysctls-common
     image: "${PROXY_IMAGE:-fit-proxy:latest}"
-    ports:
     environment:
       - OTEL_SDK_ENABLED=false
       - PROXY_HOST=0.0.0.0:8080

@@ -56,4 +56,4 @@ jobs:
       - name: Build all
         run: make build-all
       - name: Run integration test
-        run: mvn test -Dtest=MetaSuiteIT#testRegister
+        run: mvn test -Dtest=ExampleSuiteIT#testA

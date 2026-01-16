@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"strconv"
 
 	"go.reynard.dev/instrumentation/shared/util"
 )
@@ -11,12 +10,6 @@ type ProxyConfig struct {
 	Host        string
 	Target      string
 	Destination string
-}
-
-type ControlConfig struct {
-	Port         int
-	Destination  string
-	UseTelemetry bool
 }
 
 func GetProxyConfig() ProxyConfig {
@@ -40,28 +33,5 @@ func GetProxyConfig() ProxyConfig {
 		Host:        proxyHost,
 		Target:      proxyTarget,
 		Destination: destination,
-	}
-}
-
-func GetControlConfig(proxyConfig ProxyConfig) ControlConfig {
-	UseTelemetry := os.Getenv("USE_OTEL") == "true"
-
-	if controllerPort := os.Getenv("CONTROL_PORT"); controllerPort != "" {
-		if controllerPortInt, err := strconv.Atoi(controllerPort); err == nil {
-			return ControlConfig{
-				UseTelemetry: UseTelemetry,
-				Port:         controllerPortInt,
-				Destination:  proxyConfig.Destination,
-			}
-		}
-	}
-
-	_, proxyPort := util.AsHostAndPort(proxyConfig.Host)
-	controlPort := proxyPort + 1
-
-	return ControlConfig{
-		UseTelemetry: UseTelemetry,
-		Port:         controlPort,
-		Destination:  proxyConfig.Destination,
 	}
 }

@@ -22,7 +22,7 @@ To run commands, use either `poetry run python <script>` or use `poetry shell` a
 
 This script is intended to visualize a directory of **runs** (not logs) in the results directory.
 It will search recursively for folders of interest, so you can also provide it with a directory containing directories with runs.
-You can use the `--all` flag to get *combined* results for all subdirectories (for analytical purpoposes).
+You can use the `--all` flag to get _combined_ results for all subdirectories (for analytical purpoposes).
 
 ```bash
 python viz_all.py <relative-path-to-results-runs-dir> [--all] [--format=svg|png]
@@ -40,8 +40,9 @@ Some of these can be rendered stand-alone (see scripts).
 ### Search Tree Comparison
 
 Compare two search trees for analytical purposes.
-The input is: 
-- Two directories that correspond to a single execution. These are the folders directly containing the `.json` files corresponding to a single execution of a Reynard test case, i.e. `"./results/runs/meta/default/MetaSuiteIT#testRegister/default-1"`
+The input is:
+
+- Two directories that correspond to a single execution. These are the folders directly containing the `.json` files corresponding to a single execution of a Reynard test case, i.e. `"./results/runs/<benchmark>/default/<suite>#<test>/default-1"`
 - An output directory
 
 ```bash

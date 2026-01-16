@@ -68,7 +68,7 @@ To verify if you can run the experiments, we recommend reproducing a single iter
 
 - Clone the repository in an empty directory: `git clone --single-branch https://github.com/reynard-testing/reynard.git reynard` (similar to [1.1.1.](#111-cloning-repositories))
 - Change directory to the reynard folder (`cd reynard`) and build the instrumentation images and the testing library in docker images using `make build-all`. This takes roughly 3-4 minutes to build.
-- Run the following script to perform a single execution of the register benchmark: `./util/experiments/meta/run_single.sh register`. This should take roughly one minute to execute, and should result in “729 tests run”.
+- Run the following script to perform a single execution of the register benchmark: `./util/experiments/micro/run_single.sh a`. This should take roughly 1-5 minute to execute, and should result in "548 tests run".
 - The results should now be present in the `results` directory relative to where you ran the script from.
 - Make sure this results directory is not the same as the directory where the complete results are stored, as they might influence each other if they end up in the same run directory. Optionally, you can remove the results directory to be sure.
 
@@ -217,7 +217,7 @@ N=10 ./reynard/util/experiments/hotelreservation/run_all_n.sh # (~ 1m30s of over
 TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/hotelreservation/run_all_n.sh # (~ 1m30s of overhead + 5s per iteration)
 ```
 
-### 1.6. "Meta" and Micro Benchmarks
+### 1.6. Micro Benchmarks
 
 These benchmarks are contained in this repository.
 They are run using [testcontainers](https://testcontainers.com/) and require Docker.
@@ -228,10 +228,6 @@ cd <experimentation directory>/reynard
 
 # Uncomment if you intent to use your local maven installation
 # export USE_DOCKER=false
-
-# Meta
-N=10 ./reynard/util/experiments/meta/run_all_n.sh # (~2m30s per iteration)
-TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/meta/run_all_n.sh # For ablation, (~2m30s iteration)
 
 # Micro
 N=10 ./reynard/util/experiments/micro/run_all_n.sh # (~5m per iteration)

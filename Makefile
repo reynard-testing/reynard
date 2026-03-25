@@ -1,4 +1,4 @@
-.PHONY: test build-controller build-proxy build-all run-test install
+.PHONY: test build-controller build-proxy build-lambda-extension build-all run-test install
 
 build-controller:
 	cd ./instrumentation/; docker build -t fit-controller:latest -f controller/Dockerfile .
@@ -12,7 +12,10 @@ build-library:
 build-library-dind:
 	docker build -t fit-library-dind:latest -f Dockerfile.dind .
 
-build-all: build-controller build-proxy build-library build-library-dind
+build-lambda-proxy:
+	cd ./instrumentation/; docker build -t fit-lambda-proxy:latest -f lambda-proxy/Dockerfile .
+
+build-all: build-controller build-proxy build-library build-library-dind build-lambda-proxy
 
 run-test:
 	cd ./library; mvn test

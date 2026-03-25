@@ -2,7 +2,10 @@ module go.reynard.dev/instrumentation
 
 go 1.24
 
-require golang.org/x/net v0.41.0
+require (
+	github.com/aws/aws-lambda-go v1.54.0
+	golang.org/x/net v0.41.0
+)
 
 require (
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect

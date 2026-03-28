@@ -13,7 +13,7 @@ build-library-dind:
 	docker build -t fit-library-dind:latest -f Dockerfile.dind .
 
 build-lambda-proxy:
-	cd ./instrumentation/; docker build -t fit-lambda-proxy:latest -f lambda-proxy/Dockerfile .
+	./instrumentation/lambda-proxy/build.sh
 
 build-all: build-controller build-proxy build-library build-library-dind build-lambda-proxy
 

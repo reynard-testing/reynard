@@ -149,7 +149,7 @@ public class RemoteController implements FaultController {
         node.put("trace_id", faultload.getTraceId());
 
         String jsonBody = node.toString();
-        ;
+
         RequestBody body = RequestBody.create(jsonBody, JSON);
         Request request = new Request.Builder()
                 // .addHeader("Content-Type", "application/json")

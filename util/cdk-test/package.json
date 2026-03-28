@@ -1,0 +1,27 @@
+{
+  "name": "reynard-cdk-test",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Delano Flipse",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "zip-lambda": "zip -j lambda/handler.zip lambda/index.js",
+    "synth": "cdk synth --output cdk.out/app --app \"vite-node ./stack/index.ts\"",
+    "bootstrap": "cdk bootstrap --output cdk.out/app --app \"vite-node ./stack/index.ts\" ${1:---all}",
+    "diff": "cdk diff --output cdk.out/app --app \"vite-node ./stack/index.ts\" ${1:---all}",
+    "deploy": "cdk deploy --output cdk.out/app --app \"vite-node ./stack/index.ts\" ${1:---all}",
+    "destroy": "cdk destroy --output cdk.out/app --app \"vite-node ./stack/index.ts\" ${1:---all}"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.245.0",
+    "constructs": "^10.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "aws-cdk": "^2.1114.1",
+    "typescript": "^6.0.2",
+    "vite-node": "^6.0.0"
+  }
+}

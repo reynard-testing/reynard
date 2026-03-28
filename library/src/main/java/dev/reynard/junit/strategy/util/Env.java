@@ -35,6 +35,16 @@ public class Env {
         return env;
     }
 
+    public static String getEnv(String key) {
+        String env = System.getenv(key);
+
+        if (env == null || env.equals("")) {
+            throw new IllegalStateException("Environment variable " + key + " is not set and has no default value.");
+        }
+
+        return env;
+    }
+
     private static boolean isTruthy(String value) {
         return value != null && !value.isEmpty() && !value.equalsIgnoreCase("false");
     }

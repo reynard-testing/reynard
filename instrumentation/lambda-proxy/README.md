@@ -6,14 +6,14 @@ Lambda-based microservices.
 
 ## How it works
 
-The binary acts as a Lambda custom runtime (`bootstrap`). On startup it launches the FIT reverse
-proxy HTTP server as a goroutine, then enters the Lambda Runtime API event loop. For each Lambda
-invocation, the runtime API is polled, the invocation is acknowledged, and the proxy continues
-running between invocations.
+The binary acts as a Lambda custom runtime (`bootstrap`). It registers a handler via the Lambda
+Runtime API (`lambda.Start`) that is invoked for each incoming request.
 
-Outgoing HTTP calls from a Lambda function that routes traffic through this proxy are intercepted,
-consulted against the FIT controller for fault decisions, and faults (delays, errors, omissions)
-are injected as configured.
+For each invocation, the handler extracts the trace context (W3C `traceparent` or X-Ray), checks
+whether FIT is enabled for that trace, consults the FIT controller for fault decisions, and then
+forwards the request to the configured `PROXY_TARGET`. Faults (delays, errors, omissions) are
+injected as configured, and the span is reported back to the controller after the request
+completes.
 
 ## Build
 

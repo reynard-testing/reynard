@@ -16,7 +16,7 @@ import okhttp3.Response;
 /**
  * @see util/cdk-test
  */
-public class AwsSuiteIT {
+public class AwsCdkSuiteIT {
     // Note: This are deployment specific.
     public static final String CONTROLLER_HOST = Env.getEnv("CONTROLLER_HOST");
     public static final String BASE_URL = Env.getEnv("BASE_URL");

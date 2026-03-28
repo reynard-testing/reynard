@@ -88,6 +88,9 @@ func newHTTPHandler() http.Handler {
 		mux.Handle(pattern, handler)
 	}
 
+	handleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	handleFunc("GET /v1/trace/{trace_id}", endpoints.GetReportsByTraceID)
 	handleFunc("POST /v1/proxy/report", endpoints.ReportSpanId)
 	handleFunc("POST /v1/proxy/init", endpoints.InitRequestHandler)

@@ -9,9 +9,9 @@ RUN go mod download
 COPY . .
 
 # Build the Lambda custom runtime binary (linux/amd64, named bootstrap per Lambda convention)
-RUN GOARCH=amd64 GOOS=linux go build -o bootstrap lambda-extension/main.go
+RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o bootstrap lambda-proxy/main.go
 
-# Final minimal image; bootstrap is placed at /var/task/ per Lambda custom runtime convention
-FROM debian:bullseye-slim
+# Final minimal image; bootstrap at root so docker export outputs to ./lambda/bootstrap
+FROM scratch
 
-COPY --from=builder /go/src/go.reynard.dev/instrumentation/bootstrap /var/task/bootstrap
+COPY --from=builder /go/src/go.reynard.dev/instrumentation/bootstrap /bootstrap

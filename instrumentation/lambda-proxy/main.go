@@ -40,6 +40,8 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
 	proxyTarget = os.Getenv("PROXY_TARGET")
+	proxyTarget = strings.TrimSuffix(proxyTarget, "/")
+
 	destination = os.Getenv("SERVICE_NAME")
 	if destination == "" {
 		destination = os.Getenv("OTEL_SERVICE_NAME")
@@ -166,9 +168,11 @@ func handleRequest(ctx context.Context, event events.APIGatewayV2HTTPRequest) (e
 	if parentSpan != nil {
 		traceId = parentSpan.TraceID
 		parentSpanId = parentSpan.ParentID
+		slog.Debug("Extracted W3C trace context", "traceId", traceId, "parentSpanId", parentSpanId)
 	} else if xray != nil {
 		traceId = xray.traceId
 		parentSpanId = xray.spanId
+		slog.Debug("Extracted XRay trace context", "traceId", traceId, "parentSpanId", parentSpanId)
 	}
 
 	// No trace context: forward without inspection
@@ -179,6 +183,7 @@ func handleRequest(ctx context.Context, event events.APIGatewayV2HTTPRequest) (e
 
 	// Parse tracestate for FIT flags
 	state := tracing.ParseTraceState(tracestate)
+	slog.Debug("Found tracestate", "state", state)
 	if state.GetWithDefault(proxyPkg.FIT_FLAG, "0") != "1" {
 		slog.Debug("FIT not enabled, forwarding directly")
 		return forward(req)

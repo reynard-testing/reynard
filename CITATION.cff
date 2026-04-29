@@ -11,7 +11,11 @@ authors:
 title: "Reynard"
 version: 0.2.2
 url: "https://github.com/reynard-testing/reynard"
-date-released: 2025-07-15
+repository-code: 'https://github.com/reynard-testing/reynard'
+repository-artifact: 'https://github.com/reynard-testing/experiment-artifacts'
+commit: 7fc79c85f5eefd766946a6d878abd441f7641f81
+version: v0.2.2-artifact
+date-released: 2026-01-16
 identifiers:
   - type: swh
     value: "swh:1:snp:46be16a0632500d0ae311a2faae94e879bc27c87"
@@ -51,3 +55,17 @@ preferred-citation:
     - type: doi
       value: 10.1145/3744916.3773193
   title: "Automated Network-Level Fault Injection Testing of Microservice Architectures"
+  collection-title: "Proceedings of the 2026 IEEE/ACM 48th International Conference on Software Engineering"
+  collection-type: proceedings
+  conference:
+    name: "ICSE '26"
+    location: "Rio de Janeiro, Brazil"
+    date-start: 2026-04-12
+    date-end: 2026-04-18
+  year: 2026
+  month: 4
+  publisher:
+    name: "ACM"
+    address: "New York, NY, USA"
+  doi: "10.1145/3744916.3773193"
+  pages: 12

@@ -38,7 +38,7 @@ void testCheckout(TrackedFaultload faultload) throws IOException {
       boolean paymentProcessed = PaymentService.getPaymentProcessedFor(userId);
       boolean orderShipped = ShippingService.getOrderShippedFor(userId);
 
-      // Then - either the user payed, and the order is shipped, or neither ocurred
+      // Then - either the user paid, and the order is shipped, or neither ocurred
       // Otherwise a user would be paying for nothing, or a order is shipped without payment
       assertTrue((paymentProcessed && orderShipped) || (!paymentProcessed && !orderShipped));
   }
@@ -57,9 +57,9 @@ The simplest way to see Reynard in action is to run the [ExampleSuiteIT.java](/l
 
 Reynard's instrumentation can precisely identify requests in the system and inject faults for those requests. We can inject faults based on temporal and causal relation, e.g., the second request sent by service `B` to a specific endpoint of service `C`, when a specific endpoint of `B` was called by service `A`.
 
-### Broad Applicablility
+### Broad Applicability
 
-Reynard can function in any system that supports modern distributed tracing, that can be configured with a reverse-proxy side-card pattern, and that uses HTTP or gRPC for inter-service communication.
+Reynard can function in any system that supports modern distributed tracing, that can be configured with a reverse-proxy sidecar pattern, and that uses HTTP or gRPC for inter-service communication.
 
 ### Automated Exhaustive Testing
 
@@ -70,32 +70,32 @@ It is able to do this for common communication patterns, but do note that there 
 
 ## 1. Installing Instrumentation
 
-To use Reynard, we require the addition of the following instrumentation to the the system's runtime (in a local or test environment):
+To use Reynard, we require the addition of the following instrumentation to the system's runtime (in a local or test environment):
 
-1. The addition of [OpenTelemetry](https://opentelemetry.io/) for each service of interest, or any tracing solution that allows for both the propagation of the `traceparent` and `tracecontext` headers [as defined by the W3C](https://www.w3.org/TR/trace-context/).
+1. The addition of [OpenTelemetry](https://opentelemetry.io/) for each service of interest, or any tracing solution that allows for both the propagation of the `traceparent` and `tracestate` headers [as defined by the W3C](https://www.w3.org/TR/trace-context/).
 1. The addition of reverse proxies as a sidecar to each service of interest.
 1. The addition of a fault injection controller process.
 1. (Optionally) the addition of [Jaeger](https://www.jaegertracing.io/) to collect and visualize traces for debugging purposes.
 
-#### 1.1. Distributed Tracing:
+### 1.1. Distributed Tracing:
 
 We recommend [OpenTelemetry](https://opentelemetry.io/) as a distributed tracing solution as, in many cases, it can be [automatically added](https://opentelemetry.io/docs/zero-code/) without source-code changes. Keep in mind that adding distributed tracing will introduce some computational overhead. Our tooling does not require that every span is exported, but it does require that context is correctly propagated.
 Exporting spans to a tool like [Jaeger](https://www.jaegertracing.io/) will aid in debugging.
 
-#### 1.2. Proxies:
+### 1.2. Proxies:
 
 The reverse proxies are available as a [Docker image](https://hub.docker.com/r/dflipse/reynard-proxy). The exact deployment of the proxies depends on the system configuration. In most cases, you want to route traffic targeted to a service of interest through a proxy, without changing the services.
 We provide a [converter utility](util/converter/) for Docker compose.
 The supported communication protocols are HTTP1.1, HTTP2 and gRPC. We currently do not support encrypted communication, but that should be feasible with some effort.
 
-#### 1.3. Controller:
+### 1.3. Controller:
 
 The controller service is available as a [Docker image](https://hub.docker.com/r/dflipse/reynard-controller). It must be [configured](/instrumentation/controller/README.md#configuration) to be aware of all deployed proxies to function correctly.
 
 ## 2. Using the Test Library
 
 The exploration algorithm is implemented in Java.
-You can apply Reynard even if your microservice system is not build Java.
+You can apply Reynard even if your microservice system is not built in Java.
 The testing library is available as a [Maven package](https://central.sonatype.com/artifact/dev.reynard/junit) under the `dev.reynard.junit` namespace.
 
 More details can be found in the [`/library` directory](/library/).
@@ -119,7 +119,7 @@ The "tracked faultload" defines the current set of faults (starting with no faul
 A Reynard test function must have the properties:
 
 - It should be **repeatable**, as the test function is run repeatedly and it should be independent of previous executions.
-- If the dependencies of a request should be tested with faults, than the intial request must include the headers defined in the tracked faultload. If you use `okhttp`, you can use the utility function `TrackedFaultload.newRequestBuilder` to automatically add the right headers.
+- If the dependencies of a request should be tested with faults, then the initial request must include the headers defined in the tracked faultload. If you use `okhttp`, you can use the utility function `TrackedFaultload.newRequestBuilder` to automatically add the right headers.
 - Only one request should use the faultload headers, as not to confuse the testing library. The test function can make multiple calls to the system to prepare the system state, but only the request of interest should include the headers.
 
 ## Limits
@@ -135,6 +135,6 @@ Reynard can work in a variety of scenarios, but is not complete or sound in the 
 
 - If request identifiers the system is non-deterministic, then Reynard will try to search an ever growing number of fault injection points, and will never inject the right faults. To resolve this, Reynard [can be configured](/library/README.md#configuration) to be less precise in its identifiers.
 - If the effects of requests are non-deterministic. Reynard will wrongly infer the effects of an event. As a result, it will visit either combinations of faults that cannot be combined (false-positives), or omit combinations of faults that it inferred to be redundant (false-negatives). Hence, Reynard can be slower, and/or inexhaustive.
-- If te responses with the same status code have different meanings, this will cause non-deterministic effects, which results in the behavior as described above.
+- If the responses with the same status code have different meanings, this will cause non-deterministic effects, which results in the behavior as described above.
 
-Please see [the readme for the testing library](/library/) what can be configured to work around some of these limitations.
+Please see [the readme for the testing library](/library/) for what can be configured to work around some of these limitations.

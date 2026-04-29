@@ -11,13 +11,15 @@ Reynard consists of the following components:
 - [Instrumentation](instrumentation/) to allow deterministic fault injection and inspect inter-service communication: a reverse proxy is placed as a side-car to services of interest, while a controller exposes an API for fault injection testing.
 - A [testing library](library/) to automatically explore relevant combinations of faults. This is implemented as a Java JUnit 5 decorator.
 
-## Experiments/Artifact Instruction
+## ICSE 2026
 
-We have documented all steps needed to reproduce our results in [this readme](util/experiments/).
+Reynard was presented at ICSE 2026 in our paper on ["Automated Network-Level Fault Injection Testing of Microservice Architectures"](https://doi.org/10.1145/3744916.3773193).
+You can find the exact version of the repository used for the artifacts [here](https://github.com/reynard-testing/reynard/tree/v0.2.2-artifact).
+You can find the steps needed to reproduce our results in [this readme](https://github.com/reynard-testing/reynard/tree/7fc79c85f5eefd766946a6d878abd441f7641f81/util/experiments).
 
 ## Example Usage
 
-Considere a webshop designed as a Microservice Architecture. In a test environment, we have added the required instrumentation of Reynard (see below). For the checkout endpoint, we want to ensure that failures do not cause a payment for an order that is never shipped. Using Reynard, we can create the following test suite:
+Consider a webshop designed as a Microservice Architecture. In a test environment, we have added the required instrumentation of Reynard (see below). For the checkout endpoint, we want to ensure that failures do not cause a payment for an order that is never shipped. Using Reynard, we can create the following test suite:
 
 ```java
 @FiTest

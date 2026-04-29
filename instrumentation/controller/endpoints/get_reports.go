@@ -16,7 +16,7 @@ type GetReportsByTraceIDResponse struct {
 func GetReportsByTraceID(w http.ResponseWriter, r *http.Request) {
 	traceID := faultload.TraceID(r.PathValue("trace_id"))
 
-	if !store.TraceIds.IsRegistered(traceID) {
+	if !store.TraceFaults.IsTraceRegistered(traceID) {
 		http.Error(w, "Trace ID not registered", http.StatusNotFound)
 		return
 	}

@@ -28,8 +28,6 @@ func StartController(port int, useOTEL bool) (err error) {
 	slog.SetDefault(slog.New(handler))
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds) // Ensure timestamps are logged
 	slog.Info("Logging", "level", logLevel)
-
-	slog.Info("Registered proxies", "proxyList", endpoints.ProxyList)
 	slog.Info("OTEL", "enabled", useOTEL)
 
 	// Handle SIGINT (CTRL+C) gracefully.
@@ -92,9 +90,9 @@ func newHTTPHandler() http.Handler {
 
 	handleFunc("GET /v1/trace/{trace_id}", endpoints.GetReportsByTraceID)
 	handleFunc("POST /v1/proxy/report", endpoints.ReportSpanId)
-	handleFunc("POST /v1/proxy/get-uid", endpoints.GetFaultUid)
-	handleFunc("POST /v1/faultload/register", endpoints.RegisterFaultloadsAtProxies)
-	handleFunc("POST /v1/faultload/unregister", endpoints.UnregisterFaultloadsAtProxies)
+	handleFunc("POST /v1/proxy/init", endpoints.InitRequestHandler)
+	handleFunc("POST /v1/faultload/register", endpoints.RegisterFaultload)
+	handleFunc("POST /v1/faultload/unregister", endpoints.UnregisterFaultload)
 	handleFunc("GET /v1/clear", endpoints.ClearAll)
 
 	// Add HTTP instrumentation for the whole server.

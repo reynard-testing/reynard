@@ -20,7 +20,6 @@ class FilibusterConverter(ComposeConverter):
 
         # These configurations are set be in line with the original converter
         self.instrumented_suffix = '-real'
-        self.proxy_control_port = 8050
         self.public_ports['controller'] = self.port_manager.get_available_port(
             6050)
         self.service_names = {

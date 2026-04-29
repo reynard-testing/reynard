@@ -1,7 +1,6 @@
 package dev.reynard.junit.strategy.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;

@@ -69,7 +69,6 @@ public class InstrumentedApp extends RemoteController {
     public InstrumentedService instrument(String hostname, int port, GenericContainer<?> service) {
         var newProxy = new InstrumentedService(service, hostname, port, this);
         this.proxies.add(newProxy);
-        controller.withEnv("PROXY_LIST", String.join(",", getProxyList()));
 
         if (jaeger != null) {
             // Add OTEL environment variables to the instrumented service
@@ -92,16 +91,6 @@ public class InstrumentedApp extends RemoteController {
         }
 
         return true;
-    }
-
-    private List<String> getProxyList() {
-        List<String> proxyList = new ArrayList<>();
-
-        for (var proxy : proxies) {
-            proxyList.add(proxy.getControlHost());
-        }
-
-        return proxyList;
     }
 
     public void start() {

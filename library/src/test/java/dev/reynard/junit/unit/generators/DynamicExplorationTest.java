@@ -1,10 +1,11 @@
 package dev.reynard.junit.unit.generators;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
 import org.junit.jupiter.api.Test;
 
 import dev.reynard.junit.faultload.Behaviour;

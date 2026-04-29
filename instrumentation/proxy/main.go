@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"go.reynard.dev/instrumentation/proxy/config"
-	"go.reynard.dev/instrumentation/proxy/control"
 	"go.reynard.dev/instrumentation/proxy/proxy"
 	"go.reynard.dev/instrumentation/shared/util"
 )
@@ -25,13 +24,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds) // Ensure timestamps are logged
 
 	proxyConfig := config.GetProxyConfig()
-	controlConfig := config.GetControlConfig(proxyConfig)
 
 	// Start the reverse proxy server
-	go func() {
-		proxy.StartProxy(proxyConfig)
-	}()
-
-	// Start the control server
-	control.StartControlServer(controlConfig)
+	proxy.StartProxy(proxyConfig)
 }

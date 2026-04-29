@@ -68,7 +68,7 @@
   "dateModified": "2025-10-22",
   "datePublished": "2025-07-15",
   "description": "Automated Network-Level Fault Injection Testing of Microservice Architectures",
-  "downloadUrl": "https://github.com/reynard-testing/reynard/releases/tag/v0.2.1-experiments",
+  "downloadUrl": "https://github.com/reynard-testing/reynard/releases/tag/v0.2.2-artifact",
   "keywords": [
     "microservice architectures",
     "automated testing",
@@ -78,6 +78,5 @@
   "name": "Reynard",
   "programmingLanguage": ["Java", "Go", "Python"],
   "relatedLink": "http://reynard.dev/",
-  "releaseNotes": "Minor patches and tweaks, and improved documentation",
-  "version": "0.2.1"
+  "version": "0.2.2"
 }

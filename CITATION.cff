@@ -8,33 +8,64 @@ authors:
     affiliation: Delft University of Technology
     city: Delft
     country: Netherlands
-  - family-names: Simsek
-    given-names: Hakan
-    orcid: https://orcid.org/0009-0009-8170-3181
-    email: hakan.simsek@asml.com
-    affiliation: ASML
-    city: Veldhoven
-    country: Netherlands
-  - family-names: Decouchant
-    given-names: Jérémie
-    orcid: https://orcid.org/0000-0001-9143-3984
-    email: j.decouchant@tudelft.nl
-    affiliation: Delft University of Technology
-    city: Delft
-    country: Netherlands
-  - family-names: Kulahcioglu Ozkan
-    given-names: Burcu
-    orcid: https://orcid.org/0000-0002-7038-165X
-    email: b.ozkan@tudelft.nl
-    affiliation: Delft University of Technology
-    city: Delft
-    country: Netherlands
-title: "Automated Network-Level Fault Injection Testing of Microservice Architectures"
-version: 0.2.1
+title: "Reynard"
+version: 0.2.2
 url: "https://github.com/reynard-testing/reynard"
-date-released: 2025-07-15
-#preferred-citation:
-#  type: proceedings
-# identifiers:
-#   - type: doi
-#     value:
+repository-code: 'https://github.com/reynard-testing/reynard'
+repository-artifact: 'https://github.com/reynard-testing/experiment-artifacts'
+commit: 7fc79c85f5eefd766946a6d878abd441f7641f81
+version: v0.2.2-artifact
+date-released: 2026-01-16
+identifiers:
+  - type: swh
+    value: "swh:1:snp:46be16a0632500d0ae311a2faae94e879bc27c87"
+    description: Repository snapshot
+preferred-citation:
+  type: conference-paper
+  authors:
+    - family-names: Flipse
+      given-names: Delano
+      orcid: https://orcid.org/0009-0008-4163-4743
+      email: d.e.flipse@student.tudelft.nl
+      affiliation: Delft University of Technology
+      city: Delft
+      country: Netherlands
+    - family-names: Simsek
+      given-names: Hakan
+      orcid: https://orcid.org/0009-0009-8170-3181
+      email: hakan.simsek@asml.com
+      affiliation: ASML
+      city: Veldhoven
+      country: Netherlands
+    - family-names: Decouchant
+      given-names: Jérémie
+      orcid: https://orcid.org/0000-0001-9143-3984
+      email: j.decouchant@tudelft.nl
+      affiliation: Delft University of Technology
+      city: Delft
+      country: Netherlands
+    - family-names: Kulahcioglu Ozkan
+      given-names: Burcu
+      orcid: https://orcid.org/0000-0002-7038-165X
+      email: b.ozkan@tudelft.nl
+      affiliation: Delft University of Technology
+      city: Delft
+      country: Netherlands
+  identifiers:
+    - type: doi
+      value: 10.1145/3744916.3773193
+  title: "Automated Network-Level Fault Injection Testing of Microservice Architectures"
+  collection-title: "Proceedings of the 2026 IEEE/ACM 48th International Conference on Software Engineering"
+  collection-type: proceedings
+  conference:
+    name: "ICSE '26"
+    location: "Rio de Janeiro, Brazil"
+    date-start: 2026-04-12
+    date-end: 2026-04-18
+  year: 2026
+  month: 4
+  publisher:
+    name: "ACM"
+    address: "New York, NY, USA"
+  doi: "10.1145/3744916.3773193"
+  pages: 12

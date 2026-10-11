@@ -60,6 +60,7 @@ public class StrategyReporter {
         long totalGenerated = statistics.getTotalGenerated();
         long totalPruned = statistics.getTotalPruned();
         long totalRun = statistics.getTotalRun();
+        long totalLost = statistics.getTotalLost();
         long faultSpaceSize = statistics.getTotalSize() - 1;
 
         long fullSpace = faultSpaceSize + 1;
@@ -70,6 +71,7 @@ public class StrategyReporter {
         report.put("prune_invocations", totalPruned);
         report.put("total_run", totalRun);
         report.put("cases_run", totalRun - 1);
+        report.put("results_lost", totalLost);
 
         return report;
     }

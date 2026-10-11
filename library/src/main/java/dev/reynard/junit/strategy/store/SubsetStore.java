@@ -9,7 +9,6 @@ import dev.reynard.junit.strategy.util.Sets;
 
 public class SubsetStore<E> {
     private final List<Set<E>> sets = new ArrayList<>();
-    private final boolean allowNull = false;
     private final boolean minimize;
     private BiPredicate<E, E> equality = (a, b) -> a.equals(b);
 
@@ -50,7 +49,7 @@ public class SubsetStore<E> {
     }
 
     public boolean hasSubsetOf(Set<E> set) {
-        if (set.isEmpty() && !allowNull) {
+        if (set.isEmpty()) {
             return false;
         }
 
@@ -80,7 +79,7 @@ public class SubsetStore<E> {
     }
 
     public boolean hasSet(Set<E> set) {
-        if (set.isEmpty() && !allowNull) {
+        if (set.isEmpty()) {
             return false;
         }
 
@@ -94,7 +93,7 @@ public class SubsetStore<E> {
     }
 
     public void add(Set<E> set) {
-        if (set.isEmpty() && !allowNull) {
+        if (set.isEmpty()) {
             return;
         }
 

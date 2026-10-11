@@ -160,6 +160,7 @@ func UnregisterFaultloadsAtProxies(w http.ResponseWriter, r *http.Request) {
 
 	store.TraceIds.Unregister(requestData.TraceId)
 	store.InvocationCounter.Clear(requestData.TraceId)
+	store.Reports.RemoveByTraceId(requestData.TraceId)
 
 	// Register the Faultload at the proxies
 	var wg sync.WaitGroup

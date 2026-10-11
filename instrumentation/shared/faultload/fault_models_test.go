@@ -179,3 +179,17 @@ func TestMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestInjectionPointPredecessorsString(t *testing.T) {
+	cs := InjectionPointPredecessors{
+		"a": 1,
+		"b": 2,
+	}
+
+	got := cs.String()
+	want := "{a:1,b:2}"
+
+	if got != want {
+		t.Errorf("String() = %q, want %q", got, want)
+	}
+}

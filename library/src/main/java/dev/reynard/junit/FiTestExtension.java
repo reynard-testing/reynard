@@ -337,14 +337,19 @@ public class FiTestExtension
                 strategy.handleResult(result);
                 faultload.timer.stop("handleResult");
             } catch (IOException e) {
-                e.printStackTrace();
+                // The fault combinations this run would have expanded into
+                // are never explored, so this must stay visible rather than
+                // being silently dropped as a stack trace on stdout.
+                logger.error("Failed to fetch or process trace for faultload, this run's result is lost: {}",
+                        faultload.getTraceId(), e);
+                strategy.statistics.registerLost();
             }
 
             faultload.timer.start("unregisterFautload");
             try {
                 controller.unregisterFaultload(faultload);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.warn("Failed to unregister faultload: {}", faultload.getTraceId(), e);
             }
             faultload.timer.stop("unregisterFautload");
 

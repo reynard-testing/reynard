@@ -196,7 +196,7 @@ func (cs InjectionPointPredecessors) String() string {
 		return ""
 	}
 
-	csStrings := make([]string, len(cs))
+	csStrings := make([]string, 0, len(cs))
 
 	// Sort the keys to ensure consistent ordering
 	keys := make([]string, 0, len(cs))

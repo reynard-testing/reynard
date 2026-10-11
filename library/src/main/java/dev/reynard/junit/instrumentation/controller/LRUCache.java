@@ -1,42 +1,20 @@
 package dev.reynard.junit.instrumentation.controller;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class LRUCache<K, V> extends HashMap<K, V> {
-    private static final int MAX_CAPACITY = 100;
-    private final List<K> keys = new ArrayList<>();
+public class LRUCache<K, V> extends LinkedHashMap<K, V> {
+    private final int maxCapacity;
 
     public LRUCache(int maxCapacity) {
-        super();
+        // accessOrder=true moves an entry to the end on get(), making this a
+        // true LRU cache instead of FIFO.
+        super(16, 0.75f, true);
+        this.maxCapacity = maxCapacity;
     }
 
     @Override
-    public void clear() {
-        super.clear();
-        keys.clear();
-    }
-
-    @Override
-    public V put(K key, V value) {
-        if (keys.size() > MAX_CAPACITY) {
-            K lruKey = keys.remove(0);
-            super.remove(lruKey);
-        }
-
-        keys.add(key);
-        return super.put(key, value);
-    }
-
-    @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
-    }
-
-    @Override
-    public V remove(Object key) {
-        keys.remove(key);
-        return super.remove(key);
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > maxCapacity;
     }
 }

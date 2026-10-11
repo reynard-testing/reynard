@@ -212,5 +212,7 @@ func (rs *ReportStore) GetByTraceId(TraceId faultload.TraceID) []trace.TraceRepo
 		return []trace.TraceReport{}
 	}
 
-	return reports
+	// Return a copy: the backing slice is mutated by Replace/Add under lock,
+	// and callers here read it with the lock already released.
+	return append([]trace.TraceReport{}, reports...)
 }

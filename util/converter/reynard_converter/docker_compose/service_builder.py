@@ -8,12 +8,6 @@ class PortMapping:
     container: int
 
 
-@dataclass
-class PortMapping:
-    host: int
-    container: int
-
-
 def parse_port(port_str: str) -> PortMapping:
     """
     Parse a port mapping string in the format "host:container" or "container".

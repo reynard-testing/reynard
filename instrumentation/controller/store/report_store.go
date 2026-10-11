@@ -8,9 +8,6 @@ import (
 	"go.reynard.dev/instrumentation/shared/trace"
 )
 
-type SpanId string
-type TraceId string
-
 type ReportStore struct {
 	mu                       sync.RWMutex
 	reports                  []trace.TraceReport

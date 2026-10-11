@@ -22,6 +22,7 @@ public class StrategyStatistics {
     private long totalSize = 0;
     private long totalGenerated = 0;
     private long totalPruned = 0;
+    private long totalLost = 0;
 
     public StrategyStatistics(StrategyRunner runner) {
         this.runner = runner;
@@ -59,6 +60,10 @@ public class StrategyStatistics {
         totalRun++;
     }
 
+    public void registerLost() {
+        totalLost++;
+    }
+
     // ---- Helper functions for reporting ----
     public Map<String, Long> getGeneratorCount() {
         return generatorCount;
@@ -92,6 +97,10 @@ public class StrategyStatistics {
         return totalPruned;
     }
 
+    public long getTotalLost() {
+        return totalLost;
+    }
+
     public List<FaultloadResult> getFailures() {
         return failures;
     }
@@ -110,5 +119,6 @@ public class StrategyStatistics {
         totalSize = 0;
         totalGenerated = 0;
         totalPruned = 0;
+        totalLost = 0;
     }
 }

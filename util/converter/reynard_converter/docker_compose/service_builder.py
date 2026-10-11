@@ -10,16 +10,23 @@ class PortMapping:
 
 def parse_port(port_str: str) -> PortMapping:
     """
-    Parse a port mapping string in the format "host:container" or "container".
+    Parse a port mapping string in the format "host:container", "container",
+    or "ip:host:container".
     """
-    # we only support host or host:container format
+    # we only support (ip:)host:container or container format
     if "[" in port_str or "-" in port_str or "/" in port_str:
         return None
 
-    if ':' not in port_str:
-        return PortMapping(host=None, container=int(port_str))
+    parts = port_str.split(':')
 
-    host_port, container_port = map(int, port_str.split(':'))
+    if len(parts) == 1:
+        return PortMapping(host=None, container=int(parts[0]))
+
+    if len(parts) > 3:
+        return None
+
+    # For "ip:host:container", only the last two segments matter here.
+    host_port, container_port = int(parts[-2]), int(parts[-1])
     return PortMapping(host=host_port, container=container_port)
 
 
@@ -67,6 +74,13 @@ class ServiceBuilder:
     def with_environment(self, key: str, value: str):
         if 'environment' not in self.definition:
             self.definition['environment'] = []
+        elif isinstance(self.definition['environment'], dict):
+            # Compose allows the mapping form (`environment: {KEY: value}`);
+            # normalize it to the list form this class works with.
+            self.definition['environment'] = [
+                f'{k}={v}' if v is not None else f'{k}'
+                for k, v in self.definition['environment'].items()
+            ]
 
         for env in self.definition['environment']:
             if env.startswith(f'{key}='):

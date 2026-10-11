@@ -18,11 +18,29 @@ import (
 )
 
 var (
-	ProxyList       = strings.Split(os.Getenv("PROXY_LIST"), ",")
+	ProxyList       = parseProxyList(os.Getenv("PROXY_LIST"))
 	ProxyRetryCount = util.GetIntEnvOrDefault("PROXY_RETRY_COUNT", 3)
 	ProxyTimeout    = time.Duration(util.GetIntEnvOrDefault("PROXY_TIMEOUT", 100)) * time.Millisecond
 	proxyClient     = util.GetDefaultClient()
 )
+
+// parseProxyList splits a comma-separated PROXY_LIST env var, dropping empty
+// entries so that an unset/empty default ("") means zero proxies instead of
+// one proxy with an empty address.
+func parseProxyList(value string) []string {
+	if value == "" {
+		return []string{}
+	}
+
+	parts := strings.Split(value, ",")
+	proxies := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p != "" {
+			proxies = append(proxies, p)
+		}
+	}
+	return proxies
+}
 
 func RegisterFaultload(proxyAddr string, ctx context.Context, f *faultload.Faultload) error {
 	url := "http://" + proxyAddr + "/v1/faultload/register"

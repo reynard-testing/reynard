@@ -1,4 +1,6 @@
 
+from copy import deepcopy
+
 import yaml
 from reynard_converter.config import IGNORED_IMAGES, IMAGES
 from reynard_converter.docker_compose.compose_builder import (
@@ -162,12 +164,14 @@ class ComposeConverter:
         # Define the new names (hostname and service name)
         service_hostname = service.get_hostname()
         new_service_hostname = f'{service_hostname}{self.instrumented_suffix}'
-        proxy_service_name = f'{service_hostname}{self.proxy_suffix}'
+        proxy_service_name = self.name_manager.get_safe_name(
+            f'{service_hostname}{self.proxy_suffix}')
 
         # Create a copy of the service to instrument, and rename it
         # This is to avoid Compose resolving the hostname due the service name
         instrumented_service = service.copy()
-        instrumented_service.name = f'{service.name}{self.instrumented_suffix}'
+        instrumented_service.name = self.name_manager.get_safe_name(
+            f'{service.name}{self.instrumented_suffix}')
 
         # Determine service ports
         container_port = self._get_container_port(service)
@@ -181,6 +185,11 @@ class ComposeConverter:
         # This is to ensure that the proxy can still be created
         if container_port is None:
             container_port = f"<!!!-port-of-{service.name}-!!!>"
+            print(
+                f"WARNING: could not determine the container port for service "
+                f"'{service.name}'. A placeholder ('{container_port}') was "
+                f"written to the output; edit it manually or provide a "
+                f"'{service.name}_port' hint before using the generated file.")
 
         # Create the proxy service
         proxy_service = ServiceBuilder(proxy_service_name) \
@@ -191,6 +200,13 @@ class ComposeConverter:
             .with_environment('SERVICE_NAME', service.name) \
             .with_environment('PROXY_HOST', f"0.0.0.0:{container_port}") \
             .with_environment('PROXY_TARGET', f"http://{new_service_hostname}:{container_port}") \
+
+        # The proxy takes over the original service's hostname/identity in
+        # the network, so it needs to join the same custom networks (if any)
+        # or it won't be reachable from other services.
+        if 'networks' in service.definition:
+            proxy_service.definition['networks'] = deepcopy(
+                service.definition['networks'])
 
         # Check if the container port is exposed in the original service
         host_port = None

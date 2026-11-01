@@ -66,7 +66,7 @@ public class StrategyBenchmark {
      * odd Cij, makes the caller fail too; even Cij are handled by a fallback.
      * Bi retries Ci1 once when it fails.
      */
-    static ImplicationsStore system(int width, int depth) {
+    public static ImplicationsStore system(int width, int depth) {
         ImplicationsStore store = new ImplicationsStore();
         EventBuilder a = new EventBuilder("A");
         List<EventBuilder> bs = new ArrayList<>();
@@ -94,7 +94,7 @@ public class StrategyBenchmark {
         return store;
     }
 
-    static TraceAnalysis run(Faultload faultload, ImplicationsStore system) {
+    public static TraceAnalysis run(Faultload faultload, ImplicationsStore system) {
         var root = system.getRootCause();
         List<TraceReport> reports = new ArrayList<>();
         for (var behaviour : new ImplicationsModel(system).getBehaviours(faultload.faultSet())) {

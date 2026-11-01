@@ -10,6 +10,7 @@ import (
 	"runtime"
 
 	"go.reynard.dev/instrumentation/proxy/config"
+	"go.reynard.dev/instrumentation/proxy/extension"
 	"go.reynard.dev/instrumentation/proxy/proxy"
 	"go.reynard.dev/instrumentation/shared/util"
 )
@@ -41,6 +42,14 @@ func main() {
 		go func() {
 			slog.Info("Starting pprof server on :6060")
 			log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+		}()
+	}
+
+	// Inside Lambda, the proxy is deployed as an extension layer
+	if runtimeApi := os.Getenv("AWS_LAMBDA_RUNTIME_API"); runtimeApi != "" {
+		go func() {
+			extension.Run(runtimeApi)
+			os.Exit(0)
 		}()
 	}
 

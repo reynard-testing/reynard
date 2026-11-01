@@ -2,3 +2,4 @@
 .vscode/
 results/
 target/
+instrumentation/proxy/lambda-layer/

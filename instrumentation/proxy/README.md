@@ -16,3 +16,14 @@ The environment can be configured using environment variables:
 | `USE_OTEL` | `false`  | Whether to use OTel internally.
 
 If `USE_OTEL` is set to `true`, you can configure [OpenTelemetry configurations](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/) in the environment too.
+## AWS Lambda
+
+The proxy also runs as a [Lambda extension](https://docs.aws.amazon.com/lambda/latest/dg/lambda-extensions.html): when `AWS_LAMBDA_RUNTIME_API` is set, it registers itself with the Extensions API. Put it behind [AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter), so requests flow adapter → proxy → app on localhost:
+
+| Key | Example |
+| --- | ------- |
+| `AWS_LWA_PORT` | `8081` (the proxy) |
+| `PROXY_HOST` | `127.0.0.1:8081` |
+| `PROXY_TARGET` | `http://127.0.0.1:8080` (the app) |
+
+Build the layer with `make build-lambda-layer`, which exports it to `proxy/lambda-layer/`. See [util/cdk-test](../../util/cdk-test/) for a full example.

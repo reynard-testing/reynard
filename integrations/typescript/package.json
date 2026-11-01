@@ -1,0 +1,30 @@
+{
+  "name": "@reynard-testing/explorer",
+  "version": "0.3.0",
+  "description": "Drive a Reynard exploration from TypeScript tests (vitest, jest, ...)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/explore.d.ts",
+      "default": "./dist/explore.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "testcontainers": "^12.2.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

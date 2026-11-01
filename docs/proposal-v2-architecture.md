@@ -69,10 +69,10 @@ The explorer is today's `strategy/` package plus `StrategyRunner`, taken out of 
 
 | Call | Purpose |
 |---|---|
-| `POST /v2/sessions` `{name, config}` | Starts exploring one scenario. `config` holds today's `@FiTest` options. |
-| `POST /v2/sessions/{id}/next` | Returns `{run_id, headers}` for the next run, or `204` when the exploration is done. |
-| `POST /v2/sessions/{id}/runs/{run_id}` `{passed, message}` | Records the verdict. The explorer then fetches the trace and updates its search. |
-| `GET /v2/sessions/{id}/report` | Returns statistics and counterexamples (today's reporter output). |
+| `POST /v1/sessions` `{name, config}` | Starts exploring one scenario. `config` holds today's `@FiTest` options. |
+| `POST /v1/sessions/{id}/next` | Returns `{run_id, headers}` for the next run, or `204` when the exploration is done. |
+| `POST /v1/sessions/{id}/runs/{run_id}` `{passed, message}` | Records the verdict. The explorer then fetches the trace and updates its search. |
+| `GET /v1/sessions/{id}/report` | Returns statistics and counterexamples (today's reporter output). |
 
 What a test author does, in any language: **attach the two headers to the request under test, and report whether the invariant held.** There are three ways to integrate:
 

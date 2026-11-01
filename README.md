@@ -100,6 +100,8 @@ The testing library is available as a [Maven package](https://central.sonatype.c
 
 More details can be found in the [`/library` directory](/library/).
 
+Tests written in other languages can drive the same exploration through the explorer's CLI or HTTP API, see the [`/explorer` directory](/explorer/).
+
 ### 2.1 Enabling Fault Injection
 
 A Reynard test suite requires that the test class implements a `public static FaultController getController()`, in order to control fault injection and analyse system behavior.

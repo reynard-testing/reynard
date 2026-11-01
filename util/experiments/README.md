@@ -58,7 +58,6 @@ This experiment requires Reynard, as well as the benchmark systems it should run
 1. [DeathStarBench](https://github.com/delimitrou/DeathStarBench)'s hotelReservation
 1. OpenTelemetry's [Astronomy shop](https://github.com/open-telemetry/opentelemetry-demo)
 1. Microbenchmarks included in Reynard
-1. Reynard itself (we refer to these tests as "meta" tests)
 
 ### 1.1. Installation
 
@@ -234,7 +233,7 @@ N=10 ./reynard/util/experiments/micro/run_all_n.sh # (~5m per iteration)
 TAG="NO-SER" USE_SER=false N=1 ./reynard/util/experiments/micro/run_all_n.sh # For ablation (~12m per iteration)
 ```
 
-Note: For the "meta" test, the images used are already built when we ran `make build-all`, but the micro benchmark docker images have to be built the first time they are executed (and will be reused after), so this will take a while (1-2 minutes) during which the script seems unresponsive.
+Note: The micro benchmark docker images have to be built the first time they are executed (and will be reused after), so this will take a while (1-2 minutes) during which the script seems unresponsive.
 
 Tip: These benchmarks can be debugged directly using your IDE if you use reynard locally.
 

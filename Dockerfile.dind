@@ -19,6 +19,12 @@ COPY --from=build-env /usr/share/maven /usr/share/maven
 # We add 'bash' because Maven scripts often require it
 RUN apk add --no-cache libstdc++ gcompat bash git make curl
 
+# Install the parent pom and the explorer module, which the library depends on
+WORKDIR /reynard
+COPY ./pom.xml ./pom.xml
+COPY ./explorer ./explorer
+RUN mvn -N install && mvn -f explorer/pom.xml install -DskipTests
+
 WORKDIR /app
 COPY ./library .
 COPY ./util/micro-benchmarks/ /util/micro-benchmarks/

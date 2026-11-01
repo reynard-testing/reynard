@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"log/slog"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
+	"runtime"
 
 	"go.reynard.dev/instrumentation/proxy/config"
-	"go.reynard.dev/instrumentation/proxy/control"
 	"go.reynard.dev/instrumentation/proxy/proxy"
 	"go.reynard.dev/instrumentation/shared/util"
 )
@@ -24,14 +27,23 @@ func main() {
 	slog.Info("Logging", "level", logLevel)
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds) // Ensure timestamps are logged
 
-	proxyConfig := config.GetProxyConfig()
-	controlConfig := config.GetControlConfig(proxyConfig)
+	// Set up OpenTelemetry.
+	otelShutdown, err := util.SetupOTelSDK(context.Background(), os.Getenv("USE_OTEL") == "true")
+	if err != nil {
+		slog.Error("Failed to set up OpenTelemetry", "err", err)
+		return
+	}
+	defer otelShutdown(context.Background())
+
+	// Start pprof server for profiling.
+	if os.Getenv("USE_PPROF") == "true" {
+		runtime.SetCPUProfileRate(500)
+		go func() {
+			slog.Info("Starting pprof server on :6060")
+			log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+		}()
+	}
 
 	// Start the reverse proxy server
-	go func() {
-		proxy.StartProxy(proxyConfig)
-	}()
-
-	// Start the control server
-	control.StartControlServer(controlConfig)
+	proxy.StartProxy(config.GetProxyConfig())
 }

@@ -10,7 +10,7 @@ import (
 	"go.reynard.dev/instrumentation/shared/trace"
 )
 
-type UidRequest struct {
+type InterceptRequest struct {
 	TraceId             faultload.TraceID               `json:"trace_id"`
 	SpanId              faultload.SpanID                `json:"span_id"`
 	ReportParentId      faultload.SpanID                `json:"parent_span_id"`
@@ -19,8 +19,10 @@ type UidRequest struct {
 	IncludePredecessors bool                            `json:"include_events"`
 }
 
-type UidResponse struct {
-	Uid faultload.FaultUid `json:"uid"`
+// InterceptResponse holds the uid of the request, and the fault to inject (nil if none).
+type InterceptResponse struct {
+	Uid   faultload.FaultUid `json:"uid"`
+	Fault *faultload.Fault   `json:"fault"`
 }
 
 func getCompletedEvents(parentEvent *trace.TraceReport) *faultload.InjectionPointPredecessors {
@@ -51,7 +53,7 @@ func getCompletedEvents(parentEvent *trace.TraceReport) *faultload.InjectionPoin
 	return &completed
 }
 
-func determineUid(data UidRequest) *faultload.FaultUid {
+func determineUid(data InterceptRequest) *faultload.FaultUid {
 	if data.IsInitial {
 		var pred *faultload.InjectionPointPredecessors = nil
 
@@ -91,10 +93,16 @@ func determineUid(data UidRequest) *faultload.FaultUid {
 	return &uid
 }
 
-func GetFaultUid(w http.ResponseWriter, r *http.Request) {
-	var data UidRequest
+func InterceptHandler(w http.ResponseWriter, r *http.Request) {
+	var data InterceptRequest
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	// Proxies forward requests of unregistered traces untouched
+	if !store.TraceFaults.IsTraceRegistered(data.TraceId) {
+		http.Error(w, "Trace ID not registered", http.StatusNotFound)
 		return
 	}
 
@@ -106,7 +114,8 @@ func GetFaultUid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Debug("Determined uid", "uid", faultUid)
+	fault := store.TraceFaults.GetMatchingFault(data.TraceId, *faultUid)
+	slog.Debug("Determined uid", "uid", faultUid, "fault", fault)
 
 	traceReport := trace.TraceReport{
 		TraceId:       data.TraceId,
@@ -120,8 +129,9 @@ func GetFaultUid(w http.ResponseWriter, r *http.Request) {
 
 	store.Reports.Add(traceReport)
 
-	response := UidResponse{
-		Uid: *faultUid,
+	response := InterceptResponse{
+		Uid:   *faultUid,
+		Fault: fault,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

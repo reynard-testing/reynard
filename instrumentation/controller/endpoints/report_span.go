@@ -17,7 +17,7 @@ func ReportSpanId(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !store.TraceIds.IsRegistered(data.TraceId) {
+	if !store.TraceFaults.IsTraceRegistered(data.TraceId) {
 		fmt.Fprintf(w, "Trace id (%s) not registered anymore for uid %v", data.TraceId, data.FaultUid.String())
 		w.WriteHeader(http.StatusNotFound)
 		return

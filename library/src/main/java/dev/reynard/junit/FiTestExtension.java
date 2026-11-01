@@ -1,6 +1,5 @@
 package dev.reynard.junit;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
@@ -17,40 +16,19 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.reynard.junit.faultload.modes.ErrorFault;
-import dev.reynard.junit.faultload.modes.FailureMode;
-import dev.reynard.junit.faultload.modes.HttpError;
+import dev.reynard.explorer.Explorer;
+import dev.reynard.explorer.ExplorerConfig;
+
 import dev.reynard.junit.instrumentation.FaultController;
-import dev.reynard.junit.strategy.FaultloadResult;
 import dev.reynard.junit.strategy.StrategyRunner;
 import dev.reynard.junit.strategy.TrackedFaultload;
-import dev.reynard.junit.strategy.components.analyzers.BehaviorAnalyzer;
-import dev.reynard.junit.strategy.components.analyzers.ConcurrencyDetector;
-import dev.reynard.junit.strategy.components.analyzers.ConditionalPointDetector;
-import dev.reynard.junit.strategy.components.analyzers.ErrorPropagationDetector;
-import dev.reynard.junit.strategy.components.analyzers.FaultsWithoutCauseOracle;
-import dev.reynard.junit.strategy.components.analyzers.HappensBeforeNeighbourDetector;
-import dev.reynard.junit.strategy.components.analyzers.HappyPathDetector;
-import dev.reynard.junit.strategy.components.analyzers.ParentChildDetector;
-import dev.reynard.junit.strategy.components.analyzers.RedundancyAnalyzer;
-import dev.reynard.junit.strategy.components.analyzers.StatusAnalyzer;
-import dev.reynard.junit.strategy.components.analyzers.StatusPropagationOracle;
-import dev.reynard.junit.strategy.components.analyzers.TimingAnalyzer;
-import dev.reynard.junit.strategy.components.generators.DynamicExplorationGenerator;
-import dev.reynard.junit.strategy.components.pruners.DynamicReductionPruner;
-import dev.reynard.junit.strategy.components.pruners.FaultloadSizePruner;
-import dev.reynard.junit.strategy.components.pruners.NoImpactPruner;
-import dev.reynard.junit.strategy.components.pruners.UnreachabilityPruner;
 import dev.reynard.junit.strategy.util.Env;
-import dev.reynard.junit.strategy.util.TraceAnalysis;
-import dev.reynard.junit.strategy.util.traversal.TraversalOrder;
-import dev.reynard.junit.util.TaggedTimer;
 
 public class FiTestExtension
         implements TestTemplateInvocationContextProvider {
+    private Explorer explorer;
     private StrategyRunner strategy;
     private static final String OUTPUT_DIR_KEY = "reynard.output.dir";
-    private final TaggedTimer totalTimer = new TaggedTimer();
     private static final Logger logger = LoggerFactory.getLogger(FiTestExtension.class);
 
     @Override
@@ -76,7 +54,6 @@ public class FiTestExtension
 
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
-        totalTimer.start("Total test time");
         // Retrieve the annotation and its parameters
         var annotation = context.getTestMethod()
                 .orElseThrow()
@@ -86,84 +63,40 @@ public class FiTestExtension
             annotation = context.getRequiredTestClass().getAnnotation(FiTest.class);
         }
 
-        List<FailureMode> modes = List.of(
-                ErrorFault.fromError(HttpError.INTERNAL_SERVER_ERROR),
-                ErrorFault.fromError(HttpError.BAD_GATEWAY),
-                ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE),
-                ErrorFault.fromError(HttpError.GATEWAY_TIMEOUT));
+        ExplorerConfig config = new ExplorerConfig();
+        config.name = context.getRequiredTestClass().getSimpleName() + "#"
+                + context.getTestMethod().orElseThrow().getName();
+        config.maskPayload = annotation.maskPayload();
+        config.withPredecessors = annotation.withPredecessors();
+        config.hashBody = annotation.hashBody();
+        config.logHeaders = annotation.logHeaders();
+        config.failStop = annotation.failStop();
+        config.optimizeForRetries = annotation.optimizeForRetries();
+        config.optimizeForImpactless = annotation.optimizeForImpactless();
+        config.checkAllPruners = annotation.checkAllPruners();
+        config.maxTestCases = annotation.maxTestCases();
+        config.maxTimeS = annotation.maxTimeS();
+        config.maxFaultloadSize = annotation.maxFaultloadSize();
+        config.initialGetTraceDelay = annotation.initialGetTraceDelay();
+        config.pointOrder = annotation.pointOrder();
+        config.depthFirstSearchOrder = annotation.depthFirstSearchOrder();
 
-        // List<FailureMode> modes =
-        // List.of(ErrorFault.fromError(HttpError.SERVICE_UNAVAILABLE));
+        Class<?> testClass = context.getRequiredTestClass();
+        FaultController controller;
 
-        boolean onlyPersistantOrTransientRetries = annotation.optimizeForRetries();
-        boolean pruneImpactless = annotation.optimizeForImpactless();
-        int maxFaultloadSize = annotation.maxFaultloadSize();
-        TraversalOrder traversalStrategy = annotation.pointOrder();
-        boolean depthFirstSearchOrder = annotation.depthFirstSearchOrder();
-
-        strategy = new StrategyRunner(modes);
-        strategy
-                .withComponent(new DynamicExplorationGenerator(strategy.getStore(), strategy::prune, traversalStrategy,
-                        !depthFirstSearchOrder))
-                // These components detect the necessairy info
-                // for the implications store
-                .withComponent(new HappyPathDetector())
-                .withComponent(new ParentChildDetector())
-                .withComponent(new HappensBeforeNeighbourDetector())
-                .withComponent(new ErrorPropagationDetector())
-                // Note: ConditionalPointDetector needs to be the last detector in the chain, as
-                // it relies on the implications
-                .withComponent(new ConditionalPointDetector(onlyPersistantOrTransientRetries))
-                .withComponent(new RedundancyAnalyzer())
-                .withComponent(new StatusAnalyzer())
-                .withComponent(new BehaviorAnalyzer())
-                .withComponent(new TimingAnalyzer())
-                .withComponent(new StatusPropagationOracle())
-                .withComponent(new FaultsWithoutCauseOracle())
-                .withComponent(new ConcurrencyDetector())
-                .withComponent(new UnreachabilityPruner())
-                .withComponent(new NoImpactPruner(pruneImpactless))
-                .withComponent(new DynamicReductionPruner());
-
-        if (annotation.maxTestCases() > 0) {
-            strategy.withMaxTestCases(annotation.maxTestCases());
+        try {
+            controller = (FaultController) testClass.getMethod("getController").invoke(null);
+            if (controller == null) {
+                throw new IllegalStateException(
+                        "Test has no public static field getController(). Ensure getController() exists and returns a faultcontroller.");
+            }
+        } catch (NoSuchMethodException | NullPointerException | IllegalArgumentException | IllegalAccessException
+                | InvocationTargetException | SecurityException e) {
+            throw new RuntimeException("Failed to access getControleler from test class", e);
         }
 
-        if (annotation.maxTimeS() > 0) {
-            strategy.withMaxTimeS(annotation.maxTimeS());
-        }
-
-        if (maxFaultloadSize > 0) {
-            strategy.withComponent(new FaultloadSizePruner(maxFaultloadSize));
-        }
-
-        if (annotation.failStop()) {
-            strategy.withStopOnError();
-        }
-
-        if (annotation.maskPayload()) {
-            strategy.withPayloadMasking();
-        }
-
-        if (annotation.hashBody()) {
-            strategy.withBodyHashing();
-        }
-
-        if (annotation.logHeaders()) {
-            strategy.withLogHeader();
-        }
-
-        if (annotation.checkAllPruners()) {
-            strategy.withCheckAllPruners();
-        }
-
-        if (annotation.withPredecessors()) {
-            strategy.withPredecessors();
-        }
-
-        if (annotation.initialGetTraceDelay() > 0) {
-            strategy.withGetDelay(annotation.initialGetTraceDelay());
-        }
+        explorer = new Explorer(config, controller);
+        strategy = explorer.getStrategy();
 
         String outputConfig = getOutputDir(context);
         if (outputConfig != null) {
@@ -180,10 +113,6 @@ public class FiTestExtension
             strategy.setOutputDir(outputDir);
         }
 
-        String testClassName = context.getRequiredTestClass().getSimpleName();
-        String testMethodName = context.getTestMethod().orElseThrow().getName();
-        strategy.setContextName(testClassName + "#" + testMethodName);
-
         if (annotation.additionalComponents().length > 0) {
             for (Class<?> componentClass : annotation.additionalComponents()) {
                 try {
@@ -197,34 +126,16 @@ public class FiTestExtension
             }
         }
 
-        Class<?> testClass = context.getRequiredTestClass();
-        FaultController controller;
-
-        try {
-            controller = (FaultController) testClass.getMethod("getController").invoke(null);
-            if (controller == null) {
-                throw new IllegalStateException(
-                        "Test has no public static field getController(). Ensure getController() exists and returns a faultcontroller.");
-            }
-        } catch (NoSuchMethodException | NullPointerException | IllegalArgumentException | IllegalAccessException
-                | InvocationTargetException | SecurityException e) {
-            throw new RuntimeException("Failed to access getControleler from test class", e);
-        }
-
         return Stream
-                .generate(() -> createInvocationContext(strategy, controller))
+                .generate(() -> createInvocationContext(explorer))
                 .takeWhile(ctx -> ctx != null)
                 .onClose(() -> {
                     afterAll();
                 });
     }
 
-    private TestTemplateInvocationContext createInvocationContext(StrategyRunner strategy, FaultController controller) {
-        TaggedTimer strategyTimer = new TaggedTimer();
-        strategyTimer.start("nextFaultload");
-        TrackedFaultload faultload = strategy.nextFaultload();
-        strategyTimer.stop("nextFaultload");
-        strategy.registerTime(strategyTimer);
+    private TestTemplateInvocationContext createInvocationContext(Explorer explorer) {
+        TrackedFaultload faultload = explorer.next();
 
         if (faultload == null) {
             return null;
@@ -241,17 +152,14 @@ public class FiTestExtension
             public List<Extension> getAdditionalExtensions() {
                 return List.of(
                         new QueueParameterResolver(faultload),
-                        new BeforeTestExtension(faultload, controller),
-                        new AfterTestExtension(faultload, strategy, controller));
+                        new BeforeTestExtension(faultload, explorer),
+                        new AfterTestExtension(faultload, explorer));
             }
         };
     }
 
     public void afterAll() {
-        totalTimer.stop("Total test time");
-        strategy.registerTime(totalTimer);
-        strategy.statistics.setSize(strategy.getGenerator().spaceSize());
-        strategy.statistics.report();
+        explorer.close();
     }
 
     // Parameter resolver to inject the current parameter into the test
@@ -276,11 +184,11 @@ public class FiTestExtension
     // Before each test, register the faultload with the proxies
     private static class BeforeTestExtension implements BeforeTestExecutionCallback {
         private final TrackedFaultload faultload;
-        private final FaultController controller;
+        private final Explorer explorer;
 
-        BeforeTestExtension(TrackedFaultload faultload, FaultController controller) {
+        BeforeTestExtension(TrackedFaultload faultload, Explorer explorer) {
             this.faultload = faultload;
-            this.controller = controller;
+            this.explorer = explorer;
         }
 
         @Override
@@ -292,70 +200,24 @@ public class FiTestExtension
             String displayName = context.getDisplayName();
             logger.info("Test " + displayName);
 
-            faultload.timer.start("Per test");
-            faultload.timer.start("registerFaultload");
-            try {
-                controller.registerFaultload(faultload);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to register faultload", e);
-            }
-            faultload.timer.stop("registerFaultload");
-            faultload.timer.start("testMethod");
+            explorer.start(faultload);
         }
     }
 
     // After each test, handle the result and update the strategy
     private static class AfterTestExtension implements AfterTestExecutionCallback {
         private final TrackedFaultload faultload;
-        private final StrategyRunner strategy;
-        private final FaultController controller;
+        private final Explorer explorer;
 
-        AfterTestExtension(TrackedFaultload faultload, StrategyRunner strategy, FaultController controller) {
+        AfterTestExtension(TrackedFaultload faultload, Explorer explorer) {
             this.faultload = faultload;
-            this.strategy = strategy;
-            this.controller = controller;
+            this.explorer = explorer;
         }
 
         @Override
         public void afterTestExecution(ExtensionContext context) {
-            faultload.timer.stop("testMethod");
-            // Access the queue and test result
-            // var testMethod = context.getTestMethod().orElseThrow();
-            // var annotation = testMethod.getAnnotation(FiTest.class);
-
             boolean testFailed = context.getExecutionException().isPresent();
-            logger.info("Invariant: " + (testFailed ? "VIOLATED" : "HOLDS"));
-
-            strategy.statistics.registerRun();
-
-            try {
-                TraceAnalysis trace = controller.getTrace(faultload);
-                int status = trace.getRootReport().response.status;
-                logger.info("Client responded with HTTP status: {}", status);
-                faultload.timer.start("handleResult");
-                FaultloadResult result = new FaultloadResult(faultload, trace, !testFailed);
-                strategy.handleResult(result);
-                faultload.timer.stop("handleResult");
-            } catch (IOException e) {
-                // The fault combinations this run would have expanded into
-                // are never explored, so this must stay visible rather than
-                // being silently dropped as a stack trace on stdout.
-                logger.error("Failed to fetch or process trace for faultload, this run's result is lost: {}",
-                        faultload.getTraceId(), e);
-                strategy.statistics.registerLost();
-            }
-
-            faultload.timer.start("unregisterFautload");
-            try {
-                controller.unregisterFaultload(faultload);
-            } catch (Exception e) {
-                logger.warn("Failed to unregister faultload: {}", faultload.getTraceId(), e);
-            }
-            faultload.timer.stop("unregisterFautload");
-
-            faultload.timer.stop("Per test");
-            strategy.registerTime(faultload);
+            explorer.finish(faultload, !testFailed);
         }
     }
-
 }

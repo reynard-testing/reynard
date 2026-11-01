@@ -2,6 +2,7 @@ package dev.reynard.junit.strategy.store;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +31,10 @@ public class DynamicAnalysisStore {
     private final List<FaultUid> points = new ArrayList<>();
 
     private final ImplicationsStore implicationsStore = new ImplicationsStore();
+    // Several pruners ask for the same faultload in a row; reset whenever the
+    // implications change
+    private Set<Fault> expectedBehaviourKey = null;
+    private Set<Behaviour> expectedBehaviourValue = null;
 
     private final Map<FaultUid, TraceReport> happyPath = new LinkedHashMap<>();
     private final List<Set<Fault>> redundantFaultloads = new ArrayList<>();
@@ -113,15 +118,23 @@ public class DynamicAnalysisStore {
         return this.historicResults;
     }
 
+    private void clearExpectedBehaviourCache() {
+        expectedBehaviourKey = null;
+        expectedBehaviourValue = null;
+    }
+
     public boolean addUpstreamEffect(FaultUid fid, Collection<FaultUid> children) {
+        clearExpectedBehaviourCache();
         return implicationsStore.addDownstreamRequests(fid, children);
     }
 
     public boolean addDownstreamEffect(Collection<Behaviour> condition, Behaviour effect) {
+        clearExpectedBehaviourCache();
         return implicationsStore.addUpstreamResponse(condition, effect);
     }
 
     public boolean addConditionForFaultUid(Collection<Behaviour> condition, FaultUid inclusion) {
+        clearExpectedBehaviourCache();
         boolean isNew = addFaultUid(inclusion);
         boolean isNewPrecondition = implicationsStore.addInclusionEffect(condition, inclusion);
 
@@ -139,6 +152,7 @@ public class DynamicAnalysisStore {
     }
 
     public boolean addExclusionForFaultUid(Collection<Behaviour> condition, FaultUid exclusion) {
+        clearExpectedBehaviourCache();
         boolean isNewPrecondition = implicationsStore.addExclusionEffect(condition, exclusion);
 
         if (!isNewPrecondition) {
@@ -241,7 +255,13 @@ public class DynamicAnalysisStore {
     }
 
     public Set<Behaviour> getExpectedBehaviour(Collection<Fault> faults) {
-        return new ImplicationsModel(implicationsStore).getBehaviours(faults);
+        Set<Fault> key = new HashSet<>(faults);
+        if (!key.equals(expectedBehaviourKey)) {
+            expectedBehaviourValue = Collections.unmodifiableSet(
+                    new ImplicationsModel(implicationsStore).getBehaviours(faults));
+            expectedBehaviourKey = key;
+        }
+        return expectedBehaviourValue;
     }
 
     public Set<FaultUid> getExpectedPoints(Collection<Fault> faults) {

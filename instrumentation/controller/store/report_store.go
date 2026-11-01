@@ -46,7 +46,7 @@ func (rs *ReportStore) RemoveByTraceId(TraceId faultload.TraceID) {
 	delete(rs.reportsByTraceId, TraceId)
 
 	for _, traceReport := range traceReports {
-		rs.RemoveByTraceIdAndSpanId(traceReport.TraceId, traceReport.SpanId)
+		rs.removeByTraceIdAndSpanId(traceReport.TraceId, traceReport.SpanId)
 	}
 }
 
@@ -61,7 +61,11 @@ func remove(s []trace.TraceReport, i int) []trace.TraceReport {
 func (rs *ReportStore) RemoveByTraceIdAndSpanId(TraceId faultload.TraceID, SpanId faultload.SpanID) int {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
+	return rs.removeByTraceIdAndSpanId(TraceId, SpanId)
+}
 
+// removeByTraceIdAndSpanId requires rs.mu to be held; sync.RWMutex is not reentrant.
+func (rs *ReportStore) removeByTraceIdAndSpanId(TraceId faultload.TraceID, SpanId faultload.SpanID) int {
 	index := -1
 
 	// Remove the report from the reports slice

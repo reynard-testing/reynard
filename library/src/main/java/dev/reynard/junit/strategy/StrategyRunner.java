@@ -376,7 +376,7 @@ public class StrategyRunner {
         // the pruners of the most impactfull class
         Set<Pruner> attributed = new LinkedHashSet<>();
 
-        for (Pruner pruner : pruners) {
+        pruning: for (Pruner pruner : pruners) {
             TaggedTimer pruneTimer = new TaggedTimer();
             String name = pruner.getClass().getSimpleName();
             String tag = name + ".prune<Pruner>";
@@ -396,8 +396,9 @@ public class StrategyRunner {
                 case PRUNE_SUPERSETS -> {
                     pruneDecision = PruneDecision.PRUNE_SUPERSETS;
                     attributed.add(pruner);
-                    if (withCheckAllPruners) {
-                        break;
+                    // No stronger decision exists, so the remaining pruners cannot change it
+                    if (!withCheckAllPruners) {
+                        break pruning;
                     }
                 }
 

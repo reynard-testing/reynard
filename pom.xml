@@ -15,7 +15,8 @@
   <inceptionYear>2025</inceptionYear>
 
   <modules>
-    <module>library</module>
+    <module>explorer</module>
+    <module>integrations/junit</module>
   </modules>
 
   <properties>

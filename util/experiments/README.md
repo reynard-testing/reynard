@@ -6,7 +6,7 @@ This includes scripts to simplify the experimentation process, as well as this d
 ### General notes
 
 - Most experiment scripts expect dependent projects to be present at a _specific_ path relative to their own. Be careful in the relative location and naming of checked out repositories. Moreover, do not move scripts, as they will use paths relative to their location.
-- The file [junit-platform.properties](/library/src/test/resources/junit-platform.properties) defines _where_ the Reynard results are put. Alternatively, you can run reynard with a `OUTPUT_DIR` environment variable set.
+- The file [junit-platform.properties](/integrations/junit/src/test/resources/junit-platform.properties) defines _where_ the Reynard results are put. Alternatively, you can run reynard with a `OUTPUT_DIR` environment variable set.
 
 ## Requirements
 
@@ -165,7 +165,7 @@ After all benchmarks have been run, you can use the `util/viz` scripts to post-p
 
 ### 1.3 Filibuster Corpus
 
-We combined all Reynard Filibuster Corpus experiments in the [FilibusterSuiteIT](/library/src/test/java/dev/reynard/junit/integration/FilibusterSuiteIT.java) test suite.
+We combined all Reynard Filibuster Corpus experiments in the [FilibusterSuiteIT](/integrations/junit/src/test/java/dev/reynard/junit/integration/FilibusterSuiteIT.java) test suite.
 
 We can use [the provided scripts](./filibuster/) to automatically build, start, and stop each benchmark.
 To run the whole suite, run:

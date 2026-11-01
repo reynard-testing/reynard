@@ -15,7 +15,7 @@ build-library-dind:
 build-all: build-controller build-proxy build-library build-library-dind
 
 run-test:
-	cd ./library; mvn test
+	cd ./integrations/junit; mvn test
 
 install:
 	mvn install -Dmaven.test.skip

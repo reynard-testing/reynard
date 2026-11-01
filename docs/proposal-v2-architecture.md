@@ -17,7 +17,7 @@ Status: draft, 2026-11-01
 | The controller pushes each faultload to every proxy in a static `PROXY_LIST` ([register_faultload.go](../instrumentation/controller/endpoints/register_faultload.go)) | Serverless proxies autoscale, cannot be addressed, and come and go |
 | Each proxy keeps registered faults in its own memory ([control/](../instrumentation/proxy/control/)) | When a service has N instances, a request can land on an instance that never got the faultload |
 | Cleanup depends on an explicit unregister call | A test runner that gets killed leaks its state forever |
-| Exploration is built into the JUnit extension ([FiTestExtension.java](../library/src/main/java/dev/reynard/junit/FiTestExtension.java)) | Only JVM tests can use Reynard |
+| Exploration is built into the JUnit extension ([FiTestExtension.java](../integrations/junit/src/main/java/dev/reynard/junit/FiTestExtension.java)) | Only JVM tests can use Reynard |
 
 ## Architecture
 
@@ -69,10 +69,10 @@ The explorer is today's `strategy/` package plus `StrategyRunner`, taken out of 
 
 | Call | Purpose |
 |---|---|
-| `POST /v2/sessions` `{name, config}` | Starts exploring one scenario. `config` holds today's `@FiTest` options. |
-| `POST /v2/sessions/{id}/next` | Returns `{run_id, headers}` for the next run, or `204` when the exploration is done. |
-| `POST /v2/sessions/{id}/runs/{run_id}` `{passed, message}` | Records the verdict. The explorer then fetches the trace and updates its search. |
-| `GET /v2/sessions/{id}/report` | Returns statistics and counterexamples (today's reporter output). |
+| `POST /v1/sessions` `{name, config}` | Starts exploring one scenario. `config` holds today's `@FiTest` options. |
+| `POST /v1/sessions/{id}/next` | Returns `{run_id, headers}` for the next run, or `204` when the exploration is done. |
+| `POST /v1/sessions/{id}/runs/{run_id}` `{passed, message}` | Records the verdict. The explorer then fetches the trace and updates its search. |
+| `GET /v1/sessions/{id}/report` | Returns statistics and counterexamples (today's reporter output). |
 
 What a test author does, in any language: **attach the two headers to the request under test, and report whether the invariant held.** There are three ways to integrate:
 

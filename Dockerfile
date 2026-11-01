@@ -9,6 +9,6 @@ COPY ./explorer ./explorer
 RUN mvn -N install && mvn -f explorer/pom.xml install -DskipTests
 
 WORKDIR /app
-COPY ./library .
+COPY ./integrations/junit .
 
 RUN mvn clean install -DskipTests

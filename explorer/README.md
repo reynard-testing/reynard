@@ -4,7 +4,7 @@ The explorer decides which combinations of faults to inject, and learns from the
 
 It can be used in three ways:
 
-- **In-process from JUnit:** the [`@FiTest`](../library/) decorator runs it inside the test.
+- **In-process from JUnit:** the [`@FiTest`](../integrations/junit/) decorator runs it inside the test.
 - **CLI:** runs a command once per faultload. Works with tests in any language, without code changes beyond sending two headers.
 - **HTTP API:** for test frameworks in other languages that drive the exploration from their own process.
 

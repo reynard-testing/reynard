@@ -1,7 +1,7 @@
 # Reynard Testing Library
 
 This directory contains the Java JUnit 5 testing library.
-The fault model, the search strategy and the controller client live in the [explorer](../explorer/) module, which this library runs in-process.
+The fault model, the search strategy and the controller client live in the [explorer](../../explorer/) module, which this library runs in-process.
 
 - In the root directory, you will find `FiTest` and `FiTestExtension` which define the JUnit 5 decorator and corresponding JUnit extension.
 - [instrumentation/testcontainers](./src/main/java/dev/reynard/junit/instrumentation/testcontainers/) includes utility methods to use Reynard with [Testcontainers](https://testcontainers.com/).

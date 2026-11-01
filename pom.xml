@@ -16,7 +16,7 @@
 
   <modules>
     <module>explorer</module>
-    <module>library</module>
+    <module>integrations/junit</module>
   </modules>
 
   <properties>

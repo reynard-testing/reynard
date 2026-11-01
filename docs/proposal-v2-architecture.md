@@ -17,7 +17,7 @@ Status: draft, 2026-11-01
 | The controller pushes each faultload to every proxy in a static `PROXY_LIST` ([register_faultload.go](../instrumentation/controller/endpoints/register_faultload.go)) | Serverless proxies autoscale, cannot be addressed, and come and go |
 | Each proxy keeps registered faults in its own memory ([control/](../instrumentation/proxy/control/)) | When a service has N instances, a request can land on an instance that never got the faultload |
 | Cleanup depends on an explicit unregister call | A test runner that gets killed leaks its state forever |
-| Exploration is built into the JUnit extension ([FiTestExtension.java](../library/src/main/java/dev/reynard/junit/FiTestExtension.java)) | Only JVM tests can use Reynard |
+| Exploration is built into the JUnit extension ([FiTestExtension.java](../integrations/junit/src/main/java/dev/reynard/junit/FiTestExtension.java)) | Only JVM tests can use Reynard |
 
 ## Architecture
 

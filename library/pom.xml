@@ -18,6 +18,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>dev.reynard</groupId>
+      <artifactId>explorer</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
       <version>5.10.0</version>

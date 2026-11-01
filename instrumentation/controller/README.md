@@ -7,16 +7,16 @@ The controller is an API server that has the following endpoints:
 
 | URL | Method | Description |
 | --- | ------ | ----------- |
-| `/v2/faultload/register` | `POST`  | Register the faultload of a `trace_id`, to track it.
-| `/v2/trace/{trace_id}` | `GET`  | Get the list of reports for a registered `trace_id`.
-| `/v2/faultload/unregister` | `POST`  | Remove a `trace_id`.
-| `/v2/clear` | `GET`  | Clear everything.
+| `/v1/faultload/register` | `POST`  | Register the faultload of a `trace_id`, to track it.
+| `/v1/trace/{trace_id}` | `GET`  | Get the list of reports for a registered `trace_id`.
+| `/v1/faultload/unregister` | `POST`  | Remove a `trace_id`.
+| `/v1/clear` | `GET`  | Clear everything.
 
 ### Proxy endpoints
 
 | URL | Method | Description |
 | --- | ------ | ----------- |
-| `/v2/proxy/report` | `POST`  | Upsert operation to define a report for a `span_id` and `trace_id`.
+| `/v1/proxy/report` | `POST`  | Upsert operation to define a report for a `span_id` and `trace_id`.
 | `/v2/proxy/intercept` | `POST`  | Get a fault uid and the fault to inject (if any), based on the metadata available to the proxy. Returns `404` if the `trace_id` is not registered.
 
 

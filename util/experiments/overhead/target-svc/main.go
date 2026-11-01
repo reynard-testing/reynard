@@ -13,7 +13,7 @@ func main() {
 		fmt.Fprintln(w, "OK")
 	})
 
-	http.HandleFunc("/v2/proxy/report", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/v1/proxy/report", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "OK")
 	})

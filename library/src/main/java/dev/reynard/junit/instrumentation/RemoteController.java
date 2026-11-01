@@ -41,7 +41,7 @@ public class RemoteController implements FaultController {
     }
 
     private TraceAnalysis attemptToGetTrace(TrackedFaultload faultload) throws IOException {
-        String queryUrl = apiHost + "/v2/trace/" + faultload.getTraceId();
+        String queryUrl = apiHost + "/v1/trace/" + faultload.getTraceId();
         Request request = new Request.Builder()
                 // .addHeader("Content-Type", "application/json")
                 .url(queryUrl)
@@ -115,7 +115,7 @@ public class RemoteController implements FaultController {
             throw new IllegalStateException("Collector URL not set");
         }
 
-        String queryUrl = apiHost + "/v2/faultload/register";
+        String queryUrl = apiHost + "/v1/faultload/register";
         String jsonBody = faultload.serializeJson();
         RequestBody body = RequestBody.create(jsonBody, JSON);
         Request request = new Request.Builder()
@@ -143,7 +143,7 @@ public class RemoteController implements FaultController {
             throw new IllegalStateException("Collector URL not set");
         }
 
-        String queryUrl = apiHost + "/v2/faultload/unregister";
+        String queryUrl = apiHost + "/v1/faultload/unregister";
         ObjectMapper mapper = new ObjectMapper();
         var node = mapper.createObjectNode();
         node.put("trace_id", faultload.getTraceId());

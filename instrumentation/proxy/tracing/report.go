@@ -45,7 +45,7 @@ func postJSON(url string, body any) (*http.Response, error) {
 }
 
 func attemptReport(report trace.TraceReport) bool {
-	queryUrl := fmt.Sprintf("http://%s/v2/proxy/report", queryHost)
+	queryUrl := fmt.Sprintf("http://%s/v1/proxy/report", queryHost)
 	resp, err := postJSON(queryUrl, report)
 
 	if err != nil {

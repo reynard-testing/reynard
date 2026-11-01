@@ -89,12 +89,12 @@ func newHTTPHandler() http.Handler {
 		mux.Handle(pattern, handler)
 	}
 
-	handleFunc("GET /v2/trace/{trace_id}", endpoints.GetReportsByTraceID)
-	handleFunc("POST /v2/proxy/report", endpoints.ReportSpanId)
+	handleFunc("GET /v1/trace/{trace_id}", endpoints.GetReportsByTraceID)
+	handleFunc("POST /v1/proxy/report", endpoints.ReportSpanId)
 	handleFunc("POST /v2/proxy/intercept", endpoints.InterceptHandler)
-	handleFunc("POST /v2/faultload/register", endpoints.RegisterFaultload)
-	handleFunc("POST /v2/faultload/unregister", endpoints.UnregisterFaultload)
-	handleFunc("GET /v2/clear", endpoints.ClearAll)
+	handleFunc("POST /v1/faultload/register", endpoints.RegisterFaultload)
+	handleFunc("POST /v1/faultload/unregister", endpoints.UnregisterFaultload)
+	handleFunc("GET /v1/clear", endpoints.ClearAll)
 
 	// Add HTTP instrumentation for the whole server.
 	handler := otelhttp.NewHandler(mux, "/")

@@ -38,7 +38,7 @@ public class RemoteAppSuiteIT {
                 .url(queryUrl)
                 .build();
 
-        String inspectUrl = "http://localhost:5000/v2/trace/" + faultload.getTraceId();
+        String inspectUrl = "http://localhost:5000/v1/trace/" + faultload.getTraceId();
         String traceUrl = "http://localhost:16686/trace/"
                 + faultload.getTraceId();
 

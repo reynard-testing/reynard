@@ -73,7 +73,7 @@ public class OTELSuiteIT {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
+            String inspectUrl = controller.apiHost + "/v2/trace/" + faultload.getTraceId();
             String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
             TraceAnalysis result = getController().getTrace(faultload);
@@ -106,7 +106,7 @@ public class OTELSuiteIT {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
+            String inspectUrl = controller.apiHost + "/v2/trace/" + faultload.getTraceId();
             String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
             TraceAnalysis result = getController().getTrace(faultload);
@@ -254,7 +254,7 @@ public class OTELSuiteIT {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            String inspectUrl = controller.apiHost + "/v1/trace/" + faultload.getTraceId();
+            String inspectUrl = controller.apiHost + "/v2/trace/" + faultload.getTraceId();
             String traceUrl = "http://localhost:16686/trace/" + faultload.getTraceId();
 
             var traceData = controller.getTrace(faultload);

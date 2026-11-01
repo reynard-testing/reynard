@@ -79,7 +79,7 @@ public class NondeterminismAndRetryIT {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            String inspectUrl = app.controllerInspectUrl + "/v1/trace/" + faultload.getTraceId();
+            String inspectUrl = app.controllerInspectUrl + "/v2/trace/" + faultload.getTraceId();
 
             TraceAnalysis result = getController().getTrace(faultload);
             // assert that we do not inject redundant faults

@@ -79,11 +79,11 @@ register_payload() {
   local file=$1
 
   file_abs=$(realpath "$experiment_dir/$file")
-  curl -X POST -H "Content-Type: application/json" --data-binary @$file_abs http://localhost:5050/v1/faultload/register
+  curl -X POST -H "Content-Type: application/json" --data-binary @$file_abs http://localhost:5050/v2/faultload/register
 }
 
 report_parent_event() {
-  curl -X POST -H "Content-Type: application/json"  --data-binary @payloads/report_event.json http://localhost:5050/v1/proxy/report
+  curl -X POST -H "Content-Type: application/json"  --data-binary @payloads/report_event.json http://localhost:5050/v2/proxy/report
 }
 
 cleanup_experiment() {

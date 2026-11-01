@@ -11,19 +11,19 @@ import (
 	"go.reynard.dev/instrumentation/shared/faultload"
 )
 
-func postInit(t *testing.T, req InitRequest) *httptest.ResponseRecorder {
+func postIntercept(t *testing.T, req InterceptRequest) *httptest.ResponseRecorder {
 	t.Helper()
 	body, err := json.Marshal(req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	rec := httptest.NewRecorder()
-	InitRequestHandler(rec, httptest.NewRequest(http.MethodPost, "/v1/proxy/init", bytes.NewReader(body)))
+	InterceptHandler(rec, httptest.NewRequest(http.MethodPost, "/v2/proxy/intercept", bytes.NewReader(body)))
 	return rec
 }
 
-func initialRequest(traceId faultload.TraceID, spanId faultload.SpanID, destination string) InitRequest {
-	return InitRequest{
+func initialRequest(traceId faultload.TraceID, spanId faultload.SpanID, destination string) InterceptRequest {
+	return InterceptRequest{
 		TraceId:      traceId,
 		SpanId:       spanId,
 		IsInitial:    true,
@@ -31,11 +31,11 @@ func initialRequest(traceId faultload.TraceID, spanId faultload.SpanID, destinat
 	}
 }
 
-func TestInitUnregisteredTraceIsNotTracked(t *testing.T) {
+func TestInterceptUnregisteredTraceIsNotTracked(t *testing.T) {
 	store.TraceFaults.Clear()
 	store.Reports.Clear()
 
-	rec := postInit(t, initialRequest("unregistered", "s1", "a"))
+	rec := postIntercept(t, initialRequest("unregistered", "s1", "a"))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("expected 404 for an unregistered trace, got %d", rec.Code)
@@ -45,7 +45,7 @@ func TestInitUnregisteredTraceIsNotTracked(t *testing.T) {
 	}
 }
 
-func TestInitReturnsMatchingFault(t *testing.T) {
+func TestInterceptReturnsMatchingFault(t *testing.T) {
 	store.TraceFaults.Clear()
 	store.Reports.Clear()
 
@@ -66,12 +66,12 @@ func TestInitReturnsMatchingFault(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		rec := postInit(t, initialRequest("t1", faultload.SpanID(rune('1'+i)), c.destination))
+		rec := postIntercept(t, initialRequest("t1", faultload.SpanID(rune('1'+i)), c.destination))
 		if rec.Code != http.StatusOK {
 			t.Fatalf("destination %s: expected 200, got %d", c.destination, rec.Code)
 		}
 
-		var res InitResponse
+		var res InterceptResponse
 		if err := json.NewDecoder(rec.Body).Decode(&res); err != nil {
 			t.Fatal(err)
 		}
@@ -87,6 +87,6 @@ func TestInitReturnsMatchingFault(t *testing.T) {
 	}
 
 	if len(store.Reports.GetByTraceId("t1")) != 2 {
-		t.Error("each init request should store a report")
+		t.Error("each intercept request should store a report")
 	}
 }

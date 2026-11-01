@@ -13,12 +13,12 @@ func main() {
 		fmt.Fprintln(w, "OK")
 	})
 
-	http.HandleFunc("/v1/proxy/report", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/v2/proxy/report", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "OK")
 	})
 
-	http.HandleFunc("/v1/proxy/init", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/v2/proxy/intercept", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		response := map[string]interface{}{
 			"uid": map[string]interface{}{

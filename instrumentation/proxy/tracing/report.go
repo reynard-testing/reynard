@@ -45,7 +45,7 @@ func postJSON(url string, body any) (*http.Response, error) {
 }
 
 func attemptReport(report trace.TraceReport) bool {
-	queryUrl := fmt.Sprintf("http://%s/v1/proxy/report", queryHost)
+	queryUrl := fmt.Sprintf("http://%s/v2/proxy/report", queryHost)
 	resp, err := postJSON(queryUrl, report)
 
 	if err != nil {
@@ -72,9 +72,9 @@ func ReportSpanUID(report trace.TraceReport) bool {
 	return success
 }
 
-// attemptInit returns registered=false only if the controller does not track the trace.
-func attemptInit(req endpoints.InitRequest) (res *endpoints.InitResponse, registered bool) {
-	queryUrl := fmt.Sprintf("http://%s/v1/proxy/init", queryHost)
+// attemptIntercept returns registered=false only if the controller does not track the trace.
+func attemptIntercept(req endpoints.InterceptRequest) (res *endpoints.InterceptResponse, registered bool) {
+	queryUrl := fmt.Sprintf("http://%s/v2/proxy/intercept", queryHost)
 	resp, err := postJSON(queryUrl, req)
 	if err != nil {
 		slog.Warn("Failed to reach controller to get UID", "error", err)
@@ -92,7 +92,7 @@ func attemptInit(req endpoints.InitRequest) (res *endpoints.InitResponse, regist
 		return nil, true
 	}
 
-	var response endpoints.InitResponse
+	var response endpoints.InterceptResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		slog.Warn("Failed to decode response from controller", "error", err)
 		return nil, true
@@ -104,7 +104,7 @@ func attemptInit(req endpoints.InitRequest) (res *endpoints.InitResponse, regist
 // GetUidAndFault asks the controller for the uid of the request and the fault to inject (nil if none).
 // registered is false if the controller does not track the trace, so the request must not be touched.
 func GetUidAndFault(metadata RequestMetadata, partial faultload.PartialInjectionPoint, includeEvents bool) (uid faultload.FaultUid, fault *faultload.Fault, registered bool) {
-	req := endpoints.InitRequest{
+	req := endpoints.InterceptRequest{
 		TraceId:             metadata.TraceId,
 		ReportParentId:      metadata.ReportParentId,
 		SpanId:              metadata.SpanId,
@@ -113,10 +113,10 @@ func GetUidAndFault(metadata RequestMetadata, partial faultload.PartialInjection
 		IncludePredecessors: includeEvents,
 	}
 
-	res, registered := attemptInit(req)
+	res, registered := attemptIntercept(req)
 	if registered && res == nil {
 		// retry once
-		res, registered = attemptInit(req)
+		res, registered = attemptIntercept(req)
 	}
 
 	if !registered {

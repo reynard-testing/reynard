@@ -1,4 +1,4 @@
-POST http://localhost:5050/v1/faultload/unregister
+POST http://localhost:5050/v2/faultload/unregister
 Content-Type: application/json
 
 {

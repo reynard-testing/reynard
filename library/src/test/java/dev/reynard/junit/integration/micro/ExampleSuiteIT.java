@@ -117,7 +117,7 @@ public class ExampleSuiteIT {
     // Given - A request to service A
     try (Response response = client.newCall(request).execute()) {
       // Note: if you debug this test, you can use the following URLs
-      String controllerUrl = app.controllerInspectUrl + "/v1/trace/" + faultload.getTraceId();
+      String controllerUrl = app.controllerInspectUrl + "/v2/trace/" + faultload.getTraceId();
       String jaegerUrl = app.jaegerInspectUrl + "/trace/" + faultload.getTraceId();
 
       // When - We can retrieve the trace analysis from the controller

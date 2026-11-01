@@ -10,7 +10,7 @@ import (
 	"go.reynard.dev/instrumentation/shared/trace"
 )
 
-type InitRequest struct {
+type InterceptRequest struct {
 	TraceId             faultload.TraceID               `json:"trace_id"`
 	SpanId              faultload.SpanID                `json:"span_id"`
 	ReportParentId      faultload.SpanID                `json:"parent_span_id"`
@@ -19,8 +19,8 @@ type InitRequest struct {
 	IncludePredecessors bool                            `json:"include_events"`
 }
 
-// InitResponse holds the uid of the request, and the fault to inject (nil if none).
-type InitResponse struct {
+// InterceptResponse holds the uid of the request, and the fault to inject (nil if none).
+type InterceptResponse struct {
 	Uid   faultload.FaultUid `json:"uid"`
 	Fault *faultload.Fault   `json:"fault"`
 }
@@ -53,7 +53,7 @@ func getCompletedEvents(parentEvent *trace.TraceReport) *faultload.InjectionPoin
 	return &completed
 }
 
-func determineUid(data InitRequest) *faultload.FaultUid {
+func determineUid(data InterceptRequest) *faultload.FaultUid {
 	if data.IsInitial {
 		var pred *faultload.InjectionPointPredecessors = nil
 
@@ -93,8 +93,8 @@ func determineUid(data InitRequest) *faultload.FaultUid {
 	return &uid
 }
 
-func InitRequestHandler(w http.ResponseWriter, r *http.Request) {
-	var data InitRequest
+func InterceptHandler(w http.ResponseWriter, r *http.Request) {
+	var data InterceptRequest
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
@@ -129,7 +129,7 @@ func InitRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	store.Reports.Add(traceReport)
 
-	response := InitResponse{
+	response := InterceptResponse{
 		Uid:   *faultUid,
 		Fault: fault,
 	}

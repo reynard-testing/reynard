@@ -35,8 +35,8 @@ flowchart LR
     test -- "next / verdict" --> explorer
     test -- "traceparent + tracestate" --> pa
     explorer -- "put faultload / get reports" --> controller
-    pa -- "decide / report" --> controller
-    pb -- "decide / report" --> controller
+    pa -- "intercept / report" --> controller
+    pb -- "intercept / report" --> controller
     controller --> store
 ```
 
@@ -44,11 +44,11 @@ As today, every run is isolated by its own trace ID. That isolation is what make
 
 ### 1. The proxy asks instead of being told
 
-The per-request call `POST /v1/proxy/get-uid` becomes `POST /v2/proxy/decide`, which returns `{uid, fault}`. `fault` is null when nothing should be injected. The controller already computes the UID, so it can match the UID against the trace's faultload at no extra cost, using the same shared `FaultUid.Matches`.
+The per-request call `POST /v1/proxy/get-uid` becomes `POST /v2/proxy/intercept`, which returns `{uid, fault}`. `fault` is null when nothing should be injected. The controller already computes the UID, so it can match the UID against the trace's faultload at no extra cost, using the same shared `FaultUid.Matches`.
 
-- The hot path stays at two controller calls per intercepted request (`decide` and `report`), the same as today.
+- The hot path stays at two controller calls per intercepted request (`intercept` and `report`), the same as today.
 - Requests without `fit=1` in `tracestate` still pass through without any controller call.
-- Run flags (`maskpyld`, `hashbody`, `usepred`, `hdrlog`) move out of `tracestate` into the stored faultload, and come back in the `decide` response. The proxy always sends the payload hash, and the controller ignores it when masking is on. The header keeps only `fit`, `init` and the parent of the current hop, down from up to seven keys, well within the W3C limit of 32 entries.
+- Run flags (`maskpyld`, `hashbody`, `usepred`, `hdrlog`) move out of `tracestate` into the stored faultload, and come back in the `intercept` response. The proxy always sends the payload hash, and the controller ignores it when masking is on. The header keeps only `fit`, `init` and the parent of the current hop, down from up to seven keys, well within the W3C limit of 32 entries.
 - Proxy configuration shrinks to `TARGET`, `SERVICE_NAME` and `CONTROLLER_URL`. The proxy control server, `RegisteredFaults`, the unused in-flight tracker and the controller's fan-out are deleted.
 
 ### 2. A stateless controller on a shared store
@@ -110,8 +110,8 @@ One Go core and one image, with three thin entrypoints:
 
 ## Migration (each step ships on its own)
 
-1. **Controller on a store.** Port the three in-memory stores to Valkey with TTLs, behind the existing v1 endpoints, and add `/v2/proxy/decide`. Nothing breaks for current users.
-2. **Stateless proxy.** The proxy calls `decide`. Delete the proxy control server, `RegisteredFaults`, the in-flight tracker, `PROXY_LIST` and the fan-out.
+1. **Controller on a store.** Port the three in-memory stores to Valkey with TTLs, behind the existing v1 endpoints, and add `/v2/proxy/intercept`. Nothing breaks for current users.
+2. **Stateless proxy.** The proxy calls `intercept`. Delete the proxy control server, `RegisteredFaults`, the in-flight tracker, `PROXY_LIST` and the fan-out.
 3. **Explorer API.** Put `StrategyRunner` behind the session API, with `@FiTest` calling it in-process. Add the CLI, and a Python SDK as the first client outside the JVM.
 4. **Packaging.** Build the Lambda layer, the `ext_proc` entrypoint and the native explorer binary.
 5. **Kotlin.** Convert explorer files as they are touched, starting with the model classes.

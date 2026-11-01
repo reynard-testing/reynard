@@ -68,7 +68,7 @@ To verify if you can run the experiments, we recommend reproducing a single iter
 
 - Clone the repository in an empty directory: `git clone --single-branch https://github.com/reynard-testing/reynard.git reynard` (similar to [1.1.1.](#111-cloning-repositories))
 - Change directory to the reynard folder (`cd reynard`) and build the instrumentation images and the testing library in docker images using `make build-all`. This takes roughly 3-4 minutes to build.
-- Run the following script to perform a single execution of the register benchmark: `./util/experiments/micro/run_single.sh a`. This should take roughly 1-5 minute to execute, and should result in "548 tests run".
+- Run the following script to perform a single execution of micro benchmark `a`: `./util/experiments/micro/run_single.sh a`. This should take roughly 1-5 minute to execute, and should result in "548 tests run".
 - The results should now be present in the `results` directory relative to where you ran the script from.
 - Make sure this results directory is not the same as the directory where the complete results are stored, as they might influence each other if they end up in the same run directory. Optionally, you can remove the results directory to be sure.
 

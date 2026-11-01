@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"go.reynard.dev/instrumentation/proxy/config"
-	"go.reynard.dev/instrumentation/proxy/control"
 	"go.reynard.dev/instrumentation/proxy/tracing"
 	"go.reynard.dev/instrumentation/shared/faultload"
 	"go.reynard.dev/instrumentation/shared/util"
@@ -131,25 +130,16 @@ func proxyHandler(targetHost string, protocols *http.Protocols) http.Handler {
 		r.Header.Del(OTEL_STATE_HEADER)
 		r.Header[OTEL_STATE_HEADER] = []string{tracestate}
 
-		// Determine if registered as an interesting trace
-		faults, ok := control.RegisteredFaults.Get(traceId)
-		if !ok {
-			// Forward the request to the target server
-			slog.Debug("No faults registered for trace ID", "traceId", traceId)
-			selectedProxy.ServeHTTP(w, r)
-			return
-		}
-
-		// TODO (optional): export to collector, so that jeager understands whats going on
-		currentSpan := parentSpan.GenerateNew()
-		r.Header[OTEL_PARENT_HEADER] = []string{currentSpan.String()}
-
-		// only forward the request if the "fit" flag is set in the tracestate
+		// only inspect the request if the "fit" flag is set in the tracestate
 		shouldInspect := state.GetWithDefault(FIT_FLAG, "0") == "1"
 		if !shouldInspect {
 			selectedProxy.ServeHTTP(w, r)
 			return
 		}
+
+		// TODO (optional): export to collector, so that jeager understands whats going on
+		// Headers are only rewritten once the controller confirms the trace is registered
+		currentSpan := parentSpan.GenerateNew()
 
 		slog.Debug("Received injectable request", "method", r.Method, "url", r.URL)
 		slog.Debug("Traceparent", "traceparent", parentSpan)
@@ -158,7 +148,6 @@ func proxyHandler(targetHost string, protocols *http.Protocols) http.Handler {
 
 		// determine the span ID for the current request
 		// and report the link to the parent span
-		slog.Debug("Faults registered for this trace", "faults", faults)
 		shouldMaskPayload := state.GetWithDefault(FIT_MASK_PAYLOAD_FLAG, "0") == "1"
 		slog.Debug("Mask payload", "enabled", shouldMaskPayload)
 
@@ -168,7 +157,6 @@ func proxyHandler(targetHost string, protocols *http.Protocols) http.Handler {
 		if isInitial {
 			slog.Debug("Is initial request")
 			state.Delete(FIT_IS_INITIAL_KEY)
-			r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 		}
 
 		// -- Determine FID --
@@ -193,12 +181,20 @@ func proxyHandler(targetHost string, protocols *http.Protocols) http.Handler {
 		shouldUsePredecessors := state.GetWithDefault(FIT_USE_PREDECESSORS, "0") == "1"
 		slog.Debug("Report parent ID", "reportParentId", reportParentId)
 
-		faultUid := tracing.GetUid(metadata, partialPoint, shouldUsePredecessors)
+		faultUid, fault, registered := tracing.GetUidAndFault(metadata, partialPoint, shouldUsePredecessors)
+		if !registered {
+			// Forward the request to the target server
+			slog.Debug("Trace ID not registered", "traceId", traceId)
+			selectedProxy.ServeHTTP(w, r)
+			return
+		}
+
 		metadata.FaultUid = &faultUid
-		slog.Debug("Determined ID", "faultUid", faultUid)
+		slog.Debug("Determined ID", "faultUid", faultUid, "fault", fault)
 		tracing.TrackFault(traceId, &faultUid)
 		// --
 
+		r.Header[OTEL_PARENT_HEADER] = []string{currentSpan.String()}
 		state.Set(FIT_PARENT_KEY, string(currentSpan.ParentID))
 		r.Header[OTEL_STATE_HEADER] = []string{state.String()}
 
@@ -227,11 +223,8 @@ func proxyHandler(targetHost string, protocols *http.Protocols) http.Handler {
 			slog.Info("Logging headers", "headers", r.Header)
 		}
 
-		for _, fault := range faults {
-			if fault.Uid.Matches(faultUid) {
-				Perform(fault, &proxyState)
-				break
-			}
+		if fault != nil {
+			Perform(*fault, &proxyState)
 		}
 
 		if proxyState.InjectedFault != nil {

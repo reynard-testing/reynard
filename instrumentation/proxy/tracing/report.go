@@ -72,32 +72,39 @@ func ReportSpanUID(report trace.TraceReport) bool {
 	return success
 }
 
-func attemptGetUid(req endpoints.UidRequest) *endpoints.UidResponse {
-	queryUrl := fmt.Sprintf("http://%s/v1/proxy/get-uid", queryHost)
+// attemptInit returns registered=false only if the controller does not track the trace.
+func attemptInit(req endpoints.InitRequest) (res *endpoints.InitResponse, registered bool) {
+	queryUrl := fmt.Sprintf("http://%s/v1/proxy/init", queryHost)
 	resp, err := postJSON(queryUrl, req)
 	if err != nil {
 		slog.Warn("Failed to reach controller to get UID", "error", err)
-		return nil
+		return nil, true
 	}
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, false
+	}
+
 	if resp.StatusCode != 200 {
 		slog.Warn("Failed to reach controller to get UID", "status", resp.Status)
-		return nil
+		return nil, true
 	}
 
-	var response endpoints.UidResponse
+	var response endpoints.InitResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		slog.Warn("Failed to decode response from controller", "error", err)
-		return nil
+		return nil, true
 	}
 
-	return &response
+	return &response, true
 }
 
-func GetUid(metadata RequestMetadata, partial faultload.PartialInjectionPoint, includeEvents bool) faultload.FaultUid {
-	req := endpoints.UidRequest{
+// GetUidAndFault asks the controller for the uid of the request and the fault to inject (nil if none).
+// registered is false if the controller does not track the trace, so the request must not be touched.
+func GetUidAndFault(metadata RequestMetadata, partial faultload.PartialInjectionPoint, includeEvents bool) (uid faultload.FaultUid, fault *faultload.Fault, registered bool) {
+	req := endpoints.InitRequest{
 		TraceId:             metadata.TraceId,
 		ReportParentId:      metadata.ReportParentId,
 		SpanId:              metadata.SpanId,
@@ -106,10 +113,14 @@ func GetUid(metadata RequestMetadata, partial faultload.PartialInjectionPoint, i
 		IncludePredecessors: includeEvents,
 	}
 
-	res := attemptGetUid(req)
-	if res == nil {
+	res, registered := attemptInit(req)
+	if registered && res == nil {
 		// retry once
-		res = attemptGetUid(req)
+		res, registered = attemptInit(req)
+	}
+
+	if !registered {
+		return faultload.FaultUid{}, nil, false
 	}
 
 	if res == nil {
@@ -117,8 +128,8 @@ func GetUid(metadata RequestMetadata, partial faultload.PartialInjectionPoint, i
 
 		return faultload.FaultUid{
 			Stack: []*faultload.InjectionPoint{},
-		}
+		}, nil, true
 	}
 
-	return res.Uid
+	return res.Uid, res.Fault, true
 }

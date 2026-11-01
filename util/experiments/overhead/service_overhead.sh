@@ -77,10 +77,9 @@ run_experiment() {
 
 register_payload() {
   local file=$1
-  local target=${2:-"localhost:5050"} 
 
   file_abs=$(realpath "$experiment_dir/$file")
-  curl -X POST -H "Content-Type: application/json" --data-binary @$file_abs http://$target/v1/faultload/register
+  curl -X POST -H "Content-Type: application/json" --data-binary @$file_abs http://localhost:5050/v1/faultload/register
 }
 
 report_parent_event() {
@@ -133,14 +132,12 @@ fi
 # --- 05. No faults to inject, dummy ---
 if [ -z "$TEST" ] || [ "$TEST" = "no_matching_faults_mocked" ]; then
   start_experiment dummy
-  register_payload payloads/no_matching_faults.json localhost:8050
   run_experiment "no_matching_faults_mocked" http://proxy:8080/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1"
 fi
 
 # --- No faults to inject, dummy ---
 if [ -z "$TEST" ] || [ "$TEST" = "no_matching_faults_mocked_init" ]; then
   start_experiment dummy
-  register_payload payloads/no_matching_faults.json proxy:8050
   run_experiment "no_matching_faults_mocked_init" http://proxy:8080/ -H "traceparent: 00-efcbf3a8ae78f65a35bf05ddcc8419e8-0000000000000001-01" -H "tracestate: fit=1,init=1"
 fi
 
